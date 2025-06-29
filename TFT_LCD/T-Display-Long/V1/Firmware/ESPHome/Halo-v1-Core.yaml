@@ -6,7 +6,7 @@ substitutions:
 
 psram:
   mode: octal
-  speed: 240MHz
+  speed: 120MHz
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -15,6 +15,7 @@ esp32:
     type: esp-idf
     advanced:
       enable_idf_experimental_features: true
+  cpu frequency: 240MHz
 
 esp32_improv:
   authorizer: none
