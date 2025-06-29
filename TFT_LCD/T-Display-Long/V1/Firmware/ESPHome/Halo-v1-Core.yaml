@@ -15,7 +15,7 @@ esp32:
     type: esp-idf
     advanced:
       enable_idf_experimental_features: true
-  cpu frequency: 240MHz
+  cpu_frequency: 240MHz
 
 esp32_improv:
   authorizer: none
