@@ -6,7 +6,7 @@ substitutions:
 
 psram:
   mode: octal
-  speed: 120MHz
+  speed: 240MHz
 
 esp32:
   board: esp32-s3-devkitc-1
