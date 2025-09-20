@@ -23,7 +23,7 @@ esp32:
 #  authorizer: none
 
 external_components:
-  - source: github://yashmulgaonkar/esphome-components
+  - source: github://truffshuff/esphome-components
     components: [axs15231, sy6970]
 
   - source: github://pr#7770 # RMT driver, remove rmt_channel when using esp-idf
