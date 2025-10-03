@@ -328,7 +328,7 @@ sensor:
   - platform: template
     name: "Computed AQI"
     id: computed_halo_aqi
-    unit_of_measurement: "AQI"
+    unit_of_measurement: ""
     accuracy_decimals: 0
     device_class: "aqi"
     state_class: "measurement"
