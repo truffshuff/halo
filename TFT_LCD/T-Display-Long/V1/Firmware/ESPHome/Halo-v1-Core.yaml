@@ -1565,36 +1565,36 @@ lvgl:
                       x: -2
                       y: 299
                       text: "%"
-              - name: "WiFi"
-                widgets:
-                  - label:
-                      text: "WiFi Statistics"
-                      align: CENTER
-                      x: 0
-                      y: -300
-                      text_font: montserrat_18
-                      text_color: my_white
-                  - label:
-                      id: wifi_signal_label
-                      text: "Signal: ..."
-                      align: LEFT_MID
-                      x: 10
-                      y: -250
-                      text_font: montserrat_14
-                      text_color: my_white
-                  - label:
-                      id: wifi_ssid_label
-                      text: "SSID: ..."
-                      align: LEFT_MID
-                      x: 10
-                      y: -200
-                      text_font: montserrat_14
-                      text_color: my_white
-                  - label:
-                      id: wifi_ip_label
-                      text: "IP: ..."
-                      align: LEFT_MID
-                      x: 10
-                      y: -150
-                      text_font: montserrat_14
-                      text_color: my_white
+           - name: "WiFi"
+             widgets:
+               - label:
+                   text: "WiFi Statistics"
+                   align: CENTER
+                   x: 0
+                   y: -300
+                   text_font: montserrat_18
+                   text_color: my_white
+               - label:
+                   id: wifi_signal_label
+                   text: "Signal: ..."
+                   align: LEFT_MID
+                   x: 10
+                   y: -250
+                   text_font: montserrat_14
+                   text_color: my_white
+               - label:
+                   id: wifi_ssid_label
+                   text: "SSID: ..."
+                   align: LEFT_MID
+                   x: 10
+                   y: -200
+                   text_font: montserrat_14
+                   text_color: my_white
+               - label:
+                   id: wifi_ip_label
+                   text: "IP: ..."
+                   align: LEFT_MID
+                   x: 10
+                   y: -150
+                   text_font: montserrat_14
+                   text_color: my_white
