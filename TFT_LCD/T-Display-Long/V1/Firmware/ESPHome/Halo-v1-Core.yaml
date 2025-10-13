@@ -997,6 +997,32 @@ light:
     effects:
       - addressable_rainbow:
           name: Addressable Rainbow
+      - addressable_color_wipe:
+          name: Color Wipe
+      - addressable_scan:
+          name: Scan
+      - addressable_twinkle:
+          name: Twinkle
+      - addressable_fireworks:
+          name: Fireworks
+      - addressable_flicker:
+          name: Flicker
+      - strobe:
+          name: Strobe
+      - addressable_chase:
+          name: Chase
+      - addressable_theater_chase:
+          name: Theater Chase
+      - addressable_random_twinkle:
+          name: Random Twinkle
+      - addressable_multi_color:
+          name: Multi Color
+      - addressable_larson_scanner:
+          name: Larson Scanner
+      - addressable_twinkle_fade:
+          name: Twinkle Fade
+      - addressable_fire_flicker:
+          name: Fire Flicker
 
   - platform: monochromatic
     output: backlight
