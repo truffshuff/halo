@@ -113,14 +113,15 @@ select:
     restore_value: true
     optimistic: true
     on_value:
-      - lambda: |-
-          std::string effect = id(led_effect_select).state;
-          if (effect == "None") {
-            id(rgb_light).turn_off();
-          } else {
-            id(rgb_light).turn_on();
-            id(rgb_light).set_effect(effect.c_str());
-          }
+        - lambda: |-
+            std::string effect = id(led_effect_select).state;
+            if (effect == "None") {
+              id(rgb_light).turn_off();
+            } else {
+              auto call = id(rgb_light).turn_on();
+              call.set_effect(effect);
+              call.perform();
+            }
 
 interval:
   - interval: 10s
