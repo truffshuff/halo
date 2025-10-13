@@ -114,7 +114,7 @@ select:
             call.set_brightness(0.0f);
             call.perform();
           } else if (effect == "AQI Color") {
-            float aqi = id(aqi_sensor).state;
+            float aqi = id(computed_halo_aqi).state;
             Color color;
             if (aqi <= 50) color = Color(0, 255, 0); // green
             else if (aqi <= 100) color = Color(255, 255, 0); // yellow
