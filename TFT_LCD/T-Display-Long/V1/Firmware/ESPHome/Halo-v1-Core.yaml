@@ -148,6 +148,20 @@ interval:
               text_color: my_green
           - lvgl.widget.show:
               id: ym_image              
+          - lvgl.label.update:
+              id: wifi_signal_label
+              text: !lambda |-
+                char buffer[32];
+                snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
+                return std::string(buffer);
+          - lvgl.label.update:
+              id: wifi_ssid_label
+              text: !lambda |-
+                return std::string("SSID: ") + id(wifi_ssid_sensor).state;
+          - lvgl.label.update:
+              id: wifi_ip_label
+              text: !lambda |-
+                return std::string("IP: ") + id(wifi_ip_sensor).state;
         else:
           - lvgl.widget.update:
               id: wifi_stat
@@ -1586,27 +1600,25 @@ lvgl:
             text_font: montserrat_18
             text_color: my_white
         - label:
-            text_lambda: |-
-              char buffer[64];
-              snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
-              return std::string(buffer);
-            align: LEFT
+            id: wifi_signal_label
+            text: "Signal: ..."
+            align: LEFT_MID
             x: 10
             y: -250
             text_font: montserrat_14
             text_color: my_white
         - label:
-            text_lambda: |-
-              return std::string("SSID: ") + id(wifi_ssid_sensor).state;
-            align: LEFT
+            id: wifi_ssid_label
+            text: "SSID: ..."
+            align: LEFT_MID
             x: 10
             y: -200
             text_font: montserrat_14
             text_color: my_white
         - label:
-            text_lambda: |-
-              return std::string("IP: ") + id(wifi_ip_sensor).state;
-            align: LEFT
+            id: wifi_ip_label
+            text: "IP: ..."
+            align: LEFT_MID
             x: 10
             y: -150
             text_font: montserrat_14
