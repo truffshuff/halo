@@ -100,7 +100,6 @@ select:
       - "Scan"
       - "Twinkle"
       - "Fireworks"
-      - "Flicker"
       - "Strobe"
       - "Random Twinkle"
     initial_option: "None"
@@ -111,6 +110,8 @@ select:
             std::string effect = id(led_effect_select).state;
             if (effect == "None") {
               id(rgb_light).turn_off();
+              // Clear effect in Home Assistant by setting effect to "None"
+              id(rgb_light).publish_state();
             } else {
               auto call = id(rgb_light).turn_on();
               call.set_effect(effect);
@@ -999,8 +1000,6 @@ light:
           name: Twinkle
       - addressable_fireworks:
           name: Fireworks
-      - addressable_flicker:
-          name: Flicker
       - strobe:
           name: Strobe
       - addressable_random_twinkle:
