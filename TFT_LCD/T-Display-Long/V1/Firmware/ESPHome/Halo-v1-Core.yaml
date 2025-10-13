@@ -103,7 +103,6 @@ select:
       - "Flicker"
       - "Strobe"
       - "Random Twinkle"
-      - "Fire Flicker"
     initial_option: "None"
     restore_value: true
     optimistic: true
@@ -1006,8 +1005,6 @@ light:
           name: Strobe
       - addressable_random_twinkle:
           name: Random Twinkle
-      - addressable_fire_flicker:
-          name: Fire Flicker
 
   - platform: monochromatic
     output: backlight
