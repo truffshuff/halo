@@ -1069,6 +1069,16 @@ lvgl:
             id: main_tabview
             position: TOP
             size: 0%  # hide the tab buttons while retaining swipe navigation
+            bg_color: 0x000000
+            bg_opa: COVER
+            tab_style:
+              bg_color: 0x000000
+              bg_opa: COVER
+              items:
+                bg_color: 0x000000
+            content_style:
+              bg_color: 0x000000
+              bg_opa: COVER
             tabs:
               - name: "Main"
                 widgets:
