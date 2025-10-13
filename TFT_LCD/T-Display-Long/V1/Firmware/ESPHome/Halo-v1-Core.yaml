@@ -989,7 +989,7 @@ light:
           update_interval: never
           lambda: |-
             // Turn all LEDs off
-            it.all() = Color(0, 0, 0);
+            for (int i = 0; i < it.size(); i++) it[i] = Color(0, 0, 0);
       - addressable_rainbow:
           name: Addressable Rainbow
       - addressable_color_wipe:
