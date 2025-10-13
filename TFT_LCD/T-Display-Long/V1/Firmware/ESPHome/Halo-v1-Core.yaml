@@ -373,6 +373,19 @@ sensor:
     update_interval: 60s
     entity_category: "diagnostic"
 
+  - platform: wifi_ip
+    name: "WiFi IP"
+    id: wifi_ip_sensor
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "WiFi SSID"
+    id: wifi_ssid_sensor
+    lambda: return WiFi.SSID().c_str();
+    update_interval: 60s
+    entity_category: "diagnostic"
+
   - platform: template
     name: "Computed AQI"
     id: computed_halo_aqi
@@ -1559,3 +1572,41 @@ lvgl:
             x: -2
             y: 299
             text: "%"
+
+    - id: wifi_page
+      bg_color: my_black
+      scrollbar_mode: "OFF"
+      widgets:
+        - label:
+            text: "WiFi Statistics"
+            align: CENTER
+            x: 0
+            y: -300
+            text_font: montserrat_18
+            text_color: my_white
+        - label:
+            text_lambda: |-
+              char buffer[64];
+              snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
+              return std::string(buffer);
+            align: LEFT
+            x: 10
+            y: -250
+            text_font: montserrat_14
+            text_color: my_white
+        - label:
+            text_lambda: |-
+              return std::string("SSID: ") + id(wifi_ssid_sensor).state;
+            align: LEFT
+            x: 10
+            y: -200
+            text_font: montserrat_14
+            text_color: my_white
+        - label:
+            text_lambda: |-
+              return std::string("IP: ") + id(wifi_ip_sensor).state;
+            align: LEFT
+            x: 10
+            y: -150
+            text_font: montserrat_14
+            text_color: my_white
