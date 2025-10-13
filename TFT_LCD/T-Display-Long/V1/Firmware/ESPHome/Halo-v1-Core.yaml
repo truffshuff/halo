@@ -1009,8 +1009,6 @@ light:
           name: Flicker
       - strobe:
           name: Strobe
-      - addressable_theater_chase:
-          name: Theater Chase
       - addressable_random_twinkle:
           name: Random Twinkle
       - addressable_multi_color:
