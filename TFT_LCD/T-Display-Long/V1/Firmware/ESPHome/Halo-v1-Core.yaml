@@ -108,9 +108,10 @@ select:
     on_value:
       - lambda: |-
           std::string effect = id(led_effect_select).state;
-          ESP_LOGI("effect", "Selected effect: %s", effect.c_str());
           if (effect == "None") {
-            id(rgb_light).turn_off();
+            auto call = id(rgb_light).turn_on();
+            call.set_brightness(0.0f);
+            call.perform();
           } else {
             auto call = id(rgb_light).turn_on();
             call.set_effect(effect);
