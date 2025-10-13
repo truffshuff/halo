@@ -1048,6 +1048,7 @@ lvgl:
   touchscreens:
     - lily_touch
   buffer_size: 100%
+  disp_bg_color: my_black
   pages:            
     - id: main_page
       bg_color: my_black
@@ -1055,6 +1056,8 @@ lvgl:
       widgets:
         - tabview:
             id: main_tabview
+            position: TOP
+            size: 0%  # hide the tab buttons while retaining swipe navigation
             tabs:
               - name: "Main"
                 widgets:
