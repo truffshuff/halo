@@ -157,11 +157,11 @@ interval:
           - lvgl.label.update:
               id: wifi_ssid_label
               text: !lambda |-
-                return std::string("SSID: ") + id(wifi_ssid_sensor).state;
+                return std::string("SSID: ") + WiFi.SSID().c_str();
           - lvgl.label.update:
               id: wifi_ip_label
               text: !lambda |-
-                return std::string("IP: ") + id(wifi_ip_sensor).state;
+                return std::string("IP: ") + WiFi.localIP().toString().c_str();
         else:
           - lvgl.widget.update:
               id: wifi_stat
@@ -384,20 +384,6 @@ sensor:
   - platform: wifi_signal
     name: RSSI
     id: wifi_signal_db
-    update_interval: 60s
-    entity_category: "diagnostic"
-
-  - platform: template
-    name: "WiFi IP"
-    id: wifi_ip_sensor
-    lambda: return WiFi.localIP().toString().c_str();
-    update_interval: 60s
-    entity_category: "diagnostic"
-
-  - platform: template
-    name: "WiFi SSID"
-    id: wifi_ssid_sensor
-    lambda: return WiFi.SSID().c_str();
     update_interval: 60s
     entity_category: "diagnostic"
 
