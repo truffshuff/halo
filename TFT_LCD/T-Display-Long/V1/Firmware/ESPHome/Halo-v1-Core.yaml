@@ -103,7 +103,6 @@ select:
       - "Flicker"
       - "Strobe"
       - "Random Twinkle"
-      - "Twinkle Fade"
       - "Fire Flicker"
     initial_option: "None"
     restore_value: true
@@ -1007,8 +1006,6 @@ light:
           name: Strobe
       - addressable_random_twinkle:
           name: Random Twinkle
-      - addressable_twinkle_fade:
-          name: Twinkle Fade
       - addressable_fire_flicker:
           name: Fire Flicker
 
