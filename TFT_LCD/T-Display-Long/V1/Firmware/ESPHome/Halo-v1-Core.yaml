@@ -103,7 +103,6 @@ select:
       - "Flicker"
       - "Strobe"
       - "Random Twinkle"
-      - "Larson Scanner"
       - "Twinkle Fade"
       - "Fire Flicker"
     initial_option: "None"
@@ -1008,8 +1007,6 @@ light:
           name: Strobe
       - addressable_random_twinkle:
           name: Random Twinkle
-      - addressable_larson_scanner:
-          name: Larson Scanner
       - addressable_twinkle_fade:
           name: Twinkle Fade
       - addressable_fire_flicker:
