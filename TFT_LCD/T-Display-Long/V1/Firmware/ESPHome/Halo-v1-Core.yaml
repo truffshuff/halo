@@ -108,9 +108,13 @@ select:
     on_value:
       - lambda: |-
           std::string effect = id(led_effect_select).state;
-          auto call = id(rgb_light).turn_on();
-          call.set_effect(effect);
-          call.perform();
+          if (effect == "None") {
+            id(rgb_light).turn_off();
+          } else {
+            auto call = id(rgb_light).turn_on();
+            call.set_effect(effect);
+            call.perform();
+          }
 
 interval:
   - interval: 10s
@@ -984,12 +988,6 @@ light:
     chipset: WS2812
     restore_mode: RESTORE_AND_OFF
     effects:
-      - lambda:
-          name: None
-          update_interval: never
-          lambda: |-
-            // Turn all LEDs off
-            for (int i = 0; i < it->size(); i++) (*it)[i] = Color(0, 0, 0);
       - addressable_rainbow:
           name: Addressable Rainbow
       - addressable_color_wipe:
