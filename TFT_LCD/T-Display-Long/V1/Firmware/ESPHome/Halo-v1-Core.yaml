@@ -373,9 +373,10 @@ sensor:
     update_interval: 60s
     entity_category: "diagnostic"
 
-  - platform: wifi_ip
+  - platform: template
     name: "WiFi IP"
     id: wifi_ip_sensor
+    lambda: return WiFi.localIP().toString().c_str();
     update_interval: 60s
     entity_category: "diagnostic"
 
