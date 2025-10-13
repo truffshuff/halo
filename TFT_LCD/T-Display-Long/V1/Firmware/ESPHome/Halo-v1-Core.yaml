@@ -157,11 +157,11 @@ interval:
           - lvgl.label.update:
               id: wifi_ssid_label
               text: !lambda |-
-                return std::string("SSID: ") + WiFi.SSID().c_str();
+                return std::string("SSID: ") + esphome::wifi::global_wifi_component->wifi_ssid();
           - lvgl.label.update:
               id: wifi_ip_label
               text: !lambda |-
-                return std::string("IP: ") + WiFi.localIP().toString().c_str();
+                return std::string("IP: ") + esphome::wifi::global_wifi_component->wifi_ip_address().toString();
         else:
           - lvgl.widget.update:
               id: wifi_stat
