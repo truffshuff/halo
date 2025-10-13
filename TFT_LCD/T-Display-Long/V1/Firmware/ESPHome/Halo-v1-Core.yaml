@@ -102,6 +102,7 @@ select:
       - "Fireworks"
       - "Strobe"
       - "Random Twinkle"
+      - "AQI Color"
     initial_option: "None"
     restore_value: true
     optimistic: true
@@ -111,6 +112,18 @@ select:
           if (effect == "None") {
             auto call = id(rgb_light).turn_on();
             call.set_brightness(0.0f);
+            call.perform();
+          } else if (effect == "AQI Color") {
+            float aqi = id(aqi_sensor).state;
+            Color color;
+            if (aqi <= 50) color = Color(0, 255, 0); // green
+            else if (aqi <= 100) color = Color(255, 255, 0); // yellow
+            else if (aqi <= 150) color = Color(255, 165, 0); // orange
+            else if (aqi <= 200) color = Color(255, 0, 0); // red
+            else if (aqi <= 300) color = Color(128, 0, 128); // purple
+            else color = Color(128, 0, 0); // maroon
+            auto call = id(rgb_light).turn_on();
+            call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
             call.perform();
           } else {
             auto call = id(rgb_light).turn_on();
