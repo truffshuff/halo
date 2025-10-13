@@ -989,7 +989,7 @@ light:
           update_interval: never
           lambda: |-
             // Turn all LEDs off
-            for (auto &it : it) it = Color(0, 0, 0);
+            for (auto &x : it) x = Color(0, 0, 0);
       - addressable_rainbow:
           name: Addressable Rainbow
       - addressable_color_wipe:
