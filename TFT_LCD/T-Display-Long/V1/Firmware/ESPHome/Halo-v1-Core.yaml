@@ -1096,7 +1096,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: -275
-                      text: AQI:
+                      text: "AQI:"
                   - label: 
                       id: aqi_value
                       align: LEFT_MID
@@ -1114,7 +1114,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: -246
-                      text: TEMP:
+                      text: "TEMP:"
                   - label: 
                       id: temperature_value
                       align: CENTER
@@ -1147,7 +1147,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: -205
-                      text: CO2:
+                      text: "CO2:"
                   - label: 
                       id: co2_value
                       align: CENTER
@@ -1180,7 +1180,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: -164
-                      text: PM1:
+                      text: "PM1:"
                   - label: 
                       id: pm1_value
                       align: RIGHT_MID
@@ -1213,7 +1213,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: -123
-                      text: PM2.5:
+                      text: "PM2.5:"
                   - label: 
                       id: pm25_value
                       align: RIGHT_MID
@@ -1246,7 +1246,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: -82
-                      text: PM4:
+                      text: "PM4:"
                   - label: 
                       id: pm4_value
                       align: RIGHT_MID
@@ -1279,7 +1279,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: -41
-                      text: PM10:
+                      text: "PM10:"
                   - label: 
                       id: pm10_value
                       align: RIGHT_MID
@@ -1312,7 +1312,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: 0
-                      text: VOC:
+                      text: "VOC:"
                   - label: 
                       id: voc_value
                       align: RIGHT_MID
@@ -1345,7 +1345,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: 41
-                      text: CO:
+                      text: "CO:"
                   - label: 
                       id: co_value
                       align: RIGHT_MID
@@ -1379,7 +1379,7 @@ lvgl:
                       width: 40
                       x: 2
                       y: 82
-                      text: C2H5OH:
+                      text: "C2H5OH:"
                   - label: 
                       id: ethanol_value
                       align: RIGHT_MID
@@ -1412,7 +1412,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: 124
-                      text: H2:
+                      text: "H2:"
                   - label: 
                       id: h2_value
                       align: RIGHT_MID
@@ -1445,7 +1445,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: 165
-                      text: NO2:
+                      text: "NO2:"
                   - label: 
                       id: no2_value
                       align: RIGHT_MID
@@ -1478,7 +1478,7 @@ lvgl:
                       long_mode: WRAP
                       x: 2
                       y: 206
-                      text: NH3:
+                      text: "NH3:"
                   - label:
                       id: nh3_value
                       align: RIGHT_MID
