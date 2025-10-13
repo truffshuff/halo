@@ -1138,7 +1138,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 74
+                      y: 70
                       text: "TEMP:"
                   - label: 
                       id: temperature_value
@@ -1147,7 +1147,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 0
-                      y: 86
+                      y: 80
                       text: 000.0
                   - label: 
                       id: temperature_units
@@ -1156,12 +1156,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 86
+                      y: 80
                       text: °F
                   - line: 
                       points: 
-                        - 0, 126
-                        - 180, 126
+                        - 0, 112
+                        - 180, 112
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1171,7 +1171,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 135
+                      y: 118
                       text: "CO2:"
                   - label: 
                       id: co2_value
@@ -1180,7 +1180,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 0
-                      y: 147
+                      y: 128
                       text: 0000
                   - label: 
                       id: co2_units
@@ -1189,12 +1189,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 147
+                      y: 128
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 187
-                        - 180, 187
+                        - 0, 160
+                        - 180, 160
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1204,7 +1204,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 196
+                      y: 166
                       text: "PM1:"
                   - label: 
                       id: pm1_value
@@ -1213,7 +1213,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 208
+                      y: 176
                       text: 000.0
                   - label: 
                       id: pm1_units
@@ -1222,12 +1222,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 208
+                      y: 176
                       text: ug/m3
                   - line: 
                       points: 
-                        - 0, 248
-                        - 180, 248
+                        - 0, 208
+                        - 180, 208
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1237,7 +1237,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 257
+                      y: 214
                       text: "PM2.5:"
                   - label: 
                       id: pm25_value
@@ -1246,7 +1246,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 269
+                      y: 224
                       text: 000.0
                   - label: 
                       id: pm25_units
@@ -1255,12 +1255,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 269
+                      y: 224
                       text: ug/m3
                   - line: 
                       points: 
-                        - 0, 309
-                        - 180, 309
+                        - 0, 256
+                        - 180, 256
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1270,7 +1270,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 318
+                      y: 262
                       text: "PM4:"
                   - label: 
                       id: pm4_value
@@ -1279,7 +1279,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 330
+                      y: 272
                       text: 000.0
                   - label: 
                       id: pm4_units
@@ -1288,12 +1288,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 330
+                      y: 272
                       text: ug/m3
                   - line: 
                       points: 
-                        - 0, 370
-                        - 180, 370
+                        - 0, 304
+                        - 180, 304
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1303,7 +1303,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 379
+                      y: 310
                       text: "PM10:"
                   - label: 
                       id: pm10_value
@@ -1312,7 +1312,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 391
+                      y: 320
                       text: 000.0
                   - label: 
                       id: pm10_units
@@ -1321,12 +1321,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 391
+                      y: 320
                       text: ug/m3
                   - line: 
                       points: 
-                        - 0, 431
-                        - 180, 431
+                        - 0, 352
+                        - 180, 352
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1336,7 +1336,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 440
+                      y: 358
                       text: "VOC:"
                   - label: 
                       id: voc_value
@@ -1345,7 +1345,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 452
+                      y: 368
                       text: 000.0
                   - label: 
                       id: voc_units
@@ -1354,12 +1354,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 452
+                      y: 368
                       text: IDX
                   - line: 
                       points: 
-                        - 0, 492
-                        - 180, 492
+                        - 0, 400
+                        - 180, 400
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1369,7 +1369,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 501
+                      y: 406
                       text: "CO:"
                   - label: 
                       id: co_value
@@ -1378,7 +1378,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 513
+                      y: 416
                       text: 000.0
                   - label: 
                       id: co_units
@@ -1387,12 +1387,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 513
+                      y: 416
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 553
-                        - 180, 553
+                        - 0, 448
+                        - 180, 448
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1403,7 +1403,7 @@ lvgl:
                       long_mode: SCROLL
                       width: 40
                       x: 2
-                      y: 562
+                      y: 454
                       text: "C2H5OH:"
                   - label: 
                       id: ethanol_value
@@ -1412,7 +1412,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 574
+                      y: 464
                       text: 000.0
                   - label: 
                       id: ethanol_units
@@ -1421,12 +1421,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 574
+                      y: 464
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 614
-                        - 180, 614
+                        - 0, 496
+                        - 180, 496
                       line_width: 1
                       line_color: 57343
                   - label: 
@@ -1436,7 +1436,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 623
+                      y: 502
                       text: "H2:"
                   - label: 
                       id: h2_value
@@ -1445,7 +1445,7 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 635
+                      y: 512
                       text: 000.0
                   - label: 
                       id: h2_units
@@ -1454,12 +1454,12 @@ lvgl:
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 635
+                      y: 512
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 675
-                        - 180, 675
+                        - 0, 544
+                        - 180, 544
                       line_width: 1
                       line_color: 57343
                   - label: 
