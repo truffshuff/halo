@@ -102,10 +102,7 @@ select:
       - "Fireworks"
       - "Flicker"
       - "Strobe"
-      - "Chase"
-      - "Theater Chase"
       - "Random Twinkle"
-      - "Multi Color"
       - "Larson Scanner"
       - "Twinkle Fade"
       - "Fire Flicker"
@@ -1011,8 +1008,6 @@ light:
           name: Strobe
       - addressable_random_twinkle:
           name: Random Twinkle
-      - addressable_multi_color:
-          name: Multi Color
       - addressable_larson_scanner:
           name: Larson Scanner
       - addressable_twinkle_fade:
