@@ -88,6 +88,39 @@ select:
           id: temp_unit_changed
           value: "true"
 
+  - platform: template
+    name: LED Effect
+    id: led_effect_select
+    entity_category: "Config"
+    options:
+      - "None"
+      - "Addressable Rainbow"
+      - "Color Wipe"
+      - "Scan"
+      - "Twinkle"
+      - "Fireworks"
+      - "Flicker"
+      - "Strobe"
+      - "Chase"
+      - "Theater Chase"
+      - "Random Twinkle"
+      - "Multi Color"
+      - "Larson Scanner"
+      - "Twinkle Fade"
+      - "Fire Flicker"
+    initial_option: "None"
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: |-
+          std::string effect = id(led_effect_select).state;
+          if (effect == "None") {
+            id(rgb_light).turn_off();
+          } else {
+            id(rgb_light).turn_on();
+            id(rgb_light).set_effect(effect.c_str());
+          }
+
 interval:
   - interval: 10s
     then:    
