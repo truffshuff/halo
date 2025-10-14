@@ -260,12 +260,13 @@ touchscreen:
       swap_xy: false
     on_touch:
       - lambda: |-
-            ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
-            touch.x,
-            touch.y,
-            touch.x_raw,
-            touch.y_raw
-            );
+          if (touch.y < 320) {  // Top half of the screen
+            ESP_LOGI("touch", "Swipe Right Triggered");
+            // Add swipe right logic here
+          } else {  // Bottom half of the screen
+            ESP_LOGI("touch", "Swipe Left Triggered");
+            // Add swipe left logic here
+          }
 
 web_server:
   port: 80
