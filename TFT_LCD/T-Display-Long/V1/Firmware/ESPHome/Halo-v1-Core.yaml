@@ -1098,10 +1098,10 @@ lvgl:
                       text: 00:00AM
                   - label: 
                       id: wifi_stat
-                      align: TOP_MID
+                      align: TOP_LEFT
                       text_font: montserrat_18
                       text_color: my_gray
-                      x: 0
+                      x: 70
                       y: 2
                       text: 
                   - obj: 
@@ -1113,216 +1113,250 @@ lvgl:
                       height: 42
                       bg_color: 7797366
                       border_width: 0
-                  - label: 
-                      id: aqi_label
-                      align: CENTER
-                      text_font: montserrat_28
-                      text_color: my_black
-                      long_mode: WRAP
-                      x: -45
-                      y: 45
-                      text: "AQI:"
-                  - label: 
-                      id: aqi_value
-                      align: CENTER
-                      text_font: montserrat_28
-                      text_color: my_black
-                      long_mode: WRAP
-                      x: 20
-                      y: 45
-                      text: 000
+                      widgets:
+                        - label: 
+                            id: aqi_label
+                            align: LEFT_MID
+                            text_font: montserrat_28
+                            text_color: my_black
+                            long_mode: WRAP
+                            x: 2
+                            y: 0
+                            text: "AQI:"
+                        - label: 
+                            id: aqi_value
+                            align: LEFT_MID
+                            text_font: montserrat_28
+                            text_color: my_black
+                            long_mode: WRAP
+                            x: 90
+                            y: 0
+                            text: 000
                   - label: 
                       id: temperature_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 70
+                      y: 86
                       text: "TEMP:"
                   - label: 
                       id: temperature_value
-                      align: TOP_MID
+                      align: CENTER
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: 0
-                      y: 80
+                      y: 86
                       text: 000.0
                   - label: 
                       id: temperature_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
-                      x: -2
-                      y: 80
+                      x: -8
+                      y: 86
                       text: °F
                   - line: 
                       points: 
-                        - 0, 112
-                        - 180, 112
+                        - 0, 106
+                        - 180, 106
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: co2_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 118
+                      y: 127
                       text: "CO2:"
                   - label: 
                       id: co2_value
-                      align: TOP_MID
+                      align: CENTER
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: 0
-                      y: 128
+                      y: 127
                       text: 0000
                   - label: 
                       id: co2_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 128
+                      y: 127
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 160
-                        - 180, 160
+                        - 0, 147
+                        - 180, 147
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: pm1_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 166
+                      y: 168
                       text: "PM1:"
                   - label: 
                       id: pm1_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 176
+                      y: 168
                       text: 000.0
                   - label: 
                       id: pm1_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 176
+                      y: 168
                       text: ug/m3
                   - line: 
                       points: 
-                        - 0, 208
-                        - 180, 208
+                        - 0, 188
+                        - 180, 188
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: pm25_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 214
+                      y: 209
                       text: "PM2.5:"
                   - label: 
                       id: pm25_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 224
+                      y: 209
                       text: 000.0
                   - label: 
                       id: pm25_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 224
+                      y: 209
                       text: ug/m3
                   - line: 
                       points: 
-                        - 0, 256
-                        - 180, 256
+                        - 0, 229
+                        - 180, 229
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: pm4_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 262
+                      y: 250
                       text: "PM4:"
                   - label: 
                       id: pm4_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 272
+                      y: 250
                       text: 000.0
                   - label: 
                       id: pm4_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 272
+                      y: 250
                       text: ug/m3
                   - line: 
                       points: 
-                        - 0, 304
-                        - 180, 304
+                        - 0, 270
+                        - 180, 270
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: pm10_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 310
+                      y: 291
                       text: "PM10:"
                   - label: 
                       id: pm10_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 320
+                      y: 291
                       text: 000.0
                   - label: 
                       id: pm10_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 320
+                      y: 291
                       text: ug/m3
+                  - line: 
+                      points: 
+                        - 0, 311
+                        - 180, 311
+                      line_width: 1
+                      line_color: 57343
+                  - label: 
+                      id: voc_label
+                      align: LEFT_MID
+                      text_font: montserrat_14
+                      text_color: my_white
+                      long_mode: WRAP
+                      x: 2
+                      y: 332
+                      text: "VOC:"
+                  - label: 
+                      id: voc_value
+                      align: RIGHT_MID
+                      text_font: montserrat_28
+                      text_color: my_white
+                      long_mode: WRAP
+                      x: -51
+                      y: 332
+                      text: 000.0
+                  - label: 
+                      id: voc_units
+                      align: RIGHT_MID
+                      text_font: montserrat_14
+                      text_color: my_white
+                      long_mode: WRAP
+                      x: -2
+                      y: 332
+                      text: IDX
                   - line: 
                       points: 
                         - 0, 352
@@ -1330,263 +1364,230 @@ lvgl:
                       line_width: 1
                       line_color: 57343
                   - label: 
-                      id: voc_label
-                      align: TOP_LEFT
-                      text_font: montserrat_14
-                      text_color: my_white
-                      long_mode: WRAP
-                      x: 2
-                      y: 358
-                      text: "VOC:"
-                  - label: 
-                      id: voc_value
-                      align: TOP_RIGHT
-                      text_font: montserrat_28
-                      text_color: my_white
-                      long_mode: WRAP
-                      x: -51
-                      y: 368
-                      text: 000.0
-                  - label: 
-                      id: voc_units
-                      align: TOP_RIGHT
-                      text_font: montserrat_14
-                      text_color: my_white
-                      long_mode: WRAP
-                      x: -2
-                      y: 368
-                      text: IDX
-                  - line: 
-                      points: 
-                        - 0, 400
-                        - 180, 400
-                      line_width: 1
-                      line_color: 57343
-                  - label: 
                       id: co_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 406
+                      y: 373
                       text: "CO:"
                   - label: 
                       id: co_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 416
+                      y: 373
                       text: 000.0
                   - label: 
                       id: co_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 416
+                      y: 373
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 448
-                        - 180, 448
+                        - 0, 393
+                        - 180, 393
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: ethanol_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: SCROLL
                       width: 40
                       x: 2
-                      y: 454
+                      y: 414
                       text: "C2H5OH:"
                   - label: 
                       id: ethanol_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 464
+                      y: 414
                       text: 000.0
                   - label: 
                       id: ethanol_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 464
+                      y: 414
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 496
-                        - 180, 496
+                        - 0, 434
+                        - 180, 434
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: h2_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 502
+                      y: 455
                       text: "H2:"
                   - label: 
                       id: h2_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 512
+                      y: 455
                       text: 000.0
                   - label: 
                       id: h2_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 512
+                      y: 455
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 544
-                        - 180, 544
+                        - 0, 475
+                        - 180, 475
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: no2_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 550
+                      y: 496
                       text: "NO2:"
                   - label: 
                       id: no2_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 560
+                      y: 496
                       text: 000.0
                   - label: 
                       id: no2_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 560
+                      y: 496
                       text: PPM
                   - line: 
                       points: 
-                        - 0, 592
-                        - 180, 592
+                        - 0, 516
+                        - 180, 516
                       line_width: 1
                       line_color: 57343
                   - label: 
                       id: nh3_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 598
+                      y: 537
                       text: "NH3:"
                   - label:
                       id: nh3_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 608
+                      y: 537
                       text: "000.0" 
                   - label:
                       id: nh3_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 608
+                      y: 537
                       text: "PPM"                     
                   - line:
                       points:
-                        - 0, 640
-                        - 180, 640
+                        - 0, 557
+                        - 180, 557
                       line_width: 1
                       line_color: 0x00dfff
                   - label:
                       id: ch4_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 646
+                      y: 578
                       text: "CH4:"              
                   - label:
                       id: ch4_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 656
+                      y: 578
                       text: "000.0" 
                   - label:
                       id: ch4_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 656
+                      y: 578
                       text: "PPM"                     
                   - line:
                       points:
-                        - 0, 688
-                        - 180, 688
+                        - 0, 598
+                        - 180, 598
                       line_width: 1
                       line_color: 0x00dfff
                   - label:
                       id: rh_label
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: 2
-                      y: 694
+                      y: 619
                       text: "RH:"              
                   - label:
                       id: rh_value
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_28
                       text_color: my_white
                       long_mode: WRAP
                       x: -51
-                      y: 704
+                      y: 619
                       text: "000.0" 
                   - label:
                       id: rh_units
-                      align: TOP_RIGHT
+                      align: RIGHT_MID
                       text_font: montserrat_14
                       text_color: my_white
                       long_mode: WRAP
                       x: -2
-                      y: 704
+                      y: 619
                       text: "%"
               - name: "WiFi"
                 widgets:
