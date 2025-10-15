@@ -469,9 +469,6 @@ binary_sensor:
   - platform: status
     name: Online
     id: ink_ha_connected
-  - platform: status
-    name: Status sensor
-    id: ink_ha_weather_status
 
 sensor:
   - platform: uptime
