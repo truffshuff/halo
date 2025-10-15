@@ -279,9 +279,9 @@ touchscreen:
             id(current_page) = (id(current_page) - 1 + 2) % 2;  // Decrement and wrap around for 2 tabs
             ESP_LOGI("touch", "Switching to tab %d", id(current_page));
           }
-
-          // Update the tabview to show the correct tab
-          id(main_tabview).set_tab_act(id(current_page), LV_ANIM_OFF);
+      - lvgl.tabview.set_tab:
+          id: main_tabview
+          tab: !lambda 'return id(current_page);'
 
 web_server:
   port: 80
