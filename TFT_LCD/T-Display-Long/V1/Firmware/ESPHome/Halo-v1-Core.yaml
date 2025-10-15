@@ -1105,11 +1105,11 @@ lvgl:
                       y: 2
                   - label: 
                       id: timeVal
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_18
                       text_color: my_white
                       x: 2
-                      y: 2
+                      y: -309
                       text: 00:00AM
                   - label: 
                       id: wifi_stat
