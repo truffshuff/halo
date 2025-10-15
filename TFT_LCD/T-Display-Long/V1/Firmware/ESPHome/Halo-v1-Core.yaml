@@ -1652,9 +1652,10 @@ esphome:
     priority: -100
     then:
       - delay: 1s
-      - lambda: |-
-          if (id(default_page_index) == 1) {
-            id(wifi_page)->show();
-          } else {
-            id(main_page)->show();
-          }
+      - if:
+          condition:
+            lambda: 'return id(default_page_index) == 1;'
+          then:
+            - lvgl.page.show: wifi_page
+          else:
+            - lvgl.page.show: main_page
