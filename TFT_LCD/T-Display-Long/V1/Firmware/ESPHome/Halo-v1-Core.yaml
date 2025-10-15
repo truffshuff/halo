@@ -240,7 +240,21 @@ api:
             id: scd40
     - service: sen55_clean
       then:
-        - sen5x.start_fan_autoclean: sen55    
+        - sen5x.start_fan_autoclean: sen55
+    - service: set_display_page
+      variables:
+        page_name: string
+      then:
+        - lambda: |-
+            if (page_name == "main" || page_name == "Main") {
+              id(lily_display).show_page(id(main_page));
+            } else if (page_name == "wifi" || page_name == "WiFi") {
+              id(lily_display).show_page(id(wifi_page));
+            } else if (page_name == "weather" || page_name == "Weather") {
+              id(lily_display).show_page(id(weather_forecast_page));
+            } else {
+              ESP_LOGW("set_display_page", "Unknown page: %s", page_name.c_str());
+            }
 
 i2c:
   - sda: 9
@@ -1122,7 +1136,7 @@ lvgl:
         - image:
             id: ym_image          
             src: ym_logo
-            align: LEFT_MID
+            align: CENTER
             x: 80
             y: -309
         - label: 
@@ -1135,7 +1149,7 @@ lvgl:
             text: "00:00AM"
         - label: 
             id: wifi_stat
-            align: LEFT_MID
+            align: CENTER
             text_font: montserrat_18
             text_color: my_gray
             x: 42
