@@ -245,16 +245,28 @@ api:
       variables:
         page_name: string
       then:
-        - lambda: |-
-            if (page_name == "main" || page_name == "Main") {
-              id(lily_display).show_page(id(main_page));
-            } else if (page_name == "wifi" || page_name == "WiFi") {
-              id(lily_display).show_page(id(wifi_page));
-            } else if (page_name == "weather" || page_name == "Weather") {
-              id(lily_display).show_page(id(weather_forecast_page));
-            } else {
-              ESP_LOGW("set_display_page", "Unknown page: %s", page_name.c_str());
-            }
+        - if:
+            condition:
+              lambda: 'return page_name == "main" || page_name == "Main";'
+            then:
+              - lvgl.page.show: main_page
+            else:
+              - if:
+                  condition:
+                    lambda: 'return page_name == "wifi" || page_name == "WiFi";'
+                  then:
+                    - lvgl.page.show: wifi_page
+                  else:
+                    - if:
+                        condition:
+                          lambda: 'return page_name == "weather" || page_name == "Weather";'
+                        then:
+                          - lvgl.page.show: weather_forecast_page
+                        else:
+                          - logger.log:
+                              format: "Unknown page requested: %s"
+                              args: ['page_name.c_str()']
+                              level: WARN
 
 i2c:
   - sda: 9
