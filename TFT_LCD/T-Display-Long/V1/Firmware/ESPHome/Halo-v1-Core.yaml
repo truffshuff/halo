@@ -1673,6 +1673,7 @@ esphome:
   on_boot:
     priority: 800
     then:
-      - lambda: |-
-          // Set the tabview to the default page on boot
-          id(main_tabview)->set_tab_act(id(default_page_index), LV_ANIM_OFF);
+      - lvgl.tabview.set_tab_act:
+          id: main_tabview
+          tab: !lambda 'return id(default_page_index);'
+          animation: NONE
