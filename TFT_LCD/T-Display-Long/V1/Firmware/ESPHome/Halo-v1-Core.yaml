@@ -281,7 +281,7 @@ touchscreen:
           }
 
           // Update the tabview to show the correct tab
-          lvgl.tabview.set_tab_act(id(main_tabview), id(current_page), LV_ANIM_OFF);
+          id(main_tabview).set_tab_act(id(current_page), LV_ANIM_OFF);
 
 web_server:
   port: 80
