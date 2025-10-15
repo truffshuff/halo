@@ -1140,7 +1140,7 @@ lvgl:
             text_color: my_gray
             x: 42
             y: -309
-            text: ""
+            text: "\uF1EB"
         - obj: 
             id: aqi_widget
             align: TOP_MID
