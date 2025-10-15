@@ -1103,7 +1103,7 @@ lvgl:
             text_color: my_white
             x: 2
             y: -309
-            text: 00:00AM
+            text: "00:00AM"
         - label: 
             id: wifi_stat
             align: LEFT_MID
@@ -1111,7 +1111,7 @@ lvgl:
             text_color: my_gray
             x: 42
             y: 2
-            text: 
+            text: ""
         - obj: 
             id: aqi_widget
             align: TOP_MID
