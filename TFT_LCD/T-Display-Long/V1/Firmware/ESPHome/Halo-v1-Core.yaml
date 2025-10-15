@@ -55,11 +55,12 @@ globals:
   - id: temp_unit_changed
     type: bool
     initial_value: "true"
-  - id: current_page
-    type: int
-    initial_value: '0'
   - id: last_touch_time
     type: int
+    initial_value: '0'
+  - id: default_page_index
+    type: int
+    restore_value: yes
     initial_value: '0'
 
 switch:
@@ -141,6 +142,22 @@ select:
             call.set_effect(effect);
             call.perform();
           }
+
+  - platform: template
+    name: Default Page
+    id: default_page_select
+    entity_category: "config"
+    options:
+      - "Main"
+      - "WiFi"
+    initial_option: "Main"
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: |-
+          int idx = 0;
+          if (id(default_page_select).state == "WiFi") idx = 1;
+          id(default_page_index) = idx;
 
 interval:
   - interval: 10s
@@ -271,17 +288,17 @@ touchscreen:
             return;
           }
           id(last_touch_time) = now;
-
-          if (touch.y < 320) {  // Top half of the screen
-            id(current_page) = (id(current_page) + 1) % 2;  // Increment and wrap around for 2 tabs
-            ESP_LOGI("touch", "Switching to tab %d", id(current_page));
-          } else {  // Bottom half of the screen
-            id(current_page) = (id(current_page) - 1 + 2) % 2;  // Decrement and wrap around for 2 tabs
-            ESP_LOGI("touch", "Switching to tab %d", id(current_page));
-          }
-      - lvgl.tabview.set_tab:
-          id: main_tabview
-          tab: !lambda 'return id(current_page);'
+      - if:
+          condition:
+            lambda: 'return touch.y < 320;'
+          then:
+            - lvgl.page.next:
+                animation: OUT_LEFT
+                time: 300ms
+          else:
+            - lvgl.page.previous:
+                animation: OUT_RIGHT
+                time: 300ms
 
 web_server:
   port: 80
@@ -1638,3 +1655,9 @@ lvgl:
                       y: -150
                       text_font: montserrat_14
                       text_color: my_white
+  on_boot:
+    priority: 800
+    then:
+      - lambda: |-
+          // Set the tabview to the default page on boot
+          id(main_tabview)->set_tab_act(id(default_page_index), LV_ANIM_OFF);
