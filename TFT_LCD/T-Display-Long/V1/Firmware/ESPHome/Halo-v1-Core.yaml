@@ -55,6 +55,12 @@ globals:
   - id: temp_unit_changed
     type: bool
     initial_value: "true"
+  - id: current_page
+    type: int
+    initial_value: '0'
+  - id: last_touch_time
+    type: int
+    initial_value: '0'
 
 switch:
   - platform: template
@@ -260,12 +266,20 @@ touchscreen:
       swap_xy: false
     on_touch:
       - lambda: |-
+          auto now = millis();
+          if (now - id(last_touch_time) < 500) {  // Debounce for 500ms
+            return;
+          }
+          id(last_touch_time) = now;
+
           if (touch.y < 320) {  // Top half of the screen
-            ESP_LOGI("touch", "Swipe Right Triggered");
-            // Add swipe right logic here
+            id(current_page) = (id(current_page) + 1) % 3;  // Increment and wrap around
+            ESP_LOGI("touch", "Switching to page %d", id(current_page));
+            // Add logic to update the display to the new page
           } else {  // Bottom half of the screen
-            ESP_LOGI("touch", "Swipe Left Triggered");
-            // Add swipe left logic here
+            id(current_page) = (id(current_page) - 1 + 3) % 3;  // Decrement and wrap around
+            ESP_LOGI("touch", "Switching to page %d", id(current_page));
+            // Add logic to update the display to the new page
           }
 
 web_server:
