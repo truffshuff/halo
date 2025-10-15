@@ -124,14 +124,12 @@ select:
           
           std::string effect = id(led_effect_select).state;
           if (effect == "None") {
-            auto call = id(rgb_light).turn_on();
-            call.set_brightness(0.0f);
+            auto call = id(rgb_light).turn_off();
             call.perform();
           } else if (effect == "AQI Color") {
             float aqi = id(computed_halo_aqi).state;
-            if (aqi <= 50) {
-              auto call = id(rgb_light).turn_on();
-              call.set_brightness(0.0f);
+            if (std::isnan(aqi) || aqi <= 50) {
+              auto call = id(rgb_light).turn_off();
               call.perform();
             } else {
               Color color;
@@ -241,14 +239,12 @@ api:
       - lambda: |-
           std::string effect = id(led_effect_select).state;
           if (effect == "None") {
-            auto call = id(rgb_light).turn_on();
-            call.set_brightness(0.0f);
+            auto call = id(rgb_light).turn_off();
             call.perform();
           } else if (effect == "AQI Color") {
             float aqi = id(computed_halo_aqi).state;
-            if (aqi <= 50) {
-              auto call = id(rgb_light).turn_on();
-              call.set_brightness(0.0f);
+            if (std::isnan(aqi) || aqi <= 50) {
+              auto call = id(rgb_light).turn_off();
               call.perform();
             } else {
               Color color;
@@ -1856,6 +1852,7 @@ esphome:
   on_boot:
     priority: -100
     then:
+      - light.turn_off: rgb_light
       - delay: 1s
       - if:
           condition:
