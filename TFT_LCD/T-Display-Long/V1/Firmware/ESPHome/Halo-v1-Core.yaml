@@ -1655,9 +1655,3 @@ lvgl:
                       y: -150
                       text_font: montserrat_14
                       text_color: my_white
-  on_boot:
-    priority: 800
-    then:
-      - lambda: |-
-          // Set the tabview to the default page on boot
-          id(main_tabview)->set_tab_act(id(default_page_index), LV_ANIM_OFF);
