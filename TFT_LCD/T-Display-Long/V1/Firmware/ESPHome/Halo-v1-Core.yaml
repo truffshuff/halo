@@ -1676,4 +1676,4 @@ esphome:
       - delay: 1s
       - lambda: |-
           auto tabview = id(main_tabview);
-          lv_tabview_set_act(tabview->obj, id(default_page_index), LV_ANIM_OFF);
+          lv_tabview_set_act(tabview, id(default_page_index), LV_ANIM_OFF);
