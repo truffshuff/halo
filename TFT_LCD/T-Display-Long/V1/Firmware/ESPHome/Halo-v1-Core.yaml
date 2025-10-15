@@ -62,6 +62,10 @@ globals:
     type: int
     restore_value: yes
     initial_value: '0'
+  - id: boot_complete
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 switch:
   - platform: template
@@ -115,6 +119,9 @@ select:
     optimistic: true
     on_value:
       - lambda: |-
+          // Don't apply effects during boot - let startup_light_blink handle it
+          if (!id(boot_complete)) return;
+          
           std::string effect = id(led_effect_select).state;
           if (effect == "None") {
             auto call = id(rgb_light).turn_on();
@@ -228,6 +235,7 @@ api:
   on_client_connected:
       - delay: 1s
       - lambda: 'id(cycleCounter) = 30;'
+      - lambda: 'id(boot_complete) = true;'
       # Re-apply the saved LED effect selection after HA connects
       - delay: 2s
       - lambda: |-
