@@ -408,7 +408,10 @@ number:
 binary_sensor:
   - platform: status
     name: Online
-    id: ink_ha_connected    
+    id: ink_ha_connected
+  - platform: status
+    name: Status sensor
+    id: ink_ha_weather_status
 
 sensor:
   - platform: uptime
@@ -1025,7 +1028,31 @@ text_sensor:
       else if (id(sen55_voc).state < 400) {
         return std::string("Very abnormal");} 
       else {
-        return std::string("Extremely abnormal");}    
+        return std::string("Extremely abnormal");}
+
+font:
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_100
+    size: 100
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]    
 
 light:
   # - platform: esp32_rmt_led_strip
@@ -1767,10 +1794,11 @@ esphome:
     priority: -100
     then:
       - delay: 1s
-      - if:
-          condition:
-            lambda: 'return id(default_page_index) == 1;'
-          then:
-            - lvgl.page.show: wifi_page
-          else:
-            - lvgl.page.show: main_page
+      - lambda: |-
+          if (id(default_page_index) == 1) {
+            id(lily_display).show_page(id(wifi_page));
+          } else if (id(default_page_index) == 2) {
+            id(lily_display).show_page(id(weather_forecast_page));
+          } else {
+            id(lily_display).show_page(id(main_page));
+          }
