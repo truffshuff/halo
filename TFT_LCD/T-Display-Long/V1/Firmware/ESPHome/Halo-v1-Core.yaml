@@ -1670,10 +1670,9 @@ esphome:
   project:
     name: "yashmulgaonkar.Halo-v1"
     version: "${version}"
-
-on_boot:
-  priority: 800
-  then:
-    - lambda: |-
-        // Set the tabview to the default page on boot
-        id(main_tabview)->set_tab_act(id(default_page_index), LV_ANIM_OFF);
+  on_boot:
+    priority: 800
+    then:
+      - lambda: |-
+          // Set the tabview to the default page on boot
+          id(main_tabview)->set_tab_act(id(default_page_index), LV_ANIM_OFF);
