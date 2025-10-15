@@ -279,7 +279,7 @@ touchscreen:
             id(current_page) = (id(current_page) - 1 + 2) % 2;  // Decrement and wrap around for 2 tabs
             ESP_LOGI("touch", "Switching to tab %d", id(current_page));
           }
-      - lvgl.tabview.set_tab_selected:
+      - lvgl.tabview.set_tab:
           id: main_tabview
           tab: !lambda 'return id(current_page);'
 
