@@ -1671,9 +1671,9 @@ esphome:
     name: "yashmulgaonkar.Halo-v1"
     version: "${version}"
   on_boot:
-    priority: 800
+    priority: -100  # Run after all components are initialized
     then:
-      - lvgl.tabview.set_tab_act:
-          id: main_tabview
-          tab: !lambda 'return id(default_page_index);'
-          animation: NONE
+      - delay: 1s
+      - lambda: |-
+          auto tabview = id(main_tabview);
+          lv_tabview_set_act(tabview->obj, id(default_page_index), LV_ANIM_OFF);
