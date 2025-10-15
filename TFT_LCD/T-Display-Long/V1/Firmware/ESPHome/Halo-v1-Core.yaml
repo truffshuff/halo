@@ -1655,3 +1655,25 @@ lvgl:
                       y: -150
                       text_font: montserrat_14
                       text_color: my_white
+
+esphome:
+  name: halo-v1-79e384
+  friendly_name: Halo Air Quality Sensor Dev
+  name_add_mac_suffix: false
+  platformio_options:
+    upload_speed: 921600
+    board_build.flash_mode: qio
+    board_build.psram_type: opi
+    board_build.f_flash: 80000000L
+    board_build.f_cpu: 240000000L
+  min_version: 2025.6.2
+  project:
+    name: "yashmulgaonkar.Halo-v1"
+    version: "${version}"
+
+on_boot:
+  priority: 800
+  then:
+    - lambda: |-
+        // Set the tabview to the default page on boot
+        id(main_tabview)->set_tab_act(id(default_page_index), LV_ANIM_OFF);
