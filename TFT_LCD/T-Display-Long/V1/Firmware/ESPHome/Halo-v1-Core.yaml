@@ -1124,7 +1124,7 @@ lvgl:
             src: ym_logo
             align: LEFT_MID
             x: 80
-            y: 2
+            y: -309
         - label: 
             id: timeVal
             align: LEFT_MID
@@ -1139,7 +1139,7 @@ lvgl:
             text_font: montserrat_18
             text_color: my_gray
             x: 42
-            y: 2
+            y: -309
             text: ""
         - obj: 
             id: aqi_widget
@@ -1794,11 +1794,16 @@ esphome:
     priority: -100
     then:
       - delay: 1s
-      - lambda: |-
-          if (id(default_page_index) == 1) {
-            id(lily_display).show_page(id(wifi_page));
-          } else if (id(default_page_index) == 2) {
-            id(lily_display).show_page(id(weather_forecast_page));
-          } else {
-            id(lily_display).show_page(id(main_page));
-          }
+      - if:
+          condition:
+            lambda: 'return id(default_page_index) == 1;'
+          then:
+            - lvgl.page.show: wifi_page
+          else:
+            - if:
+                condition:
+                  lambda: 'return id(default_page_index) == 2;'
+                then:
+                  - lvgl.page.show: weather_forecast_page
+                else:
+                  - lvgl.page.show: main_page
