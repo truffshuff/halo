@@ -106,6 +106,7 @@ select:
     entity_category: "Config"
     options:
       - "None"
+      - "Rainbow Effect With Custom Values"
       - "Addressable Rainbow"
       - "Color Wipe"
       - "Scan"
@@ -1144,6 +1145,10 @@ light:
     restore_mode: ALWAYS_OFF
     effects:
       - addressable_rainbow:
+          name: Rainbow Effect With Custom Values
+          speed: 10
+          width: 50
+      - addressable_rainbow:
           name: Addressable Rainbow
       - addressable_color_wipe:
           name: Color Wipe
@@ -1850,7 +1855,7 @@ esphome:
     name: "yashmulgaonkar.Halo-v1"
     version: "${version}"
   on_boot:
-    priority: -100
+    priority: 900
     then:
       - light.turn_off: rgb_light
       - delay: 1s
