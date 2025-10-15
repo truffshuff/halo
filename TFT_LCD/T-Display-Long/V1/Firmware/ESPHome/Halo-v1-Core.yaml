@@ -273,13 +273,22 @@ touchscreen:
           id(last_touch_time) = now;
 
           if (touch.y < 320) {  // Top half of the screen
-            id(current_page) = (id(current_page) + 1) % 3;  // Increment and wrap around
+            id(current_page) = (id(current_page) + 1) % 2;  // Increment and wrap around for 2 pages
             ESP_LOGI("touch", "Switching to page %d", id(current_page));
-            // Add logic to update the display to the new page
           } else {  // Bottom half of the screen
-            id(current_page) = (id(current_page) - 1 + 3) % 3;  // Decrement and wrap around
+            id(current_page) = (id(current_page) - 1 + 2) % 2;  // Decrement and wrap around for 2 pages
             ESP_LOGI("touch", "Switching to page %d", id(current_page));
-            // Add logic to update the display to the new page
+          }
+
+          // Update the display based on the current page
+          if (id(current_page) == 0) {
+            // Show main tab
+            lvgl.widget.show(id(main_tab));
+            lvgl.widget.hide(id(wifi_tab));
+          } else {
+            // Show WiFi tab
+            lvgl.widget.show(id(wifi_tab));
+            lvgl.widget.hide(id(main_tab));
           }
 
 web_server:
@@ -1100,8 +1109,8 @@ lvgl:
                   - image:
                       id: ym_image          
                       src: ym_logo
-                      align: TOP_RIGHT
-                      x: -5
+                      align: LEFT_MID
+                      x: 80
                       y: 2
                   - label: 
                       id: timeVal
@@ -1113,10 +1122,10 @@ lvgl:
                       text: 00:00AM
                   - label: 
                       id: wifi_stat
-                      align: TOP_LEFT
+                      align: LEFT_MID
                       text_font: montserrat_18
                       text_color: my_gray
-                      x: 80
+                      x: 42
                       y: 2
                       text: 
                   - obj: 
