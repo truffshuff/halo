@@ -392,66 +392,6 @@ api:
                               format: "Unknown page requested: %s"
                               args: ['page_name.c_str()']
                               level: WARN
-    # Weather page update services
-    - service: update_weather_display
-      then:
-        - lambda: |-
-            // Update weather icon color
-            std::string icon = id(fr_cond_icon).state;
-            Color icon_color = id(my_white);
-
-            if (icon.find("\U000F0599") != std::string::npos || icon.find("\U000F0594") != std::string::npos) {
-              icon_color = id(my_yellow);
-            } else if (icon.find("\U000F0590") != std::string::npos || icon.find("\U000F0591") != std::string::npos) {
-              icon_color = id(my_gray);
-            } else if (icon.find("\U000F0597") != std::string::npos || icon.find("\U000F0596") != std::string::npos) {
-              icon_color = id(my_blue);
-            } else if (icon.find("\U000F0593") != std::string::npos || icon.find("\U000F067E") != std::string::npos) {
-              icon_color = id(my_red);
-            } else if (icon.find("\U000F0598") != std::string::npos || icon.find("\U000F067F") != std::string::npos) {
-              icon_color = id(my_teal);
-            } else if (icon.find("\U000F0595") != std::string::npos) {
-              icon_color = id(my_white);
-            } else if (icon.find("\U000F059D") != std::string::npos || icon.find("\U000F059E") != std::string::npos) {
-              icon_color = id(my_gray);
-            } else if (icon.find("\U000F0592") != std::string::npos) {
-              icon_color = id(my_white);
-            }
-
-            id(lbl_weather_forecast_condition_icon)->set_text_color(icon_color);
-
-            // Update gauge
-            std::string ap_str = id(fr_tempap).state;
-            std::string hi_str = id(fr_temphi).state;
-            std::string lo_str = id(fr_templo).state;
-
-            float apparent_temp = 20.0;
-            float high_temp = 30.0;
-            float low_temp = 10.0;
-
-            size_t pos = ap_str.find_first_of("-0123456789");
-            if (pos != std::string::npos) {
-              apparent_temp = atof(ap_str.substr(pos).c_str());
-            }
-
-            pos = hi_str.find_first_of("-0123456789");
-            if (pos != std::string::npos) {
-              high_temp = atof(hi_str.substr(pos).c_str());
-            }
-
-            pos = lo_str.find_first_of("-0123456789");
-            if (pos != std::string::npos) {
-              low_temp = atof(lo_str.substr(pos).c_str());
-            }
-
-            float temp_range = high_temp - low_temp;
-            if (temp_range == 0) temp_range = 1;
-
-            float percentage = ((apparent_temp - low_temp) / temp_range) * 100.0;
-            if (percentage < 0) percentage = 0;
-            if (percentage > 100) percentage = 100;
-
-            id(weather_temp_gauge)->set_value((int)percentage);
 
 i2c:
   - sda: 9
@@ -653,6 +593,20 @@ number:
     update_interval: never
     step: 0.1
     mode: box
+  - platform: template
+    name: "Weather Gauge Value"
+    id: weather_gauge_value
+    min_value: 0
+    max_value: 100
+    step: 1
+    mode: box
+    optimistic: true
+    internal: true
+    on_value:
+      then:
+        - lvgl.arc.update:
+            id: weather_temp_gauge
+            value: !lambda 'return (int)x;'
 
 binary_sensor:
   - platform: status
@@ -2158,6 +2112,35 @@ text:
     name: wd_out_now
     widget: lbl_weather_outdnoor_now
     mode: text
+  # Helper text sensor to trigger icon color updates from Home Assistant
+  - platform: template
+    name: "Weather Icon Color Trigger"
+    id: weather_icon_color_trigger
+    on_value:
+      then:
+        - lambda: |-
+            std::string icon = id(fr_cond_icon).state;
+            Color icon_color = id(my_white);
+
+            if (icon.find("\U000F0599") != std::string::npos || icon.find("\U000F0594") != std::string::npos) {
+              icon_color = id(my_yellow);
+            } else if (icon.find("\U000F0590") != std::string::npos || icon.find("\U000F0591") != std::string::npos) {
+              icon_color = id(my_gray);
+            } else if (icon.find("\U000F0597") != std::string::npos || icon.find("\U000F0596") != std::string::npos) {
+              icon_color = id(my_blue);
+            } else if (icon.find("\U000F0593") != std::string::npos || icon.find("\U000F067E") != std::string::npos) {
+              icon_color = id(my_red);
+            } else if (icon.find("\U000F0598") != std::string::npos || icon.find("\U000F067F") != std::string::npos) {
+              icon_color = id(my_teal);
+            } else if (icon.find("\U000F0595") != std::string::npos) {
+              icon_color = id(my_white);
+            } else if (icon.find("\U000F059D") != std::string::npos || icon.find("\U000F059E") != std::string::npos) {
+              icon_color = id(my_gray);
+            } else if (icon.find("\U000F0592") != std::string::npos) {
+              icon_color = id(my_white);
+            }
+
+            id(lbl_weather_forecast_condition_icon)->set_text_color(icon_color);
 
 esphome:
   name: halo-v1-79e384
