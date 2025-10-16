@@ -198,88 +198,88 @@ interval:
             - lvgl.widget.update:
                 id: wifi_stat
                 text_color: my_green
-          - lvgl.widget.show:
-              id: ym_image              
-          - lvgl.label.update:
-              id: wifi_signal_label
-              text: !lambda |-
-                char buffer[32];
-                snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
-                return std::string(buffer);
-          - lvgl.label.update:
-              id: wifi_ssid_label
-              text: !lambda |-
-                return std::string("SSID: ") + esphome::wifi::global_wifi_component->wifi_ssid();
-          - lvgl.label.update:
-              id: wifi_ip_label
-              text: !lambda |-
-                return std::string("IP: ") + esphome::wifi::global_wifi_component->get_ip_addresses()[0].str();
-          # Update WireGuard status
-          - lvgl.label.update:
-              id: wg_status_label
-              text: !lambda |-
-                if (id(wireguard_status).state) {
-                  return std::string("Status: Connected");
-                } else {
-                  return std::string("Status: Disconnected");
-                }
-          - lvgl.widget.update:
-              id: wg_status_label
-              text_color: !lambda |-
-                if (id(wireguard_status).state) {
-                  return id(my_green);
-                } else {
-                  return id(my_gray);
-                }
-          - lvgl.label.update:
-              id: wg_address_label
-              text: !lambda |-
-                if (id(wireguard_address_text).has_state()) {
-                  return std::string("VPN IP: ") + id(wireguard_address_text).state;
-                } else {
-                  return std::string("VPN IP: Not configured");
-                }
-          - lvgl.label.update:
-              id: wg_endpoint_label
-              text: "Endpoint: Configured"
-          - logger.log: "Updating WireGuard handshake label"
-          - lvgl.label.update:
-              id: wg_handshake_label
-              text: !lambda |-
-                ESP_LOGD("wg_handshake", "Lambda executing for handshake label");
-                if (!isnan(id(wireguard_handshake).state)) {
-                  ESP_LOGD("wg_handshake", "Handshake value: %.0f", id(wireguard_handshake).state);
-                  char buffer[128];
-                  // The sensor returns seconds since epoch of last handshake
-                  // Calculate seconds ago by subtracting from current time
-                  auto current_time = id(sntp_time).now().timestamp;
-                  int seconds_ago = current_time - (int)id(wireguard_handshake).state;
-
-                  // Convert timestamp to ESPTime for formatting
-                  auto handshake_time = ESPTime::from_epoch_local((int)id(wireguard_handshake).state);
-
-                  char time_ago[32];
-                  if (seconds_ago < 0) {
-                    // If negative, just show the raw value
-                    snprintf(time_ago, sizeof(time_ago), "%ds", (int)id(wireguard_handshake).state);
-                  } else if (seconds_ago < 60) {
-                    snprintf(time_ago, sizeof(time_ago), "%ds ago", seconds_ago);
-                  } else if (seconds_ago < 3600) {
-                    snprintf(time_ago, sizeof(time_ago), "%dm ago", seconds_ago / 60);
-                  } else if (seconds_ago < 86400) {
-                    snprintf(time_ago, sizeof(time_ago), "%dh ago", seconds_ago / 3600);
-                  } else {
-                    snprintf(time_ago, sizeof(time_ago), "%dd ago", seconds_ago / 86400);
-                  }
-
-                  // Format: "Handshake: 5m ago\n14:34:56"
-                  snprintf(buffer, sizeof(buffer), "Handshake: %s\n%02d:%02d:%02d",
-                           time_ago, handshake_time.hour, handshake_time.minute, handshake_time.second);
+            - lvgl.widget.show:
+                id: ym_image              
+            - lvgl.label.update:
+                id: wifi_signal_label
+                text: !lambda |-
+                  char buffer[32];
+                  snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
                   return std::string(buffer);
-                } else {
-                  return std::string("Handshake: Never");
-                }
-          - logger.log: "10s interval: WiFi and WireGuard update complete"
+            - lvgl.label.update:
+                id: wifi_ssid_label
+                text: !lambda |-
+                  return std::string("SSID: ") + esphome::wifi::global_wifi_component->wifi_ssid();
+            - lvgl.label.update:
+                id: wifi_ip_label
+                text: !lambda |-
+                  return std::string("IP: ") + esphome::wifi::global_wifi_component->get_ip_addresses()[0].str();
+            # Update WireGuard status
+            - lvgl.label.update:
+                id: wg_status_label
+                text: !lambda |-
+                  if (id(wireguard_status).state) {
+                    return std::string("Status: Connected");
+                  } else {
+                    return std::string("Status: Disconnected");
+                  }
+            - lvgl.widget.update:
+                id: wg_status_label
+                text_color: !lambda |-
+                  if (id(wireguard_status).state) {
+                    return id(my_green);
+                  } else {
+                    return id(my_gray);
+                  }
+            - lvgl.label.update:
+                id: wg_address_label
+                text: !lambda |-
+                  if (id(wireguard_address_text).has_state()) {
+                    return std::string("VPN IP: ") + id(wireguard_address_text).state;
+                  } else {
+                    return std::string("VPN IP: Not configured");
+                  }
+            - lvgl.label.update:
+                id: wg_endpoint_label
+                text: "Endpoint: Configured"
+            - logger.log: "Updating WireGuard handshake label"
+            - lvgl.label.update:
+                id: wg_handshake_label
+                text: !lambda |-
+                  ESP_LOGD("wg_handshake", "Lambda executing for handshake label");
+                  if (!isnan(id(wireguard_handshake).state)) {
+                    ESP_LOGD("wg_handshake", "Handshake value: %.0f", id(wireguard_handshake).state);
+                    char buffer[128];
+                    // The sensor returns seconds since epoch of last handshake
+                    // Calculate seconds ago by subtracting from current time
+                    auto current_time = id(sntp_time).now().timestamp;
+                    int seconds_ago = current_time - (int)id(wireguard_handshake).state;
+
+                    // Convert timestamp to ESPTime for formatting
+                    auto handshake_time = ESPTime::from_epoch_local((int)id(wireguard_handshake).state);
+
+                    char time_ago[32];
+                    if (seconds_ago < 0) {
+                      // If negative, just show the raw value
+                      snprintf(time_ago, sizeof(time_ago), "%ds", (int)id(wireguard_handshake).state);
+                    } else if (seconds_ago < 60) {
+                      snprintf(time_ago, sizeof(time_ago), "%ds ago", seconds_ago);
+                    } else if (seconds_ago < 3600) {
+                      snprintf(time_ago, sizeof(time_ago), "%dm ago", seconds_ago / 60);
+                    } else if (seconds_ago < 86400) {
+                      snprintf(time_ago, sizeof(time_ago), "%dh ago", seconds_ago / 3600);
+                    } else {
+                      snprintf(time_ago, sizeof(time_ago), "%dd ago", seconds_ago / 86400);
+                    }
+
+                    // Format: "Handshake: 5m ago\n14:34:56"
+                    snprintf(buffer, sizeof(buffer), "Handshake: %s\n%02d:%02d:%02d",
+                            time_ago, handshake_time.hour, handshake_time.minute, handshake_time.second);
+                    return std::string(buffer);
+                  } else {
+                    return std::string("Handshake: Never");
+                  }
+            - logger.log: "10s interval: WiFi and WireGuard update complete"
         else:
           - logger.log: "WiFi disconnected"
           - lvgl.widget.update:
