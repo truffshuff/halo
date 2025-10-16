@@ -245,17 +245,26 @@ interval:
               text: !lambda |-
                 if (!isnan(id(wireguard_handshake).state)) {
                   char buffer[64];
-                  int seconds_ago = (int)id(wireguard_handshake).state;
-                  if (seconds_ago < 60) {
-                    snprintf(buffer, sizeof(buffer), "Last Handshake: %ds ago", seconds_ago);
+                  // The sensor returns seconds since epoch of last handshake
+                  // Calculate seconds ago by subtracting from current time
+                  auto current_time = id(sntp_time).now().timestamp;
+                  int seconds_ago = current_time - (int)id(wireguard_handshake).state;
+
+                  if (seconds_ago < 0) {
+                    // If negative, just show the raw value
+                    snprintf(buffer, sizeof(buffer), "Handshake: %ds", (int)id(wireguard_handshake).state);
+                  } else if (seconds_ago < 60) {
+                    snprintf(buffer, sizeof(buffer), "Handshake: %ds ago", seconds_ago);
                   } else if (seconds_ago < 3600) {
-                    snprintf(buffer, sizeof(buffer), "Last Handshake: %dm ago", seconds_ago / 60);
+                    snprintf(buffer, sizeof(buffer), "Handshake: %dm ago", seconds_ago / 60);
+                  } else if (seconds_ago < 86400) {
+                    snprintf(buffer, sizeof(buffer), "Handshake: %dh ago", seconds_ago / 3600);
                   } else {
-                    snprintf(buffer, sizeof(buffer), "Last Handshake: %dh ago", seconds_ago / 3600);
+                    snprintf(buffer, sizeof(buffer), "Handshake: %dd ago", seconds_ago / 86400);
                   }
                   return std::string(buffer);
                 } else {
-                  return std::string("Last Handshake: Never");
+                  return std::string("Handshake: Never");
                 }
         else:
           - lvgl.widget.update:
