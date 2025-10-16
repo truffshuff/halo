@@ -555,6 +555,15 @@ binary_sensor:
   - platform: status
     name: Online
     id: ink_ha_connected
+  - platform: wireguard
+    name: "WireGuard Status"
+    id: wireguard_status
+    wireguard_id: wg0
+    status:
+      name: 'WireGuard Status'
+  - platform: wireguard
+    enabled:
+      name: 'WireGuard Enabled'
 
 sensor:
   - platform: uptime
@@ -567,6 +576,15 @@ sensor:
     id: wifi_signal_db
     update_interval: 60s
     entity_category: "diagnostic"
+
+  - platform: wireguard
+    name: "WireGuard Latest Handshake"
+    id: wireguard_handshake
+    wireguard_id: wg0
+    update_interval: 10s
+
+    latest_handshake:
+      name: 'WireGuard Latest Handshake'
 
   - platform: template
     name: "Computed AQI"
@@ -1154,6 +1172,18 @@ button:
       - sen5x.start_fan_autoclean: sen55
 
 text_sensor:
+  - platform: wireguard
+    name: "WireGuard Address"
+    id: wireguard_address_text
+    wireguard_id: wg0
+    address: true
+  
+  - platform: wireguard
+    name: "WireGuard Peer Endpoint"
+    id: wireguard_peer_endpoint_text
+    wireguard_id: wg0
+    endpoint: true
+
     # Convert VOC Index To Text: 
     # https://sensirion.com/media/documents/02232963/6294E043/Info_Note_VOC_Index.pdf
     # https://sensirion.com/media/documents/ACD82D45/6294DFC0/Info_Note_Integration_VOC_NOx_Sensor.pdf
