@@ -392,6 +392,64 @@ api:
                               format: "Unknown page requested: %s"
                               args: ['page_name.c_str()']
                               level: WARN
+    - service: update_weather_gauge
+      variables:
+        apparent_temp: float
+        high_temp: float
+        low_temp: float
+      then:
+        - lvgl.arc.update:
+            id: weather_temp_gauge
+            value: !lambda |-
+              float temp_range = high_temp - low_temp;
+              if (temp_range == 0) temp_range = 1;
+              float percentage = ((apparent_temp - low_temp) / temp_range) * 100.0;
+              if (percentage < 0) percentage = 0;
+              if (percentage > 100) percentage = 100;
+              return (int)percentage;
+    - service: update_weather_icon_color
+      variables:
+        condition: string
+      then:
+        - lvgl.widget.update:
+            id: lbl_weather_forecast_condition_icon
+            text_color: !lambda |-
+              // Sunny/Clear conditions - yellow/orange
+              if (condition == "sunny" || condition == "clear-night") {
+                return id(my_yellow);
+              }
+              // Cloudy/Fog - gray
+              else if (condition == "cloudy" || condition == "fog") {
+                return id(my_gray);
+              }
+              // Rainy/Pouring - blue
+              else if (condition == "rainy" || condition == "pouring") {
+                return id(my_blue);
+              }
+              // Lightning/Storms - red
+              else if (condition == "lightning" || condition == "lightning-rainy") {
+                return id(my_red);
+              }
+              // Snowy - teal
+              else if (condition == "snowy" || condition == "snowy-rainy") {
+                return id(my_teal);
+              }
+              // Partly cloudy - white
+              else if (condition == "partlycloudy") {
+                return id(my_white);
+              }
+              // Windy - gray
+              else if (condition == "windy" || condition == "windy-variant") {
+                return id(my_gray);
+              }
+              // Hail - white
+              else if (condition == "hail") {
+                return id(my_white);
+              }
+              // Default - white
+              else {
+                return id(my_white);
+              }
 
 i2c:
   - sda: 9
@@ -2078,50 +2136,6 @@ text:
     name: fr_cond_icon
     widget: lbl_weather_forecast_condition_icon
     mode: text
-    on_value:
-      then:
-        - lvgl.widget.update:
-            id: lbl_weather_forecast_condition_icon
-            text_color: !lambda |-
-              // Color icon based on condition
-              std::string condition = id(fr_cond_icon).state;
-
-              // Sunny/Clear conditions - yellow/orange
-              if (condition == "\U000F0599" || condition == "\U000F0594") {
-                return id(my_yellow);
-              }
-              // Cloudy/Fog - gray
-              else if (condition == "\U000F0590" || condition == "\U000F0591") {
-                return id(my_gray);
-              }
-              // Rainy/Pouring - blue
-              else if (condition == "\U000F0597" || condition == "\U000F0596") {
-                return id(my_blue);
-              }
-              // Lightning/Storms - red
-              else if (condition == "\U000F0593" || condition == "\U000F067E") {
-                return id(my_red);
-              }
-              // Snowy - white/blue
-              else if (condition == "\U000F0598" || condition == "\U000F067F") {
-                return id(my_teal);
-              }
-              // Partly cloudy - light gray/white
-              else if (condition == "\U000F0595") {
-                return id(my_white);
-              }
-              // Windy - gray
-              else if (condition == "\U000F059D" || condition == "\U000F059E") {
-                return id(my_gray);
-              }
-              // Hail - white
-              else if (condition == "\U000F0592") {
-                return id(my_white);
-              }
-              // Default - white
-              else {
-                return id(my_white);
-              }
   - platform: lvgl
     name: fr_cond_name
     widget: lbl_weather_forecast_condition_name
@@ -2130,50 +2144,6 @@ text:
     name: fr_tempap
     widget: lbl_weather_forecast_tempap
     mode: text
-    on_value:
-      then:
-        # Update the arc gauge based on apparent temperature
-        # We need to calculate the position between min and max temps
-        - lvgl.arc.update:
-            id: weather_temp_gauge
-            value: !lambda |-
-              // Parse current apparent temp, high, and low temps
-              std::string ap_str = id(fr_tempap).state;
-              std::string hi_str = id(fr_temphi).state;
-              std::string lo_str = id(fr_templo).state;
-
-              // Extract numeric values (remove "H:", "L:", degree symbol, etc.)
-              float apparent_temp = 20.0; // default
-              float high_temp = 30.0;
-              float low_temp = 10.0;
-
-              // Try to parse the values
-              size_t pos = ap_str.find_first_of("-0123456789");
-              if (pos != std::string::npos) {
-                apparent_temp = atof(ap_str.substr(pos).c_str());
-              }
-
-              pos = hi_str.find_first_of("-0123456789");
-              if (pos != std::string::npos) {
-                high_temp = atof(hi_str.substr(pos).c_str());
-              }
-
-              pos = lo_str.find_first_of("-0123456789");
-              if (pos != std::string::npos) {
-                low_temp = atof(lo_str.substr(pos).c_str());
-              }
-
-              // Calculate percentage between low and high
-              float temp_range = high_temp - low_temp;
-              if (temp_range == 0) temp_range = 1; // avoid division by zero
-
-              float percentage = ((apparent_temp - low_temp) / temp_range) * 100.0;
-
-              // Clamp between 0 and 100
-              if (percentage < 0) percentage = 0;
-              if (percentage > 100) percentage = 100;
-
-              return (int)percentage;
   - platform: lvgl
     name: fr_temphi
     widget: lbl_weather_forecast_temphi
