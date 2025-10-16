@@ -601,7 +601,9 @@ number:
     step: 1
     mode: box
     optimistic: true
-    internal: true
+    entity_category: config
+    icon: mdi:gauge
+    unit_of_measurement: "%"
     on_value:
       then:
         - lvgl.arc.update:
