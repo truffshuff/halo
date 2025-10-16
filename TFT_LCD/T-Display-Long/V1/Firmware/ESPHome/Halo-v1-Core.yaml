@@ -267,12 +267,12 @@ interval:
                     snprintf(time_ago, sizeof(time_ago), "%dd ago", seconds_ago / 86400);
                   }
 
-                  // Format: "Handshake: 5m ago (12:34 PM)"
+                  // Format: "Handshake: 5m ago\n12:34 PM"
                   bool is_pm = handshake_time.hour >= 12;
                   int hour_12 = handshake_time.hour % 12;
                   if (hour_12 == 0) hour_12 = 12;
 
-                  snprintf(buffer, sizeof(buffer), "Handshake: %s (%d:%02d%s)",
+                  snprintf(buffer, sizeof(buffer), "Handshake: %s\n%d:%02d%s",
                            time_ago, hour_12, handshake_time.minute, is_pm ? "PM" : "AM");
                   return std::string(buffer);
                 } else {
