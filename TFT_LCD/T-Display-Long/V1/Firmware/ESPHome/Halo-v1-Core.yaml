@@ -1883,7 +1883,7 @@ lvgl:
             id: wifi_ssid_label
             text: "SSID: ...\n"
             align: LEFT_MID
-            x: 10
+            x: 5
             y: -250
             text_font: montserrat_18
             text_color: my_white
