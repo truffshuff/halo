@@ -616,12 +616,6 @@ sensor:
     id: wifi_signal_db
     update_interval: 60s
     entity_category: "diagnostic"
-    on_value:
-      then:
-        - lvgl.chart.add_value:
-            id: wifi_signal_chart
-            series: 0
-            value: !lambda 'return x;'
 
   - platform: wireguard
     wireguard_id: wg0
@@ -1941,21 +1935,12 @@ lvgl:
             border_width: 1
             border_color: my_white
             bg_color: my_black
-            point_count: 144
-            update_mode: SHIFT
             series:
-              - id: wifi_signal_series
+              - type: LINE
                 width: 2
-                type: LINE
                 color: my_green
-            x_axis:
-              tick_length: 0
-              tick_width: 0
-              label_gap: 0
+                sensor: wifi_signal_db
             y_axis:
-              tick_length: 0
-              tick_width: 0
-              label_gap: 0
               range_from: -100
               range_to: -30
     - id: weather_forecast_page
