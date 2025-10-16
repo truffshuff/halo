@@ -568,12 +568,12 @@ binary_sensor:
     name: Online
     id: ink_ha_connected
   - platform: wireguard
-    name: "WireGuard Status"
-    id: wireguard_status
     wireguard_id: wg0
     status:
       name: 'WireGuard Status'
+      id: wireguard_status
   - platform: wireguard
+    wireguard_id: wg0
     enabled:
       name: 'WireGuard Enabled'
 
