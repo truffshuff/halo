@@ -1182,16 +1182,16 @@ button:
 
 text_sensor:
   - platform: wireguard
-    name: "WireGuard Address"
-    id: wireguard_address_text
     wireguard_id: wg0
-    address: true
-  
+    address:
+      name: "WireGuard Address"
+      id: wireguard_address_text
+
   - platform: wireguard
-    name: "WireGuard Peer Endpoint"
-    id: wireguard_peer_endpoint_text
     wireguard_id: wg0
-    endpoint: true
+    endpoint:
+      name: "WireGuard Peer Endpoint"
+      id: wireguard_peer_endpoint_text
 
     # Convert VOC Index To Text: 
     # https://sensirion.com/media/documents/02232963/6294E043/Info_Note_VOC_Index.pdf
