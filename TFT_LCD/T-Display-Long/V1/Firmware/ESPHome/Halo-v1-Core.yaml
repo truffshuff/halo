@@ -280,11 +280,11 @@ interval:
                     return std::string("Handshake: Never");
                   }
             - logger.log: "10s interval: WiFi and WireGuard update complete"
-        else:
-          - logger.log: "WiFi disconnected"
-          - lvgl.widget.update:
-              id: wifi_stat
-              text_color: my_red
+          else:
+            - logger.log: "WiFi disconnected"
+            - lvgl.widget.update:
+                id: wifi_stat
+                text_color: my_red
 
   - interval: 1s
     then:
