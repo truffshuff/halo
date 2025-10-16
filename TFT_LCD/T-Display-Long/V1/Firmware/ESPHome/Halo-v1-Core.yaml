@@ -1824,7 +1824,7 @@ lvgl:
       scrollbar_mode: "OFF"
       widgets:
         - label:
-            text: "WiFi & VPN Statistics"
+            text: "WiFi & VPN \nStatistics"
             align: CENTER
             x: 0
             y: -300
