@@ -2116,6 +2116,8 @@ text:
   - platform: template
     name: "Weather Icon Color Trigger"
     id: weather_icon_color_trigger
+    optimistic: true
+    mode: text
     on_value:
       then:
         - lambda: |-
