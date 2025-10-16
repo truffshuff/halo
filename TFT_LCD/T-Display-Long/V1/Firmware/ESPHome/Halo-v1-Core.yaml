@@ -209,7 +209,9 @@ interval:
             - lvgl.bar.update:
                 id: wifi_signal_bar
                 value: !lambda 'return id(wifi_signal_db).state;'
-                indicator_bg_color: !lambda |-
+            - lvgl.widget.update:
+                id: wifi_signal_bar
+                bg_color: !lambda |-
                   float signal = id(wifi_signal_db).state;
                   if (signal >= -50) {
                     return id(my_green);  // Excellent signal
