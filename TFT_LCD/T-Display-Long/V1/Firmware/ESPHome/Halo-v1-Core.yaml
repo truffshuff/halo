@@ -187,85 +187,6 @@ select:
           id(default_page_index) = idx;
 
 interval:
-  - interval: 30s
-    then:
-      # Update weather gauge and icon color based on text entity values
-      - lambda: |-
-          // Update the weather icon color based on the icon character
-          std::string icon = id(fr_cond_icon).state;
-          Color icon_color = id(my_white); // default
-
-          // Sunny/Clear conditions - yellow/orange
-          if (icon.find("\U000F0599") != std::string::npos || icon.find("\U000F0594") != std::string::npos) {
-            icon_color = id(my_yellow);
-          }
-          // Cloudy/Fog - gray
-          else if (icon.find("\U000F0590") != std::string::npos || icon.find("\U000F0591") != std::string::npos) {
-            icon_color = id(my_gray);
-          }
-          // Rainy/Pouring - blue
-          else if (icon.find("\U000F0597") != std::string::npos || icon.find("\U000F0596") != std::string::npos) {
-            icon_color = id(my_blue);
-          }
-          // Lightning/Storms - red
-          else if (icon.find("\U000F0593") != std::string::npos || icon.find("\U000F067E") != std::string::npos) {
-            icon_color = id(my_red);
-          }
-          // Snowy - teal
-          else if (icon.find("\U000F0598") != std::string::npos || icon.find("\U000F067F") != std::string::npos) {
-            icon_color = id(my_teal);
-          }
-          // Partly cloudy - white
-          else if (icon.find("\U000F0595") != std::string::npos) {
-            icon_color = id(my_white);
-          }
-          // Windy - gray
-          else if (icon.find("\U000F059D") != std::string::npos || icon.find("\U000F059E") != std::string::npos) {
-            icon_color = id(my_gray);
-          }
-          // Hail - white
-          else if (icon.find("\U000F0592") != std::string::npos) {
-            icon_color = id(my_white);
-          }
-
-          id(lbl_weather_forecast_condition_icon)->set_text_color(icon_color);
-
-          // Update the gauge based on temperature values from the text entities
-          std::string ap_str = id(fr_tempap).state;
-          std::string hi_str = id(fr_temphi).state;
-          std::string lo_str = id(fr_templo).state;
-
-          // Extract numeric values
-          float apparent_temp = 20.0;
-          float high_temp = 30.0;
-          float low_temp = 10.0;
-
-          // Parse the strings to extract numbers
-          size_t pos = ap_str.find_first_of("-0123456789");
-          if (pos != std::string::npos) {
-            apparent_temp = atof(ap_str.substr(pos).c_str());
-          }
-
-          pos = hi_str.find_first_of("-0123456789");
-          if (pos != std::string::npos) {
-            high_temp = atof(hi_str.substr(pos).c_str());
-          }
-
-          pos = lo_str.find_first_of("-0123456789");
-          if (pos != std::string::npos) {
-            low_temp = atof(lo_str.substr(pos).c_str());
-          }
-
-          // Calculate percentage
-          float temp_range = high_temp - low_temp;
-          if (temp_range == 0) temp_range = 1;
-
-          float percentage = ((apparent_temp - low_temp) / temp_range) * 100.0;
-          if (percentage < 0) percentage = 0;
-          if (percentage > 100) percentage = 100;
-
-          id(weather_temp_gauge)->set_value((int)percentage);
-
   - interval: 10s
     then:
       - logger.log: "10s interval: Starting WiFi and WireGuard status update"
@@ -2042,6 +1963,82 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - logger.log: "LVGL: Weather forecast page loaded and displayed"
+        - delay: 500ms
+        - lambda: |-
+            // Update the weather icon color based on the icon character
+            std::string icon = id(fr_cond_icon).state;
+            Color icon_color = id(my_white); // default
+
+            // Sunny/Clear conditions - yellow/orange
+            if (icon.find("\U000F0599") != std::string::npos || icon.find("\U000F0594") != std::string::npos) {
+              icon_color = id(my_yellow);
+            }
+            // Cloudy/Fog - gray
+            else if (icon.find("\U000F0590") != std::string::npos || icon.find("\U000F0591") != std::string::npos) {
+              icon_color = id(my_gray);
+            }
+            // Rainy/Pouring - blue
+            else if (icon.find("\U000F0597") != std::string::npos || icon.find("\U000F0596") != std::string::npos) {
+              icon_color = id(my_blue);
+            }
+            // Lightning/Storms - red
+            else if (icon.find("\U000F0593") != std::string::npos || icon.find("\U000F067E") != std::string::npos) {
+              icon_color = id(my_red);
+            }
+            // Snowy - teal
+            else if (icon.find("\U000F0598") != std::string::npos || icon.find("\U000F067F") != std::string::npos) {
+              icon_color = id(my_teal);
+            }
+            // Partly cloudy - white
+            else if (icon.find("\U000F0595") != std::string::npos) {
+              icon_color = id(my_white);
+            }
+            // Windy - gray
+            else if (icon.find("\U000F059D") != std::string::npos || icon.find("\U000F059E") != std::string::npos) {
+              icon_color = id(my_gray);
+            }
+            // Hail - white
+            else if (icon.find("\U000F0592") != std::string::npos) {
+              icon_color = id(my_white);
+            }
+
+            id(lbl_weather_forecast_condition_icon)->set_text_color(icon_color);
+
+            // Update the gauge based on temperature values from the text entities
+            std::string ap_str = id(fr_tempap).state;
+            std::string hi_str = id(fr_temphi).state;
+            std::string lo_str = id(fr_templo).state;
+
+            // Extract numeric values
+            float apparent_temp = 20.0;
+            float high_temp = 30.0;
+            float low_temp = 10.0;
+
+            // Parse the strings to extract numbers
+            size_t pos = ap_str.find_first_of("-0123456789");
+            if (pos != std::string::npos) {
+              apparent_temp = atof(ap_str.substr(pos).c_str());
+            }
+
+            pos = hi_str.find_first_of("-0123456789");
+            if (pos != std::string::npos) {
+              high_temp = atof(hi_str.substr(pos).c_str());
+            }
+
+            pos = lo_str.find_first_of("-0123456789");
+            if (pos != std::string::npos) {
+              low_temp = atof(lo_str.substr(pos).c_str());
+            }
+
+            // Calculate percentage
+            float temp_range = high_temp - low_temp;
+            if (temp_range == 0) temp_range = 1;
+
+            float percentage = ((apparent_temp - low_temp) / temp_range) * 100.0;
+            if (percentage < 0) percentage = 0;
+            if (percentage > 100) percentage = 100;
+
+            id(weather_temp_gauge)->set_value((int)percentage);
       widgets:
         # Large weather condition icon at top
         - label:
