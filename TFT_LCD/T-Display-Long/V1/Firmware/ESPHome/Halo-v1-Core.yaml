@@ -1876,16 +1876,24 @@ lvgl:
             align: CENTER
             x: 0
             y: -300
-            text_font: montserrat_18
+            text_font: montserrat_20
             text_color: my_white
             text_align: CENTER
+        - label:
+            id: wifi_ssid_label
+            text: "SSID: ...\n"
+            align: LEFT_MID
+            x: 10
+            y: -200
+            text_font: montserrat_18
+            text_color: my_white
         - label:
             id: wifi_signal_label
             text: "Signal: ..."
             align: LEFT_MID
             x: 10
             y: -250
-            text_font: montserrat_14
+            text_font: montserrat_18
             text_color: my_white
         - bar:
             id: wifi_signal_bar
@@ -1900,28 +1908,21 @@ lvgl:
             bg_color: my_gray
             indicator:
               bg_color: my_green
-        - label:
-            id: wifi_ssid_label
-            text: "SSID: ..."
-            align: LEFT_MID
-            x: 10
-            y: -200
-            text_font: montserrat_14
-            text_color: my_white
+        
         - label:
             id: wifi_ip_label
             text: "IP: ..."
             align: LEFT_MID
             x: 10
             y: -150
-            text_font: montserrat_14
+            text_font: montserrat_18
             text_color: my_white
         - label:
             text: "WireGuard"
             align: CENTER
             x: 0
             y: -100
-            text_font: montserrat_18
+            text_font: montserrat_20
             text_color: my_teal
         - label:
             id: wg_status_label
@@ -1929,7 +1930,7 @@ lvgl:
             align: LEFT_MID
             x: 10
             y: -50
-            text_font: montserrat_14
+            text_font: montserrat_18
             text_color: my_gray
         - label:
             id: wg_address_label
@@ -1937,7 +1938,7 @@ lvgl:
             align: LEFT_MID
             x: 10
             y: 0
-            text_font: montserrat_14
+            text_font: montserrat_18
             text_color: my_white
         - label:
             id: wg_endpoint_label
@@ -1945,7 +1946,7 @@ lvgl:
             align: LEFT_MID
             x: 10
             y: 50
-            text_font: montserrat_14
+            text_font: montserrat_18
             text_color: my_white
         - label:
             id: wg_handshake_label
@@ -1953,7 +1954,7 @@ lvgl:
             align: LEFT_MID
             x: 10
             y: 100
-            text_font: montserrat_14
+            text_font: montserrat_18
             text_color: my_white
             text_align: CENTER
     - id: weather_forecast_page
