@@ -210,6 +210,56 @@ interval:
               id: wifi_ip_label
               text: !lambda |-
                 return std::string("IP: ") + esphome::wifi::global_wifi_component->get_ip_addresses()[0].str();
+          # Update WireGuard status
+          - lvgl.label.update:
+              id: wg_status_label
+              text: !lambda |-
+                if (id(wireguard_status).state) {
+                  return std::string("Status: Connected");
+                } else {
+                  return std::string("Status: Disconnected");
+                }
+          - lvgl.widget.update:
+              id: wg_status_label
+              text_color: !lambda |-
+                if (id(wireguard_status).state) {
+                  return id(my_green);
+                } else {
+                  return id(my_gray);
+                }
+          - lvgl.label.update:
+              id: wg_address_label
+              text: !lambda |-
+                if (id(wireguard_address_text).has_state()) {
+                  return std::string("VPN IP: ") + id(wireguard_address_text).state;
+                } else {
+                  return std::string("VPN IP: Not configured");
+                }
+          - lvgl.label.update:
+              id: wg_endpoint_label
+              text: !lambda |-
+                if (id(wireguard_peer_endpoint_text).has_state()) {
+                  return std::string("Endpoint: ") + id(wireguard_peer_endpoint_text).state;
+                } else {
+                  return std::string("Endpoint: Not configured");
+                }
+          - lvgl.label.update:
+              id: wg_handshake_label
+              text: !lambda |-
+                if (!isnan(id(wireguard_handshake).state)) {
+                  char buffer[64];
+                  int seconds_ago = (int)id(wireguard_handshake).state;
+                  if (seconds_ago < 60) {
+                    snprintf(buffer, sizeof(buffer), "Last Handshake: %ds ago", seconds_ago);
+                  } else if (seconds_ago < 3600) {
+                    snprintf(buffer, sizeof(buffer), "Last Handshake: %dm ago", seconds_ago / 60);
+                  } else {
+                    snprintf(buffer, sizeof(buffer), "Last Handshake: %dh ago", seconds_ago / 3600);
+                  }
+                  return std::string(buffer);
+                } else {
+                  return std::string("Last Handshake: Never");
+                }
         else:
           - lvgl.widget.update:
               id: wifi_stat
