@@ -1860,6 +1860,7 @@ lvgl:
             y: -300
             text_font: montserrat_18
             text_color: my_white
+            text_align: CENTER
         - label:
             id: wifi_signal_label
             text: "Signal: ..."
