@@ -206,6 +206,24 @@ interval:
                   char buffer[32];
                   snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
                   return std::string(buffer);
+            - lvgl.bar.update:
+                id: wifi_signal_bar
+                value: !lambda 'return id(wifi_signal_db).state;'
+            - lvgl.widget.update:
+                id: wifi_signal_bar
+                indicator_bg_color: !lambda |-
+                  float signal = id(wifi_signal_db).state;
+                  if (signal >= -50) {
+                    return id(my_green);  // Excellent signal
+                  } else if (signal >= -60) {
+                    return id(my_teal);   // Good signal
+                  } else if (signal >= -70) {
+                    return id(my_yellow); // Fair signal
+                  } else if (signal >= -80) {
+                    return id(my_orange); // Weak signal
+                  } else {
+                    return id(my_red);    // Very weak signal
+                  }
             - lvgl.label.update:
                 id: wifi_ssid_label
                 text: !lambda |-
@@ -1869,6 +1887,19 @@ lvgl:
             y: -250
             text_font: montserrat_14
             text_color: my_white
+        - bar:
+            id: wifi_signal_bar
+            align: CENTER
+            x: 0
+            y: -220
+            width: 160
+            height: 10
+            min_value: -100
+            max_value: -30
+            value: -100
+            bg_color: my_gray
+            indicator:
+              bg_color: my_green
         - label:
             id: wifi_ssid_label
             text: "SSID: ..."
@@ -1925,24 +1956,6 @@ lvgl:
             text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
-        - chart:
-            id: wifi_signal_chart
-            align: CENTER
-            x: 0
-            y: 200
-            width: 160
-            height: 120
-            border_width: 1
-            border_color: my_white
-            bg_color: my_black
-            series:
-              - type: LINE
-                width: 2
-                color: my_green
-                sensor: wifi_signal_db
-            y_axis:
-              range_from: -100
-              range_to: -30
     - id: weather_forecast_page
       bg_color: 0x000000
       bg_opa: COVER
