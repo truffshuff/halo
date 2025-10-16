@@ -618,9 +618,9 @@ sensor:
     entity_category: "diagnostic"
     on_value:
       then:
-        - lvgl.chart.add_point:
+        - lvgl.chart.add_value:
             id: wifi_signal_chart
-            series: wifi_signal_series
+            series: 0
             value: !lambda 'return x;'
 
   - platform: wireguard
