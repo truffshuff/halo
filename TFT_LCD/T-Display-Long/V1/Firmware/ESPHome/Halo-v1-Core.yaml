@@ -276,11 +276,11 @@ interval:
                     }
 
                     // Format: "Handshake: \n5m ago\n14:34:56"
-                    snprintf(buffer, sizeof(buffer), "Handshake: %s\n%02d:%02d:%02d",
+                    snprintf(buffer, sizeof(buffer), "Handshake: \n%s\n%02d:%02d:%02d",
                             time_ago, handshake_time.hour, handshake_time.minute, handshake_time.second);
                     return std::string(buffer);
                   } else {
-                    return std::string("Handshake: Never");
+                    return std::string("Handshake: \nNever");
                   }
             - logger.log: "10s interval: WiFi and WireGuard update complete"
           else:
