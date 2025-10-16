@@ -1189,7 +1189,7 @@ text_sensor:
 
   - platform: wireguard
     wireguard_id: wg0
-    endpoint:
+    peer_endpoint:
       name: "WireGuard Peer Endpoint"
       id: wireguard_peer_endpoint_text
 
