@@ -93,10 +93,12 @@ switch:
       - logger.log: "Switching to SNTP time source for WireGuard"
       - script.execute: time_update  # Switch to SNTP time display
       - delay: 500ms  # Brief delay to ensure SNTP is being used
-      - wireguard.enable: wg0
+      - wireguard.enable:
+          id: wg0
       - logger.log: "WireGuard enabled"
     on_turn_off:
-      - wireguard.disable: wg0
+      - wireguard.disable:
+          id: wg0
       - logger.log: "WireGuard disabled - switching to Home Assistant time source"
       - script.execute: time_update  # Switch to HA time display
 
