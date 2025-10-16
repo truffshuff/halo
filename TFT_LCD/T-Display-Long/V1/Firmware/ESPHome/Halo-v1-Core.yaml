@@ -188,14 +188,16 @@ select:
 
 interval:
   - interval: 10s
-    then:    
-      if:
-        condition:
-          wifi.connected:
-        then:
-          - lvgl.widget.update:
-              id: wifi_stat
-              text_color: my_green
+    then:
+      - logger.log: "10s interval: Starting WiFi and WireGuard status update"
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - logger.log: "WiFi connected - updating display labels"
+            - lvgl.widget.update:
+                id: wifi_stat
+                text_color: my_green
           - lvgl.widget.show:
               id: ym_image              
           - lvgl.label.update:
@@ -240,10 +242,13 @@ interval:
           - lvgl.label.update:
               id: wg_endpoint_label
               text: "Endpoint: Configured"
+          - logger.log: "Updating WireGuard handshake label"
           - lvgl.label.update:
               id: wg_handshake_label
               text: !lambda |-
+                ESP_LOGD("wg_handshake", "Lambda executing for handshake label");
                 if (!isnan(id(wireguard_handshake).state)) {
+                  ESP_LOGD("wg_handshake", "Handshake value: %.0f", id(wireguard_handshake).state);
                   char buffer[128];
                   // The sensor returns seconds since epoch of last handshake
                   // Calculate seconds ago by subtracting from current time
@@ -274,7 +279,9 @@ interval:
                 } else {
                   return std::string("Handshake: Never");
                 }
+          - logger.log: "10s interval: WiFi and WireGuard update complete"
         else:
+          - logger.log: "WiFi disconnected"
           - lvgl.widget.update:
               id: wifi_stat
               text_color: my_red
@@ -425,20 +432,27 @@ touchscreen:
       mirror_y: false
       swap_xy: false
     on_touch:
+      - logger.log:
+          format: "Touch detected at x=%d, y=%d"
+          args: ['touch.x', 'touch.y']
       - lambda: |-
           auto now = millis();
           if (now - id(last_touch_time) < 500) {  // Debounce for 500ms
+            ESP_LOGD("touch", "Touch ignored (debounce)");
             return;
           }
           id(last_touch_time) = now;
+          ESP_LOGD("touch", "Touch accepted");
       - if:
           condition:
             lambda: 'return touch.y < 320;'
           then:
+            - logger.log: "Swipe down - going to next page"
             - lvgl.page.next:
                 animation: OUT_LEFT
                 time: 300ms
           else:
+            - logger.log: "Swipe up - going to previous page"
             - lvgl.page.previous:
                 animation: OUT_RIGHT
                 time: 300ms
@@ -528,9 +542,11 @@ time:
 script:
   - id: time_update
     then:
+      - logger.log: "Executing time_update script"
       - lvgl.label.update:
           id: timeVal
           text: !lambda |-
+            ESP_LOGD("time_update", "Updating time display");
             static char time_buf[17];
             // Use SNTP time when WireGuard is enabled, otherwise use Home Assistant time
             auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
@@ -1294,7 +1310,12 @@ light:
   - platform: monochromatic
     output: backlight
     name: "Display Backlight"
+    id: display_backlight
     restore_mode: ALWAYS_ON
+    on_turn_on:
+      - logger.log: "Display backlight turned ON"
+    on_turn_off:
+      - logger.log: "Display backlight turned OFF"
 
 lvgl:
   displays:
@@ -1305,11 +1326,18 @@ lvgl:
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
+  log_level: DEBUG
+  on_idle:
+    timeout: 60s
+    then:
+      - logger.log: "LVGL: Display idle for 60 seconds"
   pages:
     - id: main_page
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
+      on_load:
+        - logger.log: "LVGL: Main page loaded and displayed"
       widgets:
         - image:
             id: ym_image          
@@ -1822,6 +1850,8 @@ lvgl:
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
+      on_load:
+        - logger.log: "LVGL: WiFi/VPN page loaded and displayed"
       widgets:
         - label:
             text: "WiFi & VPN \nStatistics"
@@ -1898,6 +1928,8 @@ lvgl:
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
+      on_load:
+        - logger.log: "LVGL: Weather forecast page loaded and displayed"
       widgets:
         - obj:
             align: CENTER
@@ -2025,18 +2057,26 @@ esphome:
   on_boot:
     priority: 900
     then:
+      - logger.log: "Boot sequence starting (priority 900)"
       - light.turn_off: rgb_light
       - delay: 1s
+      - logger.log:
+          format: "Setting default page (index: %d)"
+          args: ['id(default_page_index)']
       - if:
           condition:
             lambda: 'return id(default_page_index) == 1;'
           then:
+            - logger.log: "Showing WiFi page"
             - lvgl.page.show: wifi_page
           else:
             - if:
                 condition:
                   lambda: 'return id(default_page_index) == 2;'
                 then:
+                  - logger.log: "Showing Weather page"
                   - lvgl.page.show: weather_forecast_page
                 else:
+                  - logger.log: "Showing Main page"
                   - lvgl.page.show: main_page
+      - logger.log: "Boot sequence complete"
