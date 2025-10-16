@@ -501,6 +501,15 @@ time:
     id: ha_time
     on_time_sync:
       - script.execute: time_update
+  - platform: sntp
+    id: sntp_time
+    timezone: America/New_York
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    on_time_sync:
+      - script.execute: time_update
 
 script:
   - id: time_update
@@ -509,7 +518,8 @@ script:
           id: timeVal
           text: !lambda |-
             static char time_buf[17];
-            auto now = id(ha_time).now();
+            // Use SNTP time when WireGuard is enabled, otherwise use Home Assistant time
+            auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
             bool is_pm = now.hour >= 12;
             int hour_12 = now.hour % 12;
             if (hour_12 == 0) {
@@ -1809,7 +1819,7 @@ lvgl:
       scrollbar_mode: "OFF"
       widgets:
         - label:
-            text: "WiFi Statistics"
+            text: "WiFi & VPN Statistics"
             align: CENTER
             x: 0
             y: -300
@@ -1837,6 +1847,45 @@ lvgl:
             align: LEFT_MID
             x: 10
             y: -150
+            text_font: montserrat_14
+            text_color: my_white
+        - label:
+            text: "WireGuard"
+            align: CENTER
+            x: 0
+            y: -100
+            text_font: montserrat_18
+            text_color: my_teal
+        - label:
+            id: wg_status_label
+            text: "Status: Disabled"
+            align: LEFT_MID
+            x: 10
+            y: -50
+            text_font: montserrat_14
+            text_color: my_gray
+        - label:
+            id: wg_address_label
+            text: "VPN IP: ..."
+            align: LEFT_MID
+            x: 10
+            y: 0
+            text_font: montserrat_14
+            text_color: my_white
+        - label:
+            id: wg_endpoint_label
+            text: "Endpoint: ..."
+            align: LEFT_MID
+            x: 10
+            y: 50
+            text_font: montserrat_14
+            text_color: my_white
+        - label:
+            id: wg_handshake_label
+            text: "Last Handshake: ..."
+            align: LEFT_MID
+            x: 10
+            y: 100
             text_font: montserrat_14
             text_color: my_white
     - id: weather_forecast_page
