@@ -594,7 +594,6 @@ sensor:
     latest_handshake:
       name: 'WireGuard Latest Handshake'
       id: wireguard_handshake
-      update_interval: 10s
 
   - platform: template
     name: "Computed AQI"
