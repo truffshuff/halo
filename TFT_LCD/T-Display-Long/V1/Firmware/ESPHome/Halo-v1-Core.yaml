@@ -1884,7 +1884,7 @@ lvgl:
             text: "SSID: ...\n"
             align: LEFT_MID
             x: 10
-            y: -200
+            y: -250
             text_font: montserrat_18
             text_color: my_white
         - label:
@@ -1892,14 +1892,14 @@ lvgl:
             text: "Signal: ..."
             align: LEFT_MID
             x: 10
-            y: -250
+            y: -230
             text_font: montserrat_18
             text_color: my_white
         - bar:
             id: wifi_signal_bar
             align: CENTER
             x: 0
-            y: -220
+            y: -200
             width: 160
             height: 10
             min_value: -100
