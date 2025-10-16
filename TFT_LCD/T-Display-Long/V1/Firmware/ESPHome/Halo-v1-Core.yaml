@@ -1964,94 +1964,164 @@ lvgl:
       on_load:
         - logger.log: "LVGL: Weather forecast page loaded and displayed"
       widgets:
-        - obj:
+        # Large weather condition icon at top
+        - label:
+            text: "\U000F14E4"
+            id: lbl_weather_forecast_condition_icon
+            text_font: icons_100
+            text_align: CENTER
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 10
+
+        # Condition name below icon
+        - label:
+            text: "Unknown"
+            id: lbl_weather_forecast_condition_name
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 120
+
+        # Semicircle arc gauge for apparent temperature
+        - arc:
+            id: weather_temp_gauge
             align: CENTER
-            width: 228
-            height: 250
-            pad_all: 10
-            layout:
-              pad_column: 0
-              type: GRID
-              grid_rows: [FR(48), FR(13), FR(13), FR(13), FR(13)]
-              grid_columns: [FR(10), FR(40), FR(40), FR(10)]
-            widgets:
-              - label:
-                  text: "\U000F14E4"
-                  id: lbl_weather_forecast_condition_icon
-                  text_font: icons_100
-                  text_align: CENTER
-                  grid_cell_row_pos: 0
-                  grid_cell_column_pos: 0
-                  grid_cell_column_span: 2
-                  grid_cell_x_align: CENTER
-                  grid_cell_y_align: START
+            x: 0
+            y: 100
+            width: 160
+            height: 160
+            start_angle: 180
+            end_angle: 0
+            rotation: 0
+            value: 50
+            min_value: 0
+            max_value: 100
+            adjustable: false
+            arc_width: 15
+            arc_color: my_blue
+            arc_opa: COVER
+            indicator:
+              arc_color: my_orange
+              arc_width: 15
+              arc_opa: COVER
+            bg_color: 0x000000
+            border_width: 0
 
-              - label:
-                  text: "Unknown"
-                  id: lbl_weather_forecast_condition_name
-                  text_align: CENTER
-                  grid_cell_row_pos: 0
-                  grid_cell_column_pos: 2
-                  grid_cell_column_span: 2
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: CENTER
+        # Current apparent temperature in center of gauge
+        - label:
+            text: "--°"
+            id: lbl_weather_forecast_tempap
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            align: CENTER
+            x: 0
+            y: 120
 
-              - label:
-                  text: "Feels like:"
-                  grid_cell_row_pos: 1
-                  grid_cell_column_pos: 1
+        # "Feels Like" label above temp
+        - label:
+            text: "Feels Like"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: CENTER
+            x: 0
+            y: 95
 
-              - label:
-                  text: "--.- °C"
-                  id: lbl_weather_forecast_tempap
-                  text_align: RIGHT
-                  grid_cell_row_pos: 1
-                  grid_cell_column_pos: 2
-                  grid_cell_x_align: STRETCH
+        # Low temp on left side of gauge
+        - label:
+            text: "L:--°"
+            id: lbl_weather_forecast_templo
+            text_align: LEFT
+            text_font: montserrat_18
+            text_color: my_blue
+            align: CENTER
+            x: -70
+            y: 190
 
-              - label:
-                  text: "Maximum:"
-                  grid_cell_row_pos: 2
-                  grid_cell_column_pos: 1
+        # High temp on right side of gauge
+        - label:
+            text: "H:--°"
+            id: lbl_weather_forecast_temphi
+            text_align: RIGHT
+            text_font: montserrat_18
+            text_color: my_red
+            align: CENTER
+            x: 70
+            y: 190
 
-              - label:
-                  text: "--.- °C"
-                  id: lbl_weather_forecast_temphi
-                  text_align: RIGHT
-                  grid_cell_row_pos: 2
-                  grid_cell_column_pos: 2
-                  grid_cell_x_align: STRETCH
+        # Current temperature at bottom
+        - label:
+            text: "Now:"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: BOTTOM_MID
+            x: 0
+            y: -40
 
-              - label:
-                  text: "Minimum:"
-                  grid_cell_row_pos: 3
-                  grid_cell_column_pos: 1
-
-              - label:
-                  text: "--.- °C"
-                  id: lbl_weather_forecast_templo
-                  text_align: RIGHT
-                  grid_cell_row_pos: 3
-                  grid_cell_column_pos: 2
-                  grid_cell_x_align: STRETCH
-
-              - label:
-                  text: "Now:"
-                  grid_cell_row_pos: 4
-                  grid_cell_column_pos: 1
-
-              - label:
-                  text: "--.- °C"
-                  id: lbl_weather_outdnoor_now
-                  text_align: RIGHT
-                  grid_cell_row_pos: 4
-                  grid_cell_column_pos: 2
-                  grid_cell_x_align: STRETCH
+        - label:
+            text: "--.- °C"
+            id: lbl_weather_outdnoor_now
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: BOTTOM_MID
+            x: 0
+            y: -10
 text:
   - platform: lvgl
     name: fr_cond_icon
     widget: lbl_weather_forecast_condition_icon
     mode: text
+    on_value:
+      then:
+        - lvgl.widget.update:
+            id: lbl_weather_forecast_condition_icon
+            text_color: !lambda |-
+              // Color icon based on condition
+              std::string condition = id(fr_cond_icon).state;
+
+              // Sunny/Clear conditions - yellow/orange
+              if (condition == "\U000F0599" || condition == "\U000F0594") {
+                return id(my_yellow);
+              }
+              // Cloudy/Fog - gray
+              else if (condition == "\U000F0590" || condition == "\U000F0591") {
+                return id(my_gray);
+              }
+              // Rainy/Pouring - blue
+              else if (condition == "\U000F0597" || condition == "\U000F0596") {
+                return id(my_blue);
+              }
+              // Lightning/Storms - red
+              else if (condition == "\U000F0593" || condition == "\U000F067E") {
+                return id(my_red);
+              }
+              // Snowy - white/blue
+              else if (condition == "\U000F0598" || condition == "\U000F067F") {
+                return id(my_teal);
+              }
+              // Partly cloudy - light gray/white
+              else if (condition == "\U000F0595") {
+                return id(my_white);
+              }
+              // Windy - gray
+              else if (condition == "\U000F059D" || condition == "\U000F059E") {
+                return id(my_gray);
+              }
+              // Hail - white
+              else if (condition == "\U000F0592") {
+                return id(my_white);
+              }
+              // Default - white
+              else {
+                return id(my_white);
+              }
   - platform: lvgl
     name: fr_cond_name
     widget: lbl_weather_forecast_condition_name
@@ -2060,6 +2130,50 @@ text:
     name: fr_tempap
     widget: lbl_weather_forecast_tempap
     mode: text
+    on_value:
+      then:
+        # Update the arc gauge based on apparent temperature
+        # We need to calculate the position between min and max temps
+        - lvgl.arc.update:
+            id: weather_temp_gauge
+            value: !lambda |-
+              // Parse current apparent temp, high, and low temps
+              std::string ap_str = id(fr_tempap).state;
+              std::string hi_str = id(fr_temphi).state;
+              std::string lo_str = id(fr_templo).state;
+
+              // Extract numeric values (remove "H:", "L:", degree symbol, etc.)
+              float apparent_temp = 20.0; // default
+              float high_temp = 30.0;
+              float low_temp = 10.0;
+
+              // Try to parse the values
+              size_t pos = ap_str.find_first_of("-0123456789");
+              if (pos != std::string::npos) {
+                apparent_temp = atof(ap_str.substr(pos).c_str());
+              }
+
+              pos = hi_str.find_first_of("-0123456789");
+              if (pos != std::string::npos) {
+                high_temp = atof(hi_str.substr(pos).c_str());
+              }
+
+              pos = lo_str.find_first_of("-0123456789");
+              if (pos != std::string::npos) {
+                low_temp = atof(lo_str.substr(pos).c_str());
+              }
+
+              // Calculate percentage between low and high
+              float temp_range = high_temp - low_temp;
+              if (temp_range == 0) temp_range = 1; // avoid division by zero
+
+              float percentage = ((apparent_temp - low_temp) / temp_range) * 100.0;
+
+              // Clamp between 0 and 100
+              if (percentage < 0) percentage = 0;
+              if (percentage > 100) percentage = 100;
+
+              return (int)percentage;
   - platform: lvgl
     name: fr_temphi
     widget: lbl_weather_forecast_temphi
