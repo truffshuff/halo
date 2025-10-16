@@ -222,9 +222,9 @@ interval:
                 id: wg_status_label
                 text: !lambda |-
                   if (id(wireguard_status).state) {
-                    return std::string("Status: Connected");
+                    return std::string("Status: \nConnected");
                   } else {
-                    return std::string("Status: Disconnected");
+                    return std::string("Status: \nDisconnected");
                   }
             - lvgl.widget.update:
                 id: wg_status_label
@@ -1884,7 +1884,7 @@ lvgl:
             text: "SSID: ...\n"
             align: LEFT_MID
             x: 10
-            y: -280
+            y: -250
             text_font: montserrat_18
             text_color: my_white
         - label:
@@ -1914,7 +1914,7 @@ lvgl:
             text: "IP: ..."
             align: LEFT_MID
             x: 10
-            y: -150
+            y: -175
             text_font: montserrat_18
             text_color: my_white
         - label:
@@ -1942,7 +1942,7 @@ lvgl:
             text_color: my_white
         - label:
             id: wg_endpoint_label
-            text: "Endpoint: ..."
+            text: "Endpoint: \n..."
             align: LEFT_MID
             x: 10
             y: 50
