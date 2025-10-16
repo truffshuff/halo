@@ -2024,6 +2024,12 @@ lvgl:
               arc_color: my_orange
               arc_width: 15
               arc_opa: COVER
+            knob:
+              bg_color: my_white
+              border_color: my_orange
+              border_width: 2
+              radius: 8
+              pad_all: 0
             bg_color: 0x000000
             border_width: 0
 
