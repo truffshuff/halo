@@ -432,6 +432,25 @@ touchscreen:
 web_server:
   port: 80
 
+wireguard:
+  - id: wg0
+    address: !secret wg_address  # Your WireGuard interface IP address (e.g., 10.0.0.2)
+    netmask: !secret wg_netmask  # Your WireGuard netmask (e.g., 255.255.255.0)
+    private_key: !secret wg_prikey
+    peer_port: !secret wg_peerport  # Your WireGuard private key
+    peer_endpoint: !secret wg_peerendpt  # Your WireGuard server IP (e.g., 1.2.3.4)
+    peer_public_key: !secret wg_pubkey  # Your WireGuard server public key
+    peer_preshared_key: !secret wg_shrdkey  # Optional: Your WireGuard preshared key
+    peer_allowed_ips:
+      - 192.168.1.0/24
+      - 10.6.0.1/32
+      - 10.6.0.2/32
+    peer_persistent_keepalive: 25
+    # Optional: Only route specific traffic through WireGuard
+    # allowed_ips:
+    #   - 10.0.0.0/24  # Only route WireGuard subnet traffic
+    # If commented out, all traffic will be routed through WireGuard (0.0.0.0/0)
+
 image:
   - file: https://yashmulgaonkar.github.io/assets/YM.png
     id: ym_logo
