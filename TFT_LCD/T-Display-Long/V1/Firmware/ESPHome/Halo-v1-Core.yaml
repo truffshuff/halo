@@ -1907,7 +1907,7 @@ lvgl:
             value: -100
             bg_color: my_gray
             indicator:
-              bg_gradient: wifi_signal_gradient
+              bg_grad: wifi_signal_gradient
         
         - label:
             id: wifi_ip_label
