@@ -590,13 +590,11 @@ sensor:
     entity_category: "diagnostic"
 
   - platform: wireguard
-    name: "WireGuard Latest Handshake"
-    id: wireguard_handshake
     wireguard_id: wg0
     update_interval: 10s
-
     latest_handshake:
       name: 'WireGuard Latest Handshake'
+      id: wireguard_handshake
 
   - platform: template
     name: "Computed AQI"
