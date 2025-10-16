@@ -82,6 +82,23 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     optimistic: true
     entity_category: "config"
+  - platform: template
+    name: "Enable WireGuard"
+    id: wireguard_enabled
+    icon: mdi:vpn
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - logger.log: "Switching to SNTP time source for WireGuard"
+      - script.execute: time_update  # Switch to SNTP time display
+      - delay: 500ms  # Brief delay to ensure SNTP is being used
+      - wireguard.enable: wg0
+      - logger.log: "WireGuard enabled"
+    on_turn_off:
+      - wireguard.disable: wg0
+      - logger.log: "WireGuard disabled - switching to Home Assistant time source"
+      - script.execute: time_update  # Switch to HA time display
 
 select:
   - platform: template
