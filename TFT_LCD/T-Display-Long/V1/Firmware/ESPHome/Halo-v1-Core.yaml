@@ -239,12 +239,7 @@ interval:
                 }
           - lvgl.label.update:
               id: wg_endpoint_label
-              text: !lambda |-
-                if (id(wireguard_peer_endpoint_text).has_state()) {
-                  return std::string("Endpoint: ") + id(wireguard_peer_endpoint_text).state;
-                } else {
-                  return std::string("Endpoint: Not configured");
-                }
+              text: "Endpoint: Configured"
           - lvgl.label.update:
               id: wg_handshake_label
               text: !lambda |-
@@ -1186,12 +1181,6 @@ text_sensor:
     address:
       name: "WireGuard Address"
       id: wireguard_address_text
-
-  - platform: wireguard
-    wireguard_id: wg0
-    peer_endpoint:
-      name: "WireGuard Peer Endpoint"
-      id: wireguard_peer_endpoint_text
 
     # Convert VOC Index To Text: 
     # https://sensirion.com/media/documents/02232963/6294E043/Info_Note_VOC_Index.pdf
