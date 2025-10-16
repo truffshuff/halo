@@ -275,8 +275,8 @@ interval:
                       snprintf(time_ago, sizeof(time_ago), "%dd ago", seconds_ago / 86400);
                     }
 
-                    // Format: "Handshake: \n5m ago\n14:34:56"
-                    snprintf(buffer, sizeof(buffer), "Handshake: \n%s\n%02d:%02d:%02d",
+                    // Format: "Handshake: \n5m ago @ \n\n14:34:56"
+                    snprintf(buffer, sizeof(buffer), "Handshake: \n%s @\n\n%02d:%02d:%02d",
                             time_ago, handshake_time.hour, handshake_time.minute, handshake_time.second);
                     return std::string(buffer);
                   } else {
