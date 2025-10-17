@@ -591,9 +591,9 @@ script:
           if (f.size() > 0) {
             float temp = f[0]["temperature"].as<float>();
             char buf[16];
-            snprintf(buf, sizeof(buf), "High: %.1f°C", temp);
+            snprintf(buf, sizeof(buf), "High: %.1f°F", temp);
             id(todays_high).publish_state(buf);
-            ESP_LOGI("weather", "Today's high: %.1f °C", temp);
+            ESP_LOGI("weather", "Today's high: %.1f°F", temp);
           } else {
             id(todays_high).publish_state("unknown");
           }
