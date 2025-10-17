@@ -2100,6 +2100,28 @@ lvgl:
             x: 0
             y: -70
 
+        # Hourly precipitation
+        - label:
+            text: "Hour: --mm"
+            id: lbl_weather_forecast_hrprecip
+            text_align: CENTER
+            text_font: montserrat_18
+            text_color: my_teal
+            align: BOTTOM_MID
+            x: 0
+            y: -80
+
+        # Daily precipitation
+        - label:
+            text: "Day: --mm"
+            id: lbl_weather_forecast_dailyprecip
+            text_align: CENTER
+            text_font: montserrat_18
+            text_color: my_teal
+            align: BOTTOM_MID
+            x: 0
+            y: -55
+
         # Current temperature at bottom
         - label:
             text: "Now:"
@@ -2108,7 +2130,7 @@ lvgl:
             text_color: my_gray
             align: BOTTOM_MID
             x: 0
-            y: -40
+            y: -30
 
         - label:
             text: "--.- °C"
@@ -2118,7 +2140,7 @@ lvgl:
             text_color: my_white
             align: BOTTOM_MID
             x: 0
-            y: -10
+            y: -5
 text:
   - platform: lvgl
     name: fr_cond_icon
