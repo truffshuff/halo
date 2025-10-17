@@ -3039,36 +3039,36 @@ lvgl:
                   id: lbl_forecast_day1_header
                   align: TOP_MID
                   x: 0
-                  y: 10
-                  text_font: montserrat_20
+                  y: 5
+                  text_font: montserrat_18
                   text_color: my_gray
                   text_align: CENTER
 
               - label:
                   text: "\U000F14E4"
                   id: lbl_forecast_day1_icon
-                  text_font: icons_100
-                  text_color: my_white
-                  align: TOP_MID
-                  x: 0
-                  y: 35
-
-              - label:
-                  text: "Sunny"
-                  id: lbl_forecast_day1_condition
                   text_font: montserrat_28
                   text_color: my_white
                   align: TOP_MID
                   x: 0
-                  y: 135
+                  y: 22
+
+              - label:
+                  text: "Sunny"
+                  id: lbl_forecast_day1_condition
+                  text_font: montserrat_20
+                  text_color: my_white
+                  align: TOP_MID
+                  x: 0
+                  y: 50
 
               - label:
                   text: "H: 34°F / L: 22°F"
                   id: lbl_forecast_day1_temps
                   align: TOP_MID
                   x: 0
-                  y: 165
-                  text_font: montserrat_20
+                  y: 72
+                  text_font: montserrat_18
                   text_color: my_white
                   text_align: CENTER
 
@@ -3077,8 +3077,8 @@ lvgl:
                   id: lbl_forecast_day1_precip
                   align: TOP_MID
                   x: 0
-                  y: 190
-                  text_font: montserrat_18
+                  y: 92
+                  text_font: montserrat_14
                   text_color: my_teal
                   text_align: CENTER
 
@@ -3087,15 +3087,15 @@ lvgl:
                   id: lbl_forecast_day1_precip_amt
                   align: TOP_MID
                   x: 0
-                  y: 212
-                  text_font: montserrat_18
+                  y: 108
+                  text_font: montserrat_14
                   text_color: my_teal
                   text_align: CENTER
 
               - line:
                   points:
-                    - 10, 240
-                    - 170, 240
+                    - 10, 128
+                    - 170, 128
                   line_width: 1
                   line_color: 57343
 
@@ -3105,36 +3105,36 @@ lvgl:
                   id: lbl_forecast_day2_header
                   align: TOP_MID
                   x: 0
-                  y: 250
-                  text_font: montserrat_20
+                  y: 138
+                  text_font: montserrat_18
                   text_color: my_gray
                   text_align: CENTER
 
               - label:
                   text: "\U000F0595"
                   id: lbl_forecast_day2_icon
-                  text_font: icons_100
-                  text_color: my_white
-                  align: TOP_MID
-                  x: 0
-                  y: 275
-
-              - label:
-                  text: "Partly Cloudy"
-                  id: lbl_forecast_day2_condition
                   text_font: montserrat_28
                   text_color: my_white
                   align: TOP_MID
                   x: 0
-                  y: 375
+                  y: 155
+
+              - label:
+                  text: "Partly Cloudy"
+                  id: lbl_forecast_day2_condition
+                  text_font: montserrat_20
+                  text_color: my_white
+                  align: TOP_MID
+                  x: 0
+                  y: 183
 
               - label:
                   text: "H: 32°F / L: 21°F"
                   id: lbl_forecast_day2_temps
                   align: TOP_MID
                   x: 0
-                  y: 405
-                  text_font: montserrat_20
+                  y: 205
+                  text_font: montserrat_18
                   text_color: my_white
                   text_align: CENTER
 
@@ -3143,8 +3143,8 @@ lvgl:
                   id: lbl_forecast_day2_precip
                   align: TOP_MID
                   x: 0
-                  y: 430
-                  text_font: montserrat_18
+                  y: 225
+                  text_font: montserrat_14
                   text_color: my_teal
                   text_align: CENTER
 
@@ -3153,15 +3153,15 @@ lvgl:
                   id: lbl_forecast_day2_precip_amt
                   align: TOP_MID
                   x: 0
-                  y: 452
-                  text_font: montserrat_18
+                  y: 241
+                  text_font: montserrat_14
                   text_color: my_teal
                   text_align: CENTER
 
               - line:
                   points:
-                    - 10, 480
-                    - 170, 480
+                    - 10, 261
+                    - 170, 261
                   line_width: 1
                   line_color: 57343
 
@@ -3171,36 +3171,36 @@ lvgl:
                   id: lbl_forecast_day3_header
                   align: TOP_MID
                   x: 0
-                  y: 490
-                  text_font: montserrat_20
+                  y: 271
+                  text_font: montserrat_18
                   text_color: my_gray
                   text_align: CENTER
 
               - label:
                   text: "\U000F0597"
                   id: lbl_forecast_day3_icon
-                  text_font: icons_100
-                  text_color: my_white
-                  align: TOP_MID
-                  x: 0
-                  y: 515
-
-              - label:
-                  text: "Rainy"
-                  id: lbl_forecast_day3_condition
                   text_font: montserrat_28
                   text_color: my_white
                   align: TOP_MID
                   x: 0
-                  y: 615
+                  y: 288
+
+              - label:
+                  text: "Rainy"
+                  id: lbl_forecast_day3_condition
+                  text_font: montserrat_20
+                  text_color: my_white
+                  align: TOP_MID
+                  x: 0
+                  y: 316
 
               - label:
                   text: "H: 28°F / L: 19°F"
                   id: lbl_forecast_day3_temps
                   align: TOP_MID
                   x: 0
-                  y: 645
-                  text_font: montserrat_20
+                  y: 338
+                  text_font: montserrat_18
                   text_color: my_white
                   text_align: CENTER
 
@@ -3209,8 +3209,8 @@ lvgl:
                   id: lbl_forecast_day3_precip
                   align: TOP_MID
                   x: 0
-                  y: 670
-                  text_font: montserrat_18
+                  y: 358
+                  text_font: montserrat_14
                   text_color: my_teal
                   text_align: CENTER
 
@@ -3219,8 +3219,8 @@ lvgl:
                   id: lbl_forecast_day3_precip_amt
                   align: TOP_MID
                   x: 0
-                  y: 692
-                  text_font: montserrat_18
+                  y: 374
+                  text_font: montserrat_14
                   text_color: my_teal
                   text_align: CENTER
 text:
