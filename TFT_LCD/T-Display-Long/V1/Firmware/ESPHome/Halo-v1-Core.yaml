@@ -565,6 +565,41 @@ script:
               snprintf(time_buf, sizeof(time_buf), "%2d:%02d%s", hour_12, now.minute, is_pm ? "PM" : "AM");
             }
             return time_buf;
+  - id: update_weather_icon_color
+    then:
+      - logger.log: "Updating weather icon color based on condition"
+      - delay: 500ms
+      - lvgl.widget.update:
+          id: lbl_weather_forecast_condition_icon
+          text_color: !lambda |-
+            std::string condition = id(fr_cond_name).state;
+
+            if (condition.find("sunny") != std::string::npos ||
+                condition.find("clear") != std::string::npos) {
+              return lv_color_hex(0xFFD700);  // Gold
+            } else if (condition.find("cloudy") != std::string::npos ||
+                       condition.find("overcast") != std::string::npos) {
+              return lv_color_hex(0xA9A9A9);  // Dark gray
+            } else if (condition.find("rainy") != std::string::npos ||
+                       condition.find("pouring") != std::string::npos ||
+                       condition.find("drizzle") != std::string::npos) {
+              return lv_color_hex(0x4169E1);  // Royal blue
+            } else if (condition.find("snowy") != std::string::npos ||
+                       condition.find("sleet") != std::string::npos) {
+              return lv_color_hex(0xDCDCDC);  // Gainsboro (light gray)
+            } else if (condition.find("hail") != std::string::npos) {
+              return lv_color_hex(0x87CEEB);  // Sky blue
+            } else if (condition.find("lightning") != std::string::npos ||
+                       condition.find("thunderstorm") != std::string::npos) {
+              return lv_color_hex(0xFFB6C1);  // Light pink (warning)
+            } else if (condition.find("fog") != std::string::npos ||
+                       condition.find("mist") != std::string::npos) {
+              return lv_color_hex(0xB0C4DE);  // Light steel blue
+            } else if (condition.find("windy") != std::string::npos) {
+              return lv_color_hex(0x90EE90);  // Light green
+            } else {
+              return lv_color_hex(0xFFFFFF);  // White (default)
+            }
 
 number:
   - platform: template
@@ -2150,6 +2185,9 @@ text:
     name: fr_cond_name
     widget: lbl_weather_forecast_condition_name
     mode: text
+    on_value:
+      then:
+        - script.execute: update_weather_icon_color
   - platform: lvgl
     name: fr_tempap
     widget: lbl_weather_forecast_tempap
@@ -2174,6 +2212,40 @@ text:
     name: dy_precip
     widget: lbl_weather_forecast_dailyprecip
     mode: text
+  - platform: template
+    name: "Weather Condition Color"
+    id: weather_condition_color
+    lambda: |-
+      // Map weather conditions to appropriate colors
+      std::string condition = id(fr_cond_name).state;
+
+      if (condition.find("sunny") != std::string::npos ||
+          condition.find("clear") != std::string::npos) {
+        return std::string("0xFFD700");  // Gold
+      } else if (condition.find("cloudy") != std::string::npos ||
+                 condition.find("overcast") != std::string::npos) {
+        return std::string("0xA9A9A9");  // Dark gray
+      } else if (condition.find("rainy") != std::string::npos ||
+                 condition.find("pouring") != std::string::npos ||
+                 condition.find("drizzle") != std::string::npos) {
+        return std::string("0x4169E1");  // Royal blue
+      } else if (condition.find("snowy") != std::string::npos ||
+                 condition.find("sleet") != std::string::npos) {
+        return std::string("0xDCDCDC");  // Gainsboro (light gray)
+      } else if (condition.find("hail") != std::string::npos) {
+        return std::string("0x87CEEB");  // Sky blue
+      } else if (condition.find("lightning") != std::string::npos ||
+                 condition.find("thunderstorm") != std::string::npos) {
+        return std::string("0xFFB6C1");  // Light pink (warning)
+      } else if (condition.find("fog") != std::string::npos ||
+                 condition.find("mist") != std::string::npos) {
+        return std::string("0xB0C4DE");  // Light steel blue
+      } else if (condition.find("windy") != std::string::npos) {
+        return std::string("0x90EE90");  // Light green
+      } else {
+        return std::string("0xFFFFFF");  // White (default)
+      }
+    update_interval: never
 
 
 esphome:
