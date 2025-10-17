@@ -644,13 +644,17 @@ script:
             Authorization: !secret ha_api_token
           on_response:
             then:
-              - logger.log: "Forecast API Response received"
+              - logger.log:
+                  format: "Forecast API Response received - content-length: %d bytes"
+                  args: ['headers["content-length"]']
+              - delay: 500ms
               - lambda: |-
-                  id(forecast_json_data) = body;
-                  ESP_LOGD("forecast_parse", "Stored forecast JSON, length: %d", body.length());
-              - delay: 100ms
-              - lambda: |-
-                  ESP_LOGD("forecast_parse", "Forecast data: %s", id(forecast_json_data).c_str());
+                  // Log the full body after delay to ensure it's loaded
+                  ESP_LOGD("forecast_parse", "Response body start");
+                  for (size_t i = 0; i < body.length() && i < 100; i++) {
+                    ESP_LOGD("forecast_parse", "char %d: %c", i, body[i]);
+                  }
+                  ESP_LOGD("forecast_parse", "Response body end, total length: %d", body.length());
 
 number:
   - platform: template
