@@ -3658,7 +3658,7 @@ lvgl:
             text_align: LEFT
 
         # Navigation button (fixed at bottom of screen)
-        - btn:
+        - button:
             id: forecast_nav_button
             align: BOTTOM_MID
             x: 0
