@@ -575,11 +575,15 @@ script:
       - delay: 500ms
       - lambda: |-
           std::string condition = id(fr_cond_name).state;
+          // Convert to lowercase for case-insensitive comparison
+          std::transform(condition.begin(), condition.end(), condition.begin(), ::tolower);
           ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
       - lvgl.label.update:
           id: lbl_weather_forecast_condition_icon
           text_color: !lambda |-
             std::string condition = id(fr_cond_name).state;
+            // Convert to lowercase for case-insensitive comparison
+            std::transform(condition.begin(), condition.end(), condition.begin(), ::tolower);
             ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
 
             if (condition.find("sunny") != std::string::npos ||
