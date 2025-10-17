@@ -536,6 +536,9 @@ color:
     green: 0%
     blue: 0%
 
+homeassistant:
+  id: ha
+
 time:
   - platform: homeassistant
     id: ha_time
@@ -579,13 +582,13 @@ script:
       - logger.log: "Requesting daily forecast..."
       - lambda: |-
           ESP_LOGI("weather", "Requesting daily forecast...");
-          auto forecast = id(homeassistant).get_forecast("weather.hhut", "daily");
+          auto forecast = id(ha).get_forecast("weather.hhut", "daily");
           if (forecast.size() > 0) {
             float temp = forecast[0]["temperature"].as<float>();
             char buf[16];
-            snprintf(buf, sizeof(buf), "High: %.1f°C", temp);
+            snprintf(buf, sizeof(buf), "High: %.1f°F", temp);
             id(todays_high).publish_state(buf);
-            ESP_LOGI("weather", "Today's high: %.1f °C", temp);
+            ESP_LOGI("weather", "Today's high: %.1f°F", temp);
           } else {
             id(todays_high).publish_state("unknown");
           }
