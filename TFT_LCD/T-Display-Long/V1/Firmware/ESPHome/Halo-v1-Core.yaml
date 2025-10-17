@@ -108,6 +108,82 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'true'
+  - id: wifi_stat_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_logo_visible
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_signal_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_signal_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_signal_bar_last_value
+    type: float
+    restore_value: no
+    initial_value: '-200.0'
+  - id: wifi_signal_bar_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_ssid_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ssid_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_ip_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ip_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_color_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_address_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_address_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_handshake_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_handshake_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_endpoint_initialized
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 switch:
   - platform: template
@@ -239,76 +315,154 @@ interval:
             wifi.connected:
           then:
             - logger.log: "WiFi connected - updating display labels"
-            - lvgl.widget.update:
-                id: wifi_stat
-                text_color: my_green
-            - lvgl.widget.show:
-                id: ym_image              
-            - lvgl.label.update:
-                id: wifi_signal_label
-                text: !lambda |-
-                  char buffer[32];
-                  snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
-                  return std::string(buffer);
-            - lvgl.bar.update:
-                id: wifi_signal_bar
-                value: !lambda 'return id(wifi_signal_db).state;'
-            - lvgl.label.update:
-                id: wifi_ssid_label
-                text: !lambda |-
-                  return std::string("SSID: ") + esphome::wifi::global_wifi_component->wifi_ssid();
-            - lvgl.label.update:
-                id: wifi_ip_label
-                text: !lambda |-
-                  return std::string("IP: ") + esphome::wifi::global_wifi_component->get_ip_addresses()[0].str();
-            # Update WireGuard status
-            - lvgl.label.update:
-                id: wg_status_label
-                text: !lambda |-
-                  if (id(wireguard_status).state) {
-                    return std::string("Status: \nConnected");
-                  } else {
-                    return std::string("Status: \nDisconnected");
-                  }
-            - lvgl.widget.update:
-                id: wg_status_label
-                text_color: !lambda |-
-                  if (id(wireguard_status).state) {
-                    return id(my_green);
-                  } else {
-                    return id(my_gray);
-                  }
-            - lvgl.label.update:
-                id: wg_address_label
-                text: !lambda |-
-                  if (id(wireguard_address_text).has_state()) {
-                    return std::string("VPN IP: ") + id(wireguard_address_text).state;
-                  } else {
-                    return std::string("VPN IP: Not configured");
-                  }
-            - lvgl.label.update:
-                id: wg_endpoint_label
-                text: "Endpoint: \nConfigured"
-            - logger.log: "Updating WireGuard handshake label"
-            - lvgl.label.update:
-                id: wg_handshake_label
-                text: !lambda |-
-                  ESP_LOGD("wg_handshake", "Lambda executing for handshake label");
-                  if (!isnan(id(wireguard_handshake).state)) {
-                    ESP_LOGD("wg_handshake", "Handshake value: %.0f", id(wireguard_handshake).state);
-                    char buffer[128];
-                    // The sensor returns seconds since epoch of last handshake
-                    // Calculate seconds ago by subtracting from current time
-                    auto current_time = id(sntp_time).now().timestamp;
-                    int seconds_ago = current_time - (int)id(wireguard_handshake).state;
-
-                    // Convert timestamp to ESPTime for formatting
-                    auto handshake_time = ESPTime::from_epoch_local((int)id(wireguard_handshake).state);
-
+            - if:
+                condition:
+                  lambda: 'return !id(wifi_stat_connected_state);'
+              then:
+                - lvgl.widget.update:
+                    id: wifi_stat
+                    text_color: my_green
+                - lambda: 'id(wifi_stat_connected_state) = true;'
+            - if:
+                condition:
+                  lambda: 'return !id(wifi_logo_visible);'
+              then:
+                - lvgl.widget.show:
+                    id: ym_image
+                - lambda: 'id(wifi_logo_visible) = true;'
+            - lambda: |-
+                char buffer[32];
+                snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
+                std::string new_text(buffer);
+                if (new_text != id(wifi_signal_last_text)) {
+                  id(wifi_signal_last_text) = new_text;
+                  id(wifi_signal_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_signal_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wifi_signal_label
+                    text: !lambda 'return id(wifi_signal_last_text);'
+                - lambda: 'id(wifi_signal_needs_render) = false;'
+            - lambda: |-
+                float signal = id(wifi_signal_db).state;
+                if (std::isnan(signal)) {
+                  signal = -200.0f;
+                }
+                if (signal != id(wifi_signal_bar_last_value)) {
+                  id(wifi_signal_bar_last_value) = signal;
+                  id(wifi_signal_bar_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_signal_bar_needs_render);'
+              then:
+                - lvgl.bar.update:
+                    id: wifi_signal_bar
+                    value: !lambda 'return id(wifi_signal_bar_last_value);'
+                - lambda: 'id(wifi_signal_bar_needs_render) = false;'
+            - lambda: |-
+                std::string ssid = esphome::wifi::global_wifi_component->wifi_ssid();
+                std::string new_text = std::string("SSID: ") + ssid;
+                if (new_text != id(wifi_ssid_last_text)) {
+                  id(wifi_ssid_last_text) = new_text;
+                  id(wifi_ssid_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_ssid_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wifi_ssid_label
+                    text: !lambda 'return id(wifi_ssid_last_text);'
+                - lambda: 'id(wifi_ssid_needs_render) = false;'
+            - lambda: |-
+                auto addresses = esphome::wifi::global_wifi_component->get_ip_addresses();
+                std::string ip_text = "IP: Not assigned";
+                if (!addresses.empty()) {
+                  ip_text = std::string("IP: ") + addresses[0].str();
+                }
+                if (ip_text != id(wifi_ip_last_text)) {
+                  id(wifi_ip_last_text) = ip_text;
+                  id(wifi_ip_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_ip_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wifi_ip_label
+                    text: !lambda 'return id(wifi_ip_last_text);'
+                - lambda: 'id(wifi_ip_needs_render) = false;'
+            - lambda: |-
+                bool wg_connected = id(wireguard_status).state;
+                std::string new_text = wg_connected ? "Status: \nConnected" : "Status: \nDisconnected";
+                if (new_text != id(wg_status_last_text)) {
+                  id(wg_status_last_text) = new_text;
+                  id(wg_status_needs_render) = true;
+                }
+                if (wg_connected != id(wg_status_connected_state)) {
+                  id(wg_status_connected_state) = wg_connected;
+                  id(wg_status_color_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wg_status_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wg_status_label
+                    text: !lambda 'return id(wg_status_last_text);'
+                - lambda: 'id(wg_status_needs_render) = false;'
+            - if:
+                condition:
+                  lambda: 'return id(wg_status_color_needs_render);'
+              then:
+                - lvgl.widget.update:
+                    id: wg_status_label
+                    text_color: !lambda |-
+                      if (id(wg_status_connected_state)) {
+                        return id(my_green);
+                      } else {
+                        return id(my_gray);
+                      }
+                - lambda: 'id(wg_status_color_needs_render) = false;'
+            - lambda: |-
+                std::string new_text = "VPN IP: Not configured";
+                if (id(wireguard_address_text).has_state()) {
+                  new_text = std::string("VPN IP: ") + id(wireguard_address_text).state;
+                }
+                if (new_text != id(wg_address_last_text)) {
+                  id(wg_address_last_text) = new_text;
+                  id(wg_address_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wg_address_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wg_address_label
+                    text: !lambda 'return id(wg_address_last_text);'
+                - lambda: 'id(wg_address_needs_render) = false;'
+            - if:
+                condition:
+                  lambda: 'return !id(wg_endpoint_initialized);'
+              then:
+                - lvgl.label.update:
+                    id: wg_endpoint_label
+                    text: "Endpoint: \nConfigured"
+                - lambda: 'id(wg_endpoint_initialized) = true;'
+            - lambda: |-
+                std::string handshake_text;
+                if (!std::isnan(id(wireguard_handshake).state)) {
+                  const auto current_time = id(sntp_time).now();
+                  if (current_time.is_valid()) {
+                    int seconds_ago = current_time.timestamp - static_cast<int>(id(wireguard_handshake).state);
+                    auto handshake_time = ESPTime::from_epoch_local(static_cast<int>(id(wireguard_handshake).state));
                     char time_ago[32];
                     if (seconds_ago < 0) {
-                      // If negative, just show the raw value
-                      snprintf(time_ago, sizeof(time_ago), "%ds", (int)id(wireguard_handshake).state);
+                      snprintf(time_ago, sizeof(time_ago), "%ds", static_cast<int>(id(wireguard_handshake).state));
                     } else if (seconds_ago < 60) {
                       snprintf(time_ago, sizeof(time_ago), "%ds ago", seconds_ago);
                     } else if (seconds_ago < 3600) {
@@ -318,20 +472,158 @@ interval:
                     } else {
                       snprintf(time_ago, sizeof(time_ago), "%dd ago", seconds_ago / 86400);
                     }
-
-                    // Format: "Handshake: \n5m ago @ \n\n14:34:56"
+                    char buffer[128];
                     snprintf(buffer, sizeof(buffer), "Handshake: \n%s @\n\n%02d:%02d:%02d",
-                            time_ago, handshake_time.hour, handshake_time.minute, handshake_time.second);
-                    return std::string(buffer);
+                             time_ago, handshake_time.hour, handshake_time.minute, handshake_time.second);
+                    handshake_text = buffer;
                   } else {
-                    return std::string("Handshake: \nNever");
+                    handshake_text = "Handshake: \nUnknown";
                   }
+                } else {
+                  handshake_text = "Handshake: \nNever";
+                }
+                if (handshake_text != id(wg_handshake_last_text)) {
+                  id(wg_handshake_last_text) = handshake_text;
+                  id(wg_handshake_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wg_handshake_needs_render);'
+              then:
+                - logger.log: "Updating WireGuard handshake label"
+                - lvgl.label.update:
+                    id: wg_handshake_label
+                    text: !lambda 'return id(wg_handshake_last_text);'
+                - lambda: 'id(wg_handshake_needs_render) = false;'
             - logger.log: "10s interval: WiFi and WireGuard update complete"
           else:
             - logger.log: "WiFi disconnected"
-            - lvgl.widget.update:
-                id: wifi_stat
-                text_color: my_red
+            - if:
+                condition:
+                  lambda: 'return id(wifi_stat_connected_state);'
+              then:
+                - lvgl.widget.update:
+                    id: wifi_stat
+                    text_color: my_red
+            - lambda: 'id(wifi_stat_connected_state) = false;'
+            - if:
+                condition:
+                  lambda: 'return id(wifi_logo_visible);'
+              then:
+                - lvgl.widget.hide:
+                    id: ym_image
+                - lambda: 'id(wifi_logo_visible) = false;'
+            - lambda: |-
+                const std::string new_text = "Signal: --";
+                if (new_text != id(wifi_signal_last_text)) {
+                  id(wifi_signal_last_text) = new_text;
+                  id(wifi_signal_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_signal_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wifi_signal_label
+                    text: !lambda 'return id(wifi_signal_last_text);'
+                - lambda: 'id(wifi_signal_needs_render) = false;'
+            - lambda: |-
+                float new_value = -200.0f;
+                if (new_value != id(wifi_signal_bar_last_value)) {
+                  id(wifi_signal_bar_last_value) = new_value;
+                  id(wifi_signal_bar_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_signal_bar_needs_render);'
+              then:
+                - lvgl.bar.update:
+                    id: wifi_signal_bar
+                    value: !lambda 'return id(wifi_signal_bar_last_value);'
+                - lambda: 'id(wifi_signal_bar_needs_render) = false;'
+            - lambda: |-
+                const std::string ssid_text = "SSID: Not connected";
+                if (ssid_text != id(wifi_ssid_last_text)) {
+                  id(wifi_ssid_last_text) = ssid_text;
+                  id(wifi_ssid_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_ssid_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wifi_ssid_label
+                    text: !lambda 'return id(wifi_ssid_last_text);'
+                - lambda: 'id(wifi_ssid_needs_render) = false;'
+            - lambda: |-
+                const std::string ip_text = "IP: Not connected";
+                if (ip_text != id(wifi_ip_last_text)) {
+                  id(wifi_ip_last_text) = ip_text;
+                  id(wifi_ip_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wifi_ip_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wifi_ip_label
+                    text: !lambda 'return id(wifi_ip_last_text);'
+                - lambda: 'id(wifi_ip_needs_render) = false;'
+            - lambda: |-
+                const bool wg_connected = false;
+                const std::string status_text = "Status: \nDisconnected";
+                if (status_text != id(wg_status_last_text)) {
+                  id(wg_status_last_text) = status_text;
+                  id(wg_status_needs_render) = true;
+                }
+                if (wg_connected != id(wg_status_connected_state)) {
+                  id(wg_status_connected_state) = wg_connected;
+                  id(wg_status_color_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wg_status_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wg_status_label
+                    text: !lambda 'return id(wg_status_last_text);'
+                - lambda: 'id(wg_status_needs_render) = false;'
+            - if:
+                condition:
+                  lambda: 'return id(wg_status_color_needs_render);'
+              then:
+                - lvgl.widget.update:
+                    id: wg_status_label
+                    text_color: !lambda 'return id(my_gray);'
+                - lambda: 'id(wg_status_color_needs_render) = false;'
+            - lambda: |-
+                const std::string address_text = "VPN IP: Not configured";
+                if (address_text != id(wg_address_last_text)) {
+                  id(wg_address_last_text) = address_text;
+                  id(wg_address_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wg_address_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wg_address_label
+                    text: !lambda 'return id(wg_address_last_text);'
+                - lambda: 'id(wg_address_needs_render) = false;'
+            - lambda: |-
+                const std::string handshake_text = "Handshake: \nUnavailable";
+                if (handshake_text != id(wg_handshake_last_text)) {
+                  id(wg_handshake_last_text) = handshake_text;
+                  id(wg_handshake_needs_render) = true;
+                }
+            - if:
+                condition:
+                  lambda: 'return id(wg_handshake_needs_render);'
+              then:
+                - lvgl.label.update:
+                    id: wg_handshake_label
+                    text: !lambda 'return id(wg_handshake_last_text);'
+                - lambda: 'id(wg_handshake_needs_render) = false;'
 
   - interval: 1s
     then:
