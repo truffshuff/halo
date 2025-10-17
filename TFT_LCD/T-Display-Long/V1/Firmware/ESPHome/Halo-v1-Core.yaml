@@ -218,6 +218,7 @@ select:
       - "Main"
       - "WiFi"
       - "Weather"
+      - "Daily Forecast"
     initial_option: "Main"
     restore_value: true
     optimistic: true
@@ -226,6 +227,7 @@ select:
           int idx = 0;
           if (id(default_page_select).state == "WiFi") idx = 1;
           else if (id(default_page_select).state == "Weather") idx = 2;
+          else if (id(default_page_select).state == "Daily Forecast") idx = 3;
           id(default_page_index) = idx;
 
 interval:
@@ -439,10 +441,16 @@ api:
                         then:
                           - lvgl.page.show: weather_forecast_page
                         else:
-                          - logger.log:
-                              format: "Unknown page requested: %s"
-                              args: ['page_name.c_str()']
-                              level: WARN
+                          - if:
+                              condition:
+                                lambda: 'return page_name == "daily" || page_name == "Daily";'
+                              then:
+                                - lvgl.page.show: daily_forecast_page
+                              else:
+                                - logger.log:
+                                    format: "Unknown page requested: %s"
+                                    args: ['page_name.c_str()']
+                                    level: WARN
 
 i2c:
   - sda: 9
@@ -1528,52 +1536,52 @@ text_sensor:
   - platform: homeassistant
     name: "Forecast Day 1 Date"
     entity_id: input_text.forecast_day_1_date
-    id: forecast_day1_date
+    id: forecast_day1_header
 
   - platform: homeassistant
     name: "Forecast Day 2 Date"
     entity_id: input_text.forecast_day_2_date
-    id: forecast_day2_date
+    id: forecast_day2_header
 
   - platform: homeassistant
     name: "Forecast Day 3 Date"
     entity_id: input_text.forecast_day_3_date
-    id: forecast_day3_date
+    id: forecast_day3_header
 
   - platform: homeassistant
     name: "Forecast Day 4 Date"
     entity_id: input_text.forecast_day_4_date
-    id: forecast_day4_date
+    id: forecast_day4_header
 
   - platform: homeassistant
     name: "Forecast Day 5 Date"
     entity_id: input_text.forecast_day_5_date
-    id: forecast_day5_date
+    id: forecast_day5_header
 
   - platform: homeassistant
     name: "Forecast Day 6 Date"
     entity_id: input_text.forecast_day_6_date
-    id: forecast_day6_date
+    id: forecast_day6_header
 
   - platform: homeassistant
     name: "Forecast Day 7 Date"
     entity_id: input_text.forecast_day_7_date
-    id: forecast_day7_date
+    id: forecast_day7_header
 
   - platform: homeassistant
     name: "Forecast Day 8 Date"
     entity_id: input_text.forecast_day_8_date
-    id: forecast_day8_date
+    id: forecast_day8_header
 
   - platform: homeassistant
     name: "Forecast Day 9 Date"
     entity_id: input_text.forecast_day_9_date
-    id: forecast_day9_date
+    id: forecast_day9_header
 
   - platform: homeassistant
     name: "Forecast Day 10 Date"
     entity_id: input_text.forecast_day_10_date
-    id: forecast_day10_date
+    id: forecast_day10_header
 
   # 10-day forecast precipitation probability from Home Assistant
   - platform: homeassistant
@@ -2522,6 +2530,218 @@ lvgl:
             align: BOTTOM_MID
             x: 0
             y: -5
+    - id: daily_forecast_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - logger.log: "LVGL: Daily forecast page loaded and displayed"
+      widgets:
+        # Page header
+        - label:
+            text: "5-Day Forecast"
+            align: TOP_MID
+            x: 0
+            y: 10
+            text_font: montserrat_20
+            text_color: my_white
+            text_align: CENTER
+
+        # ========== Day 1 Card ==========
+        # Day name + date
+        - label:
+            text: "Tomorrow (MM/DD)"
+            id: lbl_forecast_day1_header
+            align: TOP_LEFT
+            x: 5
+            y: 35
+            text_font: montserrat_14
+            text_color: my_gray
+            text_align: LEFT
+
+        # Icon + Condition
+        - obj:
+            align: TOP_MID
+            x: 0
+            y: 52
+            width: 170
+            height: 35
+            bg_color: 0x000000
+            border_width: 0
+            widgets:
+              - label:
+                  text: "\U000F14E4"
+                  id: lbl_forecast_day1_icon
+                  text_font: icons_100
+                  text_color: my_white
+                  align: LEFT_MID
+                  x: 5
+                  y: 0
+                  width: 40
+                  height: 35
+              - label:
+                  text: "Sunny"
+                  id: lbl_forecast_day1_condition
+                  text_font: montserrat_18
+                  text_color: my_white
+                  align: LEFT_MID
+                  x: 48
+                  y: 0
+
+        # High/Low temps
+        - label:
+            text: "H: 34°C / L: 22°C"
+            id: lbl_forecast_day1_temps
+            align: TOP_MID
+            x: 0
+            y: 90
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Precipitation chance
+        - label:
+            text: "💧 15% chance"
+            id: lbl_forecast_day1_precip
+            align: TOP_MID
+            x: 0
+            y: 110
+            text_font: montserrat_14
+            text_color: my_teal
+            text_align: CENTER
+
+        # Divider line
+        - line:
+            points:
+              - 10, 130
+              - 170, 130
+            line_width: 1
+            line_color: 57343
+
+        # ========== Day 2 Card ==========
+        - label:
+            text: "Day +2 (MM/DD)"
+            id: lbl_forecast_day2_header
+            align: TOP_LEFT
+            x: 5
+            y: 140
+            text_font: montserrat_14
+            text_color: my_gray
+            text_align: LEFT
+
+        - obj:
+            align: TOP_MID
+            x: 0
+            y: 157
+            width: 170
+            height: 35
+            bg_color: 0x000000
+            border_width: 0
+            widgets:
+              - label:
+                  text: "\U000F0595"
+                  id: lbl_forecast_day2_icon
+                  text_font: icons_100
+                  text_color: my_white
+                  align: LEFT_MID
+                  x: 5
+                  y: 0
+                  width: 40
+                  height: 35
+              - label:
+                  text: "Partly Cloudy"
+                  id: lbl_forecast_day2_condition
+                  text_font: montserrat_18
+                  text_color: my_white
+                  align: LEFT_MID
+                  x: 48
+                  y: 0
+
+        - label:
+            text: "H: 32°C / L: 21°C"
+            id: lbl_forecast_day2_temps
+            align: TOP_MID
+            x: 0
+            y: 195
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        - label:
+            text: "💧 5% chance"
+            id: lbl_forecast_day2_precip
+            align: TOP_MID
+            x: 0
+            y: 215
+            text_font: montserrat_14
+            text_color: my_teal
+            text_align: CENTER
+
+        - line:
+            points:
+              - 10, 235
+              - 170, 235
+            line_width: 1
+            line_color: 57343
+
+        # ========== Day 3 Card ==========
+        - label:
+            text: "Day +3 (MM/DD)"
+            id: lbl_forecast_day3_header
+            align: TOP_LEFT
+            x: 5
+            y: 245
+            text_font: montserrat_14
+            text_color: my_gray
+            text_align: LEFT
+
+        - obj:
+            align: TOP_MID
+            x: 0
+            y: 262
+            width: 170
+            height: 35
+            bg_color: 0x000000
+            border_width: 0
+            widgets:
+              - label:
+                  text: "\U000F0597"
+                  id: lbl_forecast_day3_icon
+                  text_font: icons_100
+                  text_color: my_white
+                  align: LEFT_MID
+                  x: 5
+                  y: 0
+                  width: 40
+                  height: 35
+              - label:
+                  text: "Rainy"
+                  id: lbl_forecast_day3_condition
+                  text_font: montserrat_18
+                  text_color: my_white
+                  align: LEFT_MID
+                  x: 48
+                  y: 0
+
+        - label:
+            text: "H: 28°C / L: 19°C"
+            id: lbl_forecast_day3_temps
+            align: TOP_MID
+            x: 0
+            y: 300
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        - label:
+            text: "💧 85% chance"
+            id: lbl_forecast_day3_precip
+            align: TOP_MID
+            x: 0
+            y: 320
+            text_font: montserrat_14
+            text_color: my_teal
+            text_align: CENTER
 text:
   - platform: lvgl
     name: fr_cond_icon
@@ -2558,6 +2778,72 @@ text:
   - platform: lvgl
     name: dy_precip
     widget: lbl_weather_forecast_dailyprecip
+    mode: text
+
+  # Daily Forecast Page - Day 1
+  - platform: lvgl
+    name: forecast_day1_header
+    widget: lbl_forecast_day1_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day1_icon
+    widget: lbl_forecast_day1_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day1_condition
+    widget: lbl_forecast_day1_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day1_temps
+    widget: lbl_forecast_day1_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day1_precip
+    widget: lbl_forecast_day1_precip
+    mode: text
+
+  # Daily Forecast Page - Day 2
+  - platform: lvgl
+    name: forecast_day2_header
+    widget: lbl_forecast_day2_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day2_icon
+    widget: lbl_forecast_day2_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day2_condition
+    widget: lbl_forecast_day2_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day2_temps
+    widget: lbl_forecast_day2_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day2_precip
+    widget: lbl_forecast_day2_precip
+    mode: text
+
+  # Daily Forecast Page - Day 3
+  - platform: lvgl
+    name: forecast_day3_header
+    widget: lbl_forecast_day3_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day3_icon
+    widget: lbl_forecast_day3_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day3_condition
+    widget: lbl_forecast_day3_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day3_temps
+    widget: lbl_forecast_day3_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day3_precip
+    widget: lbl_forecast_day3_precip
     mode: text
 
 
@@ -2598,6 +2884,13 @@ esphome:
                   - logger.log: "Showing Weather page"
                   - lvgl.page.show: weather_forecast_page
                 else:
-                  - logger.log: "Showing Main page"
-                  - lvgl.page.show: main_page
+                  - if:
+                      condition:
+                        lambda: 'return id(default_page_index) == 3;'
+                      then:
+                        - logger.log: "Showing Daily Forecast page"
+                        - lvgl.page.show: daily_forecast_page
+                      else:
+                        - logger.log: "Showing Main page"
+                        - lvgl.page.show: main_page
       - logger.log: "Boot sequence complete"
