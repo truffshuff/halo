@@ -5,3 +5,4 @@ V1/Firmware/ESPHome/\#Define Project.yaml
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core copy.yaml
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/secrets.yaml.example
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/.claude/settings.local.json
+.DS_Store

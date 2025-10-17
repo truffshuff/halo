@@ -1679,7 +1679,7 @@ sensor:
             id: lbl_forecast_day1_temps
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "H: %s°F / L: 22°F", x.c_str());
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: 22°F", x);
               return buffer;
 
   - platform: homeassistant
@@ -1692,7 +1692,7 @@ sensor:
             id: lbl_forecast_day2_temps
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "H: %s°F / L: 21°F", x.c_str());
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: 21°F", x);
               return buffer;
 
   - platform: homeassistant
@@ -1705,7 +1705,7 @@ sensor:
             id: lbl_forecast_day3_temps
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "H: %s°F / L: 19°F", x.c_str());
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: 19°F", x);
               return buffer;
 
   - platform: homeassistant
