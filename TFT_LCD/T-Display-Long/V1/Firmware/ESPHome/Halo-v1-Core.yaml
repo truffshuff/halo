@@ -3022,7 +3022,8 @@ lvgl:
     - id: daily_forecast_page
       bg_color: 0x000000
       bg_opa: COVER
-      scrollbar_mode: "OFF"
+      scrollbar_mode: "AUTO"
+      scrollable: true
       on_load:
         - logger.log: "LVGL: Daily forecast page loaded and displayed"
       widgets:
@@ -3038,123 +3039,644 @@ lvgl:
 
         # Day 1
         - label:
-            text: "Tomorrow (10/17) | ☀️ Sunny | H:34°F L:22°F | 💧15% 0.0mm"
+            text: "Day +1 (--/--)"
             id: lbl_forecast_day1_header
             align: TOP_LEFT
             x: 2
-            y: 25
-            text_font: montserrat_12
+            y: 60
+            text_font: montserrat_14
             text_color: my_white
             text_align: LEFT
             long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day1_icon
+            align: TOP_LEFT
+            x: 2
+            y: 85
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day1_condition
+            align: TOP_LEFT
+            x: 30
+            y: 88
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day1_temps
+            align: TOP_LEFT
+            x: 2
+            y: 115
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day1_precip
+            align: TOP_LEFT
+            x: 2
+            y: 140
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day1_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 160
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
 
         # Day 2
         - label:
-            text: "Day +2 (10/18) | ⛅ Cloudy | H:32°F L:21°F | 💧5% 0.0mm"
+            text: "Day +2 (--/--)"
             id: lbl_forecast_day2_header
             align: TOP_LEFT
             x: 2
-            y: 60
-            text_font: montserrat_12
+            y: 240
+            text_font: montserrat_14
             text_color: my_white
             text_align: LEFT
             long_mode: WRAP
 
-        # Day 3
         - label:
-            text: "Day +3 (10/19) | 🌧️ Rainy | H:28°F L:19°F | 💧85% 0.15mm"
-            id: lbl_forecast_day3_header
+            text: "--"
+            id: lbl_forecast_day2_icon
             align: TOP_LEFT
             x: 2
-            y: 95
-            text_font: montserrat_12
+            y: 265
+            text_font: montserrat_18
             text_color: my_white
             text_align: LEFT
-            long_mode: WRAP
 
-        # Day 4
         - label:
-            text: "Day +4 (10/20) | 🌧️ Rainy | H:25°F L:18°F | 💧45% 0.45mm"
-            id: lbl_forecast_day4_header
+            text: "---"
+            id: lbl_forecast_day2_condition
+            align: TOP_LEFT
+            x: 30
+            y: 268
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day2_temps
             align: TOP_LEFT
             x: 2
-            y: 130
-            text_font: montserrat_12
+            y: 295
+            text_font: montserrat_14
             text_color: my_white
             text_align: LEFT
-            long_mode: WRAP
 
-        # Day 5
         - label:
-            text: "Day +5 (10/21) | ☀️ Sunny | H:30°F L:20°F | 💧3% 0.03mm"
-            id: lbl_forecast_day5_header
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day2_precip
             align: TOP_LEFT
             x: 2
-            y: 165
+            y: 320
             text_font: montserrat_12
             text_color: my_white
             text_align: LEFT
-            long_mode: WRAP
 
-        # Day 6
         - label:
-            text: "Day +6 (10/22) | ☀️ Sunny | H:31°F L:20°F | 💧0% 0.0mm"
-            id: lbl_forecast_day6_header
-            align: TOP_LEFT
-            x: 2
-            y: 200
-            text_font: montserrat_12
-            text_color: my_white
-            text_align: LEFT
-            long_mode: WRAP
-
-        # Day 7
-        - label:
-            text: "Day +7 (10/23) | ☀️ Sunny | H:32°F L:21°F | 💧0% 0.0mm"
-            id: lbl_forecast_day7_header
-            align: TOP_LEFT
-            x: 2
-            y: 235
-            text_font: montserrat_12
-            text_color: my_white
-            text_align: LEFT
-            long_mode: WRAP
-
-        # Day 8
-        - label:
-            text: "Day +8 (10/24) | ⛅ Cloudy | H:29°F L:19°F | 💧11% 0.11mm"
-            id: lbl_forecast_day8_header
-            align: TOP_LEFT
-            x: 2
-            y: 270
-            text_font: montserrat_12
-            text_color: my_white
-            text_align: LEFT
-            long_mode: WRAP
-
-        # Day 9
-        - label:
-            text: "Day +9 (10/25) | 🌧️ Rainy | H:27°F L:17°F | 💧24% 0.24mm"
-            id: lbl_forecast_day9_header
-            align: TOP_LEFT
-            x: 2
-            y: 305
-            text_font: montserrat_12
-            text_color: my_white
-            text_align: LEFT
-            long_mode: WRAP
-
-        # Day 10
-        - label:
-            text: "Day +10 (10/26) | ☀️ Sunny | H:33°F L:22°F | 💧5% 0.05mm"
-            id: lbl_forecast_day10_header
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day2_precip_amt
             align: TOP_LEFT
             x: 2
             y: 340
             text_font: montserrat_12
             text_color: my_white
             text_align: LEFT
+
+        # Day 3
+        - label:
+            text: "Day +3 (--/--)"
+            id: lbl_forecast_day3_header
+            align: TOP_LEFT
+            x: 2
+            y: 420
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
             long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day3_icon
+            align: TOP_LEFT
+            x: 2
+            y: 445
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day3_condition
+            align: TOP_LEFT
+            x: 30
+            y: 448
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day3_temps
+            align: TOP_LEFT
+            x: 2
+            y: 475
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day3_precip
+            align: TOP_LEFT
+            x: 2
+            y: 500
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day3_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 520
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Day 4
+        - label:
+            text: "Day +4 (--/--)"
+            id: lbl_forecast_day4_header
+            align: TOP_LEFT
+            x: 2
+            y: 600
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day4_icon
+            align: TOP_LEFT
+            x: 2
+            y: 625
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day4_condition
+            align: TOP_LEFT
+            x: 30
+            y: 628
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day4_temps
+            align: TOP_LEFT
+            x: 2
+            y: 655
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day4_precip
+            align: TOP_LEFT
+            x: 2
+            y: 680
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day4_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 700
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Day 5
+        - label:
+            text: "Day +5 (--/--)"
+            id: lbl_forecast_day5_header
+            align: TOP_LEFT
+            x: 2
+            y: 780
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day5_icon
+            align: TOP_LEFT
+            x: 2
+            y: 805
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day5_condition
+            align: TOP_LEFT
+            x: 30
+            y: 808
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day5_temps
+            align: TOP_LEFT
+            x: 2
+            y: 835
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day5_precip
+            align: TOP_LEFT
+            x: 2
+            y: 860
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day5_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 880
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Day 6
+        - label:
+            text: "Day +6 (--/--)"
+            id: lbl_forecast_day6_header
+            align: TOP_LEFT
+            x: 2
+            y: 960
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day6_icon
+            align: TOP_LEFT
+            x: 2
+            y: 985
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day6_condition
+            align: TOP_LEFT
+            x: 30
+            y: 988
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day6_temps
+            align: TOP_LEFT
+            x: 2
+            y: 1015
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day6_precip
+            align: TOP_LEFT
+            x: 2
+            y: 1040
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day6_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 1060
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Day 7
+        - label:
+            text: "Day +7 (--/--)"
+            id: lbl_forecast_day7_header
+            align: TOP_LEFT
+            x: 2
+            y: 1140
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day7_icon
+            align: TOP_LEFT
+            x: 2
+            y: 1165
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day7_condition
+            align: TOP_LEFT
+            x: 30
+            y: 1168
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day7_temps
+            align: TOP_LEFT
+            x: 2
+            y: 1195
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day7_precip
+            align: TOP_LEFT
+            x: 2
+            y: 1220
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day7_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 1240
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Day 8
+        - label:
+            text: "Day +8 (--/--)"
+            id: lbl_forecast_day8_header
+            align: TOP_LEFT
+            x: 2
+            y: 1320
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day8_icon
+            align: TOP_LEFT
+            x: 2
+            y: 1345
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day8_condition
+            align: TOP_LEFT
+            x: 30
+            y: 1348
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day8_temps
+            align: TOP_LEFT
+            x: 2
+            y: 1375
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day8_precip
+            align: TOP_LEFT
+            x: 2
+            y: 1400
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day8_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 1420
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Day 9
+        - label:
+            text: "Day +9 (--/--)"
+            id: lbl_forecast_day9_header
+            align: TOP_LEFT
+            x: 2
+            y: 1500
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day9_icon
+            align: TOP_LEFT
+            x: 2
+            y: 1525
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day9_condition
+            align: TOP_LEFT
+            x: 30
+            y: 1528
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day9_temps
+            align: TOP_LEFT
+            x: 2
+            y: 1555
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day9_precip
+            align: TOP_LEFT
+            x: 2
+            y: 1580
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day9_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 1600
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Day 10
+        - label:
+            text: "Day +10 (--/--)"
+            id: lbl_forecast_day10_header
+            align: TOP_LEFT
+            x: 2
+            y: 1680
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: WRAP
+
+        - label:
+            text: "--"
+            id: lbl_forecast_day10_icon
+            align: TOP_LEFT
+            x: 2
+            y: 1705
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "---"
+            id: lbl_forecast_day10_condition
+            align: TOP_LEFT
+            x: 30
+            y: 1708
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: --°F"
+            id: lbl_forecast_day10_temps
+            align: TOP_LEFT
+            x: 2
+            y: 1735
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Chance: --%"
+            id: lbl_forecast_day10_precip
+            align: TOP_LEFT
+            x: 2
+            y: 1760
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "💧 Amount: --mm"
+            id: lbl_forecast_day10_precip_amt
+            align: TOP_LEFT
+            x: 2
+            y: 1780
+            text_font: montserrat_12
+            text_color: my_white
+            text_align: LEFT
+
+        # Navigation button (fixed at bottom of screen)
+        - btn:
+            id: forecast_nav_button
+            align: BOTTOM_MID
+            x: 0
+            y: -5
+            width: 160
+            height: 50
+            bg_color: 0x333333
+            bg_opa: COVER
+            border_width: 2
+            border_color: 0x00DFFF
+            radius: 10
+            checkable: false
+            widgets:
+              - label:
+                  text: "Next \u25BC"
+                  align: CENTER
+                  text_font: montserrat_14
+                  text_color: my_white
 text:
   - platform: lvgl
     name: fr_cond_icon
