@@ -2608,6 +2608,10 @@ font:
     id: icons_100
     size: 100
     bpp: 4
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_20
+    size: 20
+    bpp: 4
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
@@ -3535,7 +3539,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 85
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -3597,7 +3601,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 265
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -3659,7 +3663,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 445
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -3721,7 +3725,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 625
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -3783,7 +3787,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 805
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -3845,7 +3849,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 985
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -3907,7 +3911,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1165
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -3969,7 +3973,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1345
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -4031,7 +4035,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1525
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
@@ -4093,7 +4097,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1705
-            text_font: icons_100
+            text_font: icons_20
             text_color: my_white
             text_align: LEFT
 
