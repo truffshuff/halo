@@ -638,32 +638,25 @@ script:
   - id: fetch_weather_forecast
     then:
       - logger.log: "Requesting daily forecast from Home Assistant..."
-      - homeassistant.service:
-          service: weather.get_forecasts
-          data:
+      - http_request.post:
+          url: http://192.168.1.236:8123/api/services/weather/get_forecasts
+          request_headers:
+            Authorization: !secret ha_api_token
+            Content-Type: application/json
+          json:
             entity_id: weather.hhut
             type: daily
-          response_variables:
-            forecast_response: |-
-              return x;
-          then:
-            - lambda: |-
-                ESP_LOGD("forecast", "Got forecast response");
-                if (forecast_response.size() > 0) {
-                  ESP_LOGD("forecast", "Forecast has %d days", forecast_response.size());
-                  for (size_t i = 0; i < forecast_response.size() && i < 10; i++) {
-                    auto day = forecast_response[i];
-                    ESP_LOGD("forecast", "Day %d: condition=%s, temp=%.1f, templow=%.1f, precip=%.0f%%",
-                      i,
-                      day["condition"].as<std::string>().c_str(),
-                      day["temperature"].as<float>(),
-                      day["templow"].as<float>(),
-                      day["precipitation_probability"].as<float>()
-                    );
+          on_response:
+            then:
+              - logger.log: "Forecast service response received"
+              - lambda: |-
+                  ESP_LOGD("forecast", "Response body length: %d", body.length());
+                  if (body.length() > 0) {
+                    ESP_LOGD("forecast", "Response: %s", body.substr(0, 200).c_str());
+                    id(forecast_json_data) = body;
+                  } else {
+                    ESP_LOGD("forecast", "ERROR: Response body is empty!");
                   }
-                } else {
-                  ESP_LOGD("forecast", "ERROR: Forecast is empty!");
-                }
 
 number:
   - platform: template
