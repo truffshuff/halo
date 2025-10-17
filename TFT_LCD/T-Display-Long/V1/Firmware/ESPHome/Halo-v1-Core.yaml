@@ -576,18 +576,25 @@ script:
             return time_buf;
   - id: fetch_daily_forecast
     then:
-      - logger.log: "Requesting daily forecast..."
+      - logger.log:
+          format: Requesting daily forecast...
+          level: DEBUG
+          tag: main
+      - homeassistant.service:
+          service: weather.get_forecasts
+          data:
+            entity_id: weather.hhut
+            type: daily
+          variables:
+            forecast: !lambda 'return x;'
       - lambda: |-
-          ESP_LOGI("weather", "Requesting daily forecast...");
-          auto forecast = homeassistant_component.get_forecast("weather.hhut", "daily");
           if (forecast.size() > 0) {
             float temp = forecast[0]["temperature"].as<float>();
             char buf[16];
-            snprintf(buf, sizeof(buf), "High: %.1f°F", temp);
-            id(todays_high).publish_state(buf);
-            ESP_LOGI("weather", "Today's high: %.1f°F", temp);
+            snprintf(buf, sizeof(buf), "High: %.1f°C", temp);
+            id(lv_label_forecast).set_text(buf);
           } else {
-            id(todays_high).publish_state("unknown");
+            id(lv_label_forecast).set_text("Unknown");
           }
   - id: update_weather_icon_color
     then:
