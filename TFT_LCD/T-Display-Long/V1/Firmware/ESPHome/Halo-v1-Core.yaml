@@ -569,108 +569,37 @@ script:
     then:
       - logger.log: "Updating weather icon color based on condition"
       - delay: 500ms
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("sunny") != std::string::npos ||
-                      condition.find("clear") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_yellow
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("cloudy") != std::string::npos ||
-                      condition.find("overcast") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_gray
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("rainy") != std::string::npos ||
-                      condition.find("pouring") != std::string::npos ||
-                      condition.find("drizzle") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_blue
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("snowy") != std::string::npos ||
-                      condition.find("sleet") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_white
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("hail") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_teal
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("lightning") != std::string::npos ||
-                      condition.find("thunderstorm") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_red
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("fog") != std::string::npos ||
-                      condition.find("mist") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_gray
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return (condition.find("windy") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_green
-      - if:
-          condition:
-            lambda: |-
-              std::string condition = id(fr_cond_name).state;
-              return !(condition.find("sunny") != std::string::npos ||
-                       condition.find("clear") != std::string::npos ||
-                       condition.find("cloudy") != std::string::npos ||
-                       condition.find("overcast") != std::string::npos ||
-                       condition.find("rainy") != std::string::npos ||
+      - lvgl.label.update:
+          id: lbl_weather_forecast_condition_icon
+          text_color: !lambda |-
+            std::string condition = id(fr_cond_name).state;
+
+            if (condition.find("sunny") != std::string::npos ||
+                condition.find("clear") != std::string::npos) {
+              return lv_color_hex(0xFFD700);  // Gold
+            } else if (condition.find("cloudy") != std::string::npos ||
+                       condition.find("overcast") != std::string::npos) {
+              return lv_color_hex(0xA9A9A9);  // Dark gray
+            } else if (condition.find("rainy") != std::string::npos ||
                        condition.find("pouring") != std::string::npos ||
-                       condition.find("drizzle") != std::string::npos ||
-                       condition.find("snowy") != std::string::npos ||
-                       condition.find("sleet") != std::string::npos ||
-                       condition.find("hail") != std::string::npos ||
-                       condition.find("lightning") != std::string::npos ||
-                       condition.find("thunderstorm") != std::string::npos ||
-                       condition.find("fog") != std::string::npos ||
-                       condition.find("mist") != std::string::npos ||
-                       condition.find("windy") != std::string::npos);
-          then:
-            - lvgl.widget.update:
-                id: lbl_weather_forecast_condition_icon
-                text_color: my_white
+                       condition.find("drizzle") != std::string::npos) {
+              return lv_color_hex(0x4169E1);  // Royal blue
+            } else if (condition.find("snowy") != std::string::npos ||
+                       condition.find("sleet") != std::string::npos) {
+              return lv_color_hex(0xDCDCDC);  // Gainsboro (light gray)
+            } else if (condition.find("hail") != std::string::npos) {
+              return lv_color_hex(0x87CEEB);  // Sky blue
+            } else if (condition.find("lightning") != std::string::npos ||
+                       condition.find("thunderstorm") != std::string::npos) {
+              return lv_color_hex(0xFF1493);  // Deep pink (warning)
+            } else if (condition.find("fog") != std::string::npos ||
+                       condition.find("mist") != std::string::npos) {
+              return lv_color_hex(0xB0C4DE);  // Light steel blue
+            } else if (condition.find("windy") != std::string::npos) {
+              return lv_color_hex(0x90EE90);  // Light green
+            } else {
+              return lv_color_hex(0xFFFFFF);  // White (default)
+            }
 
 number:
   - platform: template
