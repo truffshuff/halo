@@ -770,7 +770,6 @@ binary_sensor:
     id: display_backlight_state
     entity_category: "diagnostic"
     lambda: 'return id(display_backlight_is_on);'
-    update_interval: 1s
 
 sensor:
   - platform: uptime
