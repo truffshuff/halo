@@ -635,8 +635,7 @@ script:
       - http_request.get:
           url: http://hhut-ha.local:8123/api/states/weather.hhut
           request_headers:
-            Authorization: "Bearer !secret ha_api_token"
-            Content-Type: application/json
+            Authorization: !secret ha_api_token
           on_response:
             then:
               - logger.log: "Forecast API Response received"
