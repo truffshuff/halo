@@ -666,6 +666,19 @@ number:
             id: weather_temp_needle
             value: !lambda 'return (int)x;'
 
+http_request:
+  useragent: ESPHome/Halo
+  timeout: 5s
+
+rest:
+  - resource: http://hhut-ha.local:8123/api/states/weather.hhut
+    method: GET
+    headers:
+      Authorization: "Bearer !secret ha_api_token"
+      Content-Type: application/json
+    id: ha_weather_forecast
+    update_interval: 30min
+
 binary_sensor:
   - platform: status
     name: Online
@@ -1299,15 +1312,43 @@ text_sensor:
     icon: mdi:air-filter
     lambda: |-
       if (id(sen55_voc).state < 80) {
-        return std::string("Improved");} 
+        return std::string("Improved");}
       else if (id(sen55_voc).state < 150) {
-        return std::string("Normal");} 
+        return std::string("Normal");}
       else if (id(sen55_voc).state < 250) {
-        return std::string("Abnormal");} 
+        return std::string("Abnormal");}
       else if (id(sen55_voc).state < 400) {
-        return std::string("Very abnormal");} 
+        return std::string("Very abnormal");}
       else {
         return std::string("Extremely abnormal");}
+
+  # 10-day Forecast parsing from HA weather entity
+  - platform: rest
+    name: "Forecast Raw JSON"
+    id: forecast_json_raw
+    resource: http://hhut-ha.local:8123/api/states/weather.hhut
+    method: GET
+    headers:
+      Authorization: "Bearer !secret ha_api_token"
+      Content-Type: application/json
+    update_interval: 30min
+    entity_category: diagnostic
+    icon: mdi:weather-cloudy
+    lambda: |-
+      return id(ha_weather_forecast).get_string();
+
+  # Diagnostic: Test if we can read the raw JSON
+  - platform: template
+    name: "Forecast Debug"
+    id: forecast_debug
+    update_interval: 31min
+    lambda: |-
+      auto json_str = id(forecast_json_raw).state;
+      ESP_LOGD("forecast", "Raw JSON response: %s", json_str.c_str());
+      if (json_str.empty()) {
+        return std::string("No data");
+      }
+      return std::string("Data received");
 
 font:
   - file: "fonts/materialdesignicons-webfont.ttf"
