@@ -1366,7 +1366,58 @@ sensor:
                                 text_color: my_red                      
     i2c_id: lily_i2c
     address: 0x69
-    update_interval: 10s    
+    update_interval: 10s
+
+  # 10-day forecast high temperatures from Home Assistant
+  - platform: homeassistant
+    name: "Forecast Day 1 High Temp"
+    entity_id: input_text.forecast_day_1_high_temperature
+    id: forecast_day1_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 2 High Temp"
+    entity_id: input_text.forecast_day_2_high_temperature
+    id: forecast_day2_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 3 High Temp"
+    entity_id: input_text.forecast_day_3_high_temperature
+    id: forecast_day3_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 4 High Temp"
+    entity_id: input_text.forecast_day_4_high_temperature
+    id: forecast_day4_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 5 High Temp"
+    entity_id: input_text.forecast_day_5_high_temperature
+    id: forecast_day5_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 6 High Temp"
+    entity_id: input_text.forecast_day_6_high_temperature
+    id: forecast_day6_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 7 High Temp"
+    entity_id: input_text.forecast_day_7_high_temperature
+    id: forecast_day7_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 8 High Temp"
+    entity_id: input_text.forecast_day_8_high_temperature
+    id: forecast_day8_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 9 High Temp"
+    entity_id: input_text.forecast_day_9_high_temperature
+    id: forecast_day9_high_temp
+
+  - platform: homeassistant
+    name: "Forecast Day 10 High Temp"
+    entity_id: input_text.forecast_day_10_high_temperature
+    id: forecast_day10_high_temp
 
 button:
   - platform: restart
@@ -1421,6 +1472,159 @@ text_sensor:
         return std::string("Very abnormal");}
       else {
         return std::string("Extremely abnormal");}
+
+  # 10-day forecast conditions from Home Assistant
+  - platform: homeassistant
+    name: "Forecast Day 1 Condition"
+    entity_id: input_text.forecast_day_1_condition
+    id: forecast_day1_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 2 Condition"
+    entity_id: input_text.forecast_day_2_condition
+    id: forecast_day2_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Condition"
+    entity_id: input_text.forecast_day_3_condition
+    id: forecast_day3_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 4 Condition"
+    entity_id: input_text.forecast_day_4_condition
+    id: forecast_day4_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Condition"
+    entity_id: input_text.forecast_day_5_condition
+    id: forecast_day5_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Condition"
+    entity_id: input_text.forecast_day_6_condition
+    id: forecast_day6_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Condition"
+    entity_id: input_text.forecast_day_7_condition
+    id: forecast_day7_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Condition"
+    entity_id: input_text.forecast_day_8_condition
+    id: forecast_day8_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Condition"
+    entity_id: input_text.forecast_day_9_condition
+    id: forecast_day9_condition
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Condition"
+    entity_id: input_text.forecast_day_10_condition
+    id: forecast_day10_condition
+
+  # 10-day forecast dates from Home Assistant
+  - platform: homeassistant
+    name: "Forecast Day 1 Date"
+    entity_id: input_text.forecast_day_1_date
+    id: forecast_day1_date
+
+  - platform: homeassistant
+    name: "Forecast Day 2 Date"
+    entity_id: input_text.forecast_day_2_date
+    id: forecast_day2_date
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Date"
+    entity_id: input_text.forecast_day_3_date
+    id: forecast_day3_date
+
+  - platform: homeassistant
+    name: "Forecast Day 4 Date"
+    entity_id: input_text.forecast_day_4_date
+    id: forecast_day4_date
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Date"
+    entity_id: input_text.forecast_day_5_date
+    id: forecast_day5_date
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Date"
+    entity_id: input_text.forecast_day_6_date
+    id: forecast_day6_date
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Date"
+    entity_id: input_text.forecast_day_7_date
+    id: forecast_day7_date
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Date"
+    entity_id: input_text.forecast_day_8_date
+    id: forecast_day8_date
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Date"
+    entity_id: input_text.forecast_day_9_date
+    id: forecast_day9_date
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Date"
+    entity_id: input_text.forecast_day_10_date
+    id: forecast_day10_date
+
+  # 10-day forecast precipitation probability from Home Assistant
+  - platform: homeassistant
+    name: "Forecast Day 1 Precipitation Probability"
+    entity_id: input_text.forecast_day_1_precipitation_probability
+    id: forecast_day1_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 2 Precipitation Probability"
+    entity_id: input_text.forecast_day_2_precipitation_probability
+    id: forecast_day2_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Precipitation Probability"
+    entity_id: input_text.forecast_day_3_precipitation_probability
+    id: forecast_day3_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 4 Precipitation Probability"
+    entity_id: input_text.forecast_day_4_precipitation_probability
+    id: forecast_day4_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Precipitation Probability"
+    entity_id: input_text.forecast_day_5_precipitation_probability
+    id: forecast_day5_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Precipitation Probability"
+    entity_id: input_text.forecast_day_6_precipitation_probability
+    id: forecast_day6_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Precipitation Probability"
+    entity_id: input_text.forecast_day_7_precipitation_probability
+    id: forecast_day7_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Precipitation Probability"
+    entity_id: input_text.forecast_day_8_precipitation_probability
+    id: forecast_day8_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Precipitation Probability"
+    entity_id: input_text.forecast_day_9_precipitation_probability
+    id: forecast_day9_precip_prob
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Precipitation Probability"
+    entity_id: input_text.forecast_day_10_precipitation_probability
+    id: forecast_day10_precip_prob
 
 font:
   - file: "fonts/materialdesignicons-webfont.ttf"
