@@ -326,9 +326,6 @@ interval:
   - interval: 5s
     then:
       - script.execute: update_weather_icon_color
-  - interval: 1h
-    then:
-      - script.execute: fetch_daily_forecast
 
 api:
   on_client_connected:
@@ -574,28 +571,6 @@ script:
               snprintf(time_buf, sizeof(time_buf), "%2d:%02d%s", hour_12, now.minute, is_pm ? "PM" : "AM");
             }
             return time_buf;
-  - id: fetch_daily_forecast
-    then:
-      - logger.log:
-          format: "Requesting daily forecast..."
-          level: DEBUG
-          tag: main
-      - homeassistant.service:
-          service: "weather.get_forecasts"
-          data:
-            entity_id: weather.hhut
-            type: daily
-          variables:
-            forecast: !lambda 'return x;'
-      - lambda: |-
-          if (forecast.size() > 0) {
-            float temp = forecast[0]["temperature"].as<float>();
-            char buf[16];
-            snprintf(buf, sizeof(buf), "High: %.1f°C", temp);
-            id(lv_label_forecast).set_text(buf);
-          } else {
-            id(lv_label_forecast).set_text("Unknown");
-          }
   - id: update_weather_icon_color
     then:
       - logger.log: "Updating weather icon color based on condition"
@@ -2088,16 +2063,6 @@ lvgl:
             align: TOP_MID
             x: 0
             y: 120
-        
-        - label:
-            text: "Intializing..."
-            id: lv_label_forecast
-            text_align: CENTER
-            text_font: montserrat_20
-            text_color: my_white
-            align: TOP_MID
-            x: 0
-            y: 140
 
         # Semicircle meter gauge for apparent temperature
         - obj:
@@ -2317,4 +2282,3 @@ esphome:
                   - logger.log: "Showing Main page"
                   - lvgl.page.show: main_page
       - logger.log: "Boot sequence complete"
-      - script.execute: fetch_daily_forecast
