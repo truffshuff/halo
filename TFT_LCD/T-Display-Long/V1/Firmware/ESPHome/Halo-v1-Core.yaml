@@ -328,23 +328,7 @@ interval:
       - script.execute: update_weather_icon_color
   - interval: 1h
     then:
-      - logger.log: "Requesting daily forecast..."
-      - homeassistant.service:
-          service: weather.get_forecasts
-          data:
-            entity_id: weather.hhut  # replace with your weather entity
-            type: daily
-          variables:
-            forecast: |-
-              return x;
-      - lambda: |-
-          if (forecast.size() > 0) {
-            float temp = forecast[0]["temperature"].as<float>();
-            id(todays_high).publish_state("High: " + to_string(temp) + "°C");
-            ESP_LOGI("weather", "Today's high: %.1f °C", temp);
-          } else {
-            id(todays_high).publish_state("unknown");
-          }
+      - script.execute: fetch_daily_forecast
 
 api:
   on_client_connected:
@@ -590,6 +574,24 @@ script:
               snprintf(time_buf, sizeof(time_buf), "%2d:%02d%s", hour_12, now.minute, is_pm ? "PM" : "AM");
             }
             return time_buf;
+  - id: fetch_daily_forecast
+    then:
+      - logger.log: "Requesting daily forecast..."
+      - homeassistant.service:
+          service: weather.get_forecasts
+          data:
+            entity_id: weather.hhut
+            type: daily
+          variables:
+            forecast: return x;
+      - lambda: |-
+          if (forecast.size() > 0) {
+            float temp = forecast[0]["temperature"].as<float>();
+            id(todays_high).publish_state("High: " + to_string(temp) + "°C");
+            ESP_LOGI("weather", "Today's high: %.1f °C", temp);
+          } else {
+            id(todays_high).publish_state("unknown");
+          } 
   - id: update_weather_icon_color
     then:
       - logger.log: "Updating weather icon color based on condition"
@@ -2301,3 +2303,4 @@ esphome:
                   - logger.log: "Showing Main page"
                   - lvgl.page.show: main_page
       - logger.log: "Boot sequence complete"
+      - script.execute: fetch_daily_forecast
