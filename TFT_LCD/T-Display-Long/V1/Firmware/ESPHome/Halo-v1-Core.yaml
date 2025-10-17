@@ -2102,7 +2102,7 @@ lvgl:
 
         # Today precipitation ant
         - label:
-            text: "HouAmt Today: --mm"
+            text: "Amt Today: --mm"
             id: lbl_weather_forecast_hrprecip
             text_align: CENTER
             text_font: montserrat_18
