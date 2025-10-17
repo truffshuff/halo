@@ -68,10 +68,6 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: forecast_json_data
-    type: std::string
-    restore_value: no
-    initial_value: '""'
 
 switch:
   - platform: template
@@ -330,19 +326,34 @@ interval:
   - interval: 5s
     then:
       - script.execute: update_weather_icon_color
-
-  - interval: 30min
+  - interval: 1h
     then:
-      - script.execute: fetch_weather_forecast
-
+      - logger.log: "Requesting daily forecast..."
+      - homeassistant.service:
+          service: weather.get_forecasts
+          data:
+            entity_id: weather.hhut  # replace with your weather entity
+            type: daily
+          variables:
+            forecast: |-
+              return x;
+          then:
+            - lambda: |-
+                if (forecast.size() > 0) {
+                  // get today's high temp
+                  float temp = forecast[0]["temperature"].as<float>();
+                  id(todays_high).publish_state(
+                    "High: " + to_string(temp) + "°F");
+                  ESP_LOGI("weather", "Today's high: %.1f °F", temp);
+                } else {
+                  id(todays_high).publish_state("unknown");
+                }
+                
 api:
   on_client_connected:
       - delay: 1s
       - lambda: 'id(cycleCounter) = 30;'
       - lambda: 'id(boot_complete) = true;'
-      # Fetch weather forecast after connecting to HA
-      - delay: 2s
-      - script.execute: fetch_weather_forecast
       # Re-apply the saved LED effect selection after HA connects
       - delay: 2s
       - lambda: |-
@@ -635,27 +646,6 @@ script:
               return lv_color_hex(0xFFFFFF);  // White (default)
             }
 
-  - id: fetch_weather_forecast
-    then:
-      - logger.log: "Requesting daily forecast from Home Assistant..."
-      - http_request.get:
-          url: http://192.168.1.236:8123/api/states/weather.hhut
-          request_headers:
-            Authorization: !secret ha_api_token
-          on_response:
-            then:
-              - logger.log: "Weather state response received"
-              - lambda: |-
-                  ESP_LOGD("forecast", "Response body length: %d", body.length());
-                  if (body.length() > 0) {
-                    // Log first 500 chars of response
-                    std::string preview = body.substr(0, std::min((size_t)500, body.length()));
-                    ESP_LOGD("forecast", "Response preview: %s", preview.c_str());
-                    id(forecast_json_data) = body;
-                  } else {
-                    ESP_LOGD("forecast", "ERROR: Response body is empty!");
-                  }
-
 number:
   - platform: template
     name: SEN55 Temperature Offset
@@ -699,10 +689,6 @@ number:
         - lvgl.indicator.update:
             id: weather_temp_needle
             value: !lambda 'return (int)x;'
-
-http_request:
-  useragent: ESPHome/Halo
-  timeout: 5s
 
 binary_sensor:
   - platform: status
@@ -1346,21 +1332,6 @@ text_sensor:
         return std::string("Very abnormal");}
       else {
         return std::string("Extremely abnormal");}
-
-  # Forecast data sensors (will be populated by fetch_weather_forecast script)
-  - platform: template
-    name: "Forecast Raw Response"
-    id: forecast_raw_response
-    entity_category: diagnostic
-    lambda: |-
-      return std::string("Fetching...");
-
-  - platform: template
-    name: "Forecast Debug"
-    id: forecast_debug
-    update_interval: never
-    lambda: |-
-      return std::string("Ready");
 
 font:
   - file: "fonts/materialdesignicons-webfont.ttf"
