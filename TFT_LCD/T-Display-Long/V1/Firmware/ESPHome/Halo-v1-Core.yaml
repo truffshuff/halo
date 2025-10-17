@@ -573,35 +573,48 @@ script:
     then:
       - logger.log: "Updating weather icon color based on condition"
       - delay: 500ms
+      - lambda: |-
+          std::string condition = id(fr_cond_name).state;
+          ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
       - lvgl.label.update:
           id: lbl_weather_forecast_condition_icon
           text_color: !lambda |-
             std::string condition = id(fr_cond_name).state;
+            ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
 
             if (condition.find("sunny") != std::string::npos ||
                 condition.find("clear") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Gold color");
               return lv_color_hex(0xFFD700);  // Gold
             } else if (condition.find("cloudy") != std::string::npos ||
                        condition.find("overcast") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Dark Gray color");
               return lv_color_hex(0xA9A9A9);  // Dark gray
             } else if (condition.find("rainy") != std::string::npos ||
                        condition.find("pouring") != std::string::npos ||
                        condition.find("drizzle") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Royal Blue color");
               return lv_color_hex(0x4169E1);  // Royal blue
             } else if (condition.find("snowy") != std::string::npos ||
                        condition.find("sleet") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Gainsboro color");
               return lv_color_hex(0xDCDCDC);  // Gainsboro (light gray)
             } else if (condition.find("hail") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Sky Blue color");
               return lv_color_hex(0x87CEEB);  // Sky blue
             } else if (condition.find("lightning") != std::string::npos ||
                        condition.find("thunderstorm") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Deep Pink color");
               return lv_color_hex(0xFF1493);  // Deep pink (warning)
             } else if (condition.find("fog") != std::string::npos ||
                        condition.find("mist") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Light Steel Blue color");
               return lv_color_hex(0xB0C4DE);  // Light steel blue
             } else if (condition.find("windy") != std::string::npos) {
+              ESP_LOGD("weather_color", "Setting Light Green color");
               return lv_color_hex(0x90EE90);  // Light green
             } else {
+              ESP_LOGD("weather_color", "Setting White color (default)");
               return lv_color_hex(0xFFFFFF);  // White (default)
             }
 
