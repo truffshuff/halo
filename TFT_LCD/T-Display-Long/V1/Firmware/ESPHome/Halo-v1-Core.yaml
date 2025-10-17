@@ -577,28 +577,18 @@ script:
   - id: fetch_daily_forecast
     then:
       - logger.log: "Requesting daily forecast..."
-      - homeassistant.service:
-          service: weather.get_forecasts
-          data:
-            entity_id: weather.hhut
-            type: daily
-          variables:
-            forecast: |-
-              // 'x' is the result from the service
-              return x;
       - lambda: |-
-        // In ESPHome, 'forecast' from above may not propagate correctly
-        // Instead, do the whole parsing in this lambda via HA API call:
-        auto response = id(homeassistant).get_forecast("weather.hhut", "daily");
-        if (response.size() > 0) {
-          float temp = response[0]["temperature"].as<float>();
-          char buf[16];
-          snprintf(buf, sizeof(buf), "High: %.1f°F", temp);
-          id(todays_high).publish_state(buf);
-          ESP_LOGI("weather", "Today's high: %.1f°F", temp);
-        } else {
-          id(todays_high).publish_state("unknown");
-        }
+          ESP_LOGI("weather", "Requesting daily forecast...");
+          auto forecast = id(homeassistant).get_forecast("weather.hhut", "daily");
+          if (forecast.size() > 0) {
+            float temp = forecast[0]["temperature"].as<float>();
+            char buf[16];
+            snprintf(buf, sizeof(buf), "High: %.1f°C", temp);
+            id(todays_high).publish_state(buf);
+            ESP_LOGI("weather", "Today's high: %.1f °C", temp);
+          } else {
+            id(todays_high).publish_state("unknown");
+          }
   - id: update_weather_icon_color
     then:
       - logger.log: "Updating weather icon color based on condition"
