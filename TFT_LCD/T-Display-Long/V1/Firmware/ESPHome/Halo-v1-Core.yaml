@@ -2087,7 +2087,7 @@ lvgl:
             text_color: my_teal
             align: CENTER
             x: 0
-            y: -30
+            y: -70
 
         # High temp stacked above low temp
         - label:
@@ -2098,7 +2098,7 @@ lvgl:
             text_color: my_red
             align: CENTER
             x: 0
-            y: 0
+            y: -35
 
         # Current temperature at bottom
         - label:
