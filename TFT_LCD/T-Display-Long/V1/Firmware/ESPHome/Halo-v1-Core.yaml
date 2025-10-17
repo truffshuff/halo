@@ -325,11 +325,18 @@ interval:
     then:
       - script.execute: update_weather_icon_color
 
+  - interval: 30min
+    then:
+      - script.execute: fetch_weather_forecast
+
 api:
   on_client_connected:
       - delay: 1s
       - lambda: 'id(cycleCounter) = 30;'
       - lambda: 'id(boot_complete) = true;'
+      # Fetch weather forecast after connecting to HA
+      - delay: 2s
+      - script.execute: fetch_weather_forecast
       # Re-apply the saved LED effect selection after HA connects
       - delay: 2s
       - lambda: |-
@@ -622,6 +629,29 @@ script:
               return lv_color_hex(0xFFFFFF);  // White (default)
             }
 
+  - id: fetch_weather_forecast
+    then:
+      - logger.log: "Fetching weather forecast from Home Assistant"
+      - http_request.get:
+          url: http://hhut-ha.local:8123/api/states/weather.hhut
+          headers:
+            Authorization: "Bearer !secret ha_api_token"
+            Content-Type: application/json
+          on_response:
+            then:
+              - logger.log:
+                  format: "Forecast API response status: %d"
+                  args: ['status_code']
+              - if:
+                  condition:
+                    lambda: 'return status_code == 200;'
+                  then:
+                    - logger.log:
+                        format: "Forecast response body: %s"
+                        args: ['body']
+                    - lambda: |-
+                        ESP_LOGD("forecast_parse", "Full response: %s", body.c_str());
+
 number:
   - platform: template
     name: SEN55 Temperature Offset
@@ -669,15 +699,6 @@ number:
 http_request:
   useragent: ESPHome/Halo
   timeout: 5s
-
-rest:
-  - resource: http://hhut-ha.local:8123/api/states/weather.hhut
-    method: GET
-    headers:
-      Authorization: "Bearer !secret ha_api_token"
-      Content-Type: application/json
-    id: ha_weather_forecast
-    update_interval: 30min
 
 binary_sensor:
   - platform: status
@@ -1322,33 +1343,20 @@ text_sensor:
       else {
         return std::string("Extremely abnormal");}
 
-  # 10-day Forecast parsing from HA weather entity
-  - platform: rest
-    name: "Forecast Raw JSON"
-    id: forecast_json_raw
-    resource: http://hhut-ha.local:8123/api/states/weather.hhut
-    method: GET
-    headers:
-      Authorization: "Bearer !secret ha_api_token"
-      Content-Type: application/json
-    update_interval: 30min
+  # Forecast data sensors (will be populated by fetch_weather_forecast script)
+  - platform: template
+    name: "Forecast Raw Response"
+    id: forecast_raw_response
     entity_category: diagnostic
-    icon: mdi:weather-cloudy
     lambda: |-
-      return id(ha_weather_forecast).get_string();
+      return std::string("Fetching...");
 
-  # Diagnostic: Test if we can read the raw JSON
   - platform: template
     name: "Forecast Debug"
     id: forecast_debug
-    update_interval: 31min
+    update_interval: never
     lambda: |-
-      auto json_str = id(forecast_json_raw).state;
-      ESP_LOGD("forecast", "Raw JSON response: %s", json_str.c_str());
-      if (json_str.empty()) {
-        return std::string("No data");
-      }
-      return std::string("Data received");
+      return std::string("Ready");
 
 font:
   - file: "fonts/materialdesignicons-webfont.ttf"
