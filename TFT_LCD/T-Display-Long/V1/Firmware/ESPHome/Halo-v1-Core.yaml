@@ -2036,19 +2036,12 @@ lvgl:
                             end_value: 100
                             color_start: 0x0099FF
                             color_end: 0xFF6600
-                    - range_from: 0
-                      range_to: 100
-                      angle_range: 180
-                      rotation: 180
-                      ticks:
-                        count: 0
-                      indicators:
                         - line:
                             id: weather_temp_needle
-                            width: 4
-                            r_mod: -15
+                            width: 6
+                            r_mod: -20
                             value: 50
-                            color: 0xFFFFFF
+                            color: 0xFF0000
               - obj:
                   height: 100
                   width: 100
@@ -2082,23 +2075,23 @@ lvgl:
         - label:
             text: "L:--°"
             id: lbl_weather_forecast_templo
-            text_align: LEFT
+            text_align: CENTER
             text_font: montserrat_28
             text_color: my_teal
             align: CENTER
-            x: -60
-            y: 60
+            x: -50
+            y: 10
 
         # High temp on right side above gauge
         - label:
             text: "H:--°"
             id: lbl_weather_forecast_temphi
-            text_align: RIGHT
+            text_align: CENTER
             text_font: montserrat_28
             text_color: my_red
             align: CENTER
-            x: 60
-            y: 60
+            x: 50
+            y: 10
 
         # Current temperature at bottom
         - label:
