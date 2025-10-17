@@ -68,6 +68,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: forecast_json_data
+    type: std::string
+    restore_value: no
+    initial_value: '""'
 
 switch:
   - platform: template
@@ -642,7 +646,11 @@ script:
             then:
               - logger.log: "Forecast API Response received"
               - lambda: |-
-                  ESP_LOGD("forecast_parse", "Response body: %s", body.c_str());
+                  id(forecast_json_data) = body;
+                  ESP_LOGD("forecast_parse", "Stored forecast JSON, length: %d", body.length());
+              - delay: 100ms
+              - lambda: |-
+                  ESP_LOGD("forecast_parse", "Forecast data: %s", id(forecast_json_data).c_str());
 
 number:
   - platform: template
