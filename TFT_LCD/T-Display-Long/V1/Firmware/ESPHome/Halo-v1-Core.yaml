@@ -3032,7 +3032,6 @@ lvgl:
             bg_color: 0x000000
             border_width: 0
             scrollbar_mode: "ON"
-            scroll_dir: VER
             widgets:
               # ========== Day 1 Card ==========
               - label:
