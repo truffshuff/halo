@@ -1813,6 +1813,33 @@ text_sensor:
             text: !lambda 'return x;'
         - lvgl.label.update:
             id: lbl_forecast_day1_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";  // pouring
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";  // hail
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // sunny-off (unknown)
+              }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
@@ -1848,6 +1875,33 @@ text_sensor:
             text: !lambda 'return x;'
         - lvgl.label.update:
             id: lbl_forecast_day2_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
@@ -1883,6 +1937,33 @@ text_sensor:
             text: !lambda 'return x;'
         - lvgl.label.update:
             id: lbl_forecast_day3_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
@@ -1911,36 +1992,435 @@ text_sensor:
     name: "Forecast Day 4 Condition"
     entity_id: input_text.forecast_day_4_condition
     id: forecast_day4_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day4_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 5 Condition"
     entity_id: input_text.forecast_day_5_condition
     id: forecast_day5_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day5_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 6 Condition"
     entity_id: input_text.forecast_day_6_condition
     id: forecast_day6_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day6_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 7 Condition"
     entity_id: input_text.forecast_day_7_condition
     id: forecast_day7_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day7_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 8 Condition"
     entity_id: input_text.forecast_day_8_condition
     id: forecast_day8_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day8_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 9 Condition"
     entity_id: input_text.forecast_day_9_condition
     id: forecast_day9_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day9_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 10 Condition"
     entity_id: input_text.forecast_day_10_condition
     id: forecast_day10_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day10_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("hail") != std::string::npos) {
+                return "\U000F0592";
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   # 10-day forecast dates from Home Assistant
   - platform: homeassistant
@@ -2019,7 +2499,7 @@ text_sensor:
             id: lbl_forecast_day1_precip
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "💧 Chance: %s%%", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -2032,7 +2512,7 @@ text_sensor:
             id: lbl_forecast_day2_precip
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "💧 Chance: %s%%", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -2045,7 +2525,7 @@ text_sensor:
             id: lbl_forecast_day3_precip
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "💧 Chance: %s%%", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
               return buffer;
 
   # 10-day forecast precipitation amount from Home Assistant
@@ -2059,7 +2539,7 @@ text_sensor:
             id: lbl_forecast_day1_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "💧 Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -2072,7 +2552,7 @@ text_sensor:
             id: lbl_forecast_day2_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "💧 Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -2085,7 +2565,7 @@ text_sensor:
             id: lbl_forecast_day3_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "💧 Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -3055,7 +3535,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 85
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3080,7 +3560,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day1_precip
             align: TOP_LEFT
             x: 2
@@ -3090,7 +3570,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day1_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3117,7 +3597,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 265
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3142,7 +3622,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day2_precip
             align: TOP_LEFT
             x: 2
@@ -3152,7 +3632,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day2_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3179,7 +3659,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 445
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3204,7 +3684,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day3_precip
             align: TOP_LEFT
             x: 2
@@ -3214,7 +3694,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day3_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3241,7 +3721,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 625
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3266,7 +3746,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day4_precip
             align: TOP_LEFT
             x: 2
@@ -3276,7 +3756,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day4_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3303,7 +3783,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 805
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3328,7 +3808,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day5_precip
             align: TOP_LEFT
             x: 2
@@ -3338,7 +3818,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day5_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3365,7 +3845,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 985
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3390,7 +3870,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day6_precip
             align: TOP_LEFT
             x: 2
@@ -3400,7 +3880,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day6_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3427,7 +3907,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1165
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3452,7 +3932,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day7_precip
             align: TOP_LEFT
             x: 2
@@ -3462,7 +3942,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day7_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3489,7 +3969,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1345
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3514,7 +3994,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day8_precip
             align: TOP_LEFT
             x: 2
@@ -3524,7 +4004,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day8_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3551,7 +4031,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1525
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3576,7 +4056,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day9_precip
             align: TOP_LEFT
             x: 2
@@ -3586,7 +4066,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day9_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3613,7 +4093,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 1705
-            text_font: montserrat_18
+            text_font: icons_100
             text_color: my_white
             text_align: LEFT
 
@@ -3638,7 +4118,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Chance: --%"
+            text: "Chance: --%"
             id: lbl_forecast_day10_precip
             align: TOP_LEFT
             x: 2
@@ -3648,7 +4128,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "💧 Amount: --mm"
+            text: "Amount: --mm"
             id: lbl_forecast_day10_precip_amt
             align: TOP_LEFT
             x: 2
@@ -3656,27 +4136,6 @@ lvgl:
             text_font: montserrat_12
             text_color: my_white
             text_align: LEFT
-
-        # Navigation button (fixed at bottom of screen)
-        - button:
-            id: forecast_nav_button
-            align: BOTTOM_MID
-            x: 0
-            y: -5
-            width: 160
-            height: 50
-            bg_color: 0x333333
-            bg_opa: COVER
-            border_width: 2
-            border_color: 0x00DFFF
-            radius: 10
-            checkable: false
-            widgets:
-              - label:
-                  text: "Next \u25BC"
-                  align: CENTER
-                  text_font: montserrat_14
-                  text_color: my_white
 text:
   - platform: lvgl
     name: fr_cond_icon
