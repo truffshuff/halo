@@ -606,7 +606,7 @@ number:
     unit_of_measurement: "%"
     on_value:
       then:
-        - lvgl.indicator.line.update:
+        - lvgl.indicator.update:
             id: weather_temp_needle
             value: !lambda 'return (int)x;'
 
