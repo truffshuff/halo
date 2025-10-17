@@ -47,7 +47,7 @@ captive_portal:
 logger:
   level: DEBUG
   logs:
-    http_request.idf: VERY_VERBOSE
+    http_request.idf: DEBUG
 
 globals:
   - id: cycleCounter
