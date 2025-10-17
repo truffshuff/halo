@@ -2183,6 +2183,7 @@ text:
     mode: text
   - platform: lvgl
     name: fr_cond_name
+    id: fr_cond_name
     widget: lbl_weather_forecast_condition_name
     mode: text
     on_value:
