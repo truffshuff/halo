@@ -2087,7 +2087,7 @@ lvgl:
             text_color: my_teal
             align: CENTER
             x: 0
-            y: -70
+            y: -35
 
         # High temp stacked above low temp
         - label:
@@ -2098,7 +2098,7 @@ lvgl:
             text_color: my_red
             align: CENTER
             x: 0
-            y: -35
+            y: -70
 
         # Current temperature at bottom
         - label:
@@ -2144,6 +2144,15 @@ text:
     name: wd_out_now
     widget: lbl_weather_outdnoor_now
     mode: text
+  - platform: lvgl
+    name: hr_precip
+    widget: lbl_weather_forecast_hrprecip
+    mode: text
+  - platform: lvgl
+    name: dy_precip
+    widget: lbl_weather_forecast_dailyprecip
+    mode: text
+
 
 esphome:
   name: halo-v1-79e384
