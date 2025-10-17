@@ -639,18 +639,9 @@ script:
             Content-Type: application/json
           on_response:
             then:
-              - logger.log:
-                  format: "Forecast API response status: %d"
-                  args: ['status_code']
-              - if:
-                  condition:
-                    lambda: 'return status_code == 200;'
-                  then:
-                    - logger.log:
-                        format: "Forecast response body: %s"
-                        args: ['body']
-                    - lambda: |-
-                        ESP_LOGD("forecast_parse", "Full response: %s", body.c_str());
+              - logger.log: "Forecast API Response received"
+              - lambda: |-
+                  ESP_LOGD("forecast_parse", "Response body: %s", body.c_str());
 
 number:
   - platform: template
