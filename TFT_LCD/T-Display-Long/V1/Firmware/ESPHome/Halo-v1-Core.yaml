@@ -1673,16 +1673,40 @@ sensor:
     name: "Forecast Day 1 High Temp"
     entity_id: input_text.forecast_day_1_high_temperature
     id: forecast_day1_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day1_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %s°F / L: 22°F", x.c_str());
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 2 High Temp"
     entity_id: input_text.forecast_day_2_high_temperature
     id: forecast_day2_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %s°F / L: 21°F", x.c_str());
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 3 High Temp"
     entity_id: input_text.forecast_day_3_high_temperature
     id: forecast_day3_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %s°F / L: 19°F", x.c_str());
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 4 High Temp"
@@ -1778,16 +1802,106 @@ text_sensor:
     name: "Forecast Day 1 Condition"
     entity_id: input_text.forecast_day_1_condition
     id: forecast_day1_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day1_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day1_icon
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 2 Condition"
     entity_id: input_text.forecast_day_2_condition
     id: forecast_day2_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day2_icon
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 3 Condition"
     entity_id: input_text.forecast_day_3_condition
     id: forecast_day3_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day3_icon
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("hail") != std::string::npos) {
+                return lv_color_hex(0x87CEEB);
+              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
 
   - platform: homeassistant
     name: "Forecast Day 4 Condition"
@@ -1829,16 +1943,31 @@ text_sensor:
     name: "Forecast Day 1 Date"
     entity_id: input_text.forecast_day_1_date
     id: forecast_day1_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day1_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 2 Date"
     entity_id: input_text.forecast_day_2_date
     id: forecast_day2_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 3 Date"
     entity_id: input_text.forecast_day_3_date
     id: forecast_day3_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 4 Date"
@@ -1880,16 +2009,40 @@ text_sensor:
     name: "Forecast Day 1 Precipitation Probability"
     entity_id: input_text.forecast_day_1_precipitation_probability
     id: forecast_day1_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day1_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "💧 %s%% chance", x.c_str());
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 2 Precipitation Probability"
     entity_id: input_text.forecast_day_2_precipitation_probability
     id: forecast_day2_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "💧 %s%% chance", x.c_str());
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 3 Precipitation Probability"
     entity_id: input_text.forecast_day_3_precipitation_probability
     id: forecast_day3_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "💧 %s%% chance", x.c_str());
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 4 Precipitation Probability"
