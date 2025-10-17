@@ -46,6 +46,8 @@ captive_portal:
 
 logger:
   level: DEBUG
+  logs:
+    http_request.idf: VERY_VERBOSE
 
 globals:
   - id: cycleCounter
@@ -633,9 +635,10 @@ script:
     then:
       - logger.log: "Fetching weather forecast from Home Assistant"
       - http_request.get:
-          url: http://hhut-ha.local:8123/api/states/weather.hhut
+          url: http://192.168.1.236:8123/api/states/weather.hhut
           request_headers:
             Authorization: !secret ha_api_token
+          timeout: 10s
           on_response:
             then:
               - logger.log: "Forecast API Response received"
