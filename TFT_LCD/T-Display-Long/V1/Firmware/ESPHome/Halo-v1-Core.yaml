@@ -318,18 +318,18 @@ interval:
             - if:
                 condition:
                   lambda: 'return !id(wifi_stat_connected_state);'
-              then:
-                - lvgl.widget.update:
-                    id: wifi_stat
-                    text_color: my_green
-                - lambda: 'id(wifi_stat_connected_state) = true;'
+                then:
+                  - lvgl.widget.update:
+                      id: wifi_stat
+                      text_color: my_green
+                  - lambda: 'id(wifi_stat_connected_state) = true;'
             - if:
                 condition:
                   lambda: 'return !id(wifi_logo_visible);'
-              then:
-                - lvgl.widget.show:
-                    id: ym_image
-                - lambda: 'id(wifi_logo_visible) = true;'
+                then:
+                  - lvgl.widget.show:
+                      id: ym_image
+                  - lambda: 'id(wifi_logo_visible) = true;'
             - lambda: |-
                 char buffer[32];
                 snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
@@ -341,11 +341,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_signal_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wifi_signal_label
-                    text: !lambda 'return id(wifi_signal_last_text);'
-                - lambda: 'id(wifi_signal_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wifi_signal_label
+                      text: !lambda 'return id(wifi_signal_last_text);'
+                  - lambda: 'id(wifi_signal_needs_render) = false;'
             - lambda: |-
                 float signal = id(wifi_signal_db).state;
                 if (std::isnan(signal)) {
@@ -358,11 +358,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_signal_bar_needs_render);'
-              then:
-                - lvgl.bar.update:
-                    id: wifi_signal_bar
-                    value: !lambda 'return id(wifi_signal_bar_last_value);'
-                - lambda: 'id(wifi_signal_bar_needs_render) = false;'
+                then:
+                  - lvgl.bar.update:
+                      id: wifi_signal_bar
+                      value: !lambda 'return id(wifi_signal_bar_last_value);'
+                  - lambda: 'id(wifi_signal_bar_needs_render) = false;'
             - lambda: |-
                 std::string ssid = esphome::wifi::global_wifi_component->wifi_ssid();
                 std::string new_text = std::string("SSID: ") + ssid;
@@ -373,11 +373,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_ssid_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wifi_ssid_label
-                    text: !lambda 'return id(wifi_ssid_last_text);'
-                - lambda: 'id(wifi_ssid_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wifi_ssid_label
+                      text: !lambda 'return id(wifi_ssid_last_text);'
+                  - lambda: 'id(wifi_ssid_needs_render) = false;'
             - lambda: |-
                 auto addresses = esphome::wifi::global_wifi_component->get_ip_addresses();
                 std::string ip_text = "IP: Not assigned";
@@ -391,11 +391,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_ip_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wifi_ip_label
-                    text: !lambda 'return id(wifi_ip_last_text);'
-                - lambda: 'id(wifi_ip_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wifi_ip_label
+                      text: !lambda 'return id(wifi_ip_last_text);'
+                  - lambda: 'id(wifi_ip_needs_render) = false;'
             - lambda: |-
                 bool wg_connected = id(wireguard_status).state;
                 std::string new_text = wg_connected ? "Status: \nConnected" : "Status: \nDisconnected";
@@ -410,24 +410,24 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wg_status_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wg_status_label
-                    text: !lambda 'return id(wg_status_last_text);'
-                - lambda: 'id(wg_status_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wg_status_label
+                      text: !lambda 'return id(wg_status_last_text);'
+                  - lambda: 'id(wg_status_needs_render) = false;'
             - if:
                 condition:
                   lambda: 'return id(wg_status_color_needs_render);'
-              then:
-                - lvgl.widget.update:
-                    id: wg_status_label
-                    text_color: !lambda |-
-                      if (id(wg_status_connected_state)) {
-                        return id(my_green);
-                      } else {
-                        return id(my_gray);
-                      }
-                - lambda: 'id(wg_status_color_needs_render) = false;'
+                then:
+                  - lvgl.widget.update:
+                      id: wg_status_label
+                      text_color: !lambda |-
+                        if (id(wg_status_connected_state)) {
+                          return id(my_green);
+                        } else {
+                          return id(my_gray);
+                        }
+                  - lambda: 'id(wg_status_color_needs_render) = false;'
             - lambda: |-
                 std::string new_text = "VPN IP: Not configured";
                 if (id(wireguard_address_text).has_state()) {
@@ -440,19 +440,19 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wg_address_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wg_address_label
-                    text: !lambda 'return id(wg_address_last_text);'
-                - lambda: 'id(wg_address_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wg_address_label
+                      text: !lambda 'return id(wg_address_last_text);'
+                  - lambda: 'id(wg_address_needs_render) = false;'
             - if:
                 condition:
                   lambda: 'return !id(wg_endpoint_initialized);'
-              then:
-                - lvgl.label.update:
-                    id: wg_endpoint_label
-                    text: "Endpoint: \nConfigured"
-                - lambda: 'id(wg_endpoint_initialized) = true;'
+                then:
+                  - lvgl.label.update:
+                      id: wg_endpoint_label
+                      text: "Endpoint: \nConfigured"
+                  - lambda: 'id(wg_endpoint_initialized) = true;'
             - lambda: |-
                 std::string handshake_text;
                 if (!std::isnan(id(wireguard_handshake).state)) {
@@ -489,30 +489,30 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wg_handshake_needs_render);'
-              then:
-                - logger.log: "Updating WireGuard handshake label"
-                - lvgl.label.update:
-                    id: wg_handshake_label
-                    text: !lambda 'return id(wg_handshake_last_text);'
-                - lambda: 'id(wg_handshake_needs_render) = false;'
+                then:
+                  - logger.log: "Updating WireGuard handshake label"
+                  - lvgl.label.update:
+                      id: wg_handshake_label
+                      text: !lambda 'return id(wg_handshake_last_text);'
+                  - lambda: 'id(wg_handshake_needs_render) = false;'
             - logger.log: "10s interval: WiFi and WireGuard update complete"
           else:
             - logger.log: "WiFi disconnected"
             - if:
                 condition:
                   lambda: 'return id(wifi_stat_connected_state);'
-              then:
-                - lvgl.widget.update:
-                    id: wifi_stat
-                    text_color: my_red
+                then:
+                  - lvgl.widget.update:
+                      id: wifi_stat
+                      text_color: my_red
             - lambda: 'id(wifi_stat_connected_state) = false;'
             - if:
                 condition:
                   lambda: 'return id(wifi_logo_visible);'
-              then:
-                - lvgl.widget.hide:
-                    id: ym_image
-                - lambda: 'id(wifi_logo_visible) = false;'
+                then:
+                  - lvgl.widget.hide:
+                      id: ym_image
+                  - lambda: 'id(wifi_logo_visible) = false;'
             - lambda: |-
                 const std::string new_text = "Signal: --";
                 if (new_text != id(wifi_signal_last_text)) {
@@ -522,11 +522,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_signal_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wifi_signal_label
-                    text: !lambda 'return id(wifi_signal_last_text);'
-                - lambda: 'id(wifi_signal_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wifi_signal_label
+                      text: !lambda 'return id(wifi_signal_last_text);'
+                  - lambda: 'id(wifi_signal_needs_render) = false;'
             - lambda: |-
                 float new_value = -200.0f;
                 if (new_value != id(wifi_signal_bar_last_value)) {
@@ -536,11 +536,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_signal_bar_needs_render);'
-              then:
-                - lvgl.bar.update:
-                    id: wifi_signal_bar
-                    value: !lambda 'return id(wifi_signal_bar_last_value);'
-                - lambda: 'id(wifi_signal_bar_needs_render) = false;'
+                then:
+                  - lvgl.bar.update:
+                      id: wifi_signal_bar
+                      value: !lambda 'return id(wifi_signal_bar_last_value);'
+                  - lambda: 'id(wifi_signal_bar_needs_render) = false;'
             - lambda: |-
                 const std::string ssid_text = "SSID: Not connected";
                 if (ssid_text != id(wifi_ssid_last_text)) {
@@ -550,11 +550,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_ssid_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wifi_ssid_label
-                    text: !lambda 'return id(wifi_ssid_last_text);'
-                - lambda: 'id(wifi_ssid_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wifi_ssid_label
+                      text: !lambda 'return id(wifi_ssid_last_text);'
+                  - lambda: 'id(wifi_ssid_needs_render) = false;'
             - lambda: |-
                 const std::string ip_text = "IP: Not connected";
                 if (ip_text != id(wifi_ip_last_text)) {
@@ -564,11 +564,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wifi_ip_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wifi_ip_label
-                    text: !lambda 'return id(wifi_ip_last_text);'
-                - lambda: 'id(wifi_ip_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wifi_ip_label
+                      text: !lambda 'return id(wifi_ip_last_text);'
+                  - lambda: 'id(wifi_ip_needs_render) = false;'
             - lambda: |-
                 const bool wg_connected = false;
                 const std::string status_text = "Status: \nDisconnected";
@@ -583,19 +583,19 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wg_status_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wg_status_label
-                    text: !lambda 'return id(wg_status_last_text);'
-                - lambda: 'id(wg_status_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wg_status_label
+                      text: !lambda 'return id(wg_status_last_text);'
+                  - lambda: 'id(wg_status_needs_render) = false;'
             - if:
                 condition:
                   lambda: 'return id(wg_status_color_needs_render);'
-              then:
-                - lvgl.widget.update:
-                    id: wg_status_label
-                    text_color: !lambda 'return id(my_gray);'
-                - lambda: 'id(wg_status_color_needs_render) = false;'
+                then:
+                  - lvgl.widget.update:
+                      id: wg_status_label
+                      text_color: !lambda 'return id(my_gray);'
+                  - lambda: 'id(wg_status_color_needs_render) = false;'
             - lambda: |-
                 const std::string address_text = "VPN IP: Not configured";
                 if (address_text != id(wg_address_last_text)) {
@@ -605,11 +605,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wg_address_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wg_address_label
-                    text: !lambda 'return id(wg_address_last_text);'
-                - lambda: 'id(wg_address_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wg_address_label
+                      text: !lambda 'return id(wg_address_last_text);'
+                  - lambda: 'id(wg_address_needs_render) = false;'
             - lambda: |-
                 const std::string handshake_text = "Handshake: \nUnavailable";
                 if (handshake_text != id(wg_handshake_last_text)) {
@@ -619,11 +619,11 @@ interval:
             - if:
                 condition:
                   lambda: 'return id(wg_handshake_needs_render);'
-              then:
-                - lvgl.label.update:
-                    id: wg_handshake_label
-                    text: !lambda 'return id(wg_handshake_last_text);'
-                - lambda: 'id(wg_handshake_needs_render) = false;'
+                then:
+                  - lvgl.label.update:
+                      id: wg_handshake_label
+                      text: !lambda 'return id(wg_handshake_last_text);'
+                  - lambda: 'id(wg_handshake_needs_render) = false;'
 
   - interval: 1s
     then:
@@ -2842,7 +2842,7 @@ lvgl:
         # ========== Day 1 Card ==========
         # Day name + date
         - label:
-            text: "Tomorrow (MM/DD)"
+            text: "Tomorrow (10/17)"
             id: lbl_forecast_day1_header
             align: TOP_LEFT
             x: 5
@@ -2851,34 +2851,25 @@ lvgl:
             text_color: my_gray
             text_align: LEFT
 
-        # Icon + Condition
-        - obj:
-            align: TOP_MID
-            x: 0
-            y: 52
-            width: 170
-            height: 35
-            bg_color: 0x000000
-            border_width: 0
-            widgets:
-              - label:
-                  text: "\U000F14E4"
-                  id: lbl_forecast_day1_icon
-                  text_font: icons_100
-                  text_color: my_white
-                  align: LEFT_MID
-                  x: 5
-                  y: 0
-                  width: 40
-                  height: 35
-              - label:
-                  text: "Sunny"
-                  id: lbl_forecast_day1_condition
-                  text_font: montserrat_18
-                  text_color: my_white
-                  align: LEFT_MID
-                  x: 48
-                  y: 0
+        # Icon (smaller - 40px)
+        - label:
+            text: "\U000F14E4"
+            id: lbl_forecast_day1_icon
+            text_font: montserrat_28
+            text_color: my_white
+            align: TOP_LEFT
+            x: 5
+            y: 50
+
+        # Condition text
+        - label:
+            text: "Sunny"
+            id: lbl_forecast_day1_condition
+            text_font: montserrat_18
+            text_color: my_white
+            align: TOP_LEFT
+            x: 45
+            y: 50
 
         # High/Low temps
         - label:
@@ -2886,8 +2877,8 @@ lvgl:
             id: lbl_forecast_day1_temps
             align: TOP_MID
             x: 0
-            y: 90
-            text_font: montserrat_18
+            y: 75
+            text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
 
@@ -2897,7 +2888,7 @@ lvgl:
             id: lbl_forecast_day1_precip
             align: TOP_MID
             x: 0
-            y: 110
+            y: 92
             text_font: montserrat_14
             text_color: my_teal
             text_align: CENTER
@@ -2905,57 +2896,47 @@ lvgl:
         # Divider line
         - line:
             points:
-              - 10, 130
-              - 170, 130
+              - 10, 110
+              - 170, 110
             line_width: 1
             line_color: 57343
 
         # ========== Day 2 Card ==========
         - label:
-            text: "Day +2 (MM/DD)"
+            text: "Tomorrow (10/18)"
             id: lbl_forecast_day2_header
             align: TOP_LEFT
             x: 5
-            y: 140
+            y: 115
             text_font: montserrat_14
             text_color: my_gray
             text_align: LEFT
 
-        - obj:
-            align: TOP_MID
-            x: 0
-            y: 157
-            width: 170
-            height: 35
-            bg_color: 0x000000
-            border_width: 0
-            widgets:
-              - label:
-                  text: "\U000F0595"
-                  id: lbl_forecast_day2_icon
-                  text_font: icons_100
-                  text_color: my_white
-                  align: LEFT_MID
-                  x: 5
-                  y: 0
-                  width: 40
-                  height: 35
-              - label:
-                  text: "Partly Cloudy"
-                  id: lbl_forecast_day2_condition
-                  text_font: montserrat_18
-                  text_color: my_white
-                  align: LEFT_MID
-                  x: 48
-                  y: 0
+        - label:
+            text: "\U000F0595"
+            id: lbl_forecast_day2_icon
+            text_font: montserrat_28
+            text_color: my_white
+            align: TOP_LEFT
+            x: 5
+            y: 130
+
+        - label:
+            text: "Partly Cloudy"
+            id: lbl_forecast_day2_condition
+            text_font: montserrat_18
+            text_color: my_white
+            align: TOP_LEFT
+            x: 45
+            y: 130
 
         - label:
             text: "H: 32°C / L: 21°C"
             id: lbl_forecast_day2_temps
             align: TOP_MID
             x: 0
-            y: 195
-            text_font: montserrat_18
+            y: 155
+            text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
 
@@ -2964,64 +2945,54 @@ lvgl:
             id: lbl_forecast_day2_precip
             align: TOP_MID
             x: 0
-            y: 215
+            y: 172
             text_font: montserrat_14
             text_color: my_teal
             text_align: CENTER
 
         - line:
             points:
-              - 10, 235
-              - 170, 235
+              - 10, 190
+              - 170, 190
             line_width: 1
             line_color: 57343
 
         # ========== Day 3 Card ==========
         - label:
-            text: "Day +3 (MM/DD)"
+            text: "Saturday (10/19)"
             id: lbl_forecast_day3_header
             align: TOP_LEFT
             x: 5
-            y: 245
+            y: 195
             text_font: montserrat_14
             text_color: my_gray
             text_align: LEFT
 
-        - obj:
-            align: TOP_MID
-            x: 0
-            y: 262
-            width: 170
-            height: 35
-            bg_color: 0x000000
-            border_width: 0
-            widgets:
-              - label:
-                  text: "\U000F0597"
-                  id: lbl_forecast_day3_icon
-                  text_font: icons_100
-                  text_color: my_white
-                  align: LEFT_MID
-                  x: 5
-                  y: 0
-                  width: 40
-                  height: 35
-              - label:
-                  text: "Rainy"
-                  id: lbl_forecast_day3_condition
-                  text_font: montserrat_18
-                  text_color: my_white
-                  align: LEFT_MID
-                  x: 48
-                  y: 0
+        - label:
+            text: "\U000F0597"
+            id: lbl_forecast_day3_icon
+            text_font: montserrat_28
+            text_color: my_white
+            align: TOP_LEFT
+            x: 5
+            y: 210
+
+        - label:
+            text: "Rainy"
+            id: lbl_forecast_day3_condition
+            text_font: montserrat_18
+            text_color: my_white
+            align: TOP_LEFT
+            x: 45
+            y: 210
 
         - label:
             text: "H: 28°C / L: 19°C"
             id: lbl_forecast_day3_temps
             align: TOP_MID
             x: 0
-            y: 300
-            text_font: montserrat_18
+            y: 235
+            text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
 
@@ -3030,7 +3001,7 @@ lvgl:
             id: lbl_forecast_day3_precip
             align: TOP_MID
             x: 0
-            y: 320
+            y: 252
             text_font: montserrat_14
             text_color: my_teal
             text_align: CENTER
