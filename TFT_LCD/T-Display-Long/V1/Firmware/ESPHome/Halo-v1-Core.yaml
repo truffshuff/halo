@@ -536,9 +536,6 @@ color:
     green: 0%
     blue: 0%
 
-homeassistant:
-  id: ha
-
 time:
   - platform: homeassistant
     id: ha_time
@@ -582,7 +579,7 @@ script:
       - logger.log: "Requesting daily forecast..."
       - lambda: |-
           ESP_LOGI("weather", "Requesting daily forecast...");
-          auto forecast = id(ha).get_forecast("weather.hhut", "daily");
+          auto forecast = homeassistant_component.get_forecast("weather.hhut", "daily");
           if (forecast.size() > 0) {
             float temp = forecast[0]["temperature"].as<float>();
             char buf[16];
