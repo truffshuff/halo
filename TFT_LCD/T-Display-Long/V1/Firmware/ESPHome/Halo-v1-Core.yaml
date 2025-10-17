@@ -634,7 +634,7 @@ script:
       - logger.log: "Fetching weather forecast from Home Assistant"
       - http_request.get:
           url: http://hhut-ha.local:8123/api/states/weather.hhut
-          headers:
+          request_headers:
             Authorization: "Bearer !secret ha_api_token"
             Content-Type: application/json
           on_response:
