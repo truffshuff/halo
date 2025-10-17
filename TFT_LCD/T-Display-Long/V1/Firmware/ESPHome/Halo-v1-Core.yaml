@@ -2100,9 +2100,9 @@ lvgl:
             x: 0
             y: -70
 
-        # Hourly precipitation
+        # Today precipitation ant
         - label:
-            text: "Hour: --mm"
+            text: "HouAmt Today: --mm"
             id: lbl_weather_forecast_hrprecip
             text_align: CENTER
             text_font: montserrat_18
@@ -2111,9 +2111,9 @@ lvgl:
             x: 0
             y: -80
 
-        # Daily precipitation
+        # Precipitation Chnace
         - label:
-            text: "Day: --mm"
+            text: "Chance: --%"
             id: lbl_weather_forecast_dailyprecip
             text_align: CENTER
             text_font: montserrat_18
