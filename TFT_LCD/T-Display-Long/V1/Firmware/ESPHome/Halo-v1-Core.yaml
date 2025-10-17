@@ -48,6 +48,10 @@ logger:
   level: DEBUG
   logs:
     http_request.idf: DEBUG
+    lvgl: VERY_VERBOSE
+    display.qspi_dbi: VERBOSE
+    weather_color: DEBUG
+    time_update: DEBUG
 
 globals:
   - id: cycleCounter
@@ -68,6 +72,42 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: time_update_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: time_update_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: time_update_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: time_update_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: weather_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_condition
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: weather_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: display_backlight_is_on
+    type: bool
+    restore_value: no
+    initial_value: 'true'
 
 switch:
   - platform: template
@@ -325,7 +365,12 @@ interval:
 
   - interval: 5s
     then:
-      - script.execute: update_weather_icon_color
+      - if:
+          condition:
+            not:
+              - script.is_running: update_weather_icon_color
+          then:
+            - script.execute: update_weather_icon_color
 
 api:
   on_client_connected:
@@ -550,79 +595,117 @@ time:
 
 script:
   - id: time_update
+    mode: restart
     then:
-      - logger.log: "Executing time_update script"
-      - lvgl.label.update:
-          id: timeVal
-          text: !lambda |-
-            ESP_LOGD("time_update", "Updating time display");
-            static char time_buf[17];
-            // Use SNTP time when WireGuard is enabled, otherwise use Home Assistant time
-            auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-            bool is_pm = now.hour >= 12;
-            int hour_12 = now.hour % 12;
-            if (hour_12 == 0) {
-              hour_12 = 12; // 12 AM/PM should be displayed as 12, not 0
-            }
-            if(id(time_format).state) {
-              snprintf(time_buf, sizeof(time_buf), "%02d:%02d", now.hour, now.minute);
-            }
-            else {
-              snprintf(time_buf, sizeof(time_buf), "%2d:%02d%s", hour_12, now.minute, is_pm ? "PM" : "AM");
-            }
-            return time_buf;
+      - lambda: |-
+          id(time_update_last_started) = millis();
+          id(time_update_needs_render) = false;
+      - lambda: |-
+          auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+          if (!now.is_valid()) {
+            ESP_LOGW("time_update", "Time source unavailable, skipping label update");
+            return;
+          }
+          bool is_pm = now.hour >= 12;
+          int hour_12 = now.hour % 12;
+          if (hour_12 == 0) {
+            hour_12 = 12;
+          }
+          char time_buf[17];
+          if (id(time_format).state) {
+            snprintf(time_buf, sizeof(time_buf), "%02d:%02d", now.hour, now.minute);
+          } else {
+            snprintf(time_buf, sizeof(time_buf), "%2d:%02d%s", hour_12, now.minute, is_pm ? "PM" : "AM");
+          }
+          std::string new_text(time_buf);
+          if (new_text != id(time_update_last_text)) {
+            id(time_update_last_text) = new_text;
+            id(time_update_needs_render) = true;
+          }
+      - if:
+          condition:
+            lambda: 'return id(time_update_needs_render);'
+          then:
+            - lvgl.label.update:
+                id: timeVal
+                text: !lambda 'return id(time_update_last_text);'
+      - lambda: |-
+          const uint32_t elapsed = millis() - id(time_update_last_started);
+          id(time_update_last_duration) = elapsed;
+          id(time_update_duration_sensor).publish_state(elapsed);
+          const bool rendered = id(time_update_needs_render);
+          if (elapsed > 40) {
+            ESP_LOGW("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          } else {
+            ESP_LOGD("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          }
+          id(time_update_needs_render) = false;
   - id: update_weather_icon_color
+    mode: restart
     then:
-      - logger.log: "Updating weather icon color based on condition"
-      - delay: 500ms
+      - lambda: |-
+          id(weather_last_started) = millis();
+          id(weather_needs_render) = false;
       - lambda: |-
           std::string condition = id(fr_cond_name).state;
-          // Convert to lowercase for case-insensitive comparison
-          std::transform(condition.begin(), condition.end(), condition.begin(), ::tolower);
           ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
-      - lvgl.label.update:
-          id: lbl_weather_forecast_condition_icon
-          text_color: !lambda |-
-            std::string condition = id(fr_cond_name).state;
-            // Convert to lowercase for case-insensitive comparison
-            std::transform(condition.begin(), condition.end(), condition.begin(), ::tolower);
-            ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
-
-            if (condition.find("sunny") != std::string::npos ||
-                condition.find("clear") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Gold color");
-              return lv_color_hex(0xFFD700);  // Gold
-            } else if (condition.find("cloudy") != std::string::npos ||
-                       condition.find("overcast") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Dark Gray color");
-              return lv_color_hex(0xA9A9A9);  // Dark gray
-            } else if (condition.find("rainy") != std::string::npos ||
-                       condition.find("pouring") != std::string::npos ||
-                       condition.find("drizzle") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Royal Blue color");
-              return lv_color_hex(0x4169E1);  // Royal blue
-            } else if (condition.find("snowy") != std::string::npos ||
-                       condition.find("sleet") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Gainsboro color");
-              return lv_color_hex(0xDCDCDC);  // Gainsboro (light gray)
-            } else if (condition.find("hail") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Sky Blue color");
-              return lv_color_hex(0x87CEEB);  // Sky blue
-            } else if (condition.find("lightning") != std::string::npos ||
-                       condition.find("thunderstorm") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Deep Pink color");
-              return lv_color_hex(0xFF1493);  // Deep pink (warning)
-            } else if (condition.find("fog") != std::string::npos ||
-                       condition.find("mist") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Light Steel Blue color");
-              return lv_color_hex(0xB0C4DE);  // Light steel blue
-            } else if (condition.find("windy") != std::string::npos) {
-              ESP_LOGD("weather_color", "Setting Light Green color");
-              return lv_color_hex(0x90EE90);  // Light green
-            } else {
-              ESP_LOGD("weather_color", "Setting White color (default)");
-              return lv_color_hex(0xFFFFFF);  // White (default)
-            }
+          if (condition.empty()) {
+            return;
+          }
+          std::string normalized = condition;
+          std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+          if (normalized != id(weather_last_condition)) {
+            id(weather_last_condition) = normalized;
+            id(weather_needs_render) = true;
+          }
+      - if:
+          condition:
+            lambda: 'return id(weather_needs_render);'
+          then:
+            - lvgl.label.update:
+                id: lbl_weather_forecast_condition_icon
+                text_color: !lambda |-
+                  const std::string condition = id(weather_last_condition);
+                  ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
+                  if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Gold color");
+                    return lv_color_hex(0xFFD700);
+                  } else if (condition.find("cloudy") != std::string::npos || condition.find("overcast") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Dark Gray color");
+                    return lv_color_hex(0xA9A9A9);
+                  } else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos || condition.find("drizzle") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Royal Blue color");
+                    return lv_color_hex(0x4169E1);
+                  } else if (condition.find("snowy") != std::string::npos || condition.find("sleet") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Gainsboro color");
+                    return lv_color_hex(0xDCDCDC);
+                  } else if (condition.find("hail") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Sky Blue color");
+                    return lv_color_hex(0x87CEEB);
+                  } else if (condition.find("lightning") != std::string::npos || condition.find("thunderstorm") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Deep Pink color");
+                    return lv_color_hex(0xFF1493);
+                  } else if (condition.find("fog") != std::string::npos || condition.find("mist") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Steel Blue color");
+                    return lv_color_hex(0xB0C4DE);
+                  } else if (condition.find("windy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Green color");
+                    return lv_color_hex(0x90EE90);
+                  } else {
+                    ESP_LOGD("weather_color", "Setting White color (default)");
+                    return lv_color_hex(0xFFFFFF);
+                  }
+      - lambda: |-
+          const uint32_t elapsed = millis() - id(weather_last_started);
+          id(weather_last_duration) = elapsed;
+          id(weather_icon_duration_sensor).publish_state(elapsed);
+          const bool rendered = id(weather_needs_render);
+          if (elapsed > 80) {
+            ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          } else {
+            ESP_LOGD("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          }
+          id(weather_needs_render) = false;
 
 number:
   - platform: template
@@ -682,6 +765,13 @@ binary_sensor:
     enabled:
       name: 'WireGuard Enabled'
 
+  - platform: template
+    name: "Display Backlight Active"
+    id: display_backlight_state
+    entity_category: "diagnostic"
+    lambda: 'return id(display_backlight_is_on);'
+    update_interval: 1s
+
 sensor:
   - platform: uptime
     name: Uptime
@@ -693,6 +783,24 @@ sensor:
     id: wifi_signal_db
     update_interval: 60s
     entity_category: "diagnostic"
+
+  - platform: template
+    name: "Time Update Duration"
+    id: time_update_duration_sensor
+    unit_of_measurement: "ms"
+    accuracy_decimals: 0
+    icon: "mdi:timer-outline"
+    entity_category: "diagnostic"
+    update_interval: never
+
+  - platform: template
+    name: "Weather Icon Update Duration"
+    id: weather_icon_duration_sensor
+    unit_of_measurement: "ms"
+    accuracy_decimals: 0
+    icon: "mdi:weather-lightning"
+    entity_category: "diagnostic"
+    update_interval: never
 
   - platform: wireguard
     wireguard_id: wg0
@@ -1395,8 +1503,16 @@ light:
     restore_mode: ALWAYS_ON
     on_turn_on:
       - logger.log: "Display backlight turned ON"
+      - lambda: 'id(display_backlight_is_on) = true;'
+      - binary_sensor.template.publish:
+          id: display_backlight_state
+          state: ON
     on_turn_off:
       - logger.log: "Display backlight turned OFF"
+      - lambda: 'id(display_backlight_is_on) = false;'
+      - binary_sensor.template.publish:
+          id: display_backlight_state
+          state: OFF
 
 lvgl:
   displays:
@@ -1407,7 +1523,7 @@ lvgl:
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
-  log_level: DEBUG
+  log_level: VERBOSE
   on_idle:
     timeout: 60s
     then:
