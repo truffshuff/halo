@@ -45,10 +45,10 @@ spi:
 captive_portal:
 
 logger:
-  level: DEBUG
+  level: VERBOSE
   logs:
     http_request.idf: DEBUG
-    lvgl: VERY_VERBOSE
+    lvgl: VERBOSE
     display.qspi_dbi: VERBOSE
     weather_color: DEBUG
     time_update: DEBUG
