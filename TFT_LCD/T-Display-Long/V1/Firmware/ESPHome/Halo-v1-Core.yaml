@@ -638,21 +638,19 @@ script:
   - id: fetch_weather_forecast
     then:
       - logger.log: "Requesting daily forecast from Home Assistant..."
-      - http_request.post:
-          url: http://192.168.1.236:8123/api/services/weather/get_forecasts
+      - http_request.get:
+          url: http://192.168.1.236:8123/api/states/weather.hhut
           request_headers:
             Authorization: !secret ha_api_token
-            Content-Type: application/json
-          json:
-            entity_id: weather.hhut
-            type: daily
           on_response:
             then:
-              - logger.log: "Forecast service response received"
+              - logger.log: "Weather state response received"
               - lambda: |-
                   ESP_LOGD("forecast", "Response body length: %d", body.length());
                   if (body.length() > 0) {
-                    ESP_LOGD("forecast", "Response: %s", body.substr(0, 200).c_str());
+                    // Log first 500 chars of response
+                    std::string preview = body.substr(0, std::min((size_t)500, body.length()));
+                    ESP_LOGD("forecast", "Response preview: %s", preview.c_str());
                     id(forecast_json_data) = body;
                   } else {
                     ESP_LOGD("forecast", "ERROR: Response body is empty!");
