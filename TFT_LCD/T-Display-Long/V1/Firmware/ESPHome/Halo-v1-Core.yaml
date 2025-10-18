@@ -3952,7 +3952,6 @@ lvgl:
         - label:
             text: "--°F"
             id: lbl_forecast_day1_lowtemps
-            align: OUT_RIGHT_MID
             text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
