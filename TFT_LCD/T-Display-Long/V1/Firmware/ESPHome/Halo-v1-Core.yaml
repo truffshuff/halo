@@ -3892,7 +3892,7 @@ lvgl:
     - id: daily_forecast_page
       bg_color: 0x000000
       bg_opa: COVER
-      scrollbar_mode: "AUTO"
+      scrollbar_mode: AUTO
       scrollable: true
       on_load:
         - logger.log: "LVGL: Daily forecast page loaded and displayed"
