@@ -3907,6 +3907,8 @@ lvgl:
         # Day 1 flex layout
         - obj:
             id: forecast_day1_container
+            bg_color: 0x000000
+            bg_opa: 0
             layout:
               type: flex
               flex_flow: column      # stack items vertically
@@ -3923,6 +3925,8 @@ lvgl:
 
               # Icon + condition row
               - obj:
+                  bg_color: 0x000000
+                  bg_opa: 0
                   layout:
                     type: flex
                     flex_flow: row
@@ -3942,6 +3946,8 @@ lvgl:
 
               # High / Low temps row
               - obj:
+                  bg_color: 0x000000
+                  bg_opa: 0 
                   layout:
                     type: flex
                     flex_flow: row
