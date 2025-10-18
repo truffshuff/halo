@@ -3929,10 +3929,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day1_header
@@ -3942,6 +3943,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -3960,6 +3962,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -3993,10 +3996,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day2_header
@@ -4006,6 +4010,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4024,6 +4029,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4057,10 +4063,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day3_header
@@ -4070,6 +4077,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4088,6 +4096,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4120,10 +4129,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day4_header
@@ -4133,6 +4143,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4151,6 +4162,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4183,10 +4195,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day5_header
@@ -4196,6 +4209,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4214,6 +4228,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4246,10 +4261,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day6_header
@@ -4259,6 +4275,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4277,6 +4294,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4309,10 +4327,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day7_header
@@ -4322,6 +4341,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4340,6 +4360,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4372,10 +4393,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day8_header
@@ -4385,6 +4407,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4403,6 +4426,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4436,10 +4460,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day9_header
@@ -4449,6 +4474,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4467,6 +4493,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -4500,10 +4527,11 @@ lvgl:
                   bg_opa: 0
                   border_width: 0
                   width: SIZE_CONTENT
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 1
                   widgets:
                     - label:
                         id: lbl_forecast_day10_header
@@ -4513,6 +4541,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
