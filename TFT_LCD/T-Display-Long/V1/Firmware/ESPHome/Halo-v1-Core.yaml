@@ -3950,7 +3950,7 @@ lvgl:
             text_align: LEFT
 
         - label:
-            text: "H: --°F / L: "
+            text: "--°F"
             id: lbl_forecast_day1_lowtemps
             align: TOP_LEFT
             x: 18
@@ -4020,6 +4020,16 @@ lvgl:
             text_font: montserrat_14
             text_color: my_white
             text_align: LEFT
+        
+        - label:
+            text: "--°F"
+            id: lbl_forecast_day2_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 115
+            text_font: montserrat_16
+            text_color: my_white
+            text_align: LEFT
 
         - label:
             text: "Chance: --%"
@@ -4080,6 +4090,16 @@ lvgl:
             x: 2
             y: 475
             text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "--°F"
+            id: lbl_forecast_day3_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 475
+            text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
 
@@ -4146,6 +4166,16 @@ lvgl:
             text_align: LEFT
 
         - label:
+            text: "--°F"
+            id: lbl_forecast_day4_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 655
+            text_font: montserrat_16
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
             text: "Chance: --%"
             id: lbl_forecast_day4_precip
             align: TOP_LEFT
@@ -4204,6 +4234,16 @@ lvgl:
             x: 2
             y: 835
             text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "--°F"
+            id: lbl_forecast_day5_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 835
+            text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
 
@@ -4270,6 +4310,16 @@ lvgl:
             text_align: LEFT
 
         - label:
+            text: "--°F"
+            id: lbl_forecast_day6_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 1015
+            text_font: montserrat_16
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
             text: "Chance: --%"
             id: lbl_forecast_day6_precip
             align: TOP_LEFT
@@ -4328,6 +4378,16 @@ lvgl:
             x: 2
             y: 1195
             text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "--°F"
+            id: lbl_forecast_day7_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 1195
+            text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
 
@@ -4394,6 +4454,16 @@ lvgl:
             text_align: LEFT
 
         - label:
+            text: "--°F"
+            id: lbl_forecast_day8_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 1375
+            text_font: montserrat_16
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
             text: "Chance: --%"
             id: lbl_forecast_day8_precip
             align: TOP_LEFT
@@ -4456,6 +4526,16 @@ lvgl:
             text_align: LEFT
 
         - label:
+            text: "--°F"
+            id: lbl_forecast_day9_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 1555
+            text_font: montserrat_16
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
             text: "Chance: --%"
             id: lbl_forecast_day9_precip
             align: TOP_LEFT
@@ -4514,6 +4594,16 @@ lvgl:
             x: 2
             y: 1735
             text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "--°F"
+            id: lbl_forecast_day10_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 1735
+            text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
 
