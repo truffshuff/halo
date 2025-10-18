@@ -657,7 +657,7 @@ interval:
                 id: rgb_light
             - lambda: 'id(cycleCounter) += 1;'
 
-  - interval: 5s
+  - interval: 30s
     then:
       - if:
           condition:
@@ -1683,7 +1683,7 @@ sensor:
             id: lbl_forecast_day1_temps
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: 22°F", x);
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
               return buffer;
 
   - platform: homeassistant
@@ -1696,7 +1696,7 @@ sensor:
             id: lbl_forecast_day2_temps
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: 21°F", x);
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
               return buffer;
 
   - platform: homeassistant
@@ -1709,43 +1709,229 @@ sensor:
             id: lbl_forecast_day3_temps
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: 19°F", x);
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
               return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 4 High Temp"
     entity_id: input_text.forecast_day_4_high_temperature
     id: forecast_day4_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 5 High Temp"
     entity_id: input_text.forecast_day_5_high_temperature
     id: forecast_day5_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 6 High Temp"
     entity_id: input_text.forecast_day_6_high_temperature
     id: forecast_day6_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 7 High Temp"
     entity_id: input_text.forecast_day_7_high_temperature
     id: forecast_day7_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 8 High Temp"
     entity_id: input_text.forecast_day_8_high_temperature
     id: forecast_day8_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 9 High Temp"
     entity_id: input_text.forecast_day_9_high_temperature
     id: forecast_day9_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 10 High Temp"
     entity_id: input_text.forecast_day_10_high_temperature
     id: forecast_day10_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_temps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 1 Low Temp"
+    entity_id: input_text.forecast_day_1_low_temperature
+    id: forecast_day1_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day1_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+  
+  - platform: homeassistant
+    name: "Forecast Day 2 Low Temp"
+    entity_id: input_text.forecast_day_2_low_temperature
+    id: forecast_day2_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Low Temp"
+    entity_id: input_text.forecast_day_3_low_temperature
+    id: forecast_day3_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 4 Low Temp"
+    entity_id: input_text.forecast_day_4_low_temperature
+    id: forecast_day4_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Low Temp"
+    entity_id: input_text.forecast_day_5_low_temperature
+    id: forecast_day5_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Low Temp"
+    entity_id: input_text.forecast_day_6_low_temperature
+    id: forecast_day6_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Low Temp"
+    entity_id: input_text.forecast_day_7_low_temperature
+    id: forecast_day7_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Low Temp"
+    entity_id: input_text.forecast_day_8_low_temperature
+    id: forecast_day8_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Low Temp"
+    entity_id: input_text.forecast_day_9_low_temperature
+    id: forecast_day9_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Low Temp"
+    entity_id: input_text.forecast_day_10_low_temperature
+    id: forecast_day10_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_lowtemps
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
 
 button:
   - platform: restart
@@ -2457,36 +2643,71 @@ text_sensor:
     name: "Forecast Day 4 Date"
     entity_id: input_text.forecast_day_4_date
     id: forecast_day4_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 5 Date"
     entity_id: input_text.forecast_day_5_date
     id: forecast_day5_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 6 Date"
     entity_id: input_text.forecast_day_6_date
     id: forecast_day6_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 7 Date"
     entity_id: input_text.forecast_day_7_date
     id: forecast_day7_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 8 Date"
     entity_id: input_text.forecast_day_8_date
     id: forecast_day8_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 9 Date"
     entity_id: input_text.forecast_day_9_date
     id: forecast_day9_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_header
+            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 10 Date"
     entity_id: input_text.forecast_day_10_date
     id: forecast_day10_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_header
+            text: !lambda 'return x;'
 
   # 10-day forecast precipitation probability from Home Assistant
   - platform: homeassistant
@@ -2523,6 +2744,97 @@ text_sensor:
       then:
         - lvgl.label.update:
             id: lbl_forecast_day3_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+  
+  - platform: homeassistant
+    name: "Forecast Day 4 Precipitation Probability"
+    entity_id: input_text.forecast_day_4_precipitation_probability
+    id: forecast_day4_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Precipitation Probability"
+    entity_id: input_text.forecast_day_5_precipitation_probability
+    id: forecast_day5_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Precipitation Probability"
+    entity_id: input_text.forecast_day_6_precipitation_probability
+    id: forecast_day6_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Precipitation Probability"
+    entity_id: input_text.forecast_day_7_precipitation_probability
+    id: forecast_day7_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Precipitation Probability"
+    entity_id: input_text.forecast_day_8_precipitation_probability
+    id: forecast_day8_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Precipitation Probability"
+    entity_id: input_text.forecast_day_9_precipitation_probability
+    id: forecast_day9_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_precip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Precipitation Probability"
+    entity_id: input_text.forecast_day_10_precipitation_probability
+    id: forecast_day10_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_precip
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -2569,39 +2881,95 @@ text_sensor:
               return buffer;
 
   - platform: homeassistant
-    name: "Forecast Day 4 Precipitation Probability"
-    entity_id: input_text.forecast_day_4_precipitation_probability
-    id: forecast_day4_precip_prob
+    name: "Forecast Day 4 Precipitation"
+    entity_id: input_text.forecast_day_4_precipitation
+    id: forecast_day4_precip_amt
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_precip_amt
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
 
   - platform: homeassistant
-    name: "Forecast Day 5 Precipitation Probability"
-    entity_id: input_text.forecast_day_5_precipitation_probability
-    id: forecast_day5_precip_prob
+    name: "Forecast Day 5 Precipitation"
+    entity_id: input_text.forecast_day_5_precipitation
+    id: forecast_day5_precip_amt
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_precip_amt
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
 
   - platform: homeassistant
-    name: "Forecast Day 6 Precipitation Probability"
-    entity_id: input_text.forecast_day_6_precipitation_probability
-    id: forecast_day6_precip_prob
+    name: "Forecast Day 6 Precipitation"
+    entity_id: input_text.forecast_day_6_precipitation
+    id: forecast_day6_precip_amt
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_precip_amt
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
 
   - platform: homeassistant
-    name: "Forecast Day 7 Precipitation Probability"
-    entity_id: input_text.forecast_day_7_precipitation_probability
-    id: forecast_day7_precip_prob
+    name: "Forecast Day 7 Precipitation"
+    entity_id: input_text.forecast_day_7_precipitation
+    id: forecast_day7_precip_amt
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_precip_amt
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
 
   - platform: homeassistant
-    name: "Forecast Day 8 Precipitation Probability"
-    entity_id: input_text.forecast_day_8_precipitation_probability
-    id: forecast_day8_precip_prob
+    name: "Forecast Day 8 Precipitation"
+    entity_id: input_text.forecast_day_8_precipitation
+    id: forecast_day8_precip_amt
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_precip_amt
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
 
   - platform: homeassistant
-    name: "Forecast Day 9 Precipitation Probability"
-    entity_id: input_text.forecast_day_9_precipitation_probability
-    id: forecast_day9_precip_prob
+    name: "Forecast Day 9 Precipitation"
+    entity_id: input_text.forecast_day_9_precipitation
+    id: forecast_day9_precip_amt
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_precip_amt
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
 
   - platform: homeassistant
-    name: "Forecast Day 10 Precipitation Probability"
-    entity_id: input_text.forecast_day_10_precipitation_probability
-    id: forecast_day10_precip_prob
+    name: "Forecast Day 10 Precipitation"
+    entity_id: input_text.forecast_day_10_precipitation
+    id: forecast_day10_precip_amt
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_precip_amt
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
 
 font:
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -3546,7 +3914,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 60
-            text_font: montserrat_14
+            text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
             long_mode: WRAP
@@ -3567,17 +3935,27 @@ lvgl:
             align: TOP_LEFT
             x: 30
             y: 88
-            text_font: montserrat_14
+            text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
 
         - label:
-            text: "H: --°F / L: --°F"
+            text: "H: --°F / L: "
             id: lbl_forecast_day1_temps
             align: TOP_LEFT
             x: 2
             y: 115
-            text_font: montserrat_14
+            text_font: montserrat_16
+            text_color: my_white
+            text_align: LEFT
+
+        - label:
+            text: "H: --°F / L: "
+            id: lbl_forecast_day1_lowtemps
+            align: TOP_LEFT
+            x: 18
+            y: 115
+            text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
 
@@ -3587,7 +3965,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 140
-            text_font: montserrat_12
+            text_font: montserrat_14
             text_color: my_white
             text_align: LEFT
 
@@ -3597,7 +3975,7 @@ lvgl:
             align: TOP_LEFT
             x: 2
             y: 160
-            text_font: montserrat_12
+            text_font: montserrat_14
             text_color: my_white
             text_align: LEFT
 
@@ -4199,81 +4577,321 @@ text:
   # Daily Forecast Page - Day 1
   - platform: lvgl
     name: forecast_day1_header
+    internal: true
     widget: lbl_forecast_day1_header
     mode: text
   - platform: lvgl
     name: forecast_day1_icon
+    internal: true
     widget: lbl_forecast_day1_icon
     mode: text
   - platform: lvgl
     name: forecast_day1_condition
+    internal: true
     widget: lbl_forecast_day1_condition
     mode: text
   - platform: lvgl
     name: forecast_day1_temps
+    internal: true
     widget: lbl_forecast_day1_temps
     mode: text
   - platform: lvgl
     name: forecast_day1_precip
+    internal: true
     widget: lbl_forecast_day1_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day1_precip_amt
+    internal: true
+    widget: lbl_forecast_day1_precip_amt
     mode: text
 
   # Daily Forecast Page - Day 2
   - platform: lvgl
     name: forecast_day2_header
+    internal: true
     widget: lbl_forecast_day2_header
     mode: text
   - platform: lvgl
     name: forecast_day2_icon
+    internal: true
     widget: lbl_forecast_day2_icon
     mode: text
   - platform: lvgl
     name: forecast_day2_condition
+    internal: true
     widget: lbl_forecast_day2_condition
     mode: text
   - platform: lvgl
     name: forecast_day2_temps
+    internal: true
     widget: lbl_forecast_day2_temps
     mode: text
   - platform: lvgl
     name: forecast_day2_precip
+    internal: true
     widget: lbl_forecast_day2_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day2_precip_amt
+    internal: true
+    widget: lbl_forecast_day2_precip_amt
     mode: text
 
   # Daily Forecast Page - Day 3
   - platform: lvgl
     name: forecast_day3_header
+    internal: true
     widget: lbl_forecast_day3_header
     mode: text
   - platform: lvgl
     name: forecast_day3_icon
+    internal: true
     widget: lbl_forecast_day3_icon
     mode: text
   - platform: lvgl
     name: forecast_day3_condition
+    internal: true
     widget: lbl_forecast_day3_condition
     mode: text
   - platform: lvgl
     name: forecast_day3_temps
+    internal: true
     widget: lbl_forecast_day3_temps
     mode: text
   - platform: lvgl
     name: forecast_day3_precip
+    internal: true
     widget: lbl_forecast_day3_precip
-    mode: text
-
-  # Daily Forecast Precipitation Amount - Day 1, 2, 3
-  - platform: lvgl
-    name: forecast_day1_precip_amt
-    widget: lbl_forecast_day1_precip_amt
-    mode: text
-  - platform: lvgl
-    name: forecast_day2_precip_amt
-    widget: lbl_forecast_day2_precip_amt
     mode: text
   - platform: lvgl
     name: forecast_day3_precip_amt
+    internal: true
     widget: lbl_forecast_day3_precip_amt
+    mode: text
+
+  # Daily Forecast Page - Day 4
+  - platform: lvgl
+    name: forecast_day4_header
+    internal: true
+    widget: lbl_forecast_day4_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day4_icon
+    internal: true
+    widget: lbl_forecast_day4_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day4_condition
+    internal: true
+    widget: lbl_forecast_day4_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day4_temps
+    internal: true
+    widget: lbl_forecast_day4_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day4_precip
+    internal: true
+    widget: lbl_forecast_day4_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day4_precip_amt
+    internal: true
+    widget: lbl_forecast_day4_precip_amt
+    mode: text
+  
+  # Daily Forecast Page - Day 5
+  - platform: lvgl
+    name: forecast_day5_header
+    internal: true
+    widget: lbl_forecast_day5_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day5_icon
+    internal: true
+    widget: lbl_forecast_day5_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day5_condition
+    internal: true
+    widget: lbl_forecast_day5_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day5_temps
+    internal: true
+    widget: lbl_forecast_day5_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day5_precip
+    internal: true
+    widget: lbl_forecast_day5_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day5_precip_amt
+    internal: true
+    widget: lbl_forecast_day5_precip_amt
+    mode: text
+
+  # Daily Forecast Page - Day 6
+  - platform: lvgl
+    name: forecast_day6_header
+    internal: true
+    widget: lbl_forecast_day6_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day6_icon
+    internal: true
+    widget: lbl_forecast_day6_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day6_condition
+    internal: true
+    widget: lbl_forecast_day6_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day6_temps
+    internal: true
+    widget: lbl_forecast_day6_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day6_precip
+    internal: true
+    widget: lbl_forecast_day6_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day6_precip_amt
+    internal: true
+    widget: lbl_forecast_day6_precip_amt
+    mode: text
+
+  # Daily Forecast Page - Day 7
+  - platform: lvgl
+    name: forecast_day7_header
+    internal: true
+    widget: lbl_forecast_day7_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day7_icon
+    internal: true
+    widget: lbl_forecast_day7_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day7_condition
+    internal: true
+    widget: lbl_forecast_day7_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day7_temps
+    internal: true
+    widget: lbl_forecast_day7_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day7_precip
+    internal: true
+    widget: lbl_forecast_day7_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day7_precip_amt
+    internal: true
+    widget: lbl_forecast_day7_precip_amt
+    mode: text
+
+  # Daily Forecast Page - Day 8
+  - platform: lvgl
+    name: forecast_day8_header
+    internal: true
+    widget: lbl_forecast_day8_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day8_icon
+    internal: true
+    widget: lbl_forecast_day8_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day8_condition
+    internal: true
+    widget: lbl_forecast_day8_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day8_temps
+    internal: true
+    widget: lbl_forecast_day8_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day8_precip
+    internal: true
+    widget: lbl_forecast_day8_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day8_precip_amt
+    internal: true
+    widget: lbl_forecast_day8_precip_amt
+    mode: text
+
+  # Daily Forecast Page - Day 9
+  - platform: lvgl
+    name: forecast_day9_header
+    internal: true
+    widget: lbl_forecast_day9_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day9_icon
+    internal: true
+    widget: lbl_forecast_day9_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day9_condition
+    internal: true
+    widget: lbl_forecast_day9_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day9_temps
+    internal: true
+    widget: lbl_forecast_day9_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day9_precip
+    internal: true
+    widget: lbl_forecast_day9_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day9_precip_amt
+    internal: true
+    widget: lbl_forecast_day9_precip_amt
+    mode: text
+
+  # Daily Forecast Page - Day 10
+  - platform: lvgl
+    name: forecast_day10_header
+    internal: true
+    widget: lbl_forecast_day10_header
+    mode: text
+  - platform: lvgl
+    name: forecast_day10_icon
+    internal: true
+    widget: lbl_forecast_day10_icon
+    mode: text
+  - platform: lvgl
+    name: forecast_day10_condition
+    internal: true
+    widget: lbl_forecast_day10_condition
+    mode: text
+  - platform: lvgl
+    name: forecast_day10_temps
+    internal: true
+    widget: lbl_forecast_day10_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day10_precip
+    internal: true
+    widget: lbl_forecast_day10_precip
+    mode: text
+  - platform: lvgl
+    name: forecast_day10_precip_amt
+    internal: true
+    widget: lbl_forecast_day10_precip_amt
     mode: text
 
 
