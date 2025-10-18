@@ -3953,11 +3953,13 @@ lvgl:
             text: "--°F"
             id: lbl_forecast_day1_lowtemps
             align: OUT_RIGHT_MID
-            x: 4
             text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
-            align_to: lbl_forecast_day1_temps
+            align_to: 
+              id: lbl_forecast_day1_temps
+              align: RIGHT_MID
+              x: 4
 
         - label:
             text: "Chance: --%"
