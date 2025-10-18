@@ -3901,84 +3901,73 @@ lvgl:
         - label:
             text: "10-Day Forecast"
             align: TOP_MID
-            x: 0
             y: 5
             text_font: montserrat_18
             text_color: my_white
             text_align: CENTER
 
-        # Day 1
-        - label:
-            text: "Day +1 (--/--)"
-            id: lbl_forecast_day1_header
+        # Day 1 container (flex layout)
+        - container:
+            id: forecast_day1_container
             align: TOP_LEFT
             x: 2
             y: 60
-            text_font: montserrat_16
-            text_color: my_white
-            text_align: LEFT
-            long_mode: WRAP
+            layout: FLEX
+            flex_flow: COLUMN    # stack items vertically
+            pad_row: 4           # spacing between rows
+            widgets:
+              - label:
+                  id: lbl_forecast_day1_header
+                  text: "Day +1 (--/--)"
+                  text_font: montserrat_16
+                  text_color: my_white
 
-        - label:
-            text: "--"
-            id: lbl_forecast_day1_icon
-            align: TOP_LEFT
-            x: 2
-            y: 85
-            text_font: icons_20
-            text_color: my_white
-            text_align: LEFT
+              # Row for icon + condition
+              - container:
+                  layout: FLEX
+                  flex_flow: ROW
+                  pad_column: 4
+                  widgets:
+                    - label:
+                        id: lbl_forecast_day1_icon
+                        text: "--"
+                        text_font: icons_20
+                        text_color: my_white
+                    - label:
+                        id: lbl_forecast_day1_condition
+                        text: "---"
+                        text_font: montserrat_16
+                        text_color: my_white
 
-        - label:
-            text: "---"
-            id: lbl_forecast_day1_condition
-            align: TOP_LEFT
-            x: 30
-            y: 88
-            text_font: montserrat_16
-            text_color: my_white
-            text_align: LEFT
+              # Row for temps
+              - container:
+                  layout: FLEX
+                  flex_flow: ROW
+                  pad_column: 4
+                  widgets:
+                    - label:
+                        id: lbl_forecast_day1_temps
+                        text: "H: --°F / L:"
+                        text_font: montserrat_16
+                        text_color: my_white
+                    - label:
+                        id: lbl_forecast_day1_lowtemps
+                        text: "--°F"
+                        text_font: montserrat_16
+                        text_color: my_white
 
-        - label:
-            text: "H: --°F / L: "
-            id: lbl_forecast_day1_temps
-            align: TOP_LEFT
-            x: 2
-            y: 115
-            text_font: montserrat_16
-            text_color: my_white
-            
+              # Row for precipitation
+              - label:
+                  id: lbl_forecast_day1_precip
+                  text: "Chance: --%"
+                  text_font: montserrat_14
+                  text_color: my_white
 
-        - label:
-            text: "--°F"
-            id: lbl_forecast_day1_lowtemps
-            text_font: montserrat_16
-            text_color: my_white
-            text_align: LEFT
-            align_to: 
-              id: lbl_forecast_day1_temps
-              align: RIGHT_MID
-              x: 4
-
-        - label:
-            text: "Chance: --%"
-            id: lbl_forecast_day1_precip
-            align: TOP_LEFT
-            x: 2
-            y: 140
-            text_font: montserrat_14
-            text_color: my_white
-            text_align: LEFT
-
-        - label:
-            text: "Amount: --mm"
-            id: lbl_forecast_day1_precip_amt
-            align: TOP_LEFT
-            x: 2
-            y: 160
-            text_font: montserrat_14
-            text_color: my_white
-            text_align: LEFT
+              - label:
+                  id: lbl_forecast_day1_precip_amt
+                  text: "Amount: --mm"
+                  text_font: montserrat_14
+                  text_color: my_white
 
         # Day 2
         - label:
