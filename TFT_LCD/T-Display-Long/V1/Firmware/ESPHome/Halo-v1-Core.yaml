@@ -3947,17 +3947,17 @@ lvgl:
             y: 115
             text_font: montserrat_16
             text_color: my_white
-            text_align: LEFT
+            
 
         - label:
             text: "--°F"
             id: lbl_forecast_day1_lowtemps
-            align: TOP_LEFT
-            x: 18
-            y: 115
+            align: OUT_RIGHT_MID
+            x: 4
             text_font: montserrat_16
             text_color: my_white
             text_align: LEFT
+            align_to: lbl_forecast_day1_temps
 
         - label:
             text: "Chance: --%"
