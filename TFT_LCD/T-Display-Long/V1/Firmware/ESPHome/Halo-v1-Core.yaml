@@ -3894,8 +3894,6 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: AUTO
       scrollable: true
-      on_load:
-        - logger.log: "LVGL: Daily forecast page loaded and displayed"
       widgets:
         # Header
         - label:
@@ -3906,27 +3904,30 @@ lvgl:
             text_color: my_white
             text_align: CENTER
 
-        # Day 1 container (flex layout)
-        - container:
+        # Day 1 flex layout
+        - obj:
             id: forecast_day1_container
-            align: TOP_LEFT
-            x: 2
-            y: 60
-            layout: FLEX
-            flex_flow: COLUMN    # stack items vertically
-            pad_row: 4           # spacing between rows
+            layout:
+              type: flex
+              flex_flow: column      # stack items vertically
+              pad_row: 4             # spacing between rows
+              flex_align_main: start
+              flex_align_cross: start
             widgets:
+              # Day header
               - label:
                   id: lbl_forecast_day1_header
                   text: "Day +1 (--/--)"
                   text_font: montserrat_16
                   text_color: my_white
 
-              # Row for icon + condition
-              - container:
-                  layout: FLEX
-                  flex_flow: ROW
-                  pad_column: 4
+              # Icon + condition row
+              - obj:
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    pad_column: 4
+                    flex_align_main: start
                   widgets:
                     - label:
                         id: lbl_forecast_day1_icon
@@ -3939,11 +3940,13 @@ lvgl:
                         text_font: montserrat_16
                         text_color: my_white
 
-              # Row for temps
-              - container:
-                  layout: FLEX
-                  flex_flow: ROW
-                  pad_column: 4
+              # High / Low temps row
+              - obj:
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    pad_column: 4
+                    flex_align_main: start
                   widgets:
                     - label:
                         id: lbl_forecast_day1_temps
@@ -3956,13 +3959,14 @@ lvgl:
                         text_font: montserrat_16
                         text_color: my_white
 
-              # Row for precipitation
+              # Precipitation chance
               - label:
                   id: lbl_forecast_day1_precip
                   text: "Chance: --%"
                   text_font: montserrat_14
                   text_color: my_white
 
+              # Precipitation amount
               - label:
                   id: lbl_forecast_day1_precip_amt
                   text: "Amount: --mm"
