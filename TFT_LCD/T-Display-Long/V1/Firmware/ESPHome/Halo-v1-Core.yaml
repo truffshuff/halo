@@ -4596,6 +4596,11 @@ text:
     widget: lbl_forecast_day1_temps
     mode: text
   - platform: lvgl
+    name: forecast_day1_lowtemps
+    internal: true
+    widget: lbl_forecast_day1_lowtemps
+    mode: text
+  - platform: lvgl
     name: forecast_day1_precip
     internal: true
     widget: lbl_forecast_day1_precip
@@ -4626,6 +4631,11 @@ text:
     name: forecast_day2_temps
     internal: true
     widget: lbl_forecast_day2_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day2_lowtemps
+    internal: true
+    widget: lbl_forecast_day2_lowtemps
     mode: text
   - platform: lvgl
     name: forecast_day2_precip
@@ -4660,6 +4670,11 @@ text:
     widget: lbl_forecast_day3_temps
     mode: text
   - platform: lvgl
+    name: forecast_day3_lowtemps
+    internal: true
+    widget: lbl_forecast_day3_lowtemps
+    mode: text
+  - platform: lvgl
     name: forecast_day3_precip
     internal: true
     widget: lbl_forecast_day3_precip
@@ -4690,6 +4705,11 @@ text:
     name: forecast_day4_temps
     internal: true
     widget: lbl_forecast_day4_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day4_lowtemps
+    internal: true
+    widget: lbl_forecast_day4_lowtemps
     mode: text
   - platform: lvgl
     name: forecast_day4_precip
@@ -4724,6 +4744,11 @@ text:
     widget: lbl_forecast_day5_temps
     mode: text
   - platform: lvgl
+    name: forecast_day5_lowtemps
+    internal: true
+    widget: lbl_forecast_day5_lowtemps
+    mode: text
+  - platform: lvgl
     name: forecast_day5_precip
     internal: true
     widget: lbl_forecast_day5_precip
@@ -4754,6 +4779,11 @@ text:
     name: forecast_day6_temps
     internal: true
     widget: lbl_forecast_day6_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day6_lowtemps
+    internal: true
+    widget: lbl_forecast_day6_lowtemps
     mode: text
   - platform: lvgl
     name: forecast_day6_precip
@@ -4788,6 +4818,11 @@ text:
     widget: lbl_forecast_day7_temps
     mode: text
   - platform: lvgl
+    name: forecast_day7_lowtemps
+    internal: true
+    widget: lbl_forecast_day7_lowtemps
+    mode: text
+  - platform: lvgl
     name: forecast_day7_precip
     internal: true
     widget: lbl_forecast_day7_precip
@@ -4818,6 +4853,11 @@ text:
     name: forecast_day8_temps
     internal: true
     widget: lbl_forecast_day8_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day8_lowtemps
+    internal: true
+    widget: lbl_forecast_day8_lowtemps
     mode: text
   - platform: lvgl
     name: forecast_day8_precip
@@ -4852,6 +4892,11 @@ text:
     widget: lbl_forecast_day9_temps
     mode: text
   - platform: lvgl
+    name: forecast_day9_lowtemps
+    internal: true
+    widget: lbl_forecast_day9_lowtemps
+    mode: text
+  - platform: lvgl
     name: forecast_day9_precip
     internal: true
     widget: lbl_forecast_day9_precip
@@ -4882,6 +4927,11 @@ text:
     name: forecast_day10_temps
     internal: true
     widget: lbl_forecast_day10_temps
+    mode: text
+  - platform: lvgl
+    name: forecast_day10_lowtemps
+    internal: true
+    widget: lbl_forecast_day10_lowtemps
     mode: text
   - platform: lvgl
     name: forecast_day10_precip
