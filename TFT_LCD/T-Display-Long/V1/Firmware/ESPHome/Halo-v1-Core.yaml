@@ -4683,12 +4683,12 @@ text:
     mode: text
   - platform: lvgl
     name: forecast_day1_temps
-    internal: true
+    internal: false
     widget: lbl_forecast_day1_temps
     mode: text
   - platform: lvgl
     name: forecast_day1_lowtemps
-    internal: true
+    internal: false
     widget: lbl_forecast_day1_lowtemps
     mode: text
   - platform: lvgl
