@@ -52,13 +52,6 @@ logger:
     display.qspi_dbi: VERBOSE
     weather_color: DEBUG
     time_update: DEBUG
-  # Add this to publish logs to MQTT
-  on_message:
-    - mqtt.publish:
-        topic: esphome/halo/logs
-        payload: !lambda |-
-          return x.c_str();
-
 
 globals:
   - id: cycleCounter
