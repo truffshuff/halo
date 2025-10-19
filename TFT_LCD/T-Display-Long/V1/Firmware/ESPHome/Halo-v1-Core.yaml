@@ -707,7 +707,6 @@ api:
             call.perform();
           }    
   services:
-    - service: subscribe_logs
     #Co2 Calibration Service
     - service: calibrate_co2_value
       variables:
