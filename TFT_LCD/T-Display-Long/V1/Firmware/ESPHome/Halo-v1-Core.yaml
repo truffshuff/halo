@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.9.8.1"
+  version: "25.10.19.1021"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4996,19 +4996,6 @@ text:
 
 
 esphome:
-  name: halo-v1-79e384
-  friendly_name: Halo Air Quality Sensor Dev
-  name_add_mac_suffix: false
-  platformio_options:
-    upload_speed: 921600
-    board_build.flash_mode: qio
-    board_build.psram_type: opi
-    board_build.f_flash: 80000000L
-    board_build.f_cpu: 240000000L
-  min_version: 2025.6.2
-  project:
-    name: "yashmulgaonkar.Halo-v1"
-    version: "${version}"
   on_boot:
     priority: -100
     then:
