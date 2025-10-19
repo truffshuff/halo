@@ -52,6 +52,13 @@ logger:
     display.qspi_dbi: VERBOSE
     weather_color: DEBUG
     time_update: DEBUG
+  # Add this to publish logs to MQTT
+  on_message:
+    - mqtt.publish:
+        topic: esphome/halo/logs
+        payload: !lambda |-
+          return x.c_str();
+
 
 globals:
   - id: cycleCounter
@@ -700,6 +707,7 @@ api:
             call.perform();
           }    
   services:
+    - service: subscribe_logs
     #Co2 Calibration Service
     - service: calibrate_co2_value
       variables:
