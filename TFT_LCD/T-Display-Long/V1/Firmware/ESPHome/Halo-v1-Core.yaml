@@ -45,13 +45,13 @@ spi:
 captive_portal:
 
 logger:
-  level: VERBOSE
+  level: INFO
   logs:
-    http_request.idf: DEBUG
-    lvgl: VERBOSE
-    display.qspi_dbi: VERBOSE
-    weather_color: DEBUG
-    time_update: DEBUG
+    http_request.idf: WARN
+    lvgl: WARN
+    display.qspi_dbi: WARN
+    weather_color: INFO
+    time_update: INFO
 
 globals:
   - id: cycleCounter
@@ -67,6 +67,10 @@ globals:
   - id: default_page_index
     type: int
     restore_value: yes
+    initial_value: '0'
+  - id: current_page_index
+    type: int
+    restore_value: no
     initial_value: '0'
   - id: boot_complete
     type: bool
@@ -184,6 +188,15 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  # Sensor UI update batching
+  - id: sensor_ui_dirty
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: last_sensor_ui_update
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
 
 switch:
   - platform: template
@@ -309,12 +322,10 @@ select:
 interval:
   - interval: 10s
     then:
-      - logger.log: "10s interval: Starting WiFi and WireGuard status update"
       - if:
           condition:
             wifi.connected:
           then:
-            - logger.log: "WiFi connected - updating display labels"
             - if:
                 condition:
                   lambda: 'return !id(wifi_stat_connected_state);'
@@ -490,14 +501,11 @@ interval:
                 condition:
                   lambda: 'return id(wg_handshake_needs_render);'
                 then:
-                  - logger.log: "Updating WireGuard handshake label"
                   - lvgl.label.update:
                       id: wg_handshake_label
                       text: !lambda 'return id(wg_handshake_last_text);'
                   - lambda: 'id(wg_handshake_needs_render) = false;'
-            - logger.log: "10s interval: WiFi and WireGuard update complete"
           else:
-            - logger.log: "WiFi disconnected"
             - if:
                 condition:
                   lambda: 'return id(wifi_stat_connected_state);'
@@ -666,6 +674,21 @@ interval:
           then:
             - script.execute: update_weather_icon_color
 
+  # Batched sensor UI update - prevents LVGL cascade rendering
+  - interval: 2s
+    then:
+      - lambda: |-
+          // Only update if sensors changed since last batch
+          if (id(sensor_ui_dirty)) {
+            const uint32_t now = millis();
+            // Ensure minimum 2s between UI refreshes
+            if ((now - id(last_sensor_ui_update)) >= 2000) {
+              ESP_LOGD("sensor_batch", "Batched sensor UI update triggered");
+              id(sensor_ui_dirty) = false;
+              id(last_sensor_ui_update) = now;
+            }
+          }
+
 api:
   on_client_connected:
       - delay: 1s
@@ -801,7 +824,6 @@ touchscreen:
           condition:
             lambda: 'return touch.y > 320 && touch.x < 45;'
           then:
-            - logger.log: "Bottom-left touch - going to previous page"
             - lvgl.page.previous:
                 animation: OUT_RIGHT
                 time: 300ms
@@ -810,7 +832,6 @@ touchscreen:
                 condition:
                   lambda: 'return touch.y > 320 && touch.x > 135;'
                 then:
-                  - logger.log: "Bottom-right touch - going to next page"
                   - lvgl.page.next:
                       animation: OUT_LEFT
                       time: 300ms
@@ -3094,10 +3115,9 @@ lvgl:
   disp_bg_opa: COVER
   disp_bg_image: none
   log_level: VERBOSE
+  update_interval: 100ms  # Throttle LVGL main loop to max 10 FPS
   on_idle:
     timeout: 60s
-    then:
-      - logger.log: "LVGL: Display idle for 60 seconds"
   gradients:
     - id: wifi_signal_gradient
       direction: hor
@@ -3119,7 +3139,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
-        - logger.log: "LVGL: Main page loaded and displayed"
+        - lambda: 'id(current_page_index) = 0;'
       widgets:
         - image:
             id: ym_image          
@@ -3633,7 +3653,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
-        - logger.log: "LVGL: WiFi/VPN page loaded and displayed"
+        - lambda: 'id(current_page_index) = 1;'
       widgets:
         - label:
             text: "WiFi & VPN \nStatistics"
@@ -3726,7 +3746,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
-        - logger.log: "LVGL: Weather forecast page loaded and displayed"
+        - lambda: 'id(current_page_index) = 2;'
       widgets:
         # Large weather condition icon at top
         - label:
@@ -3894,6 +3914,8 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: AUTO
       scrollable: true
+      on_load:
+        - lambda: 'id(current_page_index) = 3;'
       widgets:
         # Page Header
         - label:
