@@ -720,22 +720,26 @@ interval:
   # Automatic page rotation - controllable via Home Assistant
   - interval: 1s
     then:
-      - lambda: |-
-          // Only rotate if auto rotation is enabled
-          if (id(auto_page_rotation_enabled)) {
-            const uint32_t now = millis();
-            const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
-            
-            // Check if enough time has passed since last rotation
-            if ((now - id(last_auto_rotation_time)) >= interval_ms) {
-              ESP_LOGD("page_rotation", "Auto-rotating page (interval: %ds)", id(auto_page_rotation_interval));
-              id(last_auto_rotation_time) = now;
+      - if:
+          condition:
+            lambda: |-
+              // Only rotate if auto rotation is enabled
+              if (!id(auto_page_rotation_enabled)) return false;
               
-              // Trigger page rotation
-              auto call = id(lvgl_main).call_action();
-              call.page_next(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
-            }
-          }
+              const uint32_t now = millis();
+              const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
+              
+              // Check if enough time has passed since last rotation
+              if ((now - id(last_auto_rotation_time)) >= interval_ms) {
+                ESP_LOGD("page_rotation", "Auto-rotating page (interval: %ds)", id(auto_page_rotation_interval));
+                id(last_auto_rotation_time) = now;
+                return true;
+              }
+              return false;
+          then:
+            - lvgl.page.next:
+                animation: OUT_LEFT
+                time: 300ms
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
