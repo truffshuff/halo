@@ -51,6 +51,7 @@ logger:
     lvgl: WARN
     display.qspi_dbi: WARN
     api.connection: ERROR  # Reduce API noise - only show real errors
+    touchscreen: ERROR  # Reduce touch polling noise - only show real errors
     weather_color: INFO
     time_update: INFO
 
@@ -809,6 +810,7 @@ touchscreen:
     display: lily_display
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
+    update_interval: 50ms  # Rate limit polling to prevent runaway loops (even with interrupt)
     transform:
       mirror_x: false
       mirror_y: false
