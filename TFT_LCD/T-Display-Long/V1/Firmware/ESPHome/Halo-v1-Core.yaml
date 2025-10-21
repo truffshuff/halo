@@ -54,6 +54,8 @@ logger:
     touchscreen: ERROR  # Reduce touch polling noise - only show real errors
     weather_color: INFO
     time_update: INFO
+    component: ERROR  # Disable config dump on boot - prevents watchdog timeout during MQTT setup
+    mqtt: ERROR  # Reduce MQTT logging - only show real errors
 
 globals:
   - id: cycleCounter
@@ -811,7 +813,7 @@ touchscreen:
     display: lily_display
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
-    update_interval: 200ms  # Increased from 100ms - combined with 100ms internal limiter = max 5 reads/sec
+    update_interval: never  # Interrupt-only mode - rely solely on hardware interrupts, no polling
     transform:
       mirror_x: false
       mirror_y: false
