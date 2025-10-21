@@ -1193,7 +1193,7 @@ sensor:
                                 id: co2_value
                                 text_color: my_red                                                                              
     automatic_self_calibration: false
-    update_interval: 10s
+    update_interval: 30s  # Increased from 10s to reduce I2C blocking frequency
     measurement_mode: "periodic"
     i2c_id: lily_i2c
     ambient_pressure_compensation_source: bme280pressure
@@ -1433,7 +1433,7 @@ sensor:
                             - lvgl.label.update:
                                 id: nh3_value
                                 text_color: my_red  # High level, unsafe indoors                            
-    update_interval: 12s
+    update_interval: 40s  # Increased from 12s to reduce I2C blocking frequency
     i2c_id: lily_i2c
     address: 0x75
 
@@ -1722,7 +1722,7 @@ sensor:
                                 text_color: my_red                      
     i2c_id: lily_i2c
     address: 0x69
-    update_interval: 14s
+    update_interval: 60s  # Increased from 14s - SEN55 blocks for 4+ seconds per read!
 
   # 10-day forecast high temperatures from Home Assistant
   - platform: homeassistant
