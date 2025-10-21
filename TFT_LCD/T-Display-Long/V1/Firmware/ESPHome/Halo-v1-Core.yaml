@@ -47,6 +47,7 @@ captive_portal:
 logger:
   level: INFO
   logs:
+    mqtt.client: ERROR
     http_request.idf: WARN
     lvgl: WARN
     display.qspi_dbi: WARN
