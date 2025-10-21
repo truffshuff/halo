@@ -814,7 +814,7 @@ touchscreen:
           args: ['touch.x', 'touch.y']
       - lambda: |-
           auto now = millis();
-          if (now - id(last_touch_time) < 500) {  // Debounce for 500ms
+          if (now - id(last_touch_time) < 1000) {  // Debounce for 1 second
             ESP_LOGD("touch", "Touch ignored (debounce)");
             return;
           }
