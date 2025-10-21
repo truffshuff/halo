@@ -804,13 +804,14 @@ display:
     rotation: 0
     auto_clear_enabled: false
 
+# Touchscreen with fixed rate limiting in update_touches() to prevent I2C runaway loops
 touchscreen:
   - platform: axs15231
     id: lily_touch
     display: lily_display
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
-    update_interval: never  # Interrupt-only mode - no continuous polling to prevent I2C blocking
+    update_interval: 100ms  # Base class polling interval
     transform:
       mirror_x: false
       mirror_y: false
