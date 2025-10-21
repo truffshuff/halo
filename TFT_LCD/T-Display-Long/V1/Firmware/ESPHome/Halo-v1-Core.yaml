@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1929"
+  version: "25.10.21.1958"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4272,7 +4272,7 @@ lvgl:
 
         - label:
             text: "--.- °C"
-            id: lbl_weather_outdoor_now
+            id: lbl_weather_forecast_outdoor_temp
             text_align: CENTER
             text_font: montserrat_20
             text_color: my_white
@@ -4987,7 +4987,7 @@ text:
   - platform: lvgl
     name: weather_forecast_outdoor_temp
     internal: true
-    widget: lbl_weather_outdoor_now
+    widget: lbl_weather_forecast_outdoor_temp
     mode: text
 
   # Daily Forecast Page - Day 1
