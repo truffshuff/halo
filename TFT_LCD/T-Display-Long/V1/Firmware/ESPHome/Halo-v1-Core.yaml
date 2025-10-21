@@ -810,7 +810,7 @@ touchscreen:
     display: lily_display
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
-    update_interval: 100ms  # Increased from 50ms to reduce polling frequency
+    update_interval: never  # Interrupt-only mode - no continuous polling to prevent I2C blocking
     transform:
       mirror_x: false
       mirror_y: false
