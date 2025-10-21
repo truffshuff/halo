@@ -694,6 +694,13 @@ interval:
             }
           }
 
+  # Automatic page rotation - cycle through pages every 30 seconds
+  - interval: 30s
+    then:
+      - lvgl.page.next:
+          animation: OUT_LEFT
+          time: 300ms
+
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
   # Increase buffer sizes to handle sensor bursts
@@ -807,50 +814,53 @@ display:
     rotation: 0
     auto_clear_enabled: false
 
-# Touchscreen with fixed rate limiting in update_touches() to prevent I2C runaway loops
-touchscreen:
-  - platform: axs15231
-    id: lily_touch
-    display: lily_display
-    i2c_id: touch_i2c
-    interrupt_pin: GPIO11
-    update_interval: never  # Interrupt-only mode - rely solely on hardware interrupts, no polling
-    transform:
-      mirror_x: false
-      mirror_y: false
-      swap_xy: false
-    on_touch:
-      - lambda: |-
-          // Validate touch coordinates - filter out spurious/phantom touches
-          if (touch.x < 0 || touch.x > 180 || touch.y < 0 || touch.y > 640) {
-            ESP_LOGW("touch", "Invalid touch coordinates: x=%d, y=%d - ignoring", touch.x, touch.y);
-            return;
-          }
-          
-          // Debounce: ignore touches within 2 seconds of last touch
-          auto now = millis();
-          if (now - id(last_touch_time) < 2000) {
-            ESP_LOGD("touch", "Touch ignored (debounce) - only %.1fs since last", (now - id(last_touch_time)) / 1000.0);
-            return;
-          }
-          
-          id(last_touch_time) = now;
-          ESP_LOGI("touch", "Touch ACCEPTED at x=%d, y=%d", touch.x, touch.y);
-      - if:
-          condition:
-            lambda: 'return touch.y > 320 && touch.x < 45;'
-          then:
-            - lvgl.page.previous:
-                animation: OUT_RIGHT
-                time: 300ms
-          else:
-            - if:
-                condition:
-                  lambda: 'return touch.y > 320 && touch.x > 135;'
-                then:
-                  - lvgl.page.next:
-                      animation: OUT_LEFT
-                      time: 300ms
+# Touchscreen disabled due to persistent phantom touch issues causing false triggers
+# Even with aggressive rate limiting (100ms), interrupt-only mode, and 5s debounce,
+# electrical noise from WiFi/QSPI/MQTT causes spurious touch detection
+# Re-enable once hardware shielding/grounding issues are resolved
+# touchscreen:
+#   - platform: axs15231
+#     id: lily_touch
+#     display: lily_display
+#     i2c_id: touch_i2c
+#     interrupt_pin: GPIO11
+#     update_interval: never  # Interrupt-only mode - rely solely on hardware interrupts, no polling
+#     transform:
+#       mirror_x: false
+#       mirror_y: false
+#       swap_xy: false
+#     on_touch:
+#       - lambda: |-
+#           // Validate touch coordinates - filter out spurious/phantom touches
+#           if (touch.x < 0 || touch.x > 180 || touch.y < 0 || touch.y > 640) {
+#             ESP_LOGW("touch", "Invalid touch coordinates: x=%d, y=%d - ignoring", touch.x, touch.y);
+#             return;
+#           }
+#           
+#           // Aggressive debounce: ignore touches within 5 seconds of last touch (phantom touch mitigation)
+#           auto now = millis();
+#           if (now - id(last_touch_time) < 5000) {
+#             ESP_LOGD("touch", "Touch ignored (debounce) - only %.1fs since last", (now - id(last_touch_time)) / 1000.0);
+#             return;
+#           }
+#           
+#           id(last_touch_time) = now;
+#           // ESP_LOGI("touch", "Touch ACCEPTED at x=%d, y=%d", touch.x, touch.y);  // Disabled - reduces log noise from phantom touches
+#       - if:
+#           condition:
+#             lambda: 'return touch.y > 320 && touch.x < 45;'
+#           then:
+#             - lvgl.page.previous:
+#                 animation: OUT_RIGHT
+#                 time: 300ms
+#           else:
+#             - if:
+#                 condition:
+#                   lambda: 'return touch.y > 320 && touch.x > 135;'
+#                 then:
+#                   - lvgl.page.next:
+#                       animation: OUT_LEFT
+#                       time: 300ms
 
 web_server:
   port: 80
