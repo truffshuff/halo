@@ -67,6 +67,18 @@ globals:
   - id: last_touch_time
     type: int
     initial_value: '0'
+  - id: auto_page_rotation_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: auto_page_rotation_interval
+    type: int
+    restore_value: yes
+    initial_value: '30'  # Default 30 seconds
+  - id: last_auto_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
   - id: default_page_index
     type: int
     restore_value: yes
@@ -202,6 +214,19 @@ globals:
     initial_value: '0'
 
 switch:
+  - platform: template
+    name: "Auto Page Rotation"
+    id: auto_page_rotation
+    icon: mdi:rotate-3d-variant
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(auto_page_rotation_enabled) = true;'
+      - logger.log: "Auto page rotation enabled"
+    on_turn_off:
+      - lambda: 'id(auto_page_rotation_enabled) = false;'
+      - logger.log: "Auto page rotation disabled"
   - platform: template
     name: "Startup Light Blink"
     id: startup_light_blink
@@ -692,12 +717,25 @@ interval:
             }
           }
 
-  # Automatic page rotation - cycle through pages every 30 seconds
-  - interval: 30s
+  # Automatic page rotation - controllable via Home Assistant
+  - interval: 1s
     then:
-      - lvgl.page.next:
-          animation: OUT_LEFT
-          time: 300ms
+      - lambda: |-
+          // Only rotate if auto rotation is enabled
+          if (id(auto_page_rotation_enabled)) {
+            const uint32_t now = millis();
+            const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
+            
+            // Check if enough time has passed since last rotation
+            if ((now - id(last_auto_rotation_time)) >= interval_ms) {
+              ESP_LOGD("page_rotation", "Auto-rotating page (interval: %ds)", id(auto_page_rotation_interval));
+              id(last_auto_rotation_time) = now;
+              
+              // Trigger page rotation
+              auto call = id(lvgl_main).call_action();
+              call.page_next(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
+            }
+          }
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
@@ -812,53 +850,54 @@ display:
     rotation: 0
     auto_clear_enabled: false
 
-# Touchscreen disabled due to persistent phantom touch issues causing false triggers
-# Even with aggressive rate limiting (100ms), interrupt-only mode, and 5s debounce,
-# electrical noise from WiFi/QSPI causes spurious touch detection
-# Re-enable once hardware shielding/grounding issues are resolved
-# touchscreen:
-#   - platform: axs15231
-#     id: lily_touch
-#     display: lily_display
-#     i2c_id: touch_i2c
-#     interrupt_pin: GPIO11
-#     update_interval: never  # Interrupt-only mode - rely solely on hardware interrupts, no polling
-#     transform:
-#       mirror_x: false
-#       mirror_y: false
-#       swap_xy: false
-#     on_touch:
-#       - lambda: |-
-#           // Validate touch coordinates - filter out spurious/phantom touches
-#           if (touch.x < 0 || touch.x > 180 || touch.y < 0 || touch.y > 640) {
-#             ESP_LOGW("touch", "Invalid touch coordinates: x=%d, y=%d - ignoring", touch.x, touch.y);
-#             return;
-#           }
-#           
-#           // Aggressive debounce: ignore touches within 5 seconds of last touch (phantom touch mitigation)
-#           auto now = millis();
-#           if (now - id(last_touch_time) < 5000) {
-#             ESP_LOGD("touch", "Touch ignored (debounce) - only %.1fs since last", (now - id(last_touch_time)) / 1000.0);
-#             return;
-#           }
-#           
-#           id(last_touch_time) = now;
-#           // ESP_LOGI("touch", "Touch ACCEPTED at x=%d, y=%d", touch.x, touch.y);  // Disabled - reduces log noise from phantom touches
-#       - if:
-#           condition:
-#             lambda: 'return touch.y > 320 && touch.x < 45;'
-#           then:
-#             - lvgl.page.previous:
-#                 animation: OUT_RIGHT
-#                 time: 300ms
-#           else:
-#             - if:
-#                 condition:
-#                   lambda: 'return touch.y > 320 && touch.x > 135;'
-#                 then:
-#                   - lvgl.page.next:
-#                       animation: OUT_LEFT
-#                       time: 300ms
+# Touchscreen re-enabled with protective measures:
+# - 100ms internal rate limiter in axs15231_touchscreen.cpp
+# - Interrupt-only mode (no continuous polling)
+# - 5s debounce to filter phantom touches
+# - Coordinate validation to reject invalid touches
+touchscreen:
+  - platform: axs15231
+    id: lily_touch
+    display: lily_display
+    i2c_id: touch_i2c
+    interrupt_pin: GPIO11
+    update_interval: never  # Interrupt-only mode - rely solely on hardware interrupts, no polling
+    transform:
+      mirror_x: false
+      mirror_y: false
+      swap_xy: false
+    on_touch:
+      - lambda: |-
+          // Validate touch coordinates - filter out spurious/phantom touches
+          if (touch.x < 0 || touch.x > 180 || touch.y < 0 || touch.y > 640) {
+            ESP_LOGW("touch", "Invalid touch coordinates: x=%d, y=%d - ignoring", touch.x, touch.y);
+            return;
+          }
+          
+          // Aggressive debounce: ignore touches within 5 seconds of last touch (phantom touch mitigation)
+          auto now = millis();
+          if (now - id(last_touch_time) < 5000) {
+            ESP_LOGD("touch", "Touch ignored (debounce) - only %.1fs since last", (now - id(last_touch_time)) / 1000.0);
+            return;
+          }
+          
+          id(last_touch_time) = now;
+          ESP_LOGI("touch", "Touch ACCEPTED at x=%d, y=%d", touch.x, touch.y);
+      - if:
+          condition:
+            lambda: 'return touch.y > 320 && touch.x < 45;'
+          then:
+            - lvgl.page.previous:
+                animation: OUT_RIGHT
+                time: 300ms
+          else:
+            - if:
+                condition:
+                  lambda: 'return touch.y > 320 && touch.x > 135;'
+                then:
+                  - lvgl.page.next:
+                      animation: OUT_LEFT
+                      time: 300ms
 
 web_server:
   port: 80
@@ -1057,6 +1096,24 @@ script:
           id(weather_needs_render) = false;
 
 number:
+  - platform: template
+    name: "Auto Page Rotation Interval"
+    id: page_rotation_interval
+    icon: mdi:timer
+    restore_value: true
+    initial_value: 30
+    min_value: 5
+    max_value: 300
+    entity_category: "config"
+    unit_of_measurement: "s"
+    optimistic: true
+    step: 5
+    mode: slider
+    on_value:
+      - lambda: 'id(auto_page_rotation_interval) = (int)x;'
+      - logger.log:
+          format: "Page rotation interval changed to %d seconds"
+          args: ['(int)x']
   - platform: template
     name: SEN55 Temperature Offset
     id: sen55_temperature_offset
@@ -3156,8 +3213,8 @@ light:
 lvgl:
   displays:
     - lily_display
-  # touchscreens:  # Disabled - touchscreen component removed due to phantom touch issues
-  #   - lily_touch
+  touchscreens:
+    - lily_touch
   buffer_size: 100%
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
