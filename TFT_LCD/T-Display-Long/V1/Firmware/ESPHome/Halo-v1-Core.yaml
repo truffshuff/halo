@@ -811,7 +811,7 @@ touchscreen:
     display: lily_display
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
-    update_interval: 100ms  # Base class polling interval
+    update_interval: 200ms  # Increased from 100ms - combined with 100ms internal limiter = max 5 reads/sec
     transform:
       mirror_x: false
       mirror_y: false
