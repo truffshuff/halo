@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1812"
+  version: "25.10.21.1814"
   device_description: ${name} - v${version}.
 
 psram:
@@ -3043,7 +3043,7 @@ text_sensor:
               snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
               return buffer;
         - lvgl.label.update:
-            id: lbl_weather_forecast_hrprecip
+            id: lbl_weather_precipitation_today
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Amt Today: %smm", x.c_str());
