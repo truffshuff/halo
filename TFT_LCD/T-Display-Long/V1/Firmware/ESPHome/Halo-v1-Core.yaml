@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.121.0631"
+  version: "25.10.21.1355"
   device_description: ${name} - v${version}.
 
 psram:
@@ -47,7 +47,6 @@ captive_portal:
 logger:
   level: INFO
   logs:
-    mqtt.client: ERROR
     http_request.idf: WARN
     lvgl: WARN
     display.qspi_dbi: WARN
@@ -55,8 +54,7 @@ logger:
     touchscreen: ERROR  # Reduce touch polling noise - only show real errors
     weather_color: INFO
     time_update: INFO
-    component: ERROR  # Disable config dump on boot - prevents watchdog timeout during MQTT setup
-    mqtt: ERROR  # Reduce MQTT logging - only show real errors
+    component: ERROR  # Disable config dump on boot - prevents watchdog timeout
 
 globals:
   - id: cycleCounter
@@ -816,7 +814,7 @@ display:
 
 # Touchscreen disabled due to persistent phantom touch issues causing false triggers
 # Even with aggressive rate limiting (100ms), interrupt-only mode, and 5s debounce,
-# electrical noise from WiFi/QSPI/MQTT causes spurious touch detection
+# electrical noise from WiFi/QSPI causes spurious touch detection
 # Re-enable once hardware shielding/grounding issues are resolved
 # touchscreen:
 #   - platform: axs15231
