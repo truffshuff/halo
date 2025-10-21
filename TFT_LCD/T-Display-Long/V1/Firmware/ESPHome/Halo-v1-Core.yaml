@@ -3158,8 +3158,8 @@ light:
 lvgl:
   displays:
     - lily_display
-  touchscreens:
-    - lily_touch
+  # touchscreens:  # Disabled - touchscreen component removed due to phantom touch issues
+  #   - lily_touch
   buffer_size: 100%
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
