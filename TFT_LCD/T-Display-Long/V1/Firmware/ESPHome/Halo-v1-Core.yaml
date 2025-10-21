@@ -3248,6 +3248,7 @@ light:
           state: OFF
 
 lvgl:
+  id: lvgl_main
   displays:
     - lily_display
   touchscreens:
