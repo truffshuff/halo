@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1729"
+  version: "25.10.21.1754"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1814,7 +1814,10 @@ sensor:
       then:
         - lvgl.label.update:
             id: lbl_weather_forecast_tempap
-            text: !lambda 'return x;'
+            text: !lambda |-
+              char buffer[20];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
   
   # 10-day forecast high temperatures from Home Assistant
   - platform: homeassistant
