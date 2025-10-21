@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1609"
+  version: "25.10.21.1729"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1805,6 +1805,17 @@ sensor:
     address: 0x69
     update_interval: 60s  # Increased from 14s - SEN55 blocks for 4+ seconds per read!
 
+  # Feels like Temp from Home Assistant
+  - platform: homeassistant
+    name: "Forecast Feels Like Temp"
+    entity_id: sensor.hhut_feels_like
+    id: weather_forecast_tempap
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_forecast_tempap
+            text: !lambda 'return x;'
+  
   # 10-day forecast high temperatures from Home Assistant
   - platform: homeassistant
     name: "Forecast Day 1 High Temp"
@@ -4754,7 +4765,8 @@ lvgl:
 
 text:
   - platform: lvgl
-    name: fr_tempap
+    name: weather_forecast_tempap
+    internal: true
     widget: lbl_weather_forecast_tempap
     mode: text
   - platform: lvgl
