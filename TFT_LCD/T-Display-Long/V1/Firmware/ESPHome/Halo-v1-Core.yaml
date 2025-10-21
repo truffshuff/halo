@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1814"
+  version: "25.10.21.1823"
   device_description: ${name} - v${version}.
 
 psram:
@@ -3041,12 +3041,6 @@ text_sensor:
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
-              return buffer;
-        - lvgl.label.update:
-            id: lbl_weather_precipitation_today
-            text: !lambda |-
-              char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amt Today: %smm", x.c_str());
               return buffer;
 
   - platform: homeassistant
