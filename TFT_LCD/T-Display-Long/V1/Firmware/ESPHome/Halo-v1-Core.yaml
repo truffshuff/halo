@@ -832,15 +832,21 @@ touchscreen:
           
           id(last_touch_time) = now;
           ESP_LOGI("touch", "Touch ACCEPTED at x=%d, y=%d", touch.x, touch.y);
-          
-          // Only process nav touches (left/right edges)
-          if (touch.y > 320 && touch.x < 45) {
-            // Left edge - previous page
-            auto call = id(lily_display).trigger_page_previous();
-          } else if (touch.y > 320 && touch.x > 135) {
-            // Right edge - next page  
-            auto call = id(lily_display).trigger_page_next();
-          }
+      - if:
+          condition:
+            lambda: 'return touch.y > 320 && touch.x < 45;'
+          then:
+            - lvgl.page.previous:
+                animation: OUT_RIGHT
+                time: 300ms
+          else:
+            - if:
+                condition:
+                  lambda: 'return touch.y > 320 && touch.x > 135;'
+                then:
+                  - lvgl.page.next:
+                      animation: OUT_LEFT
+                      time: 300ms
 
 web_server:
   port: 80
