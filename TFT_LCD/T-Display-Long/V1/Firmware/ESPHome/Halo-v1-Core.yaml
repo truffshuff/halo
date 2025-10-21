@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.19.1021"
+  version: "25.10.121.0631"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1146,6 +1146,8 @@ sensor:
     co2:
       name: "CO2"
       id: "co2"
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1194,6 +1196,7 @@ sensor:
       id: "no2"
       filters:
       - offset: -0.16
+      - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1232,6 +1235,8 @@ sensor:
     carbon_monoxide:
       name: Carbon Monoxide
       id: "co"
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1270,6 +1275,8 @@ sensor:
     hydrogen:
       name: Hydrogen
       id: "h2"
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1308,6 +1315,8 @@ sensor:
     methane:
       name: Methane
       id: "ch4"
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1338,6 +1347,8 @@ sensor:
     ethanol:
       name: Ethanol
       id: "ethanol"
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1376,6 +1387,8 @@ sensor:
     ammonia:
       name: Ammonia
       id: "nh3"
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1435,6 +1448,8 @@ sensor:
       name: "PM <1µm Weight concentration"
       id: pm_1_0
       accuracy_decimals: 1
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1447,6 +1462,8 @@ sensor:
       name: "PM <2.5µm Weight concentration"
       id: pm_2_5
       accuracy_decimals: 1
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1523,6 +1540,8 @@ sensor:
       name: "PM <4µm Weight concentration"
       id: pm_4_0
       accuracy_decimals: 1
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1535,6 +1554,8 @@ sensor:
       name: "PM <10µm Weight concentration"
       id: pm_10_0
       accuracy_decimals: 1
+      filters:
+        - throttle_average: 500ms
       on_value:
         then:
           - lvgl.label.update:
@@ -1548,6 +1569,7 @@ sensor:
       accuracy_decimals: 1
       filters:
         - offset: !lambda return -1.0 * id(sen55_temperature_offset).state;
+        - throttle_average: 500ms
       on_value:
         then:
           - if:
@@ -3115,7 +3137,6 @@ lvgl:
   disp_bg_opa: COVER
   disp_bg_image: none
   log_level: VERBOSE
-  update_interval: 100ms  # Throttle LVGL main loop to max 10 FPS
   gradients:
     - id: wifi_signal_gradient
       direction: hor
