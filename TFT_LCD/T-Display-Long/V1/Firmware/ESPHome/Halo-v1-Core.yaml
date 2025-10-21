@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1921"
+  version: "25.10.21.1929"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1823,12 +1823,26 @@ sensor:
   # Feels like Temp from Home Assistant
   - platform: homeassistant
     name: "Forecast Feels Like Temp"
-    entity_id: sensor.hhut_feels_like
+    entity_id: sensor.st_00143056_feels_like
     id: weather_forecast_tempap
     on_value:
       then:
         - lvgl.label.update:
             id: lbl_weather_forecast_tempap
+            text: !lambda |-
+              char buffer[20];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+# Current Temp from Home Assistant
+  - platform: homeassistant
+    name: "Current Temp"
+    entity_id: sensor.st_00143056_temperature
+    id: weather_forecast_outdoor_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_forecast_outdoor_temp
             text: !lambda |-
               char buffer[20];
               snprintf(buffer, sizeof(buffer), "%.0f°F", x);
@@ -4258,7 +4272,7 @@ lvgl:
 
         - label:
             text: "--.- °C"
-            id: lbl_weather_outdnoor_now
+            id: lbl_weather_outdoor_now
             text_align: CENTER
             text_font: montserrat_20
             text_color: my_white
@@ -4971,8 +4985,9 @@ text:
     widget: lbl_weather_forecast_tempap
     mode: text
   - platform: lvgl
-    name: wd_out_now
-    widget: lbl_weather_outdnoor_now
+    name: weather_forecast_outdoor_temp
+    internal: true
+    widget: lbl_weather_outdoor_now
     mode: text
 
   # Daily Forecast Page - Day 1
