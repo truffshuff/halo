@@ -810,38 +810,37 @@ touchscreen:
     display: lily_display
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
-    update_interval: 50ms  # Rate limit polling to prevent runaway loops (even with interrupt)
+    update_interval: 100ms  # Increased from 50ms to reduce polling frequency
     transform:
       mirror_x: false
       mirror_y: false
       swap_xy: false
     on_touch:
-      - logger.log:
-          format: "Touch detected at x=%d, y=%d"
-          args: ['touch.x', 'touch.y']
       - lambda: |-
-          auto now = millis();
-          if (now - id(last_touch_time) < 1000) {  // Debounce for 1 second
-            ESP_LOGD("touch", "Touch ignored (debounce)");
+          // Validate touch coordinates - filter out spurious/phantom touches
+          if (touch.x < 0 || touch.x > 180 || touch.y < 0 || touch.y > 640) {
+            ESP_LOGW("touch", "Invalid touch coordinates: x=%d, y=%d - ignoring", touch.x, touch.y);
             return;
           }
+          
+          // Debounce: ignore touches within 2 seconds of last touch
+          auto now = millis();
+          if (now - id(last_touch_time) < 2000) {
+            ESP_LOGD("touch", "Touch ignored (debounce) - only %.1fs since last", (now - id(last_touch_time)) / 1000.0);
+            return;
+          }
+          
           id(last_touch_time) = now;
-          ESP_LOGD("touch", "Touch accepted");
-      - if:
-          condition:
-            lambda: 'return touch.y > 320 && touch.x < 45;'
-          then:
-            - lvgl.page.previous:
-                animation: OUT_RIGHT
-                time: 300ms
-          else:
-            - if:
-                condition:
-                  lambda: 'return touch.y > 320 && touch.x > 135;'
-                then:
-                  - lvgl.page.next:
-                      animation: OUT_LEFT
-                      time: 300ms
+          ESP_LOGI("touch", "Touch ACCEPTED at x=%d, y=%d", touch.x, touch.y);
+          
+          // Only process nav touches (left/right edges)
+          if (touch.y > 320 && touch.x < 45) {
+            // Left edge - previous page
+            auto call = id(lily_display).trigger_page_previous();
+          } else if (touch.y > 320 && touch.x > 135) {
+            // Right edge - next page  
+            auto call = id(lily_display).trigger_page_next();
+          }
 
 web_server:
   port: 80
