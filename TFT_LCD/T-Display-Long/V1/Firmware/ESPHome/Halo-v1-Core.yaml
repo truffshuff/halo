@@ -1035,7 +1035,7 @@ script:
           id(weather_last_started) = millis();
           id(weather_needs_render) = false;
       - lambda: |-
-          std::string condition = id(fr_cond_name).state;
+          std::string condition = id(forecast_day1_condition).state;
           ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
           if (condition.empty()) {
             return;
@@ -1058,6 +1058,9 @@ script:
                   if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
                     ESP_LOGD("weather_color", "Setting Gold color");
                     return lv_color_hex(0xFFD700);
+                  } else if (condition.find("partly") != std::string::npos && condition.find("cloudy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Sky Blue color");
+                    return lv_color_hex(0x87CEFA);
                   } else if (condition.find("cloudy") != std::string::npos || condition.find("overcast") != std::string::npos) {
                     ESP_LOGD("weather_color", "Setting Dark Gray color");
                     return lv_color_hex(0xA9A9A9);
@@ -1811,6 +1814,12 @@ sensor:
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "H: %.0f°F / L: ", x);
               return buffer;
+        - lvgl.label.update:
+            id: lbl_weather_forecast_temphi
+            text: !lambda |-
+              char buffer[15];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°", x);
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 2 High Temp"
@@ -1940,6 +1949,12 @@ sensor:
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+        - lvgl.label.update:
+            id: lbl_weather_forecast_templo
+            text: !lambda |-
+              char buffer[15];
+              snprintf(buffer, sizeof(buffer), "L: %.0f°", x);
               return buffer;
   
   - platform: homeassistant
@@ -2124,6 +2139,9 @@ text_sensor:
             id: lbl_forecast_day1_condition
             text: !lambda 'return x;'
         - lvgl.label.update:
+            id: lbl_weather_forecast_condition_name
+            text: !lambda 'return x;'
+        - lvgl.label.update:
             id: lbl_forecast_day1_icon
             text: !lambda |-
               const std::string condition = x;
@@ -2152,29 +2170,36 @@ text_sensor:
               } else {
                 return "\U000F14E4";  // sunny-off (unknown)
               }
-            text_color: !lambda |-
+        - lvgl.label.update:
+            id: lbl_weather_forecast_condition_icon
+            text: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
               if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return lv_color_hex(0xFFD700);
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
               } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("pouring") != std::string::npos) {
+                return "\U000F0596";  // pouring
+              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
+                return "\U000F0597";  // rainy
               } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
+                return "\U000F0598";  // snowy
               } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
+                return "\U000F0592";  // hail
               } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return lv_color_hex(0xFF1493);
+                return "\U000F067E";  // lightning-rainy
               } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return lv_color_hex(0xB0C4DE);
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return lv_color_hex(0x90EE90);
+                return "\U000F059E";  // windy
               } else {
-                return lv_color_hex(0xFFFFFF);
+                return "\U000F14E4";  // weather-unknown
               }
+        - script.execute: update_weather_icon_color
 
   - platform: homeassistant
     name: "Forecast Day 2 Condition"
@@ -2848,6 +2873,12 @@ text_sensor:
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
               return buffer;
+        - lvgl.label.update:
+            id: lbl_weather_forecast_dailyprecip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
 
   - platform: homeassistant
     name: "Forecast Day 2 Precipitation Probability"
@@ -2978,6 +3009,12 @@ text_sensor:
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              return buffer;
+        - lvgl.label.update:
+            id: lbl_weather_forecast_hrprecip
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Amt Today: %smm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -4712,40 +4749,12 @@ lvgl:
 
 text:
   - platform: lvgl
-    name: fr_cond_icon
-    widget: lbl_weather_forecast_condition_icon
-    mode: text
-  - platform: lvgl
-    name: fr_cond_name
-    id: fr_cond_name
-    widget: lbl_weather_forecast_condition_name
-    mode: text
-    on_value:
-      then:
-        - script.execute: update_weather_icon_color
-  - platform: lvgl
     name: fr_tempap
     widget: lbl_weather_forecast_tempap
     mode: text
   - platform: lvgl
-    name: fr_temphi
-    widget: lbl_weather_forecast_temphi
-    mode: text
-  - platform: lvgl
-    name: fr_templo
-    widget: lbl_weather_forecast_templo
-    mode: text
-  - platform: lvgl
     name: wd_out_now
     widget: lbl_weather_outdnoor_now
-    mode: text
-  - platform: lvgl
-    name: hr_precip
-    widget: lbl_weather_forecast_hrprecip
-    mode: text
-  - platform: lvgl
-    name: dy_precip
-    widget: lbl_weather_forecast_dailyprecip
     mode: text
 
   # Daily Forecast Page - Day 1
