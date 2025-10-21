@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1754"
+  version: "25.10.21.1812"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1817,6 +1817,20 @@ sensor:
             text: !lambda |-
               char buffer[20];
               snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  # Precipitation today from Home Assistant
+  - platform: homeassistant
+    name: "Precipitation Today"
+    entity_id: sensor.hhut_nearcast_precipitation_today
+    id: weather_precipitation_today
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_precipitation_today
+            text: !lambda |-
+              char buffer[20];
+              snprintf(buffer, sizeof(buffer), "%.0fmm", x);
               return buffer;
   
   # 10-day forecast high temperatures from Home Assistant
@@ -4029,7 +4043,7 @@ lvgl:
         # Today precipitation ant
         - label:
             text: "Amt Today: --mm"
-            id: lbl_weather_forecast_hrprecip
+            id: lbl_weather_precipitation_today
             text_align: CENTER
             text_font: montserrat_18
             text_color: my_teal
