@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1900"
+  version: "25.10.21.1916"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1845,7 +1845,7 @@ sensor:
             id: lbl_weather_precipitation_today
             text: !lambda |-
               char buffer[20];
-              snprintf(buffer, sizeof(buffer), "%.0fmm", x);
+              snprintf(buffer, sizeof(buffer), "%.0f mm", x);
               return buffer;
   
   # 10-day forecast high temperatures from Home Assistant
@@ -3091,7 +3091,7 @@ text_sensor:
             id: lbl_forecast_day1_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -3104,7 +3104,7 @@ text_sensor:
             id: lbl_forecast_day2_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -3130,7 +3130,7 @@ text_sensor:
             id: lbl_forecast_day4_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -3156,7 +3156,7 @@ text_sensor:
             id: lbl_forecast_day6_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -3182,7 +3182,7 @@ text_sensor:
             id: lbl_forecast_day8_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
               return buffer;
 
   - platform: homeassistant
@@ -3208,7 +3208,7 @@ text_sensor:
             id: lbl_forecast_day10_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
               return buffer;
 
 font:
@@ -3307,45 +3307,71 @@ light:
           name: Random Twinkle
       - addressable_lambda:
           name: "Weather Condition"
-          update_interval: 1000ms
+          update_interval: 100ms
           lambda: |-
             // Get the current weather condition from Day 1 forecast
+            static uint32_t last_flash = 0;
+            static bool flash_on = false;
+            uint32_t now = millis();
+
             std::string condition = id(forecast_day1_condition).state;
             std::string normalized = condition;
             std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
 
-            // Determine color based on weather condition
+            // Check if it's a lightning condition
+            bool is_lightning = (normalized.find("lightning-rainy") != std::string::npos ||
+                                normalized.find("lightning") != std::string::npos);
+
             Color weather_color;
-            if (normalized.find("clear-night") != std::string::npos) {
-              weather_color = Color(106, 90, 205);  // Slate Blue
-            } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-              weather_color = Color(255, 215, 0);   // Gold
-            } else if (normalized.find("snowy-rainy") != std::string::npos) {
-              weather_color = Color(175, 238, 238); // Light Cyan
-            } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
-              weather_color = Color(255, 20, 147);  // Deep Pink
-            } else if (normalized.find("partlycloudy") != std::string::npos) {
-              weather_color = Color(135, 206, 250); // Light Sky Blue
-            } else if (normalized.find("cloudy") != std::string::npos) {
-              weather_color = Color(169, 169, 169); // Dark Gray
-            } else if (normalized.find("rainy") != std::string::npos) {
-              weather_color = Color(65, 105, 225);  // Royal Blue
-            } else if (normalized.find("snowy") != std::string::npos) {
-              weather_color = Color(220, 220, 220); // Gainsboro
-            } else if (normalized.find("fog") != std::string::npos) {
-              weather_color = Color(176, 196, 222); // Light Steel Blue
-            } else if (normalized.find("windy") != std::string::npos) {
-              weather_color = Color(144, 238, 144); // Light Green
+
+            if (is_lightning) {
+              // Lightning effect - random flashes
+              // Flash randomly every 1-3 seconds
+              if (now - last_flash > (random(1000, 3000))) {
+                flash_on = !flash_on;
+                last_flash = now;
+              }
+
+              if (flash_on) {
+                weather_color = Color(255, 255, 255);  // Bright white flash
+              } else {
+                weather_color = Color(255, 20, 147);   // Deep pink between flashes
+              }
             } else {
-              weather_color = Color(255, 255, 255); // White (default)
+              // Regular solid weather colors
+              if (normalized.find("clear-night") != std::string::npos) {
+                weather_color = Color(106, 90, 205);  // Slate Blue
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                weather_color = Color(255, 215, 0);   // Gold
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                weather_color = Color(175, 238, 238); // Light Cyan
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                weather_color = Color(135, 206, 250); // Light Sky Blue
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                weather_color = Color(169, 169, 169); // Dark Gray
+              } else if (normalized.find("rainy") != std::string::npos) {
+                weather_color = Color(65, 105, 225);  // Royal Blue
+              } else if (normalized.find("snowy") != std::string::npos) {
+                weather_color = Color(220, 220, 220); // Gainsboro
+              } else if (normalized.find("fog") != std::string::npos) {
+                weather_color = Color(176, 196, 222); // Light Steel Blue
+              } else if (normalized.find("windy") != std::string::npos) {
+                weather_color = Color(144, 238, 144); // Light Green
+              } else {
+                weather_color = Color(255, 255, 255); // White (default)
+              }
             }
 
             // Set all LEDs to the weather condition color
             it.all() = weather_color;
       - addressable_lambda:
           name: "Auto Context"
-          update_interval: 500ms
+          update_interval: 100ms
           lambda: |-
+            static uint32_t last_flash = 0;
+            static bool flash_on = false;
+            uint32_t now = millis();
+
             Color led_color;
             int page = id(current_page_index);
 
@@ -3353,7 +3379,8 @@ light:
             if (page == 0) {
               float aqi = id(computed_halo_aqi).state;
               if (std::isnan(aqi) || aqi <= 50) {
-                led_color = Color(0, 255, 0);      // Green (Good)
+                // Turn off LEDs when air quality is good (just like AQI Color mode)
+                led_color = Color(0, 0, 0);        // Off (Good)
               } else if (aqi <= 100) {
                 led_color = Color(255, 255, 0);    // Yellow (Moderate)
               } else if (aqi <= 150) {
@@ -3372,14 +3399,23 @@ light:
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
 
-              if (normalized.find("clear-night") != std::string::npos) {
+              // Check if it's a lightning condition
+              bool is_lightning = (normalized.find("lightning-rainy") != std::string::npos ||
+                                  normalized.find("lightning") != std::string::npos);
+
+              if (is_lightning) {
+                // Lightning effect - random flashes
+                if (now - last_flash > (random(1000, 3000))) {
+                  flash_on = !flash_on;
+                  last_flash = now;
+                }
+                led_color = flash_on ? Color(255, 255, 255) : Color(255, 20, 147);
+              } else if (normalized.find("clear-night") != std::string::npos) {
                 led_color = Color(106, 90, 205);   // Slate Blue
               } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 led_color = Color(255, 215, 0);    // Gold
               } else if (normalized.find("snowy-rainy") != std::string::npos) {
                 led_color = Color(175, 238, 238);  // Light Cyan
-              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
-                led_color = Color(255, 20, 147);   // Deep Pink
               } else if (normalized.find("partlycloudy") != std::string::npos) {
                 led_color = Color(135, 206, 250);  // Light Sky Blue
               } else if (normalized.find("cloudy") != std::string::npos) {
@@ -4185,7 +4221,7 @@ lvgl:
 
         # Today precipitation ant
         - label:
-            text: "Amt Today: --mm"
+            text: "Amt Today: -- mm"
             id: lbl_weather_precipitation_today
             text_align: CENTER
             text_font: montserrat_18
@@ -4322,7 +4358,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day1_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_14
                         text_color: my_white
 
@@ -4389,7 +4425,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day2_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
 
@@ -4456,7 +4492,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day3_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
               #===================#
@@ -4522,7 +4558,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day4_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
               #===================#
@@ -4588,7 +4624,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day5_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
               #===================#
@@ -4654,7 +4690,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day6_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
               #===================#
@@ -4720,7 +4756,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day7_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
               #===================#
@@ -4786,7 +4822,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day8_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
 
@@ -4853,7 +4889,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day9_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
 
@@ -4919,7 +4955,7 @@ lvgl:
                         text_color: my_white
                     - label:
                         id: lbl_forecast_day10_precip_amt
-                        text: "Amount: --mm"
+                        text: "Amount: -- mm"
                         text_font: montserrat_12
                         text_color: my_white
 
