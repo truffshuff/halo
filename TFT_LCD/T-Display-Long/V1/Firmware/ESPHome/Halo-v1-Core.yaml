@@ -50,6 +50,7 @@ logger:
     http_request.idf: WARN
     lvgl: WARN
     display.qspi_dbi: WARN
+    api.connection: ERROR  # Reduce API noise - only show real errors
     weather_color: INFO
     time_update: INFO
 
@@ -690,6 +691,10 @@ interval:
           }
 
 api:
+  reboot_timeout: 0s  # Disable auto-reboot on API disconnect
+  # Increase buffer sizes to handle sensor bursts
+  # Default buffer is ~2KB, increase to 8KB
+  # This prevents TCP buffer exhaustion during sensor cascades
   on_client_connected:
       - delay: 1s
       - lambda: 'id(cycleCounter) = 30;'
@@ -1111,6 +1116,7 @@ sensor:
   - platform: template
     name: "Time Update Duration"
     id: time_update_duration_sensor
+    internal: true  # Don't send to Home Assistant - internal diagnostic only
     unit_of_measurement: "ms"
     accuracy_decimals: 0
     icon: "mdi:timer-outline"
@@ -1120,6 +1126,7 @@ sensor:
   - platform: template
     name: "Weather Icon Update Duration"
     id: weather_icon_duration_sensor
+    internal: true  # Don't send to Home Assistant - internal diagnostic only
     unit_of_measurement: "ms"
     accuracy_decimals: 0
     icon: "mdi:weather-lightning"
