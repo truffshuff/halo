@@ -1147,7 +1147,7 @@ sensor:
       name: "CO2"
       id: "co2"
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1196,7 +1196,7 @@ sensor:
       id: "no2"
       filters:
       - offset: -0.16
-      - throttle_average: 500ms
+      - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1236,7 +1236,7 @@ sensor:
       name: Carbon Monoxide
       id: "co"
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1276,7 +1276,7 @@ sensor:
       name: Hydrogen
       id: "h2"
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1316,7 +1316,7 @@ sensor:
       name: Methane
       id: "ch4"
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1348,7 +1348,7 @@ sensor:
       name: Ethanol
       id: "ethanol"
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1388,7 +1388,7 @@ sensor:
       name: Ammonia
       id: "nh3"
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1449,7 +1449,7 @@ sensor:
       id: pm_1_0
       accuracy_decimals: 1
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1463,7 +1463,7 @@ sensor:
       id: pm_2_5
       accuracy_decimals: 1
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1541,7 +1541,7 @@ sensor:
       id: pm_4_0
       accuracy_decimals: 1
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1555,7 +1555,7 @@ sensor:
       id: pm_10_0
       accuracy_decimals: 1
       filters:
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - lvgl.label.update:
@@ -1569,7 +1569,7 @@ sensor:
       accuracy_decimals: 1
       filters:
         - offset: !lambda return -1.0 * id(sen55_temperature_offset).state;
-        - throttle_average: 500ms
+        - throttle_average: 2s
       on_value:
         then:
           - if:
