@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1823"
+  version: "25.10.21.1853"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1059,28 +1059,31 @@ script:
                 text_color: !lambda |-
                   const std::string condition = id(weather_last_condition);
                   ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
-                  if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
+                  if (condition.find("clear-night") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Slate Blue color (night)");
+                    return lv_color_hex(0x6A5ACD);
+                  } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
                     ESP_LOGD("weather_color", "Setting Gold color");
                     return lv_color_hex(0xFFD700);
-                  } else if (condition.find("partly") != std::string::npos && condition.find("cloudy") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Light Sky Blue color");
-                    return lv_color_hex(0x87CEFA);
-                  } else if (condition.find("cloudy") != std::string::npos || condition.find("overcast") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Dark Gray color");
-                    return lv_color_hex(0xA9A9A9);
-                  } else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos || condition.find("drizzle") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Royal Blue color");
-                    return lv_color_hex(0x4169E1);
-                  } else if (condition.find("snowy") != std::string::npos || condition.find("sleet") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Gainsboro color");
-                    return lv_color_hex(0xDCDCDC);
-                  } else if (condition.find("hail") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Sky Blue color");
-                    return lv_color_hex(0x87CEEB);
-                  } else if (condition.find("lightning") != std::string::npos || condition.find("thunderstorm") != std::string::npos) {
+                  } else if (condition.find("snowy-rainy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Cyan color (mixed precipitation)");
+                    return lv_color_hex(0xAFEEEE);
+                  } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
                     ESP_LOGD("weather_color", "Setting Deep Pink color");
                     return lv_color_hex(0xFF1493);
-                  } else if (condition.find("fog") != std::string::npos || condition.find("mist") != std::string::npos) {
+                  } else if (condition.find("partlycloudy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Sky Blue color");
+                    return lv_color_hex(0x87CEFA);
+                  } else if (condition.find("cloudy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Dark Gray color");
+                    return lv_color_hex(0xA9A9A9);
+                  } else if (condition.find("rainy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Royal Blue color");
+                    return lv_color_hex(0x4169E1);
+                  } else if (condition.find("snowy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Gainsboro color");
+                    return lv_color_hex(0xDCDCDC);
+                  } else if (condition.find("fog") != std::string::npos) {
                     ESP_LOGD("weather_color", "Setting Light Steel Blue color");
                     return lv_color_hex(0xB0C4DE);
                   } else if (condition.find("windy") != std::string::npos) {
@@ -2179,28 +2182,28 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return "\U000F0599";  // sunny
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";  // partlycloudy
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";  // cloudy
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";  // pouring
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";  // rainy
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";  // snowy
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";  // hail
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return "\U000F067E";  // lightning-rainy
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
                 return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
                 return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";  // sunny-off (unknown)
+                return "\U000F14E4";  // weather-unknown
               }
         - lvgl.label.update:
             id: lbl_weather_forecast_condition_icon
@@ -2208,23 +2211,23 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return "\U000F0599";  // sunny
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";  // partlycloudy
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";  // cloudy
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";  // pouring
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";  // rainy
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";  // snowy
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";  // hail
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return "\U000F067E";  // lightning-rainy
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
                 return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
                 return "\U000F059E";  // windy
@@ -2248,46 +2251,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2310,46 +2317,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2372,46 +2383,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2434,46 +2449,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2496,46 +2515,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2558,46 +2581,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2620,46 +2647,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2682,46 +2713,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -2744,46 +2779,50 @@ text_sensor:
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";
-              } else if (normalized.find("partly") != std::string::npos && normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0595";
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return "\U000F0590";
-              } else if (normalized.find("pouring") != std::string::npos) {
-                return "\U000F0596";
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return "\U000F0597";
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return "\U000F0598";
-              } else if (normalized.find("hail") != std::string::npos) {
-                return "\U000F0592";
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
-                return "\U000F067E";
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
-                return "\U000F0591";
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";
+                return "\U000F059D";  // windy
               } else {
-                return "\U000F14E4";
+                return "\U000F14E4";  // weather-unknown
               }
             text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
                 return lv_color_hex(0xFFD700);
-              } else if (normalized.find("cloudy") != std::string::npos || normalized.find("overcast") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos || normalized.find("pouring") != std::string::npos || normalized.find("drizzle") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos || normalized.find("sleet") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("hail") != std::string::npos) {
-                return lv_color_hex(0x87CEEB);
-              } else if (normalized.find("lightning") != std::string::npos || normalized.find("thunderstorm") != std::string::npos) {
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
                 return lv_color_hex(0xFF1493);
-              } else if (normalized.find("fog") != std::string::npos || normalized.find("mist") != std::string::npos) {
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
                 return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
                 return lv_color_hex(0x90EE90);
@@ -3254,6 +3293,104 @@ light:
           name: Strobe
       - addressable_random_twinkle:
           name: Random Twinkle
+      - addressable_lambda:
+          name: "Weather Condition"
+          update_interval: 1000ms
+          lambda: |-
+            // Get the current weather condition from Day 1 forecast
+            std::string condition = id(forecast_day1_condition).state;
+            std::string normalized = condition;
+            std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+
+            // Determine color based on weather condition
+            Color weather_color;
+            if (normalized.find("clear-night") != std::string::npos) {
+              weather_color = Color(106, 90, 205);  // Slate Blue
+            } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+              weather_color = Color(255, 215, 0);   // Gold
+            } else if (normalized.find("snowy-rainy") != std::string::npos) {
+              weather_color = Color(175, 238, 238); // Light Cyan
+            } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+              weather_color = Color(255, 20, 147);  // Deep Pink
+            } else if (normalized.find("partlycloudy") != std::string::npos) {
+              weather_color = Color(135, 206, 250); // Light Sky Blue
+            } else if (normalized.find("cloudy") != std::string::npos) {
+              weather_color = Color(169, 169, 169); // Dark Gray
+            } else if (normalized.find("rainy") != std::string::npos) {
+              weather_color = Color(65, 105, 225);  // Royal Blue
+            } else if (normalized.find("snowy") != std::string::npos) {
+              weather_color = Color(220, 220, 220); // Gainsboro
+            } else if (normalized.find("fog") != std::string::npos) {
+              weather_color = Color(176, 196, 222); // Light Steel Blue
+            } else if (normalized.find("windy") != std::string::npos) {
+              weather_color = Color(144, 238, 144); // Light Green
+            } else {
+              weather_color = Color(255, 255, 255); // White (default)
+            }
+
+            // Set all LEDs to the weather condition color
+            it.all() = weather_color;
+      - addressable_lambda:
+          name: "Auto Context"
+          update_interval: 500ms
+          lambda: |-
+            Color led_color;
+            int page = id(current_page_index);
+
+            // Main page (0) - show AQI color
+            if (page == 0) {
+              float aqi = id(computed_halo_aqi).state;
+              if (std::isnan(aqi) || aqi <= 50) {
+                led_color = Color(0, 255, 0);      // Green (Good)
+              } else if (aqi <= 100) {
+                led_color = Color(255, 255, 0);    // Yellow (Moderate)
+              } else if (aqi <= 150) {
+                led_color = Color(255, 165, 0);    // Orange (Unhealthy for Sensitive)
+              } else if (aqi <= 200) {
+                led_color = Color(255, 0, 0);      // Red (Unhealthy)
+              } else if (aqi <= 300) {
+                led_color = Color(128, 0, 128);    // Purple (Very Unhealthy)
+              } else {
+                led_color = Color(128, 0, 0);      // Maroon (Hazardous)
+              }
+            }
+            // Weather pages (2 or 3) - show weather condition color
+            else if (page == 2 || page == 3) {
+              std::string condition = id(forecast_day1_condition).state;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+
+              if (normalized.find("clear-night") != std::string::npos) {
+                led_color = Color(106, 90, 205);   // Slate Blue
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                led_color = Color(255, 215, 0);    // Gold
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                led_color = Color(175, 238, 238);  // Light Cyan
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                led_color = Color(255, 20, 147);   // Deep Pink
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                led_color = Color(135, 206, 250);  // Light Sky Blue
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                led_color = Color(169, 169, 169);  // Dark Gray
+              } else if (normalized.find("rainy") != std::string::npos) {
+                led_color = Color(65, 105, 225);   // Royal Blue
+              } else if (normalized.find("snowy") != std::string::npos) {
+                led_color = Color(220, 220, 220);  // Gainsboro
+              } else if (normalized.find("fog") != std::string::npos) {
+                led_color = Color(176, 196, 222);  // Light Steel Blue
+              } else if (normalized.find("windy") != std::string::npos) {
+                led_color = Color(144, 238, 144);  // Light Green
+              } else {
+                led_color = Color(255, 255, 255);  // White (default)
+              }
+            }
+            // Network page (1) or other - soft white
+            else {
+              led_color = Color(100, 100, 100);    // Dim white
+            }
+
+            // Set all LEDs to the contextual color
+            it.all() = led_color;
 
   - platform: monochromatic
     output: backlight
