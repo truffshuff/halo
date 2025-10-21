@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.1600"
+  version: "25.10.21.1609"
   device_description: ${name} - v${version}.
 
 psram:
@@ -878,9 +878,9 @@ touchscreen:
             return;
           }
           
-          // Aggressive debounce: ignore touches within 5 seconds of last touch (phantom touch mitigation)
+          // Moderate debounce: ignore touches within 500ms of last touch (phantom touch mitigation)
           auto now = millis();
-          if (now - id(last_touch_time) < 5000) {
+          if (now - id(last_touch_time) < 500) {
             ESP_LOGD("touch", "Touch ignored (debounce) - only %.1fs since last", (now - id(last_touch_time)) / 1000.0);
             return;
           }
