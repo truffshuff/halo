@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2141"
+  version: "25.10.21.2143"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4314,7 +4314,7 @@ lvgl:
             text_color: my_white
             text_align: CENTER
 
-        # Daily forecast layout with featured cards and scroll list
+    # Daily forecast layout with featured cards and scroll list
         - obj:
             id: forecast_layout
             width: 180
@@ -4328,8 +4328,8 @@ lvgl:
               type: flex
               flex_flow: column
               pad_row: 14
-              align_main: START
-              align_cross: CENTER
+              flex_align_main: START
+              flex_align_cross: CENTER
             widgets:
 
               #-------------------#
@@ -4343,7 +4343,7 @@ lvgl:
                   border_width: 0
                   radius: 12
                   pad_all: 12
-                  scrollbar_mode: OFF
+                  scrollbar_mode: "OFF"
                   layout:
                     type: flex
                     flex_flow: column
@@ -4361,8 +4361,8 @@ lvgl:
                           type: flex
                           flex_flow: row
                           pad_column: 8
-                          align_main: START
-                          align_cross: CENTER
+                          flex_align_main: START
+                          flex_align_cross: CENTER
                         widgets:
                           - label:
                               id: lbl_forecast_day1_icon
@@ -4387,8 +4387,8 @@ lvgl:
                           type: flex
                           flex_flow: row
                           pad_column: 10
-                          align_main: START
-                          align_cross: CENTER
+                          flex_align_main: START
+                          flex_align_cross: CENTER
                         widgets:
                           - label:
                               id: lbl_forecast_day1_precip
@@ -4412,7 +4412,7 @@ lvgl:
                   border_width: 0
                   radius: 12
                   pad_all: 12
-                  scrollbar_mode: OFF
+                  scrollbar_mode: "OFF"
                   layout:
                     type: flex
                     flex_flow: column
@@ -4430,8 +4430,8 @@ lvgl:
                           type: flex
                           flex_flow: row
                           pad_column: 8
-                          align_main: START
-                          align_cross: CENTER
+                          flex_align_main: START
+                          flex_align_cross: CENTER
                         widgets:
                           - label:
                               id: lbl_forecast_day2_icon
@@ -4456,8 +4456,8 @@ lvgl:
                           type: flex
                           flex_flow: row
                           pad_column: 10
-                          align_main: START
-                          align_cross: CENTER
+                          flex_align_main: START
+                          flex_align_cross: CENTER
                         widgets:
                           - label:
                               id: lbl_forecast_day2_precip
@@ -4483,14 +4483,14 @@ lvgl:
                   pad_right: 0
                   pad_top: 0
                   pad_bottom: 4
-                  scrollbar_mode: ACTIVE
+                  scrollbar_mode: "ACTIVE"
                   scrollable: true
                   layout:
                     type: flex
                     flex_flow: column
                     pad_row: 10
-                    align_main: START
-                    align_cross: CENTER
+                    flex_align_main: START
+                    flex_align_cross: CENTER
                   widgets:
 
                     #===================#
@@ -4504,7 +4504,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4522,8 +4522,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day3_icon
@@ -4571,7 +4571,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4589,8 +4589,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day4_icon
@@ -4638,7 +4638,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4656,8 +4656,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day5_icon
@@ -4705,7 +4705,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4723,8 +4723,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day6_icon
@@ -4772,7 +4772,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4790,8 +4790,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day7_icon
@@ -4839,7 +4839,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4857,8 +4857,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day8_icon
@@ -4906,7 +4906,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4924,8 +4924,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day9_icon
@@ -4973,7 +4973,7 @@ lvgl:
                         border_width: 0
                         radius: 10
                         pad_all: 10
-                        scrollbar_mode: OFF
+                        scrollbar_mode: "OFF"
                         layout:
                           type: flex
                           flex_flow: column
@@ -4991,8 +4991,8 @@ lvgl:
                                 type: flex
                                 flex_flow: row
                                 pad_column: 8
-                                align_main: START
-                                align_cross: CENTER
+                                flex_align_main: START
+                                flex_align_cross: CENTER
                               widgets:
                                 - label:
                                     id: lbl_forecast_day10_icon
