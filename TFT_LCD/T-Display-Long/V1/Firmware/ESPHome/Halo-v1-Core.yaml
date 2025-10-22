@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0729"
+  version: "25.10.22.0756"
   device_description: ${name} - v${version}.
 
 psram:
@@ -133,6 +133,10 @@ globals:
     type: bool
     restore_value: yes
     initial_value: 'true'
+  - id: bluetooth_proxy_reboot_needed
+    type: bool
+    restore_value: no
+    initial_value: 'false'
   - id: weather_last_condition
     type: std::string
     restore_value: no
@@ -290,16 +294,14 @@ switch:
       - logger.log: "Enabling Bluetooth Proxy"
       - lambda: |
           id(bluetooth_proxy_enabled) = true;
-          ESP_LOGI("bluetooth_proxy", "Marked Bluetooth proxy enabled; scheduling restart to apply changes");
-      - delay: 500ms
-      - button.press: esp_reboot
+          id(bluetooth_proxy_reboot_needed) = true;
+          ESP_LOGI("bluetooth_proxy", "Bluetooth proxy enabled - Please manually reboot for changes to take effect");
     on_turn_off:
       - logger.log: "Disabling Bluetooth Proxy"
       - lambda: |
           id(bluetooth_proxy_enabled) = false;
-          ESP_LOGI("bluetooth_proxy", "Marked Bluetooth proxy disabled; scheduling restart to apply changes");
-      - delay: 500ms
-      - button.press: esp_reboot
+          id(bluetooth_proxy_reboot_needed) = true;
+          ESP_LOGI("bluetooth_proxy", "Bluetooth proxy disabled - Please manually reboot for changes to take effect");
 
 select:
   - platform: template
@@ -389,13 +391,13 @@ select:
           std::string mode = id(bluetooth_proxy_mode_select).state;
           if (mode == "Active") {
             id(bluetooth_proxy_mode_active) = true;
-            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Active mode; scheduling restart to apply");
+            id(bluetooth_proxy_reboot_needed) = true;
+            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Active mode - Please manually reboot for changes to take effect");
           } else {
             id(bluetooth_proxy_mode_active) = false;
-            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Passive mode; scheduling restart to apply");
+            id(bluetooth_proxy_reboot_needed) = true;
+            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Passive mode - Please manually reboot for changes to take effect");
           }
-      - delay: 500ms
-      - button.press: esp_reboot
 
   - platform: template
     name: Default Page
@@ -1324,6 +1326,15 @@ sensor:
     entity_category: "diagnostic"
     lambda: 'return id(bluetooth_proxy_mode_active);'
     update_interval: 10s
+
+  - platform: template
+    name: "Bluetooth Proxy Reboot Needed"
+    id: ha_bluetooth_proxy_reboot_needed
+    icon: mdi:restart-alert
+    entity_category: "diagnostic"
+    device_class: problem
+    lambda: 'return id(bluetooth_proxy_reboot_needed);'
+    update_interval: 5s
 
   - platform: scd4x
     id: scd40
@@ -5466,6 +5477,9 @@ esphome:
     priority: -100
     then:
       - logger.log: "Boot sequence starting (priority 900)"
+      - lambda: |-
+          id(bluetooth_proxy_reboot_needed) = false;
+          ESP_LOGI("bluetooth_proxy", "Cleared reboot needed flag on boot");
       - light.turn_off: rgb_light
       - delay: 1s
       - logger.log:
