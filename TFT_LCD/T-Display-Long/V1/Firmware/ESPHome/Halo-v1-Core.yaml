@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0631"
+  version: "25.10.22.0634"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4282,14 +4282,14 @@ lvgl:
 
         # Today precipitation amt
         - label:
-          text: "Amt Today: -- in"
-          id: lbl_weather_precipitation_today
-                text_align: CENTER
-                text_font: montserrat_18
-                text_color: my_teal
-                align: BOTTOM_MID
-                x: 0
-                y: -80
+            text: "Amt Today: -- in"
+            id: lbl_weather_precipitation_today
+            text_align: CENTER
+            text_font: montserrat_18
+            text_color: my_teal
+            align: BOTTOM_MID
+            x: 0
+            y: -80
 
         # Precipitation Chnace
         - label:
