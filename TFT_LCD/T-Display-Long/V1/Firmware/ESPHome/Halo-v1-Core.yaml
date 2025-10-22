@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0828"
+  version: "25.10.22.0846"
   device_description: ${name} - v${version}.
 
 psram:
@@ -383,12 +383,12 @@ select:
     options:
       - "Active"
       - "Passive"
-    initial_option: "Active"
+    initial_option: "Passive"  # Passive mode by default
     restore_value: true
     optimistic: true
-    on_value:
+    set_action:  # Changed from on_value to set_action to prevent triggering on boot
       - lambda: |-
-          std::string mode = id(bluetooth_proxy_mode_select).state;
+          std::string mode = x;
           if (mode == "Active") {
             id(bluetooth_proxy_mode_active) = true;
             id(bluetooth_proxy_reboot_needed) = true;
@@ -5589,8 +5589,11 @@ esphome:
     then:
       - logger.log: "Boot sequence starting (priority 900)"
       - lambda: |-
+          // Force bluetooth proxy to disabled state (prevents AP mode interference)
+          id(bluetooth_proxy_enabled) = false;
+          id(bluetooth_proxy_mode_active) = false;
           id(bluetooth_proxy_reboot_needed) = false;
-          ESP_LOGI("bluetooth_proxy", "Cleared reboot needed flag on boot");
+          ESP_LOGI("bluetooth_proxy", "Bluetooth proxy forced to disabled state on boot");
       - light.turn_off: rgb_light
       - delay: 1s
       - logger.log:
