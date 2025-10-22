@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0638"
+  version: "25.10.22.0649"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1861,7 +1861,7 @@ sensor:
               // Convert mm to inches (1 in = 25.4 mm) and show with one decimal
               char buffer[20];
               double inches = x / 25.4;
-              snprintf(buffer, sizeof(buffer), "%.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "%.2f in", inches);
               return buffer;
   
   # 10-day forecast high temperatures from Home Assistant
@@ -3129,7 +3129,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3144,7 +3144,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3159,7 +3159,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3174,7 +3174,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3189,7 +3189,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3204,7 +3204,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3219,7 +3219,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3234,7 +3234,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3249,7 +3249,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3264,7 +3264,7 @@ text_sensor:
               char buffer[30];
               double mm = atof(x.c_str());
               double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
+              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
               return buffer;
 
 font:
