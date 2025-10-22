@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2129"
+  version: "25.10.21.2141"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4314,57 +4314,55 @@ lvgl:
             text_color: my_white
             text_align: CENTER
 
-        # Top-level container for all days
+        # Daily forecast layout with featured cards and scroll list
         - obj:
-            id: forecast_container
+            id: forecast_layout
             width: 180
-            height: 610
+            height: 575
             align: TOP_MID
             y: 30
             bg_opa: 0
             border_width: 0
-            pad_all: 5
-            scrollbar_mode: AUTO
-            scrollable: true
+            pad_all: 0
             layout:
-              type: GRID
-              grid_columns: [FR(1)]
-              grid_rows: [FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1)]
-              pad_row: 8
-              pad_column: 0
+              type: flex
+              flex_flow: column
+              pad_row: 14
+              align_main: START
+              align_cross: CENTER
             widgets:
 
               #-------------------#
-              # Day 1
+              # Featured Day 1 Card
               #-------------------#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 0
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
-                  bg_opa: 0
-                  border_width: 0
                   width: 170
                   height: SIZE_CONTENT
-                  pad_all: 0
+                  bg_color: 0x101010
+                  bg_opa: COVER
+                  border_width: 0
+                  radius: 12
+                  pad_all: 12
+                  scrollbar_mode: OFF
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 2
+                    pad_row: 8
                   widgets:
                     - label:
                         id: lbl_forecast_day1_header
                         text: "Day +1 (--/--)"
-                        text_font: montserrat_18
+                        text_font: montserrat_20
                         text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
-                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 5
+                          pad_column: 8
+                          align_main: START
+                          align_cross: CENTER
                         widgets:
                           - label:
                               id: lbl_forecast_day1_icon
@@ -4374,21 +4372,23 @@ lvgl:
                           - label:
                               id: lbl_forecast_day1_condition
                               text: "---"
-                              text_font: montserrat_14
+                              text_font: montserrat_16
                               text_color: my_white
-                          - label:
-                              id: lbl_forecast_day1_temps
-                              text: "H:--° L:--°"
-                              text_font: montserrat_14
-                              text_color: my_white
+                              long_mode: SCROLL_CIRCULAR
+                    - label:
+                        id: lbl_forecast_day1_temps
+                        text: "H:--° L:--°"
+                        text_font: montserrat_16
+                        text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
-                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 5
+                          pad_column: 10
+                          align_main: START
+                          align_cross: CENTER
                         widgets:
                           - label:
                               id: lbl_forecast_day1_precip
@@ -4401,35 +4401,37 @@ lvgl:
                               text_font: montserrat_14
                               text_color: my_white
 
-              #===================#
-              # Day 2
-              #===================#
+              #-------------------#
+              # Featured Day 2 Card
+              #-------------------#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 1
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
+                  width: 170
+                  height: SIZE_CONTENT
+                  bg_color: 0x101010
+                  bg_opa: COVER
                   border_width: 0
-                  pad_all: 0
+                  radius: 12
+                  pad_all: 12
+                  scrollbar_mode: OFF
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 3
+                    pad_row: 8
                   widgets:
                     - label:
                         id: lbl_forecast_day2_header
                         text: "Day +2 (--/--)"
-                        text_font: montserrat_18
+                        text_font: montserrat_20
                         text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
-                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 8
+                          align_main: START
+                          align_cross: CENTER
                         widgets:
                           - label:
                               id: lbl_forecast_day2_icon
@@ -4439,466 +4441,593 @@ lvgl:
                           - label:
                               id: lbl_forecast_day2_condition
                               text: "---"
-                              text_font: montserrat_14
+                              text_font: montserrat_16
                               text_color: my_white
+                              long_mode: SCROLL_CIRCULAR
                     - label:
                         id: lbl_forecast_day2_temps
                         text: "H:--° L:--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
-                    - label:
-                        id: lbl_forecast_day2_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day2_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
+                    - obj:
+                        bg_opa: 0
+                        border_width: 0
+                        layout:
+                          type: flex
+                          flex_flow: row
+                          pad_column: 10
+                          align_main: START
+                          align_cross: CENTER
+                        widgets:
+                          - label:
+                              id: lbl_forecast_day2_precip
+                              text: "Rain: --%"
+                              text_font: montserrat_14
+                              text_color: my_white
+                          - label:
+                              id: lbl_forecast_day2_precip_amt
+                              text: "-- mm"
+                              text_font: montserrat_14
+                              text_color: my_white
 
-              #===================#
-              # Day 3
-              #===================#
+              #-------------------#
+              # Scrollable Extended Forecast (Days 3-10)
+              #-------------------#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 2
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
+                  id: forecast_scroll_panel
+                  width: 180
+                  height: 320
                   bg_opa: 0
                   border_width: 0
-                  pad_all: 0
+                  pad_left: 0
+                  pad_right: 0
+                  pad_top: 0
+                  pad_bottom: 4
+                  scrollbar_mode: ACTIVE
+                  scrollable: true
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 3
+                    pad_row: 10
+                    align_main: START
+                    align_cross: CENTER
                   widgets:
-                    - label:
-                        id: lbl_forecast_day3_header
-                        text: "Day +3 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
-                    - obj:
-                        bg_opa: 0
-                        border_width: 0
-                        pad_all: 0
-                        layout:
-                          type: flex
-                          flex_flow: row
-                          pad_column: 6
-                        widgets:
-                          - label:
-                              id: lbl_forecast_day3_icon
-                              text: "--"
-                              text_font: icons_20
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day3_condition
-                              text: "---"
-                              text_font: montserrat_14
-                              text_color: my_white
-                    - label:
-                        id: lbl_forecast_day3_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day3_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day3_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
-              #===================#
-              # Day 4
-              #===================#
-              - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 3
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 3
-                  widgets:
-                    - label:
-                        id: lbl_forecast_day4_header
-                        text: "Day +4 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
-                    - obj:
-                        bg_opa: 0
-                        border_width: 0
-                        pad_all: 0
-                        layout:
-                          type: flex
-                          flex_flow: row
-                          pad_column: 6
-                        widgets:
-                          - label:
-                              id: lbl_forecast_day4_icon
-                              text: "--"
-                              text_font: icons_20
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day4_condition
-                              text: "---"
-                              text_font: montserrat_14
-                              text_color: my_white
-                    - label:
-                        id: lbl_forecast_day4_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day4_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day4_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
-              #===================#
-              # Day 5
-              #===================#
-              - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 4
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 3
-                  widgets:
-                    - label:
-                        id: lbl_forecast_day5_header
-                        text: "Day +5 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
-                    - obj:
-                        bg_opa: 0
-                        border_width: 0
-                        pad_all: 0
-                        layout:
-                          type: flex
-                          flex_flow: row
-                          pad_column: 6
-                        widgets:
-                          - label:
-                              id: lbl_forecast_day5_icon
-                              text: "--"
-                              text_font: icons_20
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day5_condition
-                              text: "---"
-                              text_font: montserrat_14
-                              text_color: my_white
-                    - label:
-                        id: lbl_forecast_day5_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day5_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day5_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
-              #===================#
-              # Day 6
-              #===================#
-              - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 5
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 3
-                  widgets:
-                    - label:
-                        id: lbl_forecast_day6_header
-                        text: "Day +6 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
-                    - obj:
-                        bg_opa: 0
-                        border_width: 0
-                        pad_all: 0
-                        layout:
-                          type: flex
-                          flex_flow: row
-                          pad_column: 6
-                        widgets:
-                          - label:
-                              id: lbl_forecast_day6_icon
-                              text: "--"
-                              text_font: icons_20
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day6_condition
-                              text: "---"
-                              text_font: montserrat_14
-                              text_color: my_white
-                    - label:
-                        id: lbl_forecast_day6_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day6_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day6_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
-              #===================#
-              # Day 7
-              #===================#
-              - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 6
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 3
-                  widgets:
-                    - label:
-                        id: lbl_forecast_day7_header
-                        text: "Day +7 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
-                    - obj:
-                        bg_opa: 0
-                        border_width: 0
-                        pad_all: 0
-                        layout:
-                          type: flex
-                          flex_flow: row
-                          pad_column: 6
-                        widgets:
-                          - label:
-                              id: lbl_forecast_day7_icon
-                              text: "--"
-                              text_font: icons_20
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day7_condition
-                              text: "---"
-                              text_font: montserrat_14
-                              text_color: my_white
-                    - label:
-                        id: lbl_forecast_day7_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day7_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day7_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
-              #===================#
-              # Day 8
-              #===================#
-              - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 7
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 3
-                  widgets:
-                    - label:
-                        id: lbl_forecast_day8_header
-                        text: "Day +8 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
-                    - obj:
-                        bg_opa: 0
-                        border_width: 0
-                        pad_all: 0
-                        layout:
-                          type: flex
-                          flex_flow: row
-                          pad_column: 6
-                        widgets:
-                          - label:
-                              id: lbl_forecast_day8_icon
-                              text: "--"
-                              text_font: icons_20
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day8_condition
-                              text: "---"
-                              text_font: montserrat_14
-                              text_color: my_white
-                    - label:
-                        id: lbl_forecast_day8_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day8_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day8_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
 
-              #===================#
-              # Day 9
-              #===================#
-              - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 8
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 3
-                  widgets:
-                    - label:
-                        id: lbl_forecast_day9_header
-                        text: "Day +9 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
+                    #===================#
+                    # Day 3
+                    #===================#
                     - obj:
-                        bg_opa: 0
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
                         border_width: 0
-                        pad_all: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
                         layout:
                           type: flex
-                          flex_flow: row
-                          pad_column: 6
+                          flex_flow: column
+                          pad_row: 6
                         widgets:
                           - label:
-                              id: lbl_forecast_day9_icon
-                              text: "--"
-                              text_font: icons_20
+                              id: lbl_forecast_day3_header
+                              text: "Day +3 (--/--)"
+                              text_font: montserrat_18
                               text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day3_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day3_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
                           - label:
-                              id: lbl_forecast_day9_condition
-                              text: "---"
+                              id: lbl_forecast_day3_temps
+                              text: "H:--° L:--°"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day9_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day9_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day9_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day3_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day3_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
-              #===================#
-              # Day 10
-              #===================#
-              - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 9
-                  grid_cell_x_align: STRETCH
-                  grid_cell_y_align: STRETCH
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 3
-                  widgets:
-                    - label:
-                        id: lbl_forecast_day10_header
-                        text: "Day +10 (--/--)"
-                        text_font: montserrat_18
-                        text_color: my_white
+                    #===================#
+                    # Day 4
+                    #===================#
                     - obj:
-                        bg_opa: 0
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
                         border_width: 0
-                        pad_all: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
                         layout:
                           type: flex
-                          flex_flow: row
-                          pad_column: 6
+                          flex_flow: column
+                          pad_row: 6
                         widgets:
                           - label:
-                              id: lbl_forecast_day10_icon
-                              text: "--"
-                              text_font: icons_20
+                              id: lbl_forecast_day4_header
+                              text: "Day +4 (--/--)"
+                              text_font: montserrat_18
                               text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day4_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day4_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
                           - label:
-                              id: lbl_forecast_day10_condition
-                              text: "---"
+                              id: lbl_forecast_day4_temps
+                              text: "H:--° L:--°"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day10_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day10_precip
-                        text: "Rain: --%"
-                        text_font: montserrat_14
-                        text_color: my_white
-                    - label:
-                        id: lbl_forecast_day10_precip_amt
-                        text: "-- mm"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day4_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day4_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+
+                    #===================#
+                    # Day 5
+                    #===================#
+                    - obj:
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
+                        border_width: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
+                        layout:
+                          type: flex
+                          flex_flow: column
+                          pad_row: 6
+                        widgets:
+                          - label:
+                              id: lbl_forecast_day5_header
+                              text: "Day +5 (--/--)"
+                              text_font: montserrat_18
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day5_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day5_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
+                          - label:
+                              id: lbl_forecast_day5_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day5_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day5_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+
+                    #===================#
+                    # Day 6
+                    #===================#
+                    - obj:
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
+                        border_width: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
+                        layout:
+                          type: flex
+                          flex_flow: column
+                          pad_row: 6
+                        widgets:
+                          - label:
+                              id: lbl_forecast_day6_header
+                              text: "Day +6 (--/--)"
+                              text_font: montserrat_18
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day6_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day6_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
+                          - label:
+                              id: lbl_forecast_day6_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day6_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day6_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+
+                    #===================#
+                    # Day 7
+                    #===================#
+                    - obj:
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
+                        border_width: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
+                        layout:
+                          type: flex
+                          flex_flow: column
+                          pad_row: 6
+                        widgets:
+                          - label:
+                              id: lbl_forecast_day7_header
+                              text: "Day +7 (--/--)"
+                              text_font: montserrat_18
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day7_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day7_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
+                          - label:
+                              id: lbl_forecast_day7_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day7_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day7_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+
+                    #===================#
+                    # Day 8
+                    #===================#
+                    - obj:
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
+                        border_width: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
+                        layout:
+                          type: flex
+                          flex_flow: column
+                          pad_row: 6
+                        widgets:
+                          - label:
+                              id: lbl_forecast_day8_header
+                              text: "Day +8 (--/--)"
+                              text_font: montserrat_18
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day8_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day8_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
+                          - label:
+                              id: lbl_forecast_day8_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day8_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day8_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+
+                    #===================#
+                    # Day 9
+                    #===================#
+                    - obj:
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
+                        border_width: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
+                        layout:
+                          type: flex
+                          flex_flow: column
+                          pad_row: 6
+                        widgets:
+                          - label:
+                              id: lbl_forecast_day9_header
+                              text: "Day +9 (--/--)"
+                              text_font: montserrat_18
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day9_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day9_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
+                          - label:
+                              id: lbl_forecast_day9_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day9_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day9_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+
+                    #===================#
+                    # Day 10
+                    #===================#
+                    - obj:
+                        width: 170
+                        height: SIZE_CONTENT
+                        bg_color: 0x090909
+                        bg_opa: COVER
+                        border_width: 0
+                        radius: 10
+                        pad_all: 10
+                        scrollbar_mode: OFF
+                        layout:
+                          type: flex
+                          flex_flow: column
+                          pad_row: 6
+                        widgets:
+                          - label:
+                              id: lbl_forecast_day10_header
+                              text: "Day +10 (--/--)"
+                              text_font: montserrat_18
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                                align_main: START
+                                align_cross: CENTER
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day10_icon
+                                    text: "--"
+                                    text_font: icons_20
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day10_condition
+                                    text: "---"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                    long_mode: SCROLL_CIRCULAR
+                          - label:
+                              id: lbl_forecast_day10_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
+                          - obj:
+                              bg_opa: 0
+                              border_width: 0
+                              layout:
+                                type: flex
+                                flex_flow: row
+                                pad_column: 8
+                              widgets:
+                                - label:
+                                    id: lbl_forecast_day10_precip
+                                    text: "Rain: --%"
+                                    text_font: montserrat_14
+                                    text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day10_precip_amt
+                                    text: "-- mm"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
 text:
   - platform: lvgl
