@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0924"
+  version: "25.10.22.0930"
   device_description: ${name} - v${version}.
 
 psram:
@@ -915,66 +915,85 @@ interval:
           // Check if enough time has passed since last rotation
           if ((now - id(last_auto_rotation_time)) < interval_ms) return;
 
-          // Build a list of enabled pages sorted by their order number
-          struct PageInfo {
-            const char* name;
-            int order;
-            esphome::lvgl::LvglPage* page;
-          };
+          // Build separate parallel arrays for page info
+          std::vector<int> page_orders;
+          std::vector<int> page_indices;  // Maps to the page in sorted order
 
-          std::vector<PageInfo> pages;
-
-          // Add enabled pages to the list
+          // Collect enabled pages with their orders (use index to identify page)
+          // Index: 0=main, 1=wifi, 2=weather, 3=daily_forecast, 4=vertical_clock
           if (id(page_rotation_main_enabled)) {
-            pages.push_back({"main", id(page_rotation_main_order), id(main_page)});
+            page_orders.push_back(id(page_rotation_main_order));
+            page_indices.push_back(0);
           }
           if (id(page_rotation_wifi_enabled)) {
-            pages.push_back({"wifi", id(page_rotation_wifi_order), id(wifi_page)});
+            page_orders.push_back(id(page_rotation_wifi_order));
+            page_indices.push_back(1);
           }
           if (id(page_rotation_weather_enabled)) {
-            pages.push_back({"weather", id(page_rotation_weather_order), id(weather_forecast_page)});
+            page_orders.push_back(id(page_rotation_weather_order));
+            page_indices.push_back(2);
           }
           if (id(page_rotation_daily_forecast_enabled)) {
-            pages.push_back({"daily_forecast", id(page_rotation_daily_forecast_order), id(daily_forecast_page)});
+            page_orders.push_back(id(page_rotation_daily_forecast_order));
+            page_indices.push_back(3);
           }
           if (id(page_rotation_vertical_clock_enabled)) {
-            pages.push_back({"vertical_clock", id(page_rotation_vertical_clock_order), id(vertical_clock_page)});
+            page_orders.push_back(id(page_rotation_vertical_clock_order));
+            page_indices.push_back(4);
           }
 
           // If no pages are enabled, don't rotate
-          if (pages.empty()) {
+          if (page_orders.empty()) {
             ESP_LOGW("page_rotation", "No pages enabled for rotation");
             return;
           }
 
-          // Sort pages by order number
-          std::sort(pages.begin(), pages.end(), [](const PageInfo& a, const PageInfo& b) {
-            return a.order < b.order;
-          });
+          // Sort indices based on their order numbers (bubble sort for simplicity)
+          for (size_t i = 0; i < page_orders.size(); i++) {
+            for (size_t j = i + 1; j < page_orders.size(); j++) {
+              if (page_orders[j] < page_orders[i]) {
+                std::swap(page_orders[i], page_orders[j]);
+                std::swap(page_indices[i], page_indices[j]);
+              }
+            }
+          }
 
-          // Find current page index in the sorted list
+          // Find current page in the sorted list
           int current_index = -1;
           auto current_obj = id(lvgl_main)->get_scr_act();
 
-          for (size_t i = 0; i < pages.size(); i++) {
-            if (pages[i].page && pages[i].page->get_obj() == current_obj) {
+          for (size_t i = 0; i < page_indices.size(); i++) {
+            lv_obj_t* check_obj = nullptr;
+            if (page_indices[i] == 0) check_obj = id(main_page)->get_obj();
+            else if (page_indices[i] == 1) check_obj = id(wifi_page)->get_obj();
+            else if (page_indices[i] == 2) check_obj = id(weather_forecast_page)->get_obj();
+            else if (page_indices[i] == 3) check_obj = id(daily_forecast_page)->get_obj();
+            else if (page_indices[i] == 4) check_obj = id(vertical_clock_page)->get_obj();
+
+            if (check_obj == current_obj) {
               current_index = i;
               break;
             }
           }
 
           // Calculate next page index (wrap around)
-          int next_index = (current_index + 1) % pages.size();
+          int next_index = (current_index + 1) % page_indices.size();
+          int next_page_id = page_indices[next_index];
 
           // Show the next page
-          ESP_LOGD("page_rotation", "Rotating from page %d (%s) to page %d (%s)",
-                   current_index,
-                   current_index >= 0 ? pages[current_index].name : "unknown",
-                   next_index,
-                   pages[next_index].name);
+          ESP_LOGD("page_rotation", "Rotating to page index %d (order: %d)",
+                   next_page_id, page_orders[next_index]);
 
-          if (pages[next_index].page) {
-            pages[next_index].page->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
+          if (next_page_id == 0) {
+            id(main_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
+          } else if (next_page_id == 1) {
+            id(wifi_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
+          } else if (next_page_id == 2) {
+            id(weather_forecast_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
+          } else if (next_page_id == 3) {
+            id(daily_forecast_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
+          } else if (next_page_id == 4) {
+            id(vertical_clock_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
           }
 
           id(last_auto_rotation_time) = now;
