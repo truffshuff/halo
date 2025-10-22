@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2154"
+  version: "25.10.21.2156"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4481,7 +4481,7 @@ lvgl:
                   pad_bottom: 4
                   scrollbar_mode: "AUTO"
                   scrollable: true
-                  scroll_dir: VERTICAL
+                  scroll_snap: NONE
                   flex_grow: 1
                   layout:
                     type: flex
