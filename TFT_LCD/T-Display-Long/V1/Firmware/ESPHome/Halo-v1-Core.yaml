@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0724"
+  version: "25.10.22.0727"
   device_description: ${name} - v${version}.
 
 psram:
@@ -292,14 +292,14 @@ switch:
           id(bluetooth_proxy_enabled) = true;
           ESP_LOGI("bluetooth_proxy", "Marked Bluetooth proxy enabled; scheduling restart to apply changes");
       - delay: 500ms
-  - button.press: esp_reboot
+      - button.press: esp_reboot
     on_turn_off:
       - logger.log: "Disabling Bluetooth Proxy"
       - lambda: |
           id(bluetooth_proxy_enabled) = false;
           ESP_LOGI("bluetooth_proxy", "Marked Bluetooth proxy disabled; scheduling restart to apply changes");
       - delay: 500ms
-  - button.press: esp_reboot
+      - button.press: esp_reboot
 
 select:
   - platform: template
