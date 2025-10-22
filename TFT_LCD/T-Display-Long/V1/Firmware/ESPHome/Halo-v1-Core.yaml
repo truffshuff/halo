@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0634"
+  version: "25.10.22.0638"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4415,11 +4415,11 @@ lvgl:
                               text: "Rain: --%"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                      id: lbl_forecast_day1_precip_amt
-                      text: "-- in"
-                      text_font: montserrat_14
-                      text_color: my_white
+                          - label:
+                              id: lbl_forecast_day1_precip_amt
+                              text: "-- in"
+                              text_font: montserrat_14
+                              text_color: my_white
 
               #-------------------#
               # Featured Day 2 Card
@@ -4482,11 +4482,11 @@ lvgl:
                               text: "Rain: --%"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                      id: lbl_forecast_day2_precip_amt
-                      text: "-- in"
-                      text_font: montserrat_14
-                      text_color: my_white
+                          - label:
+                              id: lbl_forecast_day2_precip_amt
+                              text: "-- in"
+                              text_font: montserrat_14
+                              text_color: my_white
 
               #-------------------#
               # Scrollable Extended Forecast (Days 3-10)
@@ -4573,11 +4573,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day3_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day3_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
                     #===================#
                     # Day 4
@@ -4640,11 +4640,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day4_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day4_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
                     #===================#
                     # Day 5
@@ -4707,11 +4707,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day5_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day5_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
                     #===================#
                     # Day 6
@@ -4774,11 +4774,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day6_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day6_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
                     #===================#
                     # Day 7
@@ -4841,11 +4841,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day7_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day7_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
                     #===================#
                     # Day 8
@@ -4908,11 +4908,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day8_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day8_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
                     #===================#
                     # Day 9
@@ -4975,11 +4975,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day9_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day9_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
                     #===================#
                     # Day 10
@@ -5042,11 +5042,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                          - label:
-                            id: lbl_forecast_day10_precip_amt
-                            text: "-- in"
-                            text_font: montserrat_14
-                            text_color: my_white
+                                - label:
+                                    id: lbl_forecast_day10_precip_amt
+                                    text: "-- in"
+                                    text_font: montserrat_14
+                                    text_color: my_white
 
 text:
   - platform: lvgl
