@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2157"
+  version: "25.10.22.0620"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1858,8 +1858,10 @@ sensor:
         - lvgl.label.update:
             id: lbl_weather_precipitation_today
             text: !lambda |-
+              // Convert mm to inches (1 in = 25.4 mm) and show with one decimal
               char buffer[20];
-              snprintf(buffer, sizeof(buffer), "%.0f mm", x);
+              double inches = x / 25.4;
+              snprintf(buffer, sizeof(buffer), "%.1f in", inches);
               return buffer;
   
   # 10-day forecast high temperatures from Home Assistant
@@ -3125,7 +3127,9 @@ text_sensor:
             id: lbl_forecast_day1_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3138,7 +3142,9 @@ text_sensor:
             id: lbl_forecast_day2_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3151,7 +3157,9 @@ text_sensor:
             id: lbl_forecast_day3_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3164,7 +3172,9 @@ text_sensor:
             id: lbl_forecast_day4_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3177,7 +3187,9 @@ text_sensor:
             id: lbl_forecast_day5_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3190,7 +3202,9 @@ text_sensor:
             id: lbl_forecast_day6_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3203,7 +3217,9 @@ text_sensor:
             id: lbl_forecast_day7_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3216,7 +3232,9 @@ text_sensor:
             id: lbl_forecast_day8_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3229,7 +3247,9 @@ text_sensor:
             id: lbl_forecast_day9_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %smm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
   - platform: homeassistant
@@ -3242,7 +3262,9 @@ text_sensor:
             id: lbl_forecast_day10_precip_amt
             text: !lambda |-
               char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Amount: %s mm", x.c_str());
+              double mm = atof(x.c_str());
+              double inches = mm / 25.4;
+              snprintf(buffer, sizeof(buffer), "Amount: %.1f in", inches);
               return buffer;
 
 font:
@@ -4259,9 +4281,9 @@ lvgl:
             y: -70
 
         # Today precipitation ant
-        - label:
-            text: "Amt Today: -- mm"
-            id: lbl_weather_precipitation_today
+    - label:
+      text: "Amt Today: -- in"
+      id: lbl_weather_precipitation_today
             text_align: CENTER
             text_font: montserrat_18
             text_color: my_teal
@@ -4393,11 +4415,11 @@ lvgl:
                               text: "Rain: --%"
                               text_font: montserrat_14
                               text_color: my_white
-                          - label:
-                              id: lbl_forecast_day1_precip_amt
-                              text: "-- mm"
-                              text_font: montserrat_14
-                              text_color: my_white
+              - label:
+                id: lbl_forecast_day1_precip_amt
+                text: "-- in"
+                text_font: montserrat_14
+                text_color: my_white
 
               #-------------------#
               # Featured Day 2 Card
@@ -4460,11 +4482,11 @@ lvgl:
                               text: "Rain: --%"
                               text_font: montserrat_14
                               text_color: my_white
-                          - label:
-                              id: lbl_forecast_day2_precip_amt
-                              text: "-- mm"
-                              text_font: montserrat_14
-                              text_color: my_white
+              - label:
+                id: lbl_forecast_day2_precip_amt
+                text: "-- in"
+                text_font: montserrat_14
+                text_color: my_white
 
               #-------------------#
               # Scrollable Extended Forecast (Days 3-10)
@@ -4551,11 +4573,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day3_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day3_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
                     #===================#
                     # Day 4
@@ -4618,11 +4640,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day4_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day4_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
                     #===================#
                     # Day 5
@@ -4685,11 +4707,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day5_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day5_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
                     #===================#
                     # Day 6
@@ -4752,11 +4774,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day6_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day6_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
                     #===================#
                     # Day 7
@@ -4819,11 +4841,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day7_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day7_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
                     #===================#
                     # Day 8
@@ -4886,11 +4908,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day8_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day8_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
                     #===================#
                     # Day 9
@@ -4953,11 +4975,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day9_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day9_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
                     #===================#
                     # Day 10
@@ -5020,11 +5042,11 @@ lvgl:
                                     text: "Rain: --%"
                                     text_font: montserrat_14
                                     text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day10_precip_amt
-                                    text: "-- mm"
-                                    text_font: montserrat_14
-                                    text_color: my_white
+                - label:
+                  id: lbl_forecast_day10_precip_amt
+                  text: "-- in"
+                  text_font: montserrat_14
+                  text_color: my_white
 
 text:
   - platform: lvgl
