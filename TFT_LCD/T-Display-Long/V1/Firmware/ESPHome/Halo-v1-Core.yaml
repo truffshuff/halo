@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0935"
+  version: "25.10.22.0946"
   device_description: ${name} - v${version}.
 
 psram:
@@ -159,6 +159,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: colon_blink_state
+    type: bool
+    restore_value: no
+    initial_value: 'true'
   - id: weather_last_started
     type: int
     restore_value: no
@@ -1358,6 +1362,12 @@ script:
                   if (!now.is_valid()) return std::string("--");
                   static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
                   return std::string(days[now.day_of_week - 1]);
+            - lvgl.label.update:
+                id: vclock_colon
+                text: !lambda |-
+                  // Toggle blink state every time update (happens every second)
+                  id(colon_blink_state) = !id(colon_blink_state);
+                  return id(colon_blink_state) ? ":" : " ";
       - lambda: |-
           const uint32_t elapsed = millis() - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
