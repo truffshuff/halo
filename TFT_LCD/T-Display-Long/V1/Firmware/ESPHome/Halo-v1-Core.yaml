@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0946"
+  version: "25.10.22.0947"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1351,9 +1351,8 @@ script:
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
                   static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-                  static const char* days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
                   char buf[20];
-                  snprintf(buf, sizeof(buf), "%s, %s %d", days[now.day_of_week - 1], months[now.month - 1], now.day_of_month);
+                  snprintf(buf, sizeof(buf), "%s %d", months[now.month - 1], now.day_of_month);
                   return std::string(buf);
             - lvgl.label.update:
                 id: vclock_day_top
