@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0758"
+  version: "25.10.22.0803"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1098,6 +1098,54 @@ script:
             - lvgl.label.update:
                 id: timeVal
                 text: !lambda 'return id(time_update_last_text);'
+            - lvgl.label.update:
+                id: vclock_hours
+                text: !lambda |-
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  bool is_pm = now.hour >= 12;
+                  int hour_12 = now.hour % 12;
+                  if (hour_12 == 0) hour_12 = 12;
+                  char buf[3];
+                  if (id(time_format).state) {
+                    snprintf(buf, sizeof(buf), "%02d", now.hour);
+                  } else {
+                    snprintf(buf, sizeof(buf), "%2d", hour_12);
+                  }
+                  return std::string(buf);
+            - lvgl.label.update:
+                id: vclock_minutes
+                text: !lambda |-
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  char buf[3];
+                  snprintf(buf, sizeof(buf), "%02d", now.minute);
+                  return std::string(buf);
+            - lvgl.label.update:
+                id: vclock_ampm
+                text: !lambda |-
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                  if (!now.is_valid()) return std::string("");
+                  if (id(time_format).state) return std::string("");
+                  bool is_pm = now.hour >= 12;
+                  return std::string(is_pm ? "PM" : "AM");
+            - lvgl.label.update:
+                id: vclock_date
+                text: !lambda |-
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+                  static const char* days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+                  char buf[20];
+                  snprintf(buf, sizeof(buf), "%s, %s %d", days[now.day_of_week - 1], months[now.month - 1], now.day_of_month);
+                  return std::string(buf);
+            - lvgl.label.update:
+                id: vclock_day_top
+                text: !lambda |-
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+                  return std::string(days[now.day_of_week - 1]);
       - lambda: |-
           const uint32_t elapsed = millis() - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
@@ -5137,6 +5185,70 @@ lvgl:
                                     text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
+
+    - id: vertical_clock_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - lambda: 'id(current_page_index) = 4;'
+      widgets:
+        # Large time display vertically centered
+        - label:
+            id: vclock_hours
+            align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            x: 0
+            y: -80
+            text: "12"
+
+        - label:
+            id: vclock_colon
+            align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            x: 0
+            y: -40
+            text: ":"
+
+        - label:
+            id: vclock_minutes
+            align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            x: 0
+            y: 0
+            text: "00"
+
+        - label:
+            id: vclock_ampm
+            align: CENTER
+            text_font: montserrat_18
+            text_color: my_white
+            x: 0
+            y: 40
+            text: "AM"
+
+        # Date below time
+        - label:
+            id: vclock_date
+            align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            x: 0
+            y: 80
+            text: "Mon, Jan 1"
+
+        # Day of week at top
+        - label:
+            id: vclock_day_top
+            align: TOP_MID
+            text_font: montserrat_14
+            text_color: my_gray
+            x: 0
+            y: 10
+            text: "Monday"
 
 text:
   - platform: lvgl
