@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2156"
+  version: "25.10.21.2157"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4360,7 +4360,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 4
+                          pad_column: 2
                           flex_align_main: START
                           flex_align_cross: CENTER
                         widgets:
@@ -4427,7 +4427,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 4
+                          pad_column: 2
                           flex_align_main: START
                           flex_align_cross: CENTER
                         widgets:
@@ -4481,7 +4481,6 @@ lvgl:
                   pad_bottom: 4
                   scrollbar_mode: "AUTO"
                   scrollable: true
-                  scroll_snap: NONE
                   flex_grow: 1
                   layout:
                     type: flex
@@ -4519,7 +4518,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4586,7 +4585,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4653,7 +4652,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4720,7 +4719,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4787,7 +4786,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4854,7 +4853,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4921,7 +4920,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4988,7 +4987,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 4
+                                pad_column: 2
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
