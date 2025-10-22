@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2031"
+  version: "25.10.21.2044"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4320,7 +4320,7 @@ lvgl:
         - obj:
             id: forecast_container
             width: 180
-            height: 580
+            height: 265
             align: TOP_MID
             y: 30
             bg_opa: 0
@@ -4331,7 +4331,7 @@ lvgl:
             layout:
               type: flex
               flex_flow: column
-              pad_row: 12
+              pad_row: 8
               flex_align_main: start
               flex_align_cross: start
             widgets:
@@ -4347,7 +4347,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day1_header
@@ -4361,7 +4361,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day1_icon
@@ -4373,11 +4373,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day1_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day1_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4385,7 +4385,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day1_precip
@@ -4409,7 +4409,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day2_header
@@ -4423,7 +4423,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day2_icon
@@ -4435,11 +4435,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day2_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day2_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4447,7 +4447,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day2_precip
@@ -4471,7 +4471,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day3_header
@@ -4485,7 +4485,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day3_icon
@@ -4497,11 +4497,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day3_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day3_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4509,7 +4509,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day3_precip
@@ -4532,7 +4532,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day4_header
@@ -4546,7 +4546,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day4_icon
@@ -4558,11 +4558,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day4_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day4_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4570,7 +4570,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day4_precip
@@ -4593,7 +4593,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day5_header
@@ -4607,7 +4607,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day5_icon
@@ -4619,11 +4619,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day5_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day5_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4631,7 +4631,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day5_precip
@@ -4654,7 +4654,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day6_header
@@ -4668,7 +4668,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day6_icon
@@ -4680,11 +4680,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day6_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day6_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4692,7 +4692,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day6_precip
@@ -4715,7 +4715,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day7_header
@@ -4729,7 +4729,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day7_icon
@@ -4741,11 +4741,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day7_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day7_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4753,7 +4753,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day7_precip
@@ -4776,7 +4776,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day8_header
@@ -4790,7 +4790,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day8_icon
@@ -4802,11 +4802,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day8_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day8_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4814,7 +4814,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day8_precip
@@ -4838,7 +4838,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day9_header
@@ -4852,7 +4852,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day9_icon
@@ -4864,11 +4864,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day9_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day9_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         bg_opa: 0
                         border_width: 0
@@ -4876,7 +4876,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day9_precip
@@ -4900,7 +4900,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 4
+                    pad_row: 2
                   widgets:
                     - label:
                         id: lbl_forecast_day10_header
@@ -4914,7 +4914,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day10_icon
@@ -4926,11 +4926,11 @@ lvgl:
                               text: "---"
                               text_font: montserrat_14
                               text_color: my_white
-                    - label:
-                        id: lbl_forecast_day10_temps
-                        text: "H:--° L:--°"
-                        text_font: montserrat_14
-                        text_color: my_white
+                          - label:
+                              id: lbl_forecast_day10_temps
+                              text: "H:--° L:--°"
+                              text_font: montserrat_14
+                              text_color: my_white
                     - obj:
                         border_width: 0
                         bg_opa: 0
@@ -4938,7 +4938,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 6
+                          pad_column: 5
                         widgets:
                           - label:
                               id: lbl_forecast_day10_precip
