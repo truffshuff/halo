@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2056"
+  version: "25.10.21.2044"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4474,14 +4474,9 @@ lvgl:
               # Day 3
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 2
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
@@ -4540,14 +4535,9 @@ lvgl:
               # Day 4
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 3
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
@@ -4606,14 +4596,9 @@ lvgl:
               # Day 5
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 4
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
@@ -4672,14 +4657,9 @@ lvgl:
               # Day 6
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 5
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
@@ -4738,14 +4718,9 @@ lvgl:
               # Day 7
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 6
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
@@ -4804,14 +4779,9 @@ lvgl:
               # Day 8
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 7
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
@@ -4871,14 +4841,9 @@ lvgl:
               # Day 9
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 8
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
@@ -4938,14 +4903,9 @@ lvgl:
               # Day 10
               #===================#
               - obj:
-                  grid_cell_column_pos: 0
-                  grid_cell_row_pos: 9
-                  grid_cell_x_align: START
-                  grid_cell_y_align: START
                   bg_opa: 0
                   border_width: 0
-                  width: 170
-                  height: SIZE_CONTENT
+                  width: SIZE_CONTENT
                   pad_all: 0
                   layout:
                     type: flex
