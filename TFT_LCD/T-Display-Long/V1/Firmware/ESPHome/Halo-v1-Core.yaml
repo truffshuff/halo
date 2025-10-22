@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0756"
+  version: "25.10.22.0758"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1264,6 +1264,14 @@ binary_sensor:
     entity_category: "diagnostic"
     lambda: 'return id(display_backlight_is_on);'
 
+  - platform: template
+    name: "Bluetooth Proxy Reboot Needed"
+    id: ha_bluetooth_proxy_reboot_needed
+    icon: mdi:restart-alert
+    entity_category: "diagnostic"
+    device_class: problem
+    lambda: 'return id(bluetooth_proxy_reboot_needed);'
+
 sensor:
   - platform: uptime
     name: Uptime
@@ -1326,15 +1334,6 @@ sensor:
     entity_category: "diagnostic"
     lambda: 'return id(bluetooth_proxy_mode_active);'
     update_interval: 10s
-
-  - platform: template
-    name: "Bluetooth Proxy Reboot Needed"
-    id: ha_bluetooth_proxy_reboot_needed
-    icon: mdi:restart-alert
-    entity_category: "diagnostic"
-    device_class: problem
-    lambda: 'return id(bluetooth_proxy_reboot_needed);'
-    update_interval: 5s
 
   - platform: scd4x
     id: scd40
