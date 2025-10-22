@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.1033"
+  version: "25.10.22.1854"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4888,6 +4888,8 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        height: SIZE_CONTENT
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: column
@@ -4929,6 +4931,8 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        height: SIZE_CONTENT
+                        pad_all: 0
                         layout:
                           type: flex
                           flex_flow: row
@@ -5020,6 +5024,8 @@ lvgl:
                           - obj:
                               bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
@@ -5087,6 +5093,8 @@ lvgl:
                           - obj:
                               bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
@@ -5154,6 +5162,8 @@ lvgl:
                           - obj:
                               bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
@@ -5221,6 +5231,8 @@ lvgl:
                           - obj:
                               bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
@@ -5288,6 +5300,8 @@ lvgl:
                           - obj:
                               bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
@@ -5353,8 +5367,10 @@ lvgl:
                               text_font: montserrat_18
                               text_color: my_white
                           - obj:
-                              bg_opa: 0
+                             bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
@@ -5422,6 +5438,8 @@ lvgl:
                           - obj:
                               bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
@@ -5489,6 +5507,8 @@ lvgl:
                           - obj:
                               bg_opa: 0
                               border_width: 0
+                              height: SIZE_CONTENT
+                              pad_all: 0
                               layout:
                                 type: flex
                                 flex_flow: row
