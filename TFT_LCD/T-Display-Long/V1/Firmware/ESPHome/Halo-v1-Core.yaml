@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.1020"
+  version: "25.10.22.1033"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1368,16 +1368,17 @@ script:
                   if (!now.is_valid()) return std::string("--");
                   static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
                   return std::string(days[now.day_of_week - 1]);
-            - lvgl.widget.update:
-                id: vclock_colon
-                text_opa: !lambda |-
-                  // Only blink if enabled via switch
-                  if (!id(colon_blink_enabled).state) {
-                    return LV_OPA_COVER;  // Always visible if blinking disabled
-                  }
-                  // Toggle blink state every time update (happens every second)
-                  id(colon_blink_state) = !id(colon_blink_state);
-                  return id(colon_blink_state) ? LV_OPA_COVER : LV_OPA_TRANSP;
+      # Colon blink runs every second, outside the render condition
+      - lvgl.widget.update:
+          id: vclock_colon
+          text_opa: !lambda |-
+            // Only blink if enabled via switch
+            if (!id(colon_blink_enabled).state) {
+              return LV_OPA_COVER;  // Always visible if blinking disabled
+            }
+            // Toggle blink state every time update (happens every second)
+            id(colon_blink_state) = !id(colon_blink_state);
+            return id(colon_blink_state) ? LV_OPA_COVER : LV_OPA_TRANSP;
       - lambda: |-
           const uint32_t elapsed = millis() - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
