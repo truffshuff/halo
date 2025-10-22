@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2143"
+  version: "25.10.21.2154"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4314,7 +4314,7 @@ lvgl:
             text_color: my_white
             text_align: CENTER
 
-    # Daily forecast layout with featured cards and scroll list
+        # Daily forecast layout with featured cards and scroll list
         - obj:
             id: forecast_layout
             width: 180
@@ -4327,7 +4327,7 @@ lvgl:
             layout:
               type: flex
               flex_flow: column
-              pad_row: 14
+              pad_row: 10
               flex_align_main: START
               flex_align_cross: CENTER
             widgets:
@@ -4347,7 +4347,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 8
+                    pad_row: 6
                   widgets:
                     - label:
                         id: lbl_forecast_day1_header
@@ -4360,7 +4360,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 8
+                          pad_column: 4
                           flex_align_main: START
                           flex_align_cross: CENTER
                         widgets:
@@ -4385,10 +4385,8 @@ lvgl:
                         border_width: 0
                         layout:
                           type: flex
-                          flex_flow: row
-                          pad_column: 10
-                          flex_align_main: START
-                          flex_align_cross: CENTER
+                          flex_flow: column
+                          pad_row: 2
                         widgets:
                           - label:
                               id: lbl_forecast_day1_precip
@@ -4416,7 +4414,7 @@ lvgl:
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 8
+                    pad_row: 6
                   widgets:
                     - label:
                         id: lbl_forecast_day2_header
@@ -4429,7 +4427,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: row
-                          pad_column: 8
+                          pad_column: 4
                           flex_align_main: START
                           flex_align_cross: CENTER
                         widgets:
@@ -4454,10 +4452,8 @@ lvgl:
                         border_width: 0
                         layout:
                           type: flex
-                          flex_flow: row
-                          pad_column: 10
-                          flex_align_main: START
-                          flex_align_cross: CENTER
+                          flex_flow: column
+                          pad_row: 2
                         widgets:
                           - label:
                               id: lbl_forecast_day2_precip
@@ -4483,12 +4479,14 @@ lvgl:
                   pad_right: 0
                   pad_top: 0
                   pad_bottom: 4
-                  scrollbar_mode: "ACTIVE"
+                  scrollbar_mode: "AUTO"
                   scrollable: true
+                  scroll_dir: VERTICAL
+                  flex_grow: 1
                   layout:
                     type: flex
                     flex_flow: column
-                    pad_row: 10
+                    pad_row: 8
                     flex_align_main: START
                     flex_align_cross: CENTER
                   widgets:
@@ -4508,7 +4506,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day3_header
@@ -4521,7 +4519,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4546,8 +4544,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day3_precip
@@ -4575,7 +4573,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day4_header
@@ -4588,7 +4586,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4613,8 +4611,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day4_precip
@@ -4642,7 +4640,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day5_header
@@ -4655,7 +4653,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4680,8 +4678,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day5_precip
@@ -4709,7 +4707,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day6_header
@@ -4722,7 +4720,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4747,8 +4745,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day6_precip
@@ -4776,7 +4774,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day7_header
@@ -4789,7 +4787,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4814,8 +4812,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day7_precip
@@ -4843,7 +4841,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day8_header
@@ -4856,7 +4854,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4881,8 +4879,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day8_precip
@@ -4910,7 +4908,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day9_header
@@ -4923,7 +4921,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -4948,8 +4946,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day9_precip
@@ -4977,7 +4975,7 @@ lvgl:
                         layout:
                           type: flex
                           flex_flow: column
-                          pad_row: 6
+                          pad_row: 4
                         widgets:
                           - label:
                               id: lbl_forecast_day10_header
@@ -4990,7 +4988,7 @@ lvgl:
                               layout:
                                 type: flex
                                 flex_flow: row
-                                pad_column: 8
+                                pad_column: 4
                                 flex_align_main: START
                                 flex_align_cross: CENTER
                               widgets:
@@ -5015,8 +5013,8 @@ lvgl:
                               border_width: 0
                               layout:
                                 type: flex
-                                flex_flow: row
-                                pad_column: 8
+                                flex_flow: column
+                                pad_row: 2
                               widgets:
                                 - label:
                                     id: lbl_forecast_day10_precip
