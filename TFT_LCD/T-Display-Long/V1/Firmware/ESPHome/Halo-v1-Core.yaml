@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.21.2101"
+  version: "25.10.21.2111"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4324,23 +4324,26 @@ lvgl:
             bg_opa: 0
             border_width: 0
             pad_all: 5
+            pad_row: 8
+            pad_column: 0
             scrollbar_mode: AUTO
             scrollable: true
             layout:
-              type: flex
-              flex_flow: column
-              pad_row: 8
-              flex_align_main: start
-              flex_align_cross: start
+              type: GRID
+              grid_columns: [FR(1)]
+              grid_rows: [FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1), FR(1)]
             widgets:
 
               #-------------------#
               # Day 1
               #-------------------#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 0
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
                   pad_all: 0
                   layout:
                     type: flex
@@ -4400,9 +4403,13 @@ lvgl:
               # Day 2
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 1
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4462,9 +4469,13 @@ lvgl:
               # Day 3
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 2
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4523,9 +4534,13 @@ lvgl:
               # Day 4
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 3
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4584,9 +4599,13 @@ lvgl:
               # Day 5
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 4
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4645,9 +4664,13 @@ lvgl:
               # Day 6
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 5
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4706,9 +4729,13 @@ lvgl:
               # Day 7
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 6
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4767,9 +4794,13 @@ lvgl:
               # Day 8
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 7
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4829,9 +4860,13 @@ lvgl:
               # Day 9
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 8
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
@@ -4891,9 +4926,13 @@ lvgl:
               # Day 10
               #===================#
               - obj:
+                  grid_cell_column_pos: 0
+                  grid_cell_row_pos: 9
+                  grid_cell_x_align: STRETCH
+                  grid_cell_y_align: STRETCH
                   bg_opa: 0
                   border_width: 0
-                  width: 170
+                  
                   pad_all: 0
                   layout:
                     type: flex
