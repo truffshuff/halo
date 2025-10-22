@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0846"
+  version: "25.10.22.0911"
   device_description: ${name} - v${version}.
 
 psram:
@@ -3449,7 +3449,24 @@ font:
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
-      ]    
+      ]
+
+  # Large fonts for vertical clock
+  - file: "gfonts://Montserrat"
+    id: montserrat_80
+    size: 80
+    bpp: 4
+    glyphs: "0123456789:"
+  - file: "gfonts://Montserrat"
+    id: montserrat_50
+    size: 50
+    bpp: 4
+    glyphs: "0123456789APM"
+  - file: "gfonts://Montserrat"
+    id: montserrat_24
+    size: 24
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,:-"
 
 light:
   # - platform: esp32_rmt_led_strip
@@ -5197,57 +5214,57 @@ lvgl:
         - label:
             id: vclock_hours
             align: CENTER
-            text_font: montserrat_28
+            text_font: montserrat_80
             text_color: my_white
             x: 0
-            y: -80
+            y: -120
             text: "12"
 
         - label:
             id: vclock_colon
             align: CENTER
-            text_font: montserrat_28
+            text_font: montserrat_80
             text_color: my_white
             x: 0
-            y: -40
+            y: -20
             text: ":"
 
         - label:
             id: vclock_minutes
             align: CENTER
-            text_font: montserrat_28
+            text_font: montserrat_80
             text_color: my_white
             x: 0
-            y: 0
+            y: 80
             text: "00"
 
         - label:
             id: vclock_ampm
             align: CENTER
-            text_font: montserrat_18
+            text_font: montserrat_50
             text_color: my_white
             x: 0
-            y: 40
+            y: 180
             text: "AM"
 
         # Date below time
         - label:
             id: vclock_date
             align: CENTER
-            text_font: montserrat_14
+            text_font: montserrat_24
             text_color: my_gray
             x: 0
-            y: 80
+            y: 250
             text: "Mon, Jan 1"
 
         # Day of week at top
         - label:
             id: vclock_day_top
             align: TOP_MID
-            text_font: montserrat_14
+            text_font: montserrat_24
             text_color: my_gray
             x: 0
-            y: 10
+            y: 20
             text: "Monday"
 
 text:
