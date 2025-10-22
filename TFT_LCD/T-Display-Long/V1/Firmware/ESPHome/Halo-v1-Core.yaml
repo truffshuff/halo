@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0727"
+  version: "25.10.22.0729"
   device_description: ${name} - v${version}.
 
 psram:
@@ -395,7 +395,7 @@ select:
             ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Passive mode; scheduling restart to apply");
           }
       - delay: 500ms
-  - button.press: esp_reboot
+      - button.press: esp_reboot
 
   - platform: template
     name: Default Page
