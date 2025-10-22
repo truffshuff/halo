@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0657"
+  version: "25.10.22.0706"
   device_description: ${name} - v${version}.
 
 psram:
@@ -3126,156 +3126,156 @@ text_sensor:
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
               return buffer;
 
-  # 10-day forecast precipitation amount from Home Assistant
-  - platform: homeassistant
-    name: "Forecast Day 1 Precipitation"
-    entity_id: input_text.forecast_day_1_precipitation
-    id: forecast_day1_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day1_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # # 10-day forecast precipitation amount from Home Assistant
+  # - platform: homeassistant
+  #   name: "Forecast Day 1 Precipitation"
+  #   entity_id: input_text.forecast_day_1_precipitation
+  #   id: forecast_day1_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day1_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 2 Precipitation"
-    entity_id: input_text.forecast_day_2_precipitation
-    id: forecast_day2_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day2_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 2 Precipitation"
+  #   entity_id: input_text.forecast_day_2_precipitation
+  #   id: forecast_day2_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day2_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 3 Precipitation"
-    entity_id: input_text.forecast_day_3_precipitation
-    id: forecast_day3_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day3_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 3 Precipitation"
+  #   entity_id: input_text.forecast_day_3_precipitation
+  #   id: forecast_day3_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day3_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 4 Precipitation"
-    entity_id: input_text.forecast_day_4_precipitation
-    id: forecast_day4_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day4_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 4 Precipitation"
+  #   entity_id: input_text.forecast_day_4_precipitation
+  #   id: forecast_day4_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day4_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 5 Precipitation"
-    entity_id: input_text.forecast_day_5_precipitation
-    id: forecast_day5_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day5_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 5 Precipitation"
+  #   entity_id: input_text.forecast_day_5_precipitation
+  #   id: forecast_day5_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day5_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 6 Precipitation"
-    entity_id: input_text.forecast_day_6_precipitation
-    id: forecast_day6_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day6_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 6 Precipitation"
+  #   entity_id: input_text.forecast_day_6_precipitation
+  #   id: forecast_day6_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day6_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 7 Precipitation"
-    entity_id: input_text.forecast_day_7_precipitation
-    id: forecast_day7_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day7_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 7 Precipitation"
+  #   entity_id: input_text.forecast_day_7_precipitation
+  #   id: forecast_day7_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day7_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 8 Precipitation"
-    entity_id: input_text.forecast_day_8_precipitation
-    id: forecast_day8_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day8_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 8 Precipitation"
+  #   entity_id: input_text.forecast_day_8_precipitation
+  #   id: forecast_day8_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day8_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 9 Precipitation"
-    entity_id: input_text.forecast_day_9_precipitation
-    id: forecast_day9_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day9_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 9 Precipitation"
+  #   entity_id: input_text.forecast_day_9_precipitation
+  #   id: forecast_day9_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day9_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
-  - platform: homeassistant
-    name: "Forecast Day 10 Precipitation"
-    entity_id: input_text.forecast_day_10_precipitation
-    id: forecast_day10_precip_amt
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day10_precip_amt
-            text: !lambda |-
-              char buffer[30];
-              double mm = atof(x.c_str());
-              double inches = mm / 25.4;
-              snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
-              return buffer;
+  # - platform: homeassistant
+  #   name: "Forecast Day 10 Precipitation"
+  #   entity_id: input_text.forecast_day_10_precipitation
+  #   id: forecast_day10_precip_amt
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_forecast_day10_precip_amt
+  #           text: !lambda |-
+  #             char buffer[30];
+  #             double mm = atof(x.c_str());
+  #             double inches = mm / 25.4;
+  #             snprintf(buffer, sizeof(buffer), "Amount: %.2f in", inches);
+  #             return buffer;
 
 font:
   - file: "fonts/materialdesignicons-webfont.ttf"
