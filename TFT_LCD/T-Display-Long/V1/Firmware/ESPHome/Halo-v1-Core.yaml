@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0706"
+  version: "25.10.22.0718"
   device_description: ${name} - v${version}.
 
 psram:
@@ -125,6 +125,14 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+  - id: bluetooth_proxy_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: bluetooth_proxy_mode_active
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
   - id: weather_last_condition
     type: std::string
     restore_value: no
@@ -271,6 +279,28 @@ switch:
       - logger.log: "WireGuard disabled - switching to Home Assistant time source"
       - script.execute: time_update  # Switch to HA time display
 
+  - platform: template
+    name: "Bluetooth Proxy"
+    id: bluetooth_proxy_switch
+    icon: mdi:bluetooth-audio
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - logger.log: "Enabling Bluetooth Proxy"
+      - lambda: |
+          id(bluetooth_proxy_enabled) = true;
+          ESP_LOGI("bluetooth_proxy", "Marked Bluetooth proxy enabled; scheduling restart to apply changes");
+      - delay: 500ms
+      - button.press: "ESP Reboot"
+    on_turn_off:
+      - logger.log: "Disabling Bluetooth Proxy"
+      - lambda: |
+          id(bluetooth_proxy_enabled) = false;
+          ESP_LOGI("bluetooth_proxy", "Marked Bluetooth proxy disabled; scheduling restart to apply changes");
+      - delay: 500ms
+      - button.press: "ESP Reboot"
+
 select:
   - platform: template
     name: Display Temperature Unit
@@ -342,6 +372,31 @@ select:
             auto call = id(rgb_light).turn_on();
             call.set_effect(effect);
             call.perform();
+          }
+
+  - platform: template
+    name: "Bluetooth Proxy Mode"
+    id: bluetooth_proxy_mode_select
+    entity_category: "Config"
+    options:
+      - "Active"
+      - "Passive"
+    initial_option: "Active"
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: |-
+          std::string mode = id(bluetooth_proxy_mode_select).state;
+          if (mode == "Active") {
+            id(bluetooth_proxy_mode_active) = true;
+            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Active mode; scheduling restart to apply");
+      - delay: 500ms
+      - button.press: "ESP Reboot"
+          } else {
+            id(bluetooth_proxy_mode_active) = false;
+            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Passive mode; scheduling restart to apply");
+      - delay: 500ms
+      - button.press: "ESP Reboot"
           }
 
   - platform: template
@@ -1255,6 +1310,22 @@ sensor:
     device_class: "aqi"
     state_class: "measurement"
     update_interval: never  # We'll update it manually
+
+  - platform: template
+    name: "Bluetooth Proxy Enabled"
+    id: ha_bluetooth_proxy_enabled
+    icon: mdi:bluetooth-connect
+    entity_category: "diagnostic"
+    lambda: 'return id(bluetooth_proxy_enabled);'
+    update_interval: 10s
+
+  - platform: template
+    name: "Bluetooth Proxy Mode Active"
+    id: ha_bluetooth_proxy_mode_active
+    icon: mdi:swap-vertical-bold
+    entity_category: "diagnostic"
+    lambda: 'return id(bluetooth_proxy_mode_active);'
+    update_interval: 10s
 
   - platform: scd4x
     id: scd40
