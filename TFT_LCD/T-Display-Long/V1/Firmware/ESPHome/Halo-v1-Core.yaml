@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0930"
+  version: "25.10.22.0935"
   device_description: ${name} - v${version}.
 
 psram:
@@ -905,98 +905,125 @@ interval:
   # Automatic page rotation - controllable via Home Assistant with custom page selection and order
   - interval: 1s
     then:
-      - lambda: |-
-          // Only rotate if auto rotation is enabled
-          if (!id(auto_page_rotation_enabled)) return;
+      - if:
+          condition:
+            lambda: |-
+              // Only rotate if auto rotation is enabled
+              if (!id(auto_page_rotation_enabled)) return false;
 
-          const uint32_t now = millis();
-          const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
+              const uint32_t now = millis();
+              const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
 
-          // Check if enough time has passed since last rotation
-          if ((now - id(last_auto_rotation_time)) < interval_ms) return;
+              // Check if enough time has passed since last rotation
+              if ((now - id(last_auto_rotation_time)) < interval_ms) return false;
 
-          // Build separate parallel arrays for page info
-          std::vector<int> page_orders;
-          std::vector<int> page_indices;  // Maps to the page in sorted order
+              // Build separate parallel arrays for page info
+              std::vector<int> page_orders;
+              std::vector<int> page_indices;  // Maps to the page in sorted order
 
-          // Collect enabled pages with their orders (use index to identify page)
-          // Index: 0=main, 1=wifi, 2=weather, 3=daily_forecast, 4=vertical_clock
-          if (id(page_rotation_main_enabled)) {
-            page_orders.push_back(id(page_rotation_main_order));
-            page_indices.push_back(0);
-          }
-          if (id(page_rotation_wifi_enabled)) {
-            page_orders.push_back(id(page_rotation_wifi_order));
-            page_indices.push_back(1);
-          }
-          if (id(page_rotation_weather_enabled)) {
-            page_orders.push_back(id(page_rotation_weather_order));
-            page_indices.push_back(2);
-          }
-          if (id(page_rotation_daily_forecast_enabled)) {
-            page_orders.push_back(id(page_rotation_daily_forecast_order));
-            page_indices.push_back(3);
-          }
-          if (id(page_rotation_vertical_clock_enabled)) {
-            page_orders.push_back(id(page_rotation_vertical_clock_order));
-            page_indices.push_back(4);
-          }
-
-          // If no pages are enabled, don't rotate
-          if (page_orders.empty()) {
-            ESP_LOGW("page_rotation", "No pages enabled for rotation");
-            return;
-          }
-
-          // Sort indices based on their order numbers (bubble sort for simplicity)
-          for (size_t i = 0; i < page_orders.size(); i++) {
-            for (size_t j = i + 1; j < page_orders.size(); j++) {
-              if (page_orders[j] < page_orders[i]) {
-                std::swap(page_orders[i], page_orders[j]);
-                std::swap(page_indices[i], page_indices[j]);
+              // Collect enabled pages with their orders (use index to identify page)
+              // Index: 0=main, 1=wifi, 2=weather, 3=daily_forecast, 4=vertical_clock
+              if (id(page_rotation_main_enabled)) {
+                page_orders.push_back(id(page_rotation_main_order));
+                page_indices.push_back(0);
               }
-            }
-          }
+              if (id(page_rotation_wifi_enabled)) {
+                page_orders.push_back(id(page_rotation_wifi_order));
+                page_indices.push_back(1);
+              }
+              if (id(page_rotation_weather_enabled)) {
+                page_orders.push_back(id(page_rotation_weather_order));
+                page_indices.push_back(2);
+              }
+              if (id(page_rotation_daily_forecast_enabled)) {
+                page_orders.push_back(id(page_rotation_daily_forecast_order));
+                page_indices.push_back(3);
+              }
+              if (id(page_rotation_vertical_clock_enabled)) {
+                page_orders.push_back(id(page_rotation_vertical_clock_order));
+                page_indices.push_back(4);
+              }
 
-          // Find current page in the sorted list
-          int current_index = -1;
-          auto current_obj = id(lvgl_main)->get_scr_act();
+              // If no pages are enabled, don't rotate
+              if (page_orders.empty()) {
+                ESP_LOGW("page_rotation", "No pages enabled for rotation");
+                return false;
+              }
 
-          for (size_t i = 0; i < page_indices.size(); i++) {
-            lv_obj_t* check_obj = nullptr;
-            if (page_indices[i] == 0) check_obj = id(main_page)->get_obj();
-            else if (page_indices[i] == 1) check_obj = id(wifi_page)->get_obj();
-            else if (page_indices[i] == 2) check_obj = id(weather_forecast_page)->get_obj();
-            else if (page_indices[i] == 3) check_obj = id(daily_forecast_page)->get_obj();
-            else if (page_indices[i] == 4) check_obj = id(vertical_clock_page)->get_obj();
+              // Sort indices based on their order numbers (bubble sort for simplicity)
+              for (size_t i = 0; i < page_orders.size(); i++) {
+                for (size_t j = i + 1; j < page_orders.size(); j++) {
+                  if (page_orders[j] < page_orders[i]) {
+                    std::swap(page_orders[i], page_orders[j]);
+                    std::swap(page_indices[i], page_indices[j]);
+                  }
+                }
+              }
 
-            if (check_obj == current_obj) {
-              current_index = i;
-              break;
-            }
-          }
+              // Use a static variable to track position in rotation sequence
+              static int rotation_position = 0;
 
-          // Calculate next page index (wrap around)
-          int next_index = (current_index + 1) % page_indices.size();
-          int next_page_id = page_indices[next_index];
+              // Make sure rotation_position is within bounds
+              if (rotation_position >= page_indices.size()) {
+                rotation_position = 0;
+              }
 
-          // Show the next page
-          ESP_LOGD("page_rotation", "Rotating to page index %d (order: %d)",
-                   next_page_id, page_orders[next_index]);
+              // Get the next page to show
+              int next_page_id = page_indices[rotation_position];
 
-          if (next_page_id == 0) {
-            id(main_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
-          } else if (next_page_id == 1) {
-            id(wifi_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
-          } else if (next_page_id == 2) {
-            id(weather_forecast_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
-          } else if (next_page_id == 3) {
-            id(daily_forecast_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
-          } else if (next_page_id == 4) {
-            id(vertical_clock_page)->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
-          }
+              // Store the next page ID in current_page_index for the action to use
+              id(current_page_index) = next_page_id;
 
-          id(last_auto_rotation_time) = now;
+              // Advance rotation position for next time (wrap around)
+              rotation_position = (rotation_position + 1) % page_indices.size();
+
+              // Show the next page
+              ESP_LOGD("page_rotation", "Rotating to page index %d (order: %d)",
+                       next_page_id, page_orders[rotation_position > 0 ? rotation_position - 1 : page_orders.size() - 1]);
+
+              id(last_auto_rotation_time) = now;
+              return true;
+          then:
+            - if:
+                condition:
+                  lambda: 'return id(current_page_index) == 0;'
+                then:
+                  - lvgl.page.show:
+                      id: main_page
+                      animation: OUT_LEFT
+                      time: 300ms
+                else:
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 1;'
+                      then:
+                        - lvgl.page.show:
+                            id: wifi_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                        - if:
+                            condition:
+                              lambda: 'return id(current_page_index) == 2;'
+                            then:
+                              - lvgl.page.show:
+                                  id: weather_forecast_page
+                                  animation: OUT_LEFT
+                                  time: 300ms
+                            else:
+                              - if:
+                                  condition:
+                                    lambda: 'return id(current_page_index) == 3;'
+                                  then:
+                                    - lvgl.page.show:
+                                        id: daily_forecast_page
+                                        animation: OUT_LEFT
+                                        time: 300ms
+                                  else:
+                                    - lvgl.page.show:
+                                        id: vertical_clock_page
+                                        animation: OUT_LEFT
+                                        time: 300ms
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
