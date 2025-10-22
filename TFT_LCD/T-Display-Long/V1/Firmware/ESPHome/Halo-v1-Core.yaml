@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0918"
+  version: "25.10.22.0924"
   device_description: ${name} - v${version}.
 
 psram:
@@ -954,7 +954,7 @@ interval:
 
           // Find current page index in the sorted list
           int current_index = -1;
-          auto current_obj = id(display_main)->get_scr_act();
+          auto current_obj = id(lvgl_main)->get_scr_act();
 
           for (size_t i = 0; i < pages.size(); i++) {
             if (pages[i].page && pages[i].page->get_obj() == current_obj) {
