@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.0911"
+  version: "25.10.22.0918"
   device_description: ${name} - v${version}.
 
 psram:
@@ -89,6 +89,48 @@ globals:
     type: unsigned long
     restore_value: no
     initial_value: '0'
+  # Page rotation settings - which pages are included
+  - id: page_rotation_main_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_wifi_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_weather_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_daily_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_vertical_clock_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  # Page rotation order (1-5, 0 means disabled)
+  - id: page_rotation_main_order
+    type: int
+    restore_value: yes
+    initial_value: '1'
+  - id: page_rotation_wifi_order
+    type: int
+    restore_value: yes
+    initial_value: '2'
+  - id: page_rotation_weather_order
+    type: int
+    restore_value: yes
+    initial_value: '3'
+  - id: page_rotation_daily_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '4'
+  - id: page_rotation_vertical_clock_order
+    type: int
+    restore_value: yes
+    initial_value: '5'
   - id: default_page_index
     type: int
     restore_value: yes
@@ -302,6 +344,77 @@ switch:
           id(bluetooth_proxy_enabled) = false;
           id(bluetooth_proxy_reboot_needed) = true;
           ESP_LOGI("bluetooth_proxy", "Bluetooth proxy disabled - Please manually reboot for changes to take effect");
+
+  # Page rotation selection switches
+  - platform: template
+    name: "Page Rotation: Main Page"
+    id: page_rotation_main_switch
+    icon: mdi:view-dashboard
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_main_enabled) = true;'
+      - logger.log: "Main page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_main_enabled) = false;'
+      - logger.log: "Main page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: WiFi Page"
+    id: page_rotation_wifi_switch
+    icon: mdi:wifi
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_wifi_enabled) = true;'
+      - logger.log: "WiFi page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_wifi_enabled) = false;'
+      - logger.log: "WiFi page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Weather Page"
+    id: page_rotation_weather_switch
+    icon: mdi:weather-partly-cloudy
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_weather_enabled) = true;'
+      - logger.log: "Weather page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_weather_enabled) = false;'
+      - logger.log: "Weather page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Daily Forecast Page"
+    id: page_rotation_daily_forecast_switch
+    icon: mdi:calendar-today
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_daily_forecast_enabled) = true;'
+      - logger.log: "Daily forecast page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_daily_forecast_enabled) = false;'
+      - logger.log: "Daily forecast page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Vertical Clock Page"
+    id: page_rotation_vertical_clock_switch
+    icon: mdi:clock-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_vertical_clock_enabled) = true;'
+      - logger.log: "Vertical clock page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_vertical_clock_enabled) = false;'
+      - logger.log: "Vertical clock page disabled in rotation"
 
 select:
   - platform: template
@@ -789,29 +902,82 @@ interval:
             }
           }
 
-  # Automatic page rotation - controllable via Home Assistant
+  # Automatic page rotation - controllable via Home Assistant with custom page selection and order
   - interval: 1s
     then:
-      - if:
-          condition:
-            lambda: |-
-              // Only rotate if auto rotation is enabled
-              if (!id(auto_page_rotation_enabled)) return false;
-              
-              const uint32_t now = millis();
-              const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
-              
-              // Check if enough time has passed since last rotation
-              if ((now - id(last_auto_rotation_time)) >= interval_ms) {
-                ESP_LOGD("page_rotation", "Auto-rotating page (interval: %ds)", id(auto_page_rotation_interval));
-                id(last_auto_rotation_time) = now;
-                return true;
-              }
-              return false;
-          then:
-            - lvgl.page.next:
-                animation: OUT_LEFT
-                time: 300ms
+      - lambda: |-
+          // Only rotate if auto rotation is enabled
+          if (!id(auto_page_rotation_enabled)) return;
+
+          const uint32_t now = millis();
+          const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
+
+          // Check if enough time has passed since last rotation
+          if ((now - id(last_auto_rotation_time)) < interval_ms) return;
+
+          // Build a list of enabled pages sorted by their order number
+          struct PageInfo {
+            const char* name;
+            int order;
+            esphome::lvgl::LvglPage* page;
+          };
+
+          std::vector<PageInfo> pages;
+
+          // Add enabled pages to the list
+          if (id(page_rotation_main_enabled)) {
+            pages.push_back({"main", id(page_rotation_main_order), id(main_page)});
+          }
+          if (id(page_rotation_wifi_enabled)) {
+            pages.push_back({"wifi", id(page_rotation_wifi_order), id(wifi_page)});
+          }
+          if (id(page_rotation_weather_enabled)) {
+            pages.push_back({"weather", id(page_rotation_weather_order), id(weather_forecast_page)});
+          }
+          if (id(page_rotation_daily_forecast_enabled)) {
+            pages.push_back({"daily_forecast", id(page_rotation_daily_forecast_order), id(daily_forecast_page)});
+          }
+          if (id(page_rotation_vertical_clock_enabled)) {
+            pages.push_back({"vertical_clock", id(page_rotation_vertical_clock_order), id(vertical_clock_page)});
+          }
+
+          // If no pages are enabled, don't rotate
+          if (pages.empty()) {
+            ESP_LOGW("page_rotation", "No pages enabled for rotation");
+            return;
+          }
+
+          // Sort pages by order number
+          std::sort(pages.begin(), pages.end(), [](const PageInfo& a, const PageInfo& b) {
+            return a.order < b.order;
+          });
+
+          // Find current page index in the sorted list
+          int current_index = -1;
+          auto current_obj = id(display_main)->get_scr_act();
+
+          for (size_t i = 0; i < pages.size(); i++) {
+            if (pages[i].page && pages[i].page->get_obj() == current_obj) {
+              current_index = i;
+              break;
+            }
+          }
+
+          // Calculate next page index (wrap around)
+          int next_index = (current_index + 1) % pages.size();
+
+          // Show the next page
+          ESP_LOGD("page_rotation", "Rotating from page %d (%s) to page %d (%s)",
+                   current_index,
+                   current_index >= 0 ? pages[current_index].name : "unknown",
+                   next_index,
+                   pages[next_index].name);
+
+          if (pages[next_index].page) {
+            pages[next_index].page->show(LV_SCR_LOAD_ANIM_MOVE_LEFT, 300);
+          }
+
+          id(last_auto_rotation_time) = now;
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
@@ -1242,13 +1408,105 @@ number:
     entity_category: "config"
     unit_of_measurement: "s"
     optimistic: true
-    step: 5
-    mode: slider
+    step: 1
+    mode: box
     on_value:
       - lambda: 'id(auto_page_rotation_interval) = (int)x;'
       - logger.log:
           format: "Page rotation interval changed to %d seconds"
           args: ['(int)x']
+
+  # Page rotation order numbers (1-5, lower numbers show first)
+  - platform: template
+    name: "Page Order: Main Page"
+    id: page_order_main
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 1
+    min_value: 1
+    max_value: 5
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_main_order) = (int)x;'
+      - logger.log:
+          format: "Main page order set to %d"
+          args: ['(int)x']
+
+  - platform: template
+    name: "Page Order: WiFi Page"
+    id: page_order_wifi
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 2
+    min_value: 1
+    max_value: 5
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_wifi_order) = (int)x;'
+      - logger.log:
+          format: "WiFi page order set to %d"
+          args: ['(int)x']
+
+  - platform: template
+    name: "Page Order: Weather Page"
+    id: page_order_weather
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 3
+    min_value: 1
+    max_value: 5
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_weather_order) = (int)x;'
+      - logger.log:
+          format: "Weather page order set to %d"
+          args: ['(int)x']
+
+  - platform: template
+    name: "Page Order: Daily Forecast Page"
+    id: page_order_daily_forecast
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 4
+    min_value: 1
+    max_value: 5
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_daily_forecast_order) = (int)x;'
+      - logger.log:
+          format: "Daily forecast page order set to %d"
+          args: ['(int)x']
+
+  - platform: template
+    name: "Page Order: Vertical Clock Page"
+    id: page_order_vertical_clock
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 5
+    min_value: 1
+    max_value: 5
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_vertical_clock_order) = (int)x;'
+      - logger.log:
+          format: "Vertical clock page order set to %d"
+          args: ['(int)x']
+
   - platform: template
     name: SEN55 Temperature Offset
     id: sen55_temperature_offset
