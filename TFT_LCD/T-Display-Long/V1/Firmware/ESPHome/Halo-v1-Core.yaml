@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.0913"
+  version: "25.10.23.0923"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1156,6 +1156,7 @@ display:
     reset_pin: 16
     rotation: 0
     auto_clear_enabled: false
+    update_interval: 100ms  # Limit display refresh rate to reduce SPI load
 
 # Touchscreen re-enabled with protective measures:
 # - 100ms internal rate limiter in axs15231_touchscreen.cpp
@@ -4072,7 +4073,7 @@ lvgl:
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
-  log_level: VERBOSE
+  log_level: WARN  # Reduced from VERBOSE to prevent render spam during init
   gradients:
     - id: wifi_signal_gradient
       direction: hor
