@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.0808"
+  version: "25.10.23.0823"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1619,11 +1619,6 @@ number:
             value: !lambda 'return (int)x;'
 
 binary_sensor:
-  - platform: template
-    name: "Free Heap"
-    lambda: return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-    unit_of_measurement: "bytes"
-    update_interval: 60s
   - platform: status
     name: Online
     id: ink_ha_connected
@@ -1652,6 +1647,12 @@ binary_sensor:
     lambda: 'return id(bluetooth_proxy_reboot_needed);'
 
 sensor:
+  - platform: template
+    name: "Free Heap"
+    lambda: return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    unit_of_measurement: "bytes"
+    update_interval: 60s
+
   - platform: uptime
     name: Uptime
     id: sys_uptime
