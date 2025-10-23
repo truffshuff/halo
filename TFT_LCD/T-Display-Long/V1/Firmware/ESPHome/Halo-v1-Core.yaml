@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1200"
+  version: "25.10.23.1229"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1027,11 +1027,13 @@ api:
             call.set_effect(effect);
             call.perform();
           }
-      - delay: 2s
+      - delay: 7s
       - esp32_ble_tracker.start_scan:
           continuous: true
   on_client_disconnected:
       - esp32_ble_tracker.stop_scan:
+      - delay: 7s
+          
   services:
     #Co2 Calibration Service
     - service: calibrate_co2_value
@@ -1099,7 +1101,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
-    data_rate: 20MHz  # Increased - sometimes faster is more stable with proper timing
+    data_rate: 80MHz  # Maximum speed for smooth drawing - most QSPI displays support this
     spi_id: lily_spi
     dimensions:
       height: 640
@@ -5856,7 +5858,7 @@ esphome:
     then:
       - logger.log: "Boot sequence starting (priority -100)"
       - light.turn_off: rgb_light
-      - delay: 3s  # Increased from 1s to allow display controller to fully initialize after OTA
+      - delay: 5s  # Increased from 1s to allow display controller to fully initialize after OTA
       - logger.log:
           format: "Setting default page (index: %d)"
           args: ['id(default_page_index)']
