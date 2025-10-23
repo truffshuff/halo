@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1339"
+  version: "25.10.23.1422"
   device_description: ${name} - v${version}.
 
 psram:
@@ -57,18 +57,7 @@ spi:
 captive_portal:
 
 logger:
-  level: INFO
-  logs:
-    http_request.idf: WARN
-    lvgl: WARN
-    display.qspi_dbi: WARN
-    spi: DEBUG
-    spi.esp_idf: DEBUG
-    api.connection: ERROR  # Reduce API noise - only show real errors
-    touchscreen: ERROR  # Reduce touch polling noise - only show real errors
-    weather_color: INFO
-    time_update: INFO
-    component: ERROR  # Disable config dump on boot - prevents watchdog timeout
+  level: DEBUG
 
 globals:
   - id: cycleCounter
@@ -806,7 +795,7 @@ interval:
                       text: !lambda 'return id(wg_handshake_last_text);'
                   - lambda: 'id(wg_handshake_needs_render) = false;'
 
-  - interval: 1s
+  - interval: 3s  # Reduced from 1s to decrease SPI bus contention
     then:
       - script.execute: time_update  
 
@@ -1338,7 +1327,8 @@ script:
       - lambda: |-
           const uint32_t elapsed = millis() - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
-          id(time_update_duration_sensor).publish_state(elapsed);
+          // Removed publish_state to prevent TCP buffer overflow - store in global instead
+          // id(time_update_duration_sensor).publish_state(elapsed);
           const bool rendered = id(time_update_needs_render);
           if (elapsed > 40) {
             ESP_LOGW("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
@@ -1410,7 +1400,8 @@ script:
       - lambda: |-
           const uint32_t elapsed = millis() - id(weather_last_started);
           id(weather_last_duration) = elapsed;
-          id(weather_icon_duration_sensor).publish_state(elapsed);
+          // Removed publish_state to prevent TCP buffer overflow - store in global instead
+          // id(weather_icon_duration_sensor).publish_state(elapsed);
           const bool rendered = id(weather_needs_render);
           if (elapsed > 80) {
             ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
