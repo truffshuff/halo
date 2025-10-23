@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.0845"
+  version: "25.10.23.0900"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1145,6 +1145,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
+    data_rate: 10MHz
     spi_id: lily_spi
     dimensions:
       height: 640
@@ -1153,7 +1154,6 @@ display:
     reset_pin: 16
     rotation: 0
     auto_clear_enabled: false
-    data_rate: 10MHz
 
 # Touchscreen re-enabled with protective measures:
 # - 100ms internal rate limiter in axs15231_touchscreen.cpp
