@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.0900"
+  version: "25.10.23.0913"
   device_description: ${name} - v${version}.
 
 psram:
@@ -60,6 +60,8 @@ logger:
     http_request.idf: WARN
     lvgl: WARN
     display.qspi_dbi: WARN
+    spi: DEBUG
+    spi.esp_idf: DEBUG
     api.connection: ERROR  # Reduce API noise - only show real errors
     touchscreen: ERROR  # Reduce touch polling noise - only show real errors
     weather_color: INFO
