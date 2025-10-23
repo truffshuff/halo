@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1326"
+  version: "25.10.23.1339"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4898,18 +4898,16 @@ lvgl:
                           pad_column: 2
                           flex_align_main: START
                           flex_align_cross: CENTER
-                        widgets:
-                          - label:
-                              id: lbl_forecast_day1_icon
-                              text: "--"
-                              text_font: icons_50
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day1_condition
-                              text: "---"
-                              text_font: montserrat_20
-                              text_color: my_white
-                              long_mode: SCROLL_CIRCULAR
+                    - label:
+                        id: lbl_forecast_day1_icon
+                        text: "--"
+                        text_font: icons_50
+                        text_color: my_white
+                    - label:
+                        id: lbl_forecast_day1_condition
+                        text: "---"
+                        text_font: montserrat_20
+                        text_color: my_white
                     - label:
                         id: lbl_forecast_day1_temps
                         text: "H:--° L:--°"
