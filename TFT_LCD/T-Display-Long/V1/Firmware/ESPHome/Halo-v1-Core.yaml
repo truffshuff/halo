@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1741"
+  version: "25.10.23.1747"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4013,7 +4013,7 @@ font:
       "\U000F14E4", # sunny-off
       ]
 
-   - file: "fonts/materialdesignicons-webfont.ttf"
+  - file: "fonts/materialdesignicons-webfont.ttf"
     id: icons_80
     size: 80
     bpp: 4
