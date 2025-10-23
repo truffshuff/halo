@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.1858"
+  version: "25.10.22.2020"
   device_description: ${name} - v${version}.
 
 psram:
@@ -2284,13 +2284,13 @@ sensor:
 
   # Feels like Temp from Home Assistant
   - platform: homeassistant
-    name: "Forecast Feels Like Temp"
+    name: "Today Feels Like Temp"
     entity_id: sensor.st_00143056_feels_like
-    id: weather_forecast_tempap
+    id: weather_today_tempap
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_weather_forecast_tempap
+            id: lbl_weather_today_tempap
             text: !lambda |-
               char buffer[20];
               snprintf(buffer, sizeof(buffer), "%.0f°F", x);
@@ -2300,11 +2300,11 @@ sensor:
   - platform: homeassistant
     name: "Current Temp"
     entity_id: sensor.st_00143056_temperature
-    id: weather_forecast_outdoor_temp
+    id: weather_today_outdoor_temp
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_weather_forecast_outdoor_temp
+            id: lbl_weather_today_outdoor_temp
             text: !lambda |-
               char buffer[20];
               snprintf(buffer, sizeof(buffer), "%.0f°F", x);
@@ -2684,9 +2684,17 @@ text_sensor:
         - lvgl.label.update:
             id: lbl_forecast_day1_condition
             text: !lambda 'return x;'
-        - lvgl.label.update:
-            id: lbl_weather_forecast_condition_name
-            text: !lambda 'return x;'
+        # Only update the large forecast display (big icon/name) when the condition actually changes
+        - if:
+            condition:
+              lambda: |-
+                std::string cond = id(forecast_day1_condition).state;
+                std::transform(cond.begin(), cond.end(), cond.begin(), ::tolower);
+                return cond != id(weather_last_condition);
+            then:
+              - lvgl.label.update:
+                  id: lbl_weather_forecast_condition_name
+                  text: !lambda 'return id(forecast_day1_condition).state;'
         - lvgl.label.update:
             id: lbl_forecast_day1_icon
             text: !lambda |-
@@ -2717,34 +2725,63 @@ text_sensor:
                 return "\U000F14E4";  // weather-unknown
               }
         - lvgl.label.update:
-            id: lbl_weather_forecast_condition_icon
-            text: !lambda |-
+            id: lbl_forecast_day1_icon
+            text_color: !lambda |-
               const std::string condition = x;
               std::string normalized = condition;
               std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
               if (normalized.find("clear-night") != std::string::npos) {
-                return "\U000F0594";  // weather-night
+                return lv_color_hex(0x6A5ACD);
               } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";  // sunny
+                return lv_color_hex(0xFFD700);
               } else if (normalized.find("snowy-rainy") != std::string::npos) {
-                return "\U000F0F35";  // weather-snowy-rainy
+                return lv_color_hex(0xAFEEEE);
               } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
-                return "\U000F067E";  // lightning-rainy
+                return lv_color_hex(0xFF1493);
               } else if (normalized.find("partlycloudy") != std::string::npos) {
-                return "\U000F0595";  // partlycloudy
+                return lv_color_hex(0x87CEFA);
               } else if (normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0590";  // cloudy
+                return lv_color_hex(0xA9A9A9);
               } else if (normalized.find("rainy") != std::string::npos) {
-                return "\U000F0597";  // rainy
+                return lv_color_hex(0x4169E1);
               } else if (normalized.find("snowy") != std::string::npos) {
-                return "\U000F0598";  // snowy
+                return lv_color_hex(0xDCDCDC);
               } else if (normalized.find("fog") != std::string::npos) {
-                return "\U000F0591";  // fog
+                return lv_color_hex(0xB0C4DE);
               } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059E";  // windy
+                return lv_color_hex(0x90EE90);
               } else {
-                return "\U000F14E4";  // weather-unknown
+                return lv_color_hex(0xFFFFFF);
               }
+              - lvgl.label.update:
+                  id: lbl_weather_forecast_condition_icon
+                  text: !lambda |-
+                    const std::string condition = id(forecast_day1_condition).state;
+                    std::string normalized = condition;
+                    std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+                    if (normalized.find("clear-night") != std::string::npos) {
+                      return "\U000F0594";  // weather-night
+                    } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                      return "\U000F0599";  // sunny
+                    } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                      return "\U000F0F35";  // weather-snowy-rainy
+                    } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                      return "\U000F067E";  // lightning-rainy
+                    } else if (normalized.find("partlycloudy") != std::string::npos) {
+                      return "\U000F0595";  // partlycloudy
+                    } else if (normalized.find("cloudy") != std::string::npos) {
+                      return "\U000F0590";  // cloudy
+                    } else if (normalized.find("rainy") != std::string::npos) {
+                      return "\U000F0597";  // rainy
+                    } else if (normalized.find("snowy") != std::string::npos) {
+                      return "\U000F0598";  // snowy
+                    } else if (normalized.find("fog") != std::string::npos) {
+                      return "\U000F0591";  // fog
+                    } else if (normalized.find("windy") != std::string::npos) {
+                      return "\U000F059E";  // windy
+                    } else {
+                      return "\U000F14E4";  // weather-unknown
+                    }
         - script.execute: update_weather_icon_color
 
   - platform: homeassistant
@@ -4720,7 +4757,7 @@ lvgl:
         # Current apparent temperature in center of gauge
         - label:
             text: "--°"
-            id: lbl_weather_forecast_tempap
+            id: lbl_weather_today_tempap
             text_align: CENTER
             text_font: montserrat_28
             text_color: my_white
@@ -4794,7 +4831,7 @@ lvgl:
 
         - label:
             text: "--.- °C"
-            id: lbl_weather_forecast_outdoor_temp
+            id: lbl_weather_today_outdoor_temp
             text_align: CENTER
             text_font: montserrat_20
             text_color: my_white
@@ -4854,7 +4891,7 @@ lvgl:
                     - label:
                         id: lbl_forecast_day1_header
                         text: "Day +1 (--/--)"
-                        text_font: montserrat_20
+                        text_font: montserrat_18
                         text_color: my_white
                     - obj:
                         bg_opa: 0
@@ -4926,7 +4963,7 @@ lvgl:
                     - label:
                         id: lbl_forecast_day2_header
                         text: "Day +2 (--/--)"
-                        text_font: montserrat_20
+                        text_font: montserrat_18
                         text_color: my_white
                     - obj:
                         bg_opa: 0
@@ -5617,14 +5654,14 @@ lvgl:
 
 text:
   - platform: lvgl
-    name: weather_forecast_tempap
+    name: weather_today_tempap
     internal: true
-    widget: lbl_weather_forecast_tempap
+    widget: lbl_weather_today_tempap
     mode: text
   - platform: lvgl
-    name: weather_forecast_outdoor_temp
+    name: weather_today_outdoor_temp
     internal: true
-    widget: lbl_weather_forecast_outdoor_temp
+    widget: lbl_weather_today_outdoor_temp
     mode: text
 
   # Daily Forecast Page - Day 1
