@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1229"
+  version: "25.10.23.1239"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1101,7 +1101,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
-    data_rate: 80MHz  # Maximum speed for smooth drawing - most QSPI displays support this
+    data_rate: 40MHz  # Balanced speed - fast but more stable than 80MHz
     spi_id: lily_spi
     dimensions:
       height: 640
@@ -1110,7 +1110,6 @@ display:
     reset_pin: 16
     rotation: 0
     auto_clear_enabled: false
-    setup_priority: 100  # Initialize display after SPI but before LVGL
 
 # Touchscreen re-enabled with protective measures:
 # - 100ms internal rate limiter in axs15231_touchscreen.cpp
