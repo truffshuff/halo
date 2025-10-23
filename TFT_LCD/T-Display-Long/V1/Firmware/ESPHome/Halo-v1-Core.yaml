@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1551"
+  version: "25.10.23.1640"
   device_description: ${name} - v${version}.
 
 psram:
@@ -47,6 +47,7 @@ external_components:
 spi:
   id: lily_spi
   type: quad
+  data_rate: 40MHz   # try 26MHz or 20MHz if 40 still trips errors
   clk_pin: 17
   data_pins:
     - 13
@@ -2287,15 +2288,32 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day1_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              // Gracefully handle missing forecast values from Home Assistant.
               float low = id(forecast_day1_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
         - lvgl.label.update:
             id: lbl_weather_forecast_temphi
             text: !lambda |-
-              char buffer[15];
-              snprintf(buffer, sizeof(buffer), "H: %.0f°", x);
+              char buffer[16];
+              if (isnan(x)) {
+                snprintf(buffer, sizeof(buffer), "H: --°");
+              } else {
+                snprintf(buffer, sizeof(buffer), "H: %.0f°", x);
+              }
               return buffer;
 
   - platform: homeassistant
@@ -2307,9 +2325,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day2_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day2_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2321,9 +2351,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day3_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day3_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2335,9 +2377,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day4_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day4_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2349,9 +2403,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day5_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day5_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2363,9 +2429,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day6_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day6_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2377,9 +2455,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day7_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day7_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2391,9 +2481,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day8_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day8_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2405,9 +2507,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day9_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day9_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2419,9 +2533,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day10_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float low = id(forecast_day10_low_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", x, low);
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2433,15 +2559,31 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day1_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day1_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
         - lvgl.label.update:
             id: lbl_weather_forecast_templo
             text: !lambda |-
-              char buffer[15];
-              snprintf(buffer, sizeof(buffer), "L: %.0f°", x);
+              char buffer[16];
+              if (isnan(x)) {
+                snprintf(buffer, sizeof(buffer), "L: --°");
+              } else {
+                snprintf(buffer, sizeof(buffer), "L: %.0f°", x);
+              }
               return buffer;
   
   - platform: homeassistant
@@ -2453,9 +2595,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day2_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day2_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2467,9 +2621,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day3_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day3_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2481,9 +2647,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day4_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day4_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2495,9 +2673,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day5_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day5_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2509,9 +2699,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day6_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day6_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2523,9 +2725,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day7_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day7_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2537,9 +2751,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day8_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day8_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2551,9 +2777,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day9_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day9_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
   - platform: homeassistant
@@ -2565,9 +2803,21 @@ sensor:
         - lvgl.label.update:
             id: lbl_forecast_day10_temps
             text: !lambda |-
-              char buffer[30];
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
               float high = id(forecast_day10_high_temp).state;
-              snprintf(buffer, sizeof(buffer), "H:%.0f° L:%.0f°", high, x);
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
               return buffer;
 
 button:
