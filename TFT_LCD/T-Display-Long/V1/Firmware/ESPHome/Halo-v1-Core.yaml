@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.2020"
+  version: "25.10.22.2027"
   device_description: ${name} - v${version}.
 
 psram:
@@ -2684,17 +2684,6 @@ text_sensor:
         - lvgl.label.update:
             id: lbl_forecast_day1_condition
             text: !lambda 'return x;'
-        # Only update the large forecast display (big icon/name) when the condition actually changes
-        - if:
-            condition:
-              lambda: |-
-                std::string cond = id(forecast_day1_condition).state;
-                std::transform(cond.begin(), cond.end(), cond.begin(), ::tolower);
-                return cond != id(weather_last_condition);
-            then:
-              - lvgl.label.update:
-                  id: lbl_weather_forecast_condition_name
-                  text: !lambda 'return id(forecast_day1_condition).state;'
         - lvgl.label.update:
             id: lbl_forecast_day1_icon
             text: !lambda |-
@@ -2753,31 +2742,41 @@ text_sensor:
               } else {
                 return lv_color_hex(0xFFFFFF);
               }
+        - if:
+            condition:
+              lambda: |-
+                std::string cond = id(forecast_day1_condition).state;
+                std::transform(cond.begin(), cond.end(), cond.begin(), ::tolower);
+                return cond != id(weather_last_condition);
+            then:
+              - lvgl.label.update:
+                  id: lbl_weather_forecast_condition_name
+                  text: !lambda 'return id(forecast_day1_condition).state;'
               - lvgl.label.update:
                   id: lbl_weather_forecast_condition_icon
                   text: !lambda |-
-                    const std::string condition = id(forecast_day1_condition).state;
-                    std::string normalized = condition;
-                    std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-                    if (normalized.find("clear-night") != std::string::npos) {
+                    const std::string cond_b = id(forecast_day1_condition).state;
+                    std::string norm_b = cond_b;
+                    std::transform(norm_b.begin(), norm_b.end(), norm_b.begin(), ::tolower);
+                    if (norm_b.find("clear-night") != std::string::npos) {
                       return "\U000F0594";  // weather-night
-                    } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                    } else if (norm_b.find("sunny") != std::string::npos || norm_b.find("clear") != std::string::npos) {
                       return "\U000F0599";  // sunny
-                    } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                    } else if (norm_b.find("snowy-rainy") != std::string::npos) {
                       return "\U000F0F35";  // weather-snowy-rainy
-                    } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                    } else if (norm_b.find("lightning-rainy") != std::string::npos || norm_b.find("lightning") != std::string::npos) {
                       return "\U000F067E";  // lightning-rainy
-                    } else if (normalized.find("partlycloudy") != std::string::npos) {
+                    } else if (norm_b.find("partlycloudy") != std::string::npos) {
                       return "\U000F0595";  // partlycloudy
-                    } else if (normalized.find("cloudy") != std::string::npos) {
+                    } else if (norm_b.find("cloudy") != std::string::npos) {
                       return "\U000F0590";  // cloudy
-                    } else if (normalized.find("rainy") != std::string::npos) {
+                    } else if (norm_b.find("rainy") != std::string::npos) {
                       return "\U000F0597";  // rainy
-                    } else if (normalized.find("snowy") != std::string::npos) {
+                    } else if (norm_b.find("snowy") != std::string::npos) {
                       return "\U000F0598";  // snowy
-                    } else if (normalized.find("fog") != std::string::npos) {
+                    } else if (norm_b.find("fog") != std::string::npos) {
                       return "\U000F0591";  // fog
-                    } else if (normalized.find("windy") != std::string::npos) {
+                    } else if (norm_b.find("windy") != std::string::npos) {
                       return "\U000F059E";  // windy
                     } else {
                       return "\U000F14E4";  // weather-unknown
