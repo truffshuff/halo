@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1640"
+  version: "25.10.23.1644"
   device_description: ${name} - v${version}.
 
 psram:
@@ -47,7 +47,6 @@ external_components:
 spi:
   id: lily_spi
   type: quad
-  data_rate: 40MHz   # try 26MHz or 20MHz if 40 still trips errors
   clk_pin: 17
   data_pins:
     - 13
