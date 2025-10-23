@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.22.2027"
+  version: "25.10.22.2110"
   device_description: ${name} - v${version}.
 
 psram:
@@ -2651,10 +2651,6 @@ text_sensor:
       name: "WireGuard Address"
       id: wireguard_address_text
 
-  - platform: template
-    name: "Today's High Temp"
-    id: todays_high
-
     # Convert VOC Index To Text: 
     # https://sensirion.com/media/documents/02232963/6294E043/Info_Note_VOC_Index.pdf
     # https://sensirion.com/media/documents/ACD82D45/6294DFC0/Info_Note_Integration_VOC_NOx_Sensor.pdf
@@ -3486,13 +3482,13 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day1_precip
+            id: lbl_forecast_day1_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
               return buffer;
         - lvgl.label.update:
-            id: lbl_weather_forecast_dailyprecip
+            id: lbl_weather_today_dailyprecipprob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3505,7 +3501,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day2_precip
+            id: lbl_forecast_day2_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3518,7 +3514,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day3_precip
+            id: lbl_forecast_day3_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3531,7 +3527,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day4_precip
+            id: lbl_forecast_day4_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3544,7 +3540,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day5_precip
+            id: lbl_forecast_day5_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3557,7 +3553,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day6_precip
+            id: lbl_forecast_day6_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3570,7 +3566,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day7_precip
+            id: lbl_forecast_day7_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3583,7 +3579,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day8_precip
+            id: lbl_forecast_day8_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3596,7 +3592,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day9_precip
+            id: lbl_forecast_day9_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -3609,7 +3605,7 @@ text_sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day10_precip
+            id: lbl_forecast_day10_precip_prob
             text: !lambda |-
               char buffer[30];
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
@@ -4810,7 +4806,7 @@ lvgl:
         # Precipitation Chnace
         - label:
             text: "Chance: --%"
-            id: lbl_weather_forecast_dailyprecip
+            id: lbl_weather_today_dailyprecipprob
             text_align: CENTER
             text_font: montserrat_18
             text_color: my_teal
@@ -4932,15 +4928,11 @@ lvgl:
                           pad_row: 2
                         widgets:
                           - label:
-                              id: lbl_forecast_day1_precip
+                              id: lbl_forecast_day1_precip_prob
                               text: "Rain: --%"
                               text_font: montserrat_14
                               text_color: my_white
-                          - label:
-                              id: lbl_forecast_day1_precip_amt
-                              text: "-- in"
-                              text_font: montserrat_14
-                              text_color: my_white
+
 
               #-------------------#
               # Featured Day 2 Card
@@ -5001,13 +4993,8 @@ lvgl:
                           pad_row: 2
                         widgets:
                           - label:
-                              id: lbl_forecast_day2_precip
+                              id: lbl_forecast_day2_precip_prob
                               text: "Rain: --%"
-                              text_font: montserrat_14
-                              text_color: my_white
-                          - label:
-                              id: lbl_forecast_day2_precip_amt
-                              text: "-- in"
                               text_font: montserrat_14
                               text_color: my_white
 
@@ -5094,13 +5081,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day3_precip
+                                    id: lbl_forecast_day3_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day3_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5163,13 +5145,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day4_precip
+                                    id: lbl_forecast_day4_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day4_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5232,13 +5209,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day5_precip
+                                    id: lbl_forecast_day5_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day5_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5301,13 +5273,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day6_precip
+                                    id: lbl_forecast_day6_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day6_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5370,13 +5337,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day7_precip
+                                    id: lbl_forecast_day7_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day7_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5439,13 +5401,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day8_precip
+                                    id: lbl_forecast_day8_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day8_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5508,13 +5465,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day9_precip
+                                    id: lbl_forecast_day9_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day9_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5577,13 +5529,8 @@ lvgl:
                                 pad_row: 2
                               widgets:
                                 - label:
-                                    id: lbl_forecast_day10_precip
+                                    id: lbl_forecast_day10_precip_prob
                                     text: "Rain: --%"
-                                    text_font: montserrat_14
-                                    text_color: my_white
-                                - label:
-                                    id: lbl_forecast_day10_precip_amt
-                                    text: "-- in"
                                     text_font: montserrat_14
                                     text_color: my_white
 
@@ -5685,14 +5632,9 @@ text:
     widget: lbl_forecast_day1_temps
     mode: text
   - platform: lvgl
-    name: forecast_day1_precip
+    name: forecast_day1_precip_prob
     internal: true
-    widget: lbl_forecast_day1_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day1_precip_amt
-    internal: true
-    widget: lbl_forecast_day1_precip_amt
+    widget: lbl_forecast_day1_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 2
@@ -5717,14 +5659,9 @@ text:
     widget: lbl_forecast_day2_temps
     mode: text
   - platform: lvgl
-    name: forecast_day2_precip
+    name: forecast_day2_precip_prob
     internal: true
-    widget: lbl_forecast_day2_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day2_precip_amt
-    internal: true
-    widget: lbl_forecast_day2_precip_amt
+    widget: lbl_forecast_day2_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 3
@@ -5749,14 +5686,9 @@ text:
     widget: lbl_forecast_day3_temps
     mode: text
   - platform: lvgl
-    name: forecast_day3_precip
+    name: forecast_day3_precip_prob
     internal: true
-    widget: lbl_forecast_day3_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day3_precip_amt
-    internal: true
-    widget: lbl_forecast_day3_precip_amt
+    widget: lbl_forecast_day3_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 4
@@ -5781,14 +5713,9 @@ text:
     widget: lbl_forecast_day4_temps
     mode: text
   - platform: lvgl
-    name: forecast_day4_precip
+    name: forecast_day4_precip_prob
     internal: true
-    widget: lbl_forecast_day4_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day4_precip_amt
-    internal: true
-    widget: lbl_forecast_day4_precip_amt
+    widget: lbl_forecast_day4_precip_prob
     mode: text
   
   # Daily Forecast Page - Day 5
@@ -5813,14 +5740,9 @@ text:
     widget: lbl_forecast_day5_temps
     mode: text
   - platform: lvgl
-    name: forecast_day5_precip
+    name: forecast_day5_precip_prob
     internal: true
-    widget: lbl_forecast_day5_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day5_precip_amt
-    internal: true
-    widget: lbl_forecast_day5_precip_amt
+    widget: lbl_forecast_day5_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 6
@@ -5845,14 +5767,9 @@ text:
     widget: lbl_forecast_day6_temps
     mode: text
   - platform: lvgl
-    name: forecast_day6_precip
+    name: forecast_day6_precip_prob
     internal: true
-    widget: lbl_forecast_day6_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day6_precip_amt
-    internal: true
-    widget: lbl_forecast_day6_precip_amt
+    widget: lbl_forecast_day6_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 7
@@ -5877,14 +5794,9 @@ text:
     widget: lbl_forecast_day7_temps
     mode: text
   - platform: lvgl
-    name: forecast_day7_precip
+    name: forecast_day7_precip_prob
     internal: true
-    widget: lbl_forecast_day7_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day7_precip_amt
-    internal: true
-    widget: lbl_forecast_day7_precip_amt
+    widget: lbl_forecast_day7_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 8
@@ -5909,14 +5821,9 @@ text:
     widget: lbl_forecast_day8_temps
     mode: text
   - platform: lvgl
-    name: forecast_day8_precip
+    name: forecast_day8_precip_prob
     internal: true
-    widget: lbl_forecast_day8_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day8_precip_amt
-    internal: true
-    widget: lbl_forecast_day8_precip_amt
+    widget: lbl_forecast_day8_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 9
@@ -5941,14 +5848,9 @@ text:
     widget: lbl_forecast_day9_temps
     mode: text
   - platform: lvgl
-    name: forecast_day9_precip
+    name: forecast_day9_precip_prob
     internal: true
-    widget: lbl_forecast_day9_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day9_precip_amt
-    internal: true
-    widget: lbl_forecast_day9_precip_amt
+    widget: lbl_forecast_day9_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 10
@@ -5973,14 +5875,9 @@ text:
     widget: lbl_forecast_day10_temps
     mode: text
   - platform: lvgl
-    name: forecast_day10_precip
+    name: forecast_day10_precip_prob
     internal: true
-    widget: lbl_forecast_day10_precip
-    mode: text
-  - platform: lvgl
-    name: forecast_day10_precip_amt
-    internal: true
-    widget: lbl_forecast_day10_precip_amt
+    widget: lbl_forecast_day10_precip_prob
     mode: text
 
 
