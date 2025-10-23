@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1028"
+  version: "25.10.23.1119"
   device_description: ${name} - v${version}.
 
 psram:
@@ -24,10 +24,12 @@ esp32_improv:
   authorizer: none
 
 esp32_ble_tracker:
+  id: ble_tracker
   scan_parameters:
     interval: 1100ms
     window: 1100ms
     active: true
+    continuous: false
 
 bluetooth_proxy:
   active: true
@@ -173,18 +175,6 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  - id: bluetooth_proxy_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'false'  # Disabled by default - user can enable via HA switch
-  - id: bluetooth_proxy_mode_active
-    type: bool
-    restore_value: yes
-    initial_value: 'false'  # Passive mode by default
-  - id: bluetooth_proxy_reboot_needed
-    type: bool
-    restore_value: no
-    initial_value: 'false'
   - id: weather_last_condition
     type: std::string
     restore_value: no
@@ -338,26 +328,6 @@ switch:
       - logger.log: "WireGuard disabled - switching to Home Assistant time source"
       - script.execute: time_update  # Switch to HA time display
 
-  - platform: template
-    name: "Bluetooth Proxy"
-    id: bluetooth_proxy_switch
-    icon: mdi:bluetooth-audio
-    restore_mode: RESTORE_DEFAULT_OFF  # Disabled by default to allow AP mode WiFi provisioning
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - logger.log: "Enabling Bluetooth Proxy"
-      - lambda: |
-          id(bluetooth_proxy_enabled) = true;
-          id(bluetooth_proxy_reboot_needed) = true;
-          ESP_LOGI("bluetooth_proxy", "Bluetooth proxy enabled - Please manually reboot for changes to take effect");
-    on_turn_off:
-      - logger.log: "Disabling Bluetooth Proxy"
-      - lambda: |
-          id(bluetooth_proxy_enabled) = false;
-          id(bluetooth_proxy_reboot_needed) = true;
-          ESP_LOGI("bluetooth_proxy", "Bluetooth proxy disabled - Please manually reboot for changes to take effect");
-
   # Page rotation selection switches
   - platform: template
     name: "Page Rotation: Main Page"
@@ -500,29 +470,6 @@ select:
             auto call = id(rgb_light).turn_on();
             call.set_effect(effect);
             call.perform();
-          }
-
-  - platform: template
-    name: "Bluetooth Proxy Mode"
-    id: bluetooth_proxy_mode_select
-    entity_category: "Config"
-    options:
-      - "Active"
-      - "Passive"
-    initial_option: "Passive"  # Passive mode by default
-    restore_value: true
-    optimistic: true
-    set_action:  # Changed from on_value to set_action to prevent triggering on boot
-      - lambda: |-
-          std::string mode = x;
-          if (mode == "Active") {
-            id(bluetooth_proxy_mode_active) = true;
-            id(bluetooth_proxy_reboot_needed) = true;
-            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Active mode - Please manually reboot for changes to take effect");
-          } else {
-            id(bluetooth_proxy_mode_active) = false;
-            id(bluetooth_proxy_reboot_needed) = true;
-            ESP_LOGI("bluetooth_proxy", "Bluetooth Proxy set to Passive mode - Please manually reboot for changes to take effect");
           }
 
   - platform: template
@@ -1079,7 +1026,12 @@ api:
             auto call = id(rgb_light).turn_on();
             call.set_effect(effect);
             call.perform();
-          }    
+          }
+      - delay: 2s
+      - esp32_ble_tracker.start_scan:
+          continuous: true
+  on_client_disconnected:
+      - esp32_ble_tracker.stop_scan:
   services:
     #Co2 Calibration Service
     - service: calibrate_co2_value
@@ -1640,14 +1592,6 @@ binary_sensor:
     entity_category: "diagnostic"
     lambda: 'return id(display_backlight_is_on);'
 
-  - platform: template
-    name: "Bluetooth Proxy Reboot Needed"
-    id: ha_bluetooth_proxy_reboot_needed
-    icon: mdi:restart-alert
-    entity_category: "diagnostic"
-    device_class: problem
-    lambda: 'return id(bluetooth_proxy_reboot_needed);'
-
 sensor:
   - platform: template
     name: "Free Heap"
@@ -1722,22 +1666,6 @@ sensor:
     device_class: "aqi"
     state_class: "measurement"
     update_interval: never  # We'll update it manually
-
-  - platform: template
-    name: "Bluetooth Proxy Enabled"
-    id: ha_bluetooth_proxy_enabled
-    icon: mdi:bluetooth-connect
-    entity_category: "diagnostic"
-    lambda: 'return id(bluetooth_proxy_enabled);'
-    update_interval: 10s
-
-  - platform: template
-    name: "Bluetooth Proxy Mode Active"
-    id: ha_bluetooth_proxy_mode_active
-    icon: mdi:swap-vertical-bold
-    entity_category: "diagnostic"
-    lambda: 'return id(bluetooth_proxy_mode_active);'
-    update_interval: 10s
 
   - platform: scd4x
     id: scd40
@@ -5917,12 +5845,6 @@ esphome:
     priority: -100
     then:
       - logger.log: "Boot sequence starting (priority 900)"
-      - lambda: |-
-          // Force bluetooth proxy to disabled state (prevents AP mode interference)
-          id(bluetooth_proxy_enabled) = false;
-          id(bluetooth_proxy_mode_active) = false;
-          id(bluetooth_proxy_reboot_needed) = false;
-          ESP_LOGI("bluetooth_proxy", "Bluetooth proxy forced to disabled state on boot");
       - light.turn_off: rgb_light
       - delay: 1s
       - logger.log:
