@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1017"
+  version: "25.10.23.1028"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1147,7 +1147,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
-    data_rate: 5MHz  # Reduced from 10MHz - testing if slower speed eliminates timeouts
+    data_rate: 20MHz  # Increased - sometimes faster is more stable with proper timing
     spi_id: lily_spi
     dimensions:
       height: 640
@@ -1156,7 +1156,6 @@ display:
     reset_pin: 16
     rotation: 0
     auto_clear_enabled: false
-    update_interval: 100ms  # Limit display refresh rate to reduce SPI load
 
 # Touchscreen re-enabled with protective measures:
 # - 100ms internal rate limiter in axs15231_touchscreen.cpp
@@ -4069,7 +4068,7 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 25%  # Reduced from 100% to reduce SPI transaction sizes and memory pressure
+  buffer_size: 50%  # Balanced - not too large, not too small
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
