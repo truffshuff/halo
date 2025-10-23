@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.0825"
+  version: "25.10.23.0845"
   device_description: ${name} - v${version}.
 
 psram:
@@ -544,7 +544,7 @@ select:
           id(default_page_index) = idx;
 
 interval:
-  - interval: 10s
+  - interval: 30s  # Increased from 10s to reduce memory churn
     then:
       - if:
           condition:
@@ -1652,6 +1652,28 @@ sensor:
     lambda: return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
     update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "Largest Free Block"
+    lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+    unit_of_measurement: "bytes"
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "Heap Fragmentation"
+    lambda: |-
+      size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+      size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+      if (free_heap > 0) {
+        return ((float)(free_heap - largest_block) / free_heap) * 100.0;
+      }
+      return 0.0;
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    update_interval: 60s
+    entity_category: "diagnostic"
 
   - platform: uptime
     name: Uptime
