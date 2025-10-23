@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1432"
+  version: "25.10.23.1450"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4016,6 +4016,8 @@ lvgl:
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
+  on_idle:
+    timeout: 30s  # Give system time to stabilize before heavy rendering
   
   gradients:
     - id: wifi_signal_gradient
@@ -5883,7 +5885,7 @@ esphome:
     then:
       - logger.log: "Boot sequence starting (priority -100)"
       - light.turn_off: rgb_light
-      - delay: 5s  # Increased from 1s to allow display controller to fully initialize after OTA
+      - delay: 10s  # Increased from 1s to allow display controller to fully initialize after OTA
       - logger.log:
           format: "Setting default page (index: %d)"
           args: ['id(default_page_index)']
