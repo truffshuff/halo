@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1646"
+  version: "25.10.23.1704"
   device_description: ${name} - v${version}.
 
 psram:
@@ -486,39 +486,43 @@ interval:
     then:
       - if:
           condition:
-            wifi.connected:
+            lambda: 'return id(boot_complete);'
           then:
             - if:
                 condition:
-                  lambda: 'return !id(wifi_stat_connected_state);'
+                  wifi.connected:
                 then:
-                  - lvgl.widget.update:
-                      id: wifi_stat
-                      text_color: my_green
-                  - lambda: 'id(wifi_stat_connected_state) = true;'
-            - if:
-                condition:
-                  lambda: 'return !id(wifi_logo_visible);'
-                then:
-                  - lvgl.widget.show:
-                      id: ym_image
-                  - lambda: 'id(wifi_logo_visible) = true;'
-            - lambda: |-
-                char buffer[32];
-                snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
-                std::string new_text(buffer);
-                if (new_text != id(wifi_signal_last_text)) {
-                  id(wifi_signal_last_text) = new_text;
-                  id(wifi_signal_needs_render) = true;
-                }
-            - if:
-                condition:
-                  lambda: 'return id(wifi_signal_needs_render);'
-                then:
-                  - lvgl.label.update:
-                      id: wifi_signal_label
-                      text: !lambda 'return id(wifi_signal_last_text);'
-                  - lambda: 'id(wifi_signal_needs_render) = false;'
+                  - if:
+                      condition:
+                        lambda: 'return !id(wifi_stat_connected_state);'
+                      then:
+                        - lvgl.widget.update:
+                            id: wifi_stat
+                            text_color: my_green
+                        - lambda: 'id(wifi_stat_connected_state) = true;'
+                  - if:
+                      condition:
+                        lambda: 'return !id(wifi_logo_visible);'
+                      then:
+                        - lvgl.widget.show:
+                            id: ym_image
+                        - lambda: 'id(wifi_logo_visible) = true;'
+                  - lambda: |-
+                      char buffer[32];
+                      snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
+                      std::string new_text(buffer);
+                      if (new_text != id(wifi_signal_last_text)) {
+                        id(wifi_signal_last_text) = new_text;
+                        id(wifi_signal_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_signal_needs_render);'
+                      then:
+                        - lvgl.label.update:
+                            id: wifi_signal_label
+                            text: !lambda 'return id(wifi_signal_last_text);'
+                        - lambda: 'id(wifi_signal_needs_render) = false;'
             - lambda: |-
                 float signal = id(wifi_signal_db).state;
                 if (std::isnan(signal)) {
@@ -797,7 +801,25 @@ interval:
 
   - interval: 3s  # Reduced from 1s to decrease SPI bus contention
     then:
-      - script.execute: time_update  
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - script.execute: time_update
+
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - lambda: |-
+                if (id(colon_blink_enabled).state) {
+                  id(colon_blink_state) = !id(colon_blink_state);
+                } else if (!id(colon_blink_state)) {
+                  id(colon_blink_state) = true;
+                }
+            - script.execute: update_colon_widget
 
   - interval: 1s
     then:
@@ -857,6 +879,7 @@ interval:
       - if:
           condition:
             lambda: |-
+              if (!id(boot_complete)) return false;
               // Only rotate if auto rotation is enabled
               if (!id(auto_page_rotation_enabled)) return false;
 
@@ -1314,17 +1337,7 @@ script:
                   if (!now.is_valid()) return std::string("--");
                   static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
                   return std::string(days[now.day_of_week - 1]);
-      # Colon blink runs every second, outside the render condition
-      - lvgl.widget.update:
-          id: vclock_colon
-          text_opa: !lambda |-
-            // Only blink if enabled via switch
-            if (!id(colon_blink_enabled).state) {
-              return LV_OPA_COVER;  // Always visible if blinking disabled
-            }
-            // Toggle blink state every time update (happens every second)
-            id(colon_blink_state) = !id(colon_blink_state);
-            return id(colon_blink_state) ? LV_OPA_COVER : LV_OPA_TRANSP;
+      - script.execute: update_colon_widget
       - lambda: |-
           const uint32_t elapsed = millis() - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
@@ -1337,6 +1350,19 @@ script:
             ESP_LOGD("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
           }
           id(time_update_needs_render) = false;
+  - id: update_colon_widget
+    mode: restart
+    then:
+      - lvgl.widget.update:
+          id: vclock_colon
+          text_opa: !lambda |-
+            if (!id(colon_blink_enabled).state) {
+              if (!id(colon_blink_state)) {
+                id(colon_blink_state) = true;  // Keep colon visible when blinking disabled
+              }
+              return LV_OPA_COVER;
+            }
+            return id(colon_blink_state) ? LV_OPA_COVER : LV_OPA_TRANSP;
   - id: update_weather_icon_color
     mode: restart
     then:
