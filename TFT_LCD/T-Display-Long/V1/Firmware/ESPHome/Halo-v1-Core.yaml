@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.0923"
+  version: "25.10.23.1017"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1147,7 +1147,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
-    data_rate: 10MHz
+    data_rate: 5MHz  # Reduced from 10MHz - testing if slower speed eliminates timeouts
     spi_id: lily_spi
     dimensions:
       height: 640
@@ -4069,7 +4069,7 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 100%
+  buffer_size: 25%  # Reduced from 100% to reduce SPI transaction sizes and memory pressure
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
