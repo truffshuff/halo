@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1644"
+  version: "25.10.23.1646"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1090,6 +1090,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
+    data_rate: 10MHz
     spi_id: lily_spi
     dimensions:
       height: 640
