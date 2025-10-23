@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1136"
+  version: "25.10.23.1200"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1108,6 +1108,7 @@ display:
     reset_pin: 16
     rotation: 0
     auto_clear_enabled: false
+    setup_priority: 100  # Initialize display after SPI but before LVGL
 
 # Touchscreen re-enabled with protective measures:
 # - 100ms internal rate limiter in axs15231_touchscreen.cpp
@@ -5853,9 +5854,9 @@ esphome:
   on_boot:
     priority: -100
     then:
-      - logger.log: "Boot sequence starting (priority 900)"
+      - logger.log: "Boot sequence starting (priority -100)"
       - light.turn_off: rgb_light
-      - delay: 1s
+      - delay: 3s  # Increased from 1s to allow display controller to fully initialize after OTA
       - logger.log:
           format: "Setting default page (index: %d)"
           args: ['id(default_page_index)']
