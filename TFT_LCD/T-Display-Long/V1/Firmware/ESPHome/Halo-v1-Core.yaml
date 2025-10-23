@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1422"
+  version: "25.10.23.1432"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4012,11 +4012,11 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 100%
+  buffer_size: 25%  # Reduced from 100% to prevent memory exhaustion and crashes
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
-  log_level: WARN  # Reduced from VERBOSE to prevent render spam during init
+  
   gradients:
     - id: wifi_signal_gradient
       direction: hor
