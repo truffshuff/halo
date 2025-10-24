@@ -57,7 +57,7 @@ spi:
 captive_portal:
 
 logger:
-  level: DEBUG
+  level: INFO
 
 globals:
   - id: cycleCounter
@@ -4987,7 +4987,7 @@ light:
           name: Random Twinkle
       - addressable_lambda:
           name: "Weather Condition"
-          update_interval: 100ms
+      update_interval: 250ms
           lambda: |-
             // Get the current weather condition from Day 1 forecast
             static uint32_t last_flash = 0;
@@ -5049,7 +5049,7 @@ light:
             it.all() = weather_color;
       - addressable_lambda:
           name: "Auto Context"
-          update_interval: 100ms
+      update_interval: 250ms
           lambda: |-
             static uint32_t last_flash = 0;
             static bool flash_on = false;
@@ -5149,7 +5149,7 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 60%  # Reduced from 100% to prevent memory exhaustion and crashes
+  buffer_size: 30%  # Further reduced to mitigate SPI/DMA pressure and err 101
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
@@ -8056,6 +8056,14 @@ esphome:
     then:
       - logger.log: "Boot sequence starting (priority -100)"
       - light.turn_off: rgb_light
+      # Ensure the very first visible page is the Vertical Clock if selected by default,
+      # before any long init delay. This prevents briefly showing the Main page at power-on.
+      - if:
+          condition:
+            lambda: 'return id(default_page_select_boot).state == std::string("Vertical Clock");'
+          then:
+            - logger.log: "Early show: Vertical Clock page"
+            - lvgl.page.show: vertical_clock_page
       - delay: 10s  # Increased from 1s to allow display controller to fully initialize after OTA
       - lambda: |-
           const std::string &choice = id(default_page_select_boot).state;
