@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.1747"
+  version: "25.10.23.2159"
   device_description: ${name} - v${version}.
 
 psram:
@@ -2312,26 +2312,6 @@ sensor:
     on_value:
       then:
         - lvgl.label.update:
-            id: lbl_forecast_day1_temps
-            text: !lambda |-
-              char buffer[32];
-              char high_str[8];
-              char low_str[8];
-              const char *high_text = "--";
-              const char *low_text = "--";
-              // Gracefully handle missing forecast values from Home Assistant.
-              float low = id(forecast_day1_low_temp).state;
-              if (!isnan(x)) {
-                snprintf(high_str, sizeof(high_str), "%.0f", x);
-                high_text = high_str;
-              }
-              if (!isnan(low)) {
-                snprintf(low_str, sizeof(low_str), "%.0f", low);
-                low_text = low_str;
-              }
-              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
-              return buffer;
-        - lvgl.label.update:
             id: lbl_weather_forecast_temphi
             text: !lambda |-
               char buffer[16];
@@ -2582,25 +2562,6 @@ sensor:
     id: forecast_day1_low_temp
     on_value:
       then:
-        - lvgl.label.update:
-            id: lbl_forecast_day1_temps
-            text: !lambda |-
-              char buffer[32];
-              char high_str[8];
-              char low_str[8];
-              const char *high_text = "--";
-              const char *low_text = "--";
-              float high = id(forecast_day1_high_temp).state;
-              if (!isnan(high)) {
-                snprintf(high_str, sizeof(high_str), "%.0f", high);
-                high_text = high_str;
-              }
-              if (!isnan(x)) {
-                snprintf(low_str, sizeof(low_str), "%.0f", x);
-                low_text = low_str;
-              }
-              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
-              return buffer;
         - lvgl.label.update:
             id: lbl_weather_forecast_templo
             text: !lambda |-
@@ -2904,67 +2865,6 @@ text_sensor:
     id: forecast_day1_condition
     on_value:
       then:
-        - lvgl.label.update:
-            id: lbl_forecast_day1_condition
-            text: !lambda 'return x;'
-        - lvgl.label.update:
-            id: lbl_forecast_day1_icon
-            text: !lambda |-
-              const std::string condition = x;
-              std::string normalized = condition;
-              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("clear-night") != std::string::npos) {
-                return "\U000F0594";  // weather-night
-              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return "\U000F0599";  // sunny
-              } else if (normalized.find("snowy-rainy") != std::string::npos) {
-                return "\U000F0F35";  // weather-snowy-rainy
-              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
-                return "\U000F067E";  // lightning-rainy
-              } else if (normalized.find("partlycloudy") != std::string::npos) {
-                return "\U000F0595";  // partlycloudy
-              } else if (normalized.find("cloudy") != std::string::npos) {
-                return "\U000F0590";  // cloudy
-              } else if (normalized.find("rainy") != std::string::npos) {
-                return "\U000F0597";  // rainy
-              } else if (normalized.find("snowy") != std::string::npos) {
-                return "\U000F0598";  // snowy
-              } else if (normalized.find("fog") != std::string::npos) {
-                return "\U000F0591";  // fog
-              } else if (normalized.find("windy") != std::string::npos) {
-                return "\U000F059D";  // windy
-              } else {
-                return "\U000F14E4";  // weather-unknown
-              }
-        - lvgl.label.update:
-            id: lbl_forecast_day1_icon
-            text_color: !lambda |-
-              const std::string condition = x;
-              std::string normalized = condition;
-              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-              if (normalized.find("clear-night") != std::string::npos) {
-                return lv_color_hex(0x6A5ACD);
-              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
-                return lv_color_hex(0xFFD700);
-              } else if (normalized.find("snowy-rainy") != std::string::npos) {
-                return lv_color_hex(0xAFEEEE);
-              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
-                return lv_color_hex(0xFF1493);
-              } else if (normalized.find("partlycloudy") != std::string::npos) {
-                return lv_color_hex(0x87CEFA);
-              } else if (normalized.find("cloudy") != std::string::npos) {
-                return lv_color_hex(0xA9A9A9);
-              } else if (normalized.find("rainy") != std::string::npos) {
-                return lv_color_hex(0x4169E1);
-              } else if (normalized.find("snowy") != std::string::npos) {
-                return lv_color_hex(0xDCDCDC);
-              } else if (normalized.find("fog") != std::string::npos) {
-                return lv_color_hex(0xB0C4DE);
-              } else if (normalized.find("windy") != std::string::npos) {
-                return lv_color_hex(0x90EE90);
-              } else {
-                return lv_color_hex(0xFFFFFF);
-              }
         - if:
             condition:
               lambda: |-
@@ -3708,12 +3608,6 @@ text_sensor:
     id: forecast_day1_precip_prob
     on_value:
       then:
-        - lvgl.label.update:
-            id: lbl_forecast_day1_precip_prob
-            text: !lambda |-
-              char buffer[30];
-              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
-              return buffer;
         - lvgl.label.update:
             id: lbl_weather_today_dailyprecipprob
             text: !lambda |-
@@ -5900,33 +5794,6 @@ text:
     name: weather_today_outdoor_temp
     internal: true
     widget: lbl_weather_today_outdoor_temp
-    mode: text
-
-  # Daily Forecast Page - Day 1
-  - platform: lvgl
-    name: forecast_day1_header
-    internal: true
-    widget: lbl_forecast_day1_header
-    mode: text
-  - platform: lvgl
-    name: forecast_day1_icon
-    internal: true
-    widget: lbl_forecast_day1_icon
-    mode: text
-  - platform: lvgl
-    name: forecast_day1_condition
-    internal: true
-    widget: lbl_forecast_day1_condition
-    mode: text
-  - platform: lvgl
-    name: forecast_day1_temps
-    internal: true
-    widget: lbl_forecast_day1_temps
-    mode: text
-  - platform: lvgl
-    name: forecast_day1_precip_prob
-    internal: true
-    widget: lbl_forecast_day1_precip_prob
     mode: text
 
   # Daily Forecast Page - Day 2
