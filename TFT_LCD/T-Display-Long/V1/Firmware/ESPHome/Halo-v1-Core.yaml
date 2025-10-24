@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0823"
+  version: "25.10.24.0910"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1040,6 +1040,8 @@ api:
             call.perform();
           }
       - delay: 7s
+      - esp32_ble_tracker.stop_scan:
+      - delay: 500ms
       - esp32_ble_tracker.start_scan:
           continuous: true
   on_client_disconnected:
