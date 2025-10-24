@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0910"
+  version: "25.10.24.0919"
   device_description: ${name} - v${version}.
 
 psram:
@@ -5255,6 +5255,7 @@ lvgl:
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
+      skip: true
       widgets:
         - label:
             text: "Extended Forecast"
@@ -5352,23 +5353,6 @@ lvgl:
                   text_font: montserrat_16
                   text_color: my_white
 
-        # Navigation button (center of screen)
-        - obj:
-            id: nav_button_forecast_45
-            align: CENTER
-            x: 0
-            y: 0
-            width: 100
-            height: 100
-            bg_opa: 0
-            border_width: 0
-            clickable: true
-            on_click:
-              - lvgl.page.show:
-                  id: forecast_days_6_7_page
-                  animation: OUT_LEFT
-                  time: 300ms
-
         # Top-right button for main page navigation
         - obj:
             id: nav_button_top_45
@@ -5385,10 +5369,28 @@ lvgl:
                   animation: OUT_LEFT
                   time: 300ms
 
+        # Navigation button (center of screen) - must be LAST to render on top
+        - obj:
+            id: nav_button_forecast_45
+            align: CENTER
+            x: 0
+            y: 0
+            width: 150
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_click:
+              - lvgl.page.show:
+                  id: forecast_days_6_7_page
+                  animation: OUT_LEFT
+                  time: 300ms
+
     - id: forecast_days_6_7_page
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
+      skip: true
       widgets:
         - label:
             text: "Extended Forecast"
@@ -5486,23 +5488,6 @@ lvgl:
                   text_font: montserrat_16
                   text_color: my_white
 
-        # Navigation button (center of screen)
-        - obj:
-            id: nav_button_forecast_67
-            align: CENTER
-            x: 0
-            y: 0
-            width: 100
-            height: 100
-            bg_opa: 0
-            border_width: 0
-            clickable: true
-            on_click:
-              - lvgl.page.show:
-                  id: forecast_days_8_9_page
-                  animation: OUT_LEFT
-                  time: 300ms
-
         # Top-right button for main page navigation
         - obj:
             id: nav_button_top_67
@@ -5519,10 +5504,28 @@ lvgl:
                   animation: OUT_LEFT
                   time: 300ms
 
+        # Navigation button (center of screen) - must be LAST to render on top
+        - obj:
+            id: nav_button_forecast_67
+            align: CENTER
+            x: 0
+            y: 0
+            width: 150
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_click:
+              - lvgl.page.show:
+                  id: forecast_days_8_9_page
+                  animation: OUT_LEFT
+                  time: 300ms
+
     - id: forecast_days_8_9_page
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
+      skip: true
       widgets:
         - label:
             text: "Extended Forecast"
@@ -5620,23 +5623,6 @@ lvgl:
                   text_font: montserrat_16
                   text_color: my_white
 
-        # Navigation button (center of screen)
-        - obj:
-            id: nav_button_forecast_89
-            align: CENTER
-            x: 0
-            y: 0
-            width: 100
-            height: 100
-            bg_opa: 0
-            border_width: 0
-            clickable: true
-            on_click:
-              - lvgl.page.show:
-                  id: forecast_day_10_page
-                  animation: OUT_LEFT
-                  time: 300ms
-
         # Top-right button for main page navigation
         - obj:
             id: nav_button_top_89
@@ -5653,10 +5639,28 @@ lvgl:
                   animation: OUT_LEFT
                   time: 300ms
 
+        # Navigation button (center of screen) - must be LAST to render on top
+        - obj:
+            id: nav_button_forecast_89
+            align: CENTER
+            x: 0
+            y: 0
+            width: 150
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_click:
+              - lvgl.page.show:
+                  id: forecast_day_10_page
+                  animation: OUT_LEFT
+                  time: 300ms
+
     - id: forecast_day_10_page
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
+      skip: true
       widgets:
         - label:
             text: "Extended Forecast"
