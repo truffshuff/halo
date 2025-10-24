@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.1411"
+  version: "25.10.24.1415"
   device_description: ${name} - v${version}.
 
 psram:
@@ -743,26 +743,22 @@ interval:
           else:
             - if:
                 condition:
-                  lambda: 'return id(wifi_stat_connected_state);'
+                  lambda: 'return id(wifi_stat_connected_state) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.widget.update:
-                          id: wifi_stat
-                          text_color: my_red
+                  - lvgl.widget.update:
+                      id: wifi_stat
+                      text_color: my_red
             - lambda: 'id(wifi_stat_connected_state) = false;'
+            - if:
+                condition:
+                  lambda: 'return id(wifi_logo_visible) && id(current_page_index) == 1;'
+                then:
+                  - lvgl.widget.hide:
+                      id: ym_image
             - if:
                 condition:
                   lambda: 'return id(wifi_logo_visible);'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.widget.hide:
-                          id: ym_image
                   - lambda: 'id(wifi_logo_visible) = false;'
             - lambda: |-
                 const std::string new_text = "Signal: --";
