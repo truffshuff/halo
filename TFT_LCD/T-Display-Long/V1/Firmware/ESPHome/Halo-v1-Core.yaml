@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.1008"
+  version: "25.10.24.1115"
   device_description: ${name} - v${version}.
 
 psram:
@@ -960,6 +960,7 @@ interval:
                 condition:
                   lambda: 'return id(current_page_index) == 0;'
                 then:
+                  - logger.log: "AUTO PAGE ROTATION -> Main Page"
                   - lvgl.page.show:
                       id: main_page
                       animation: OUT_LEFT
@@ -969,6 +970,7 @@ interval:
                       condition:
                         lambda: 'return id(current_page_index) == 1;'
                       then:
+                        - logger.log: "AUTO PAGE ROTATION -> WiFi Page"
                         - lvgl.page.show:
                             id: wifi_page
                             animation: OUT_LEFT
@@ -978,6 +980,7 @@ interval:
                             condition:
                               lambda: 'return id(current_page_index) == 2;'
                             then:
+                              - logger.log: "AUTO PAGE ROTATION -> Weather Forecast Page"
                               - lvgl.page.show:
                                   id: weather_forecast_page
                                   animation: OUT_LEFT
@@ -987,11 +990,13 @@ interval:
                                   condition:
                                     lambda: 'return id(current_page_index) == 3;'
                                   then:
+                                    - logger.log: "AUTO PAGE ROTATION -> 3-Day Forecast Page"
                                     - lvgl.page.show:
                                         id: daily_forecast_page
                                         animation: OUT_LEFT
                                         time: 300ms
                                   else:
+                                    - logger.log: "AUTO PAGE ROTATION -> Vertical Clock Page"
                                     - lvgl.page.show:
                                         id: vertical_clock_page
                                         animation: OUT_LEFT
@@ -5153,6 +5158,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Extended forecast 'More' button PRESSED!"
               - lvgl.page.show:
                   id: forecast_days_4_5_page
                   animation: OUT_LEFT
@@ -5169,6 +5175,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "3-Day Forecast page nav button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5246,6 +5253,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Vertical Clock page nav button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5365,6 +5373,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Days 4-5 top-right button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5381,6 +5390,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Days 4-5 CENTER button PRESSED - going to 6-7!"
               - lvgl.page.show:
                   id: forecast_days_6_7_page
                   animation: OUT_LEFT
@@ -5500,6 +5510,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Days 6-7 top-right button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5516,6 +5527,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Days 6-7 CENTER button PRESSED - going to 8-9!"
               - lvgl.page.show:
                   id: forecast_days_8_9_page
                   animation: OUT_LEFT
@@ -5635,6 +5647,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Days 8-9 top-right button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5651,6 +5664,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Days 8-9 CENTER button PRESSED - going to Day 10!"
               - lvgl.page.show:
                   id: forecast_day_10_page
                   animation: OUT_LEFT
@@ -5726,6 +5740,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Day 10 BOTTOM button PRESSED - going back to 3-day!"
               - lvgl.page.show:
                   id: daily_forecast_page
                   animation: OUT_RIGHT
@@ -5743,6 +5758,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
+              - logger.log: "Day 10 top-right button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
