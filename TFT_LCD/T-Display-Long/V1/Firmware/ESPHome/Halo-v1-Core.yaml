@@ -1170,7 +1170,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
-    data_rate: 8MHz
+  data_rate: 6MHz
     spi_id: lily_spi
     dimensions:
       height: 640
