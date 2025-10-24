@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0919"
+  version: "25.10.24.0928"
   device_description: ${name} - v${version}.
 
 psram:
@@ -1039,14 +1039,11 @@ api:
             call.set_effect(effect);
             call.perform();
           }
-      - delay: 7s
-      - esp32_ble_tracker.stop_scan:
       - delay: 500ms
       - esp32_ble_tracker.start_scan:
           continuous: true
   on_client_disconnected:
       - esp32_ble_tracker.stop_scan:
-      - delay: 7s
           
   services:
     #Co2 Calibration Service
