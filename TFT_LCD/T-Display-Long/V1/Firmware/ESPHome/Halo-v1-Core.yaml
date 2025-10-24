@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0720"
+  version: "25.10.24.0743"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4211,7 +4211,7 @@ lvgl:
             x: 0
             y: 0
             width: 180
-            height: 60
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -4753,7 +4753,7 @@ lvgl:
             x: 0
             y: 0
             width: 180
-            height: 60
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -4860,7 +4860,7 @@ lvgl:
             x: 0
             y: 0
             width: 180
-            height: 60
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5042,7 +5042,7 @@ lvgl:
             x: 0
             y: 0
             width: 180
-            height: 30
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5280,13 +5280,11 @@ lvgl:
                   height: 320
                   bg_opa: 0
                   border_width: 0
-                  pad_left: 0
-                  pad_right: 0
-                  pad_top: 0
-                  pad_bottom: 4
+                  pad_all: 0
                   scrollbar_mode: "ON"
                   scrollable: true
                   flex_grow: 1
+                  scroll_on_focus: false
                   layout:
                     type: flex
                     flex_flow: column
@@ -5765,7 +5763,7 @@ lvgl:
             x: 0
             y: 0
             width: 180
-            height: 60
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
