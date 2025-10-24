@@ -8074,6 +8074,7 @@ esphome:
         - if:
             condition:
               lambda: 'return id(default_page_select_boot).state == std::string("Vertical Clock");'
+            then:
               - logger.log: "Early show: Vertical Clock page"
               - lvgl.page.show: vertical_clock_page
         - delay: 10s  # Increased from 1s to allow display controller to fully initialize after OTA
