@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0938"
+  version: "25.10.24.0956"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4735,6 +4735,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_click:
+              - logger.log: "Main page nav button clicked!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -4842,6 +4843,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_click:
+              - logger.log: "WiFi page nav button clicked!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5024,6 +5026,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_click:
+              - logger.log: "Weather page nav button clicked!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
