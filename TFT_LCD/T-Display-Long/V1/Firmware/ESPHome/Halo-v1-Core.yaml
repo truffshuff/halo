@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0928"
+  version: "25.10.24.0938"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4729,8 +4729,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -4836,8 +4836,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5018,8 +5018,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5160,8 +5160,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5237,8 +5237,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5356,8 +5356,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5491,8 +5491,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5626,8 +5626,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5734,8 +5734,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 60
-            height: 60
+            width: 80
+            height: 80
             bg_opa: 0
             border_width: 0
             clickable: true
