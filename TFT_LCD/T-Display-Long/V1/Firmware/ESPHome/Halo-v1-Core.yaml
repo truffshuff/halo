@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0956"
+  version: "25.10.24.1008"
   device_description: ${name} - v${version}.
 
 psram:
@@ -4734,8 +4734,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
-              - logger.log: "Main page nav button clicked!"
+            on_press:
+              - logger.log: "Main page nav button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -4842,8 +4842,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
-              - logger.log: "WiFi page nav button clicked!"
+            on_press:
+              - logger.log: "WiFi page nav button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5025,8 +5025,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
-              - logger.log: "Weather page nav button clicked!"
+            on_press:
+              - logger.log: "Weather page nav button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5152,7 +5152,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.show:
                   id: forecast_days_4_5_page
                   animation: OUT_LEFT
@@ -5168,7 +5168,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5245,7 +5245,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5364,7 +5364,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5380,7 +5380,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.show:
                   id: forecast_days_6_7_page
                   animation: OUT_LEFT
@@ -5499,7 +5499,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5515,7 +5515,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.show:
                   id: forecast_days_8_9_page
                   animation: OUT_LEFT
@@ -5634,7 +5634,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -5650,7 +5650,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.show:
                   id: forecast_day_10_page
                   animation: OUT_LEFT
@@ -5725,7 +5725,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.show:
                   id: daily_forecast_page
                   animation: OUT_RIGHT
@@ -5742,7 +5742,7 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_click:
+            on_press:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
