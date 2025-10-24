@@ -1170,7 +1170,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
-  data_rate: 6MHz
+    data_rate: 6MHz
     spi_id: lily_spi
     dimensions:
       height: 640
@@ -4987,7 +4987,7 @@ light:
           name: Random Twinkle
       - addressable_lambda:
           name: "Weather Condition"
-      update_interval: 250ms
+          update_interval: 250ms
           lambda: |-
             // Get the current weather condition from Day 1 forecast
             static uint32_t last_flash = 0;
@@ -5049,7 +5049,7 @@ light:
             it.all() = weather_color;
       - addressable_lambda:
           name: "Auto Context"
-      update_interval: 250ms
+          update_interval: 250ms
           lambda: |-
             static uint32_t last_flash = 0;
             static bool flash_on = false;
