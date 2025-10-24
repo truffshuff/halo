@@ -1170,7 +1170,7 @@ display:
   - platform: qspi_dbi
     id: lily_display
     model: AXS15231
-    data_rate: 10MHz
+    data_rate: 8MHz
     spi_id: lily_spi
     dimensions:
       height: 640
@@ -4925,12 +4925,12 @@ font:
     id: montserrat_80
     size: 80
     bpp: 4
-    glyphs: "0123456789:-"
+    glyphs: " 0123456789:-"
   - file: "gfonts://Montserrat"
     id: montserrat_50
     size: 50
     bpp: 4
-    glyphs: "0123456789APM-"
+    glyphs: " 0123456789APM-"
   - file: "gfonts://Montserrat"
     id: montserrat_24
     size: 24
