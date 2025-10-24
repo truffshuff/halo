@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.2200"
+  version: "25.10.24.0627"
   device_description: ${name} - v${version}.
 
 psram:
@@ -5161,6 +5161,7 @@ lvgl:
                     - obj:
                         bg_opa: 0
                         border_width: 0
+                        height: SIZE_CONTENT
                         pad_all: 0
                         layout:
                           type: flex
