@@ -1102,7 +1102,7 @@ api:
       # BLE tracker disabled to prevent heap exhaustion
       # - esp32_ble_tracker.start_scan:
       #     continuous: true
-  on_client_disconnected:
+  # on_client_disconnected:
       # BLE tracker disabled to prevent heap exhaustion
       # - esp32_ble_tracker.stop_scan:
           
