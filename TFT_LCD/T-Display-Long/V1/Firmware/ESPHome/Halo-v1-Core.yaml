@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.0715"
+  version: "25.10.24.0716"
   device_description: ${name} - v${version}.
 
 psram:
@@ -482,7 +482,7 @@ select:
           id(default_page_index) = idx;
 
 interval:
-  - interval: 30s  # Increased from 10s to reduce memory churn
+  - interval: 15s  # Increased from 10s to reduce memory churn
     then:
       - if:
           condition:
