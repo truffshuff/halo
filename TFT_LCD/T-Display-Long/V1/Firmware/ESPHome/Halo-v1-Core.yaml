@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.1415"
+  version: "25.10.24.1418"
   device_description: ${name} - v${version}.
 
 psram:
@@ -550,16 +550,12 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_signal_needs_render);'
+                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_index) == 1;'
                       then:
-                        - if:
-                            condition:
-                              lambda: 'return id(current_page_index) == 1;'
-                          then:
-                            - lvgl.label.update:
-                                id: wifi_signal_label
-                                text: !lambda 'return id(wifi_signal_last_text);'
-                            - lambda: 'id(wifi_signal_needs_render) = false;'
+                        - lvgl.label.update:
+                            id: wifi_signal_label
+                            text: !lambda 'return id(wifi_signal_last_text);'
+                        - lambda: 'id(wifi_signal_needs_render) = false;'
             - lambda: |-
                 float signal = id(wifi_signal_db).state;
                 if (std::isnan(signal)) {
@@ -571,16 +567,12 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wifi_signal_bar_needs_render);'
+                  lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.bar.update:
-                          id: wifi_signal_bar
-                          value: !lambda 'return id(wifi_signal_bar_last_value);'
-                      - lambda: 'id(wifi_signal_bar_needs_render) = false;'
+                  - lvgl.bar.update:
+                      id: wifi_signal_bar
+                      value: !lambda 'return id(wifi_signal_bar_last_value);'
+                  - lambda: 'id(wifi_signal_bar_needs_render) = false;'
             - lambda: |-
                 std::string ssid = esphome::wifi::global_wifi_component->wifi_ssid();
                 std::string new_text = std::string("SSID: ") + ssid;
@@ -590,16 +582,12 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wifi_ssid_needs_render);'
+                  lambda: 'return id(wifi_ssid_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wifi_ssid_label
-                          text: !lambda 'return id(wifi_ssid_last_text);'
-                      - lambda: 'id(wifi_ssid_needs_render) = false;'
+                  - lvgl.label.update:
+                      id: wifi_ssid_label
+                      text: !lambda 'return id(wifi_ssid_last_text);'
+                  - lambda: 'id(wifi_ssid_needs_render) = false;'
             - lambda: |-
                 auto addresses = esphome::wifi::global_wifi_component->get_ip_addresses();
                 std::string ip_text = "IP: Not assigned";
@@ -612,16 +600,12 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wifi_ip_needs_render);'
+                  lambda: 'return id(wifi_ip_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wifi_ip_label
-                          text: !lambda 'return id(wifi_ip_last_text);'
-                      - lambda: 'id(wifi_ip_needs_render) = false;'
+                  - lvgl.label.update:
+                      id: wifi_ip_label
+                      text: !lambda 'return id(wifi_ip_last_text);'
+                  - lambda: 'id(wifi_ip_needs_render) = false;'
             - lambda: |-
                 bool wg_connected = id(wireguard_status).state;
                 std::string new_text = wg_connected ? "Status: \nConnected" : "Status: \nDisconnected";
@@ -635,33 +619,25 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wg_status_needs_render);'
+                  lambda: 'return id(wg_status_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wg_status_label
-                          text: !lambda 'return id(wg_status_last_text);'
-                      - lambda: 'id(wg_status_needs_render) = false;'
+                  - lvgl.label.update:
+                      id: wg_status_label
+                      text: !lambda 'return id(wg_status_last_text);'
+                  - lambda: 'id(wg_status_needs_render) = false;'
             - if:
                 condition:
-                  lambda: 'return id(wg_status_color_needs_render);'
+                  lambda: 'return id(wg_status_color_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.widget.update:
-                          id: wg_status_label
-                          text_color: !lambda |-
-                            if (id(wg_status_connected_state)) {
-                              return id(my_green);
-                            } else {
-                              return id(my_gray);
-                            }
-                      - lambda: 'id(wg_status_color_needs_render) = false;'
+                  - lvgl.widget.update:
+                      id: wg_status_label
+                      text_color: !lambda |-
+                        if (id(wg_status_connected_state)) {
+                          return id(my_green);
+                        } else {
+                          return id(my_gray);
+                        }
+                  - lambda: 'id(wg_status_color_needs_render) = false;'
             - lambda: |-
                 std::string new_text = "VPN IP: Not configured";
                 if (id(wireguard_address_text).has_state()) {
@@ -673,28 +649,20 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wg_address_needs_render);'
+                  lambda: 'return id(wg_address_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wg_address_label
-                          text: !lambda 'return id(wg_address_last_text);'
-                      - lambda: 'id(wg_address_needs_render) = false;'
+                  - lvgl.label.update:
+                      id: wg_address_label
+                      text: !lambda 'return id(wg_address_last_text);'
+                  - lambda: 'id(wg_address_needs_render) = false;'
             - if:
                 condition:
-                  lambda: 'return !id(wg_endpoint_initialized);'
+                  lambda: 'return !id(wg_endpoint_initialized) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wg_endpoint_label
-                          text: "Endpoint: \nConfigured"
-                      - lambda: 'id(wg_endpoint_initialized) = true;'
+                  - lvgl.label.update:
+                      id: wg_endpoint_label
+                      text: "Endpoint: \nConfigured"
+                  - lambda: 'id(wg_endpoint_initialized) = true;'
             - lambda: |-
                 std::string handshake_text;
                 if (!std::isnan(id(wireguard_handshake).state)) {
@@ -730,16 +698,12 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wg_handshake_needs_render);'
+                  lambda: 'return id(wg_handshake_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wg_handshake_label
-                          text: !lambda 'return id(wg_handshake_last_text);'
-                      - lambda: 'id(wg_handshake_needs_render) = false;'
+                  - lvgl.label.update:
+                      id: wg_handshake_label
+                      text: !lambda 'return id(wg_handshake_last_text);'
+                  - lambda: 'id(wg_handshake_needs_render) = false;'
           else:
             - if:
                 condition:
@@ -857,16 +821,12 @@ interval:
                       - lambda: 'id(wg_status_needs_render) = false;'
             - if:
                 condition:
-                  lambda: 'return id(wg_status_color_needs_render);'
+                  lambda: 'return id(wg_status_color_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.widget.update:
-                          id: wg_status_label
-                          text_color: !lambda 'return id(my_gray);'
-                      - lambda: 'id(wg_status_color_needs_render) = false;'
+                  - lvgl.widget.update:
+                      id: wg_status_label
+                      text_color: !lambda 'return id(my_gray);'
+                  - lambda: 'id(wg_status_color_needs_render) = false;'
             - lambda: |-
                 const std::string address_text = "VPN IP: Not configured";
                 if (address_text != id(wg_address_last_text)) {
@@ -875,16 +835,12 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wg_address_needs_render);'
+                  lambda: 'return id(wg_address_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wg_address_label
-                          text: !lambda 'return id(wg_address_last_text);'
-                      - lambda: 'id(wg_address_needs_render) = false;'
+                  - lvgl.label.update:
+                      id: wg_address_label
+                      text: !lambda 'return id(wg_address_last_text);'
+                  - lambda: 'id(wg_address_needs_render) = false;'
             - lambda: |-
                 const std::string handshake_text = "Handshake: \nUnavailable";
                 if (handshake_text != id(wg_handshake_last_text)) {
@@ -893,16 +849,12 @@ interval:
                 }
             - if:
                 condition:
-                  lambda: 'return id(wg_handshake_needs_render);'
+                  lambda: 'return id(wg_handshake_needs_render) && id(current_page_index) == 1;'
                 then:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                    then:
-                      - lvgl.label.update:
-                          id: wg_handshake_label
-                          text: !lambda 'return id(wg_handshake_last_text);'
-                      - lambda: 'id(wg_handshake_needs_render) = false;'
+                  - lvgl.label.update:
+                      id: wg_handshake_label
+                      text: !lambda 'return id(wg_handshake_last_text);'
+                  - lambda: 'id(wg_handshake_needs_render) = false;'
 
   - interval: 3s  # Reduced from 1s to decrease SPI bus contention
     then:
