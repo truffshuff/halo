@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.1115"
+  version: "25.10.24.1139"
   device_description: ${name} - v${version}.
 
 psram:
@@ -99,6 +99,10 @@ globals:
     type: bool
     restore_value: yes
     initial_value: 'true'
+  - id: page_rotation_hourly_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
   - id: page_rotation_vertical_clock_enabled
     type: bool
     restore_value: yes
@@ -120,10 +124,14 @@ globals:
     type: int
     restore_value: yes
     initial_value: '4'
-  - id: page_rotation_vertical_clock_order
+  - id: page_rotation_hourly_forecast_order
     type: int
     restore_value: yes
     initial_value: '5'
+  - id: page_rotation_vertical_clock_order
+    type: int
+    restore_value: yes
+    initial_value: '6'
   - id: default_page_index
     type: int
     restore_value: yes
@@ -373,6 +381,20 @@ switch:
     on_turn_off:
       - lambda: 'id(page_rotation_daily_forecast_enabled) = false;'
       - logger.log: "Daily forecast page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Hourly Forecast Page"
+    id: page_rotation_hourly_forecast_switch
+    icon: mdi:clock-time-eight-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_hourly_forecast_enabled) = true;'
+      - logger.log: "Hourly forecast page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_hourly_forecast_enabled) = false;'
+      - logger.log: "Hourly forecast page disabled in rotation"
 
   - platform: template
     name: "Page Rotation: Vertical Clock Page"
@@ -894,7 +916,7 @@ interval:
               std::vector<int> page_indices;  // Maps to the page in sorted order
 
               // Collect enabled pages with their orders (use index to identify page)
-              // Index: 0=main, 1=wifi, 2=weather, 3=daily_forecast, 4=vertical_clock
+              // Index: 0=main, 1=wifi, 2=weather, 3=hourly_forecast, 4=daily_forecast, 5=vertical_clock
               if (id(page_rotation_main_enabled)) {
                 page_orders.push_back(id(page_rotation_main_order));
                 page_indices.push_back(0);
@@ -907,13 +929,17 @@ interval:
                 page_orders.push_back(id(page_rotation_weather_order));
                 page_indices.push_back(2);
               }
+              if (id(page_rotation_hourly_forecast_enabled)) {
+                page_orders.push_back(id(page_rotation_hourly_forecast_order));
+                page_indices.push_back(3);
+              }
               if (id(page_rotation_daily_forecast_enabled)) {
                 page_orders.push_back(id(page_rotation_daily_forecast_order));
-                page_indices.push_back(3);
+                page_indices.push_back(4);
               }
               if (id(page_rotation_vertical_clock_enabled)) {
                 page_orders.push_back(id(page_rotation_vertical_clock_order));
-                page_indices.push_back(4);
+                page_indices.push_back(5);
               }
 
               // If no pages are enabled, don't rotate
@@ -990,13 +1016,23 @@ interval:
                                   condition:
                                     lambda: 'return id(current_page_index) == 3;'
                                   then:
-                                    - logger.log: "AUTO PAGE ROTATION -> 3-Day Forecast Page"
+                                    - logger.log: "AUTO PAGE ROTATION -> Hourly Forecast Page"
                                     - lvgl.page.show:
-                                        id: daily_forecast_page
+                                        id: hourly_forecast_page
                                         animation: OUT_LEFT
                                         time: 300ms
                                   else:
-                                    - logger.log: "AUTO PAGE ROTATION -> Vertical Clock Page"
+                                    - if:
+                                        condition:
+                                          lambda: 'return id(current_page_index) == 4;'
+                                        then:
+                                          - logger.log: "AUTO PAGE ROTATION -> 3-Day Forecast Page"
+                                          - lvgl.page.show:
+                                              id: daily_forecast_page
+                                              animation: OUT_LEFT
+                                              time: 300ms
+                                        else:
+                                          - logger.log: "AUTO PAGE ROTATION -> Vertical Clock Page"
                                     - lvgl.page.show:
                                         id: vertical_clock_page
                                         animation: OUT_LEFT
@@ -1151,6 +1187,10 @@ touchscreen:
             return;
           }
           ESP_LOGI("touch", "Touch at x=%d, y=%d", touch.x, touch.y);
+
+          // Reset auto-rotation timer on any valid touch to prevent interruption during manual navigation
+          id(last_auto_rotation_time) = millis();
+          ESP_LOGD("touch", "Auto-rotation timer reset");
 
 web_server:
   port: 80
@@ -3707,6 +3747,768 @@ text_sensor:
               snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
               return buffer;
 
+  # Hourly forecast sensors from Home Assistant (6 hours)
+  - platform: homeassistant
+    name: "Forecast Hour 1 Date"
+    entity_id: input_text.forecast_hour_1_date
+    id: forecast_hour1_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Temperature"
+    entity_id: input_text.forecast_hour_1_temperature
+    id: forecast_hour1_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Apparent Temperature"
+    entity_id: input_text.forecast_hour_1_apparent_temperature
+    id: forecast_hour1_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Condition"
+    entity_id: input_text.forecast_hour_1_condition
+    id: forecast_hour1_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Humidity"
+    entity_id: input_text.forecast_hour_1_humidity
+    id: forecast_hour1_humidity
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Precipitation"
+    entity_id: input_text.forecast_hour_1_precipitation
+    id: forecast_hour1_precipitation
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Precipitation Probability"
+    entity_id: input_text.forecast_hour_1_precipitation_probability
+    id: forecast_hour1_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Pressure"
+    entity_id: input_text.forecast_hour_1_pressure
+    id: forecast_hour1_pressure
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 UV Index"
+    entity_id: input_text.forecast_hour_1_uv_index
+    id: forecast_hour1_uv_index
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Wind Bearing"
+    entity_id: input_text.forecast_hour_1_wind_bearing
+    id: forecast_hour1_wind_bearing
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_1_wind_gust_speed
+    id: forecast_hour1_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Wind Speed"
+    entity_id: input_text.forecast_hour_1_wind_speed
+    id: forecast_hour1_wind_speed
+
+  # Hour 2
+  - platform: homeassistant
+    name: "Forecast Hour 2 Date"
+    entity_id: input_text.forecast_hour_2_date
+    id: forecast_hour2_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Temperature"
+    entity_id: input_text.forecast_hour_2_temperature
+    id: forecast_hour2_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Apparent Temperature"
+    entity_id: input_text.forecast_hour_2_apparent_temperature
+    id: forecast_hour2_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Condition"
+    entity_id: input_text.forecast_hour_2_condition
+    id: forecast_hour2_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Humidity"
+    entity_id: input_text.forecast_hour_2_humidity
+    id: forecast_hour2_humidity
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Precipitation"
+    entity_id: input_text.forecast_hour_2_precipitation
+    id: forecast_hour2_precipitation
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Precipitation Probability"
+    entity_id: input_text.forecast_hour_2_precipitation_probability
+    id: forecast_hour2_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Pressure"
+    entity_id: input_text.forecast_hour_2_pressure
+    id: forecast_hour2_pressure
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 UV Index"
+    entity_id: input_text.forecast_hour_2_uv_index
+    id: forecast_hour2_uv_index
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Wind Bearing"
+    entity_id: input_text.forecast_hour_2_wind_bearing
+    id: forecast_hour2_wind_bearing
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_2_wind_gust_speed
+    id: forecast_hour2_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Wind Speed"
+    entity_id: input_text.forecast_hour_2_wind_speed
+    id: forecast_hour2_wind_speed
+
+  # Hour 3
+  - platform: homeassistant
+    name: "Forecast Hour 3 Date"
+    entity_id: input_text.forecast_hour_3_date
+    id: forecast_hour3_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Temperature"
+    entity_id: input_text.forecast_hour_3_temperature
+    id: forecast_hour3_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Apparent Temperature"
+    entity_id: input_text.forecast_hour_3_apparent_temperature
+    id: forecast_hour3_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Condition"
+    entity_id: input_text.forecast_hour_3_condition
+    id: forecast_hour3_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Humidity"
+    entity_id: input_text.forecast_hour_3_humidity
+    id: forecast_hour3_humidity
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Precipitation"
+    entity_id: input_text.forecast_hour_3_precipitation
+    id: forecast_hour3_precipitation
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Precipitation Probability"
+    entity_id: input_text.forecast_hour_3_precipitation_probability
+    id: forecast_hour3_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Pressure"
+    entity_id: input_text.forecast_hour_3_pressure
+    id: forecast_hour3_pressure
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 UV Index"
+    entity_id: input_text.forecast_hour_3_uv_index
+    id: forecast_hour3_uv_index
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Wind Bearing"
+    entity_id: input_text.forecast_hour_3_wind_bearing
+    id: forecast_hour3_wind_bearing
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_3_wind_gust_speed
+    id: forecast_hour3_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Wind Speed"
+    entity_id: input_text.forecast_hour_3_wind_speed
+    id: forecast_hour3_wind_speed
+
+  # Hour 4
+  - platform: homeassistant
+    name: "Forecast Hour 4 Date"
+    entity_id: input_text.forecast_hour_4_date
+    id: forecast_hour4_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Temperature"
+    entity_id: input_text.forecast_hour_4_temperature
+    id: forecast_hour4_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Apparent Temperature"
+    entity_id: input_text.forecast_hour_4_apparent_temperature
+    id: forecast_hour4_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Condition"
+    entity_id: input_text.forecast_hour_4_condition
+    id: forecast_hour4_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Humidity"
+    entity_id: input_text.forecast_hour_4_humidity
+    id: forecast_hour4_humidity
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Precipitation"
+    entity_id: input_text.forecast_hour_4_precipitation
+    id: forecast_hour4_precipitation
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Precipitation Probability"
+    entity_id: input_text.forecast_hour_4_precipitation_probability
+    id: forecast_hour4_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Pressure"
+    entity_id: input_text.forecast_hour_4_pressure
+    id: forecast_hour4_pressure
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 UV Index"
+    entity_id: input_text.forecast_hour_4_uv_index
+    id: forecast_hour4_uv_index
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Wind Bearing"
+    entity_id: input_text.forecast_hour_4_wind_bearing
+    id: forecast_hour4_wind_bearing
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_4_wind_gust_speed
+    id: forecast_hour4_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Wind Speed"
+    entity_id: input_text.forecast_hour_4_wind_speed
+    id: forecast_hour4_wind_speed
+
+  # Hour 5
+  - platform: homeassistant
+    name: "Forecast Hour 5 Date"
+    entity_id: input_text.forecast_hour_5_date
+    id: forecast_hour5_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Temperature"
+    entity_id: input_text.forecast_hour_5_temperature
+    id: forecast_hour5_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Apparent Temperature"
+    entity_id: input_text.forecast_hour_5_apparent_temperature
+    id: forecast_hour5_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Condition"
+    entity_id: input_text.forecast_hour_5_condition
+    id: forecast_hour5_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Humidity"
+    entity_id: input_text.forecast_hour_5_humidity
+    id: forecast_hour5_humidity
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Precipitation"
+    entity_id: input_text.forecast_hour_5_precipitation
+    id: forecast_hour5_precipitation
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Precipitation Probability"
+    entity_id: input_text.forecast_hour_5_precipitation_probability
+    id: forecast_hour5_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Pressure"
+    entity_id: input_text.forecast_hour_5_pressure
+    id: forecast_hour5_pressure
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 UV Index"
+    entity_id: input_text.forecast_hour_5_uv_index
+    id: forecast_hour5_uv_index
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Wind Bearing"
+    entity_id: input_text.forecast_hour_5_wind_bearing
+    id: forecast_hour5_wind_bearing
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_5_wind_gust_speed
+    id: forecast_hour5_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Wind Speed"
+    entity_id: input_text.forecast_hour_5_wind_speed
+    id: forecast_hour5_wind_speed
+
+  # Hour 6
+  - platform: homeassistant
+    name: "Forecast Hour 6 Date"
+    entity_id: input_text.forecast_hour_6_date
+    id: forecast_hour6_date
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Temperature"
+    entity_id: input_text.forecast_hour_6_temperature
+    id: forecast_hour6_temperature
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Apparent Temperature"
+    entity_id: input_text.forecast_hour_6_apparent_temperature
+    id: forecast_hour6_apparent_temperature
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Condition"
+    entity_id: input_text.forecast_hour_6_condition
+    id: forecast_hour6_condition
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Humidity"
+    entity_id: input_text.forecast_hour_6_humidity
+    id: forecast_hour6_humidity
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Precipitation"
+    entity_id: input_text.forecast_hour_6_precipitation
+    id: forecast_hour6_precipitation
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Precipitation Probability"
+    entity_id: input_text.forecast_hour_6_precipitation_probability
+    id: forecast_hour6_precipitation_probability
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Pressure"
+    entity_id: input_text.forecast_hour_6_pressure
+    id: forecast_hour6_pressure
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 UV Index"
+    entity_id: input_text.forecast_hour_6_uv_index
+    id: forecast_hour6_uv_index
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Wind Bearing"
+    entity_id: input_text.forecast_hour_6_wind_bearing
+    id: forecast_hour6_wind_bearing
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_6_wind_gust_speed
+    id: forecast_hour6_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Wind Speed"
+    entity_id: input_text.forecast_hour_6_wind_speed
+    id: forecast_hour6_wind_speed
+
+
   # # 10-day forecast precipitation amount from Home Assistant
   # - platform: homeassistant
   #   name: "Forecast Day 1 Precipitation"
@@ -4734,8 +5536,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -4842,8 +5644,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5025,8 +5827,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5035,12 +5837,472 @@ lvgl:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
-    - id: daily_forecast_page
+    - id: hourly_forecast_page
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
         - lambda: 'id(current_page_index) = 3;'
+      widgets:
+        # Page Header
+        - label:
+            text: "6-Hour Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Hour 1 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 35
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 8
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 3
+            widgets:
+              - label:
+                  id: lbl_hourly_hour1_header
+                  text: "Hour +1"
+                  text_font: montserrat_16
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour1_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour1_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_feels
+                        text: "--°"
+                        text_font: montserrat_12
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_precip
+                        text: "--%"
+                        text_font: montserrat_12
+                        text_color: my_teal
+
+        # Hour 2 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 155
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 8
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 3
+            widgets:
+              - label:
+                  id: lbl_hourly_hour2_header
+                  text: "Hour +2"
+                  text_font: montserrat_16
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour2_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour2_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_feels
+                        text: "--°"
+                        text_font: montserrat_12
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_precip
+                        text: "--%"
+                        text_font: montserrat_12
+                        text_color: my_teal
+
+        # Hour 3 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 275
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 8
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 3
+            widgets:
+              - label:
+                  id: lbl_hourly_hour3_header
+                  text: "Hour +3"
+                  text_font: montserrat_16
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour3_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour3_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_feels
+                        text: "--°"
+                        text_font: montserrat_12
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_precip
+                        text: "--%"
+                        text_font: montserrat_12
+                        text_color: my_teal
+
+        # Hour 4 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 395
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 8
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 3
+            widgets:
+              - label:
+                  id: lbl_hourly_hour4_header
+                  text: "Hour +4"
+                  text_font: montserrat_16
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour4_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour4_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_feels
+                        text: "--°"
+                        text_font: montserrat_12
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_precip
+                        text: "--%"
+                        text_font: montserrat_12
+                        text_color: my_teal
+
+        # Hour 5 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 515
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 8
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 3
+            widgets:
+              - label:
+                  id: lbl_hourly_hour5_header
+                  text: "Hour +5"
+                  text_font: montserrat_16
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour5_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour5_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_feels
+                        text: "--°"
+                        text_font: montserrat_12
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_12
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_precip
+                        text: "--%"
+                        text_font: montserrat_12
+                        text_color: my_teal
+
+        # Swipe or scroll indication at bottom
+        - label:
+            text: "Swipe for Hour 6 >"
+            align: BOTTOM_MID
+            y: -5
+            text_font: montserrat_14
+            text_color: my_gray
+            text_align: CENTER
+
+        - obj:
+            id: nav_button_hourly
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Hourly Forecast page nav button PRESSED!"
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+    - id: daily_forecast_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - lambda: 'id(current_page_index) = 4;'
       widgets:
         # Page Header
         - label:
@@ -5169,8 +6431,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5184,7 +6446,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
-        - lambda: 'id(current_page_index) = 4;'
+        - lambda: 'id(current_page_index) = 5;'
       widgets:
         # Large time display vertically centered
         - label:
@@ -5247,8 +6509,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5367,8 +6629,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5504,8 +6766,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5641,8 +6903,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -5752,8 +7014,8 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 80
-            height: 80
+            width: 100
+            height: 100
             bg_opa: 0
             border_width: 0
             clickable: true
@@ -6020,6 +7282,7 @@ text:
 
 
 esphome:
+  name: ${name}
   on_boot:
     priority: -100
     then:
