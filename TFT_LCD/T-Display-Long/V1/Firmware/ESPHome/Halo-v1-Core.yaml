@@ -33,7 +33,7 @@ esp32_ble_tracker:
 
 bluetooth_proxy:
   active: true
-  connection_slots: 3
+  connection_slots: 1  # Reduced from 3 to 1 to lower BLE memory usage
 
 external_components:
   - source: github://truffshuff/esphome-components
@@ -5149,7 +5149,7 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 30%  # Further reduced to mitigate SPI/DMA pressure and err 101
+  buffer_size: 20%  # Reduced to 20% to prevent BLE malloc failures during init
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
