@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.1421"
+  version: "25.10.24.1423"
   device_description: ${name} - v${version}.
 
 psram:
@@ -890,14 +890,12 @@ interval:
     then:
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 2;'
+            and:
+              - lambda: 'return id(current_page_index) == 2;'
+              - not:
+                  - script.is_running: update_weather_icon_color
           then:
-            - if:
-                condition:
-                  not:
-                    - script.is_running: update_weather_icon_color
-              then:
-                - script.execute: update_weather_icon_color
+            - script.execute: update_weather_icon_color
 
   # Batched sensor UI update - prevents LVGL cascade rendering
   - interval: 2s
