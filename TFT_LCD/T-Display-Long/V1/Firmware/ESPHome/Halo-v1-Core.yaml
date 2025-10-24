@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.23.2159"
+  version: "25.10.23.2200"
   device_description: ${name} - v${version}.
 
 psram:
@@ -3505,11 +3505,6 @@ text_sensor:
     name: "Forecast Day 1 Date"
     entity_id: input_text.forecast_day_1_date
     id: forecast_day1_header
-    on_value:
-      then:
-        - lvgl.label.update:
-            id: lbl_forecast_day1_header
-            text: !lambda 'return x;'
 
   - platform: homeassistant
     name: "Forecast Day 2 Date"
