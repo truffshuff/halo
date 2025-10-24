@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.1143"
+  version: "25.10.24.1237"
   device_description: ${name} - v${version}.
 
 psram:
@@ -3845,11 +3845,23 @@ text_sensor:
     name: "Forecast Hour 1 Humidity"
     entity_id: input_text.forecast_hour_1_humidity
     id: forecast_hour1_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_humid
+            text: !lambda |-
+              return x + "%";
 
   - platform: homeassistant
     name: "Forecast Hour 1 Precipitation"
     entity_id: input_text.forecast_hour_1_precipitation
     id: forecast_hour1_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_precip_amt
+            text: !lambda |-
+              return x + " in";
 
   - platform: homeassistant
     name: "Forecast Hour 1 Precipitation Probability"
@@ -3866,16 +3878,34 @@ text_sensor:
     name: "Forecast Hour 1 Pressure"
     entity_id: input_text.forecast_hour_1_pressure
     id: forecast_hour1_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_pressure
+            text: !lambda |-
+              return x + " mb";
 
   - platform: homeassistant
     name: "Forecast Hour 1 UV Index"
     entity_id: input_text.forecast_hour_1_uv_index
     id: forecast_hour1_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_uv
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 1 Wind Bearing"
     entity_id: input_text.forecast_hour_1_wind_bearing
     id: forecast_hour1_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_wind_dir
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 1 Wind Gust Speed"
@@ -3886,6 +3916,12 @@ text_sensor:
     name: "Forecast Hour 1 Wind Speed"
     entity_id: input_text.forecast_hour_1_wind_speed
     id: forecast_hour1_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_wind
+            text: !lambda |-
+              return x + " mph";
 
   # Hour 2
   - platform: homeassistant
@@ -3985,11 +4021,23 @@ text_sensor:
     name: "Forecast Hour 2 Humidity"
     entity_id: input_text.forecast_hour_2_humidity
     id: forecast_hour2_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_humid
+            text: !lambda |-
+              return x + "%";
 
   - platform: homeassistant
     name: "Forecast Hour 2 Precipitation"
     entity_id: input_text.forecast_hour_2_precipitation
     id: forecast_hour2_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_precip_amt
+            text: !lambda |-
+              return x + " in";
 
   - platform: homeassistant
     name: "Forecast Hour 2 Precipitation Probability"
@@ -4006,16 +4054,34 @@ text_sensor:
     name: "Forecast Hour 2 Pressure"
     entity_id: input_text.forecast_hour_2_pressure
     id: forecast_hour2_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_pressure
+            text: !lambda |-
+              return x + " mb";
 
   - platform: homeassistant
     name: "Forecast Hour 2 UV Index"
     entity_id: input_text.forecast_hour_2_uv_index
     id: forecast_hour2_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_uv
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 2 Wind Bearing"
     entity_id: input_text.forecast_hour_2_wind_bearing
     id: forecast_hour2_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_wind_dir
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 2 Wind Gust Speed"
@@ -4026,6 +4092,12 @@ text_sensor:
     name: "Forecast Hour 2 Wind Speed"
     entity_id: input_text.forecast_hour_2_wind_speed
     id: forecast_hour2_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_wind
+            text: !lambda |-
+              return x + " mph";
 
   # Hour 3
   - platform: homeassistant
@@ -4125,11 +4197,23 @@ text_sensor:
     name: "Forecast Hour 3 Humidity"
     entity_id: input_text.forecast_hour_3_humidity
     id: forecast_hour3_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_humid
+            text: !lambda |-
+              return x + "%";
 
   - platform: homeassistant
     name: "Forecast Hour 3 Precipitation"
     entity_id: input_text.forecast_hour_3_precipitation
     id: forecast_hour3_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_precip_amt
+            text: !lambda |-
+              return x + " in";
 
   - platform: homeassistant
     name: "Forecast Hour 3 Precipitation Probability"
@@ -4146,16 +4230,34 @@ text_sensor:
     name: "Forecast Hour 3 Pressure"
     entity_id: input_text.forecast_hour_3_pressure
     id: forecast_hour3_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_pressure
+            text: !lambda |-
+              return x + " mb";
 
   - platform: homeassistant
     name: "Forecast Hour 3 UV Index"
     entity_id: input_text.forecast_hour_3_uv_index
     id: forecast_hour3_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_uv
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 3 Wind Bearing"
     entity_id: input_text.forecast_hour_3_wind_bearing
     id: forecast_hour3_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_wind_dir
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 3 Wind Gust Speed"
@@ -4166,6 +4268,12 @@ text_sensor:
     name: "Forecast Hour 3 Wind Speed"
     entity_id: input_text.forecast_hour_3_wind_speed
     id: forecast_hour3_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_wind
+            text: !lambda |-
+              return x + " mph";
 
   # Hour 4
   - platform: homeassistant
@@ -4265,11 +4373,23 @@ text_sensor:
     name: "Forecast Hour 4 Humidity"
     entity_id: input_text.forecast_hour_4_humidity
     id: forecast_hour4_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_humid
+            text: !lambda |-
+              return x + "%";
 
   - platform: homeassistant
     name: "Forecast Hour 4 Precipitation"
     entity_id: input_text.forecast_hour_4_precipitation
     id: forecast_hour4_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_precip_amt
+            text: !lambda |-
+              return x + " in";
 
   - platform: homeassistant
     name: "Forecast Hour 4 Precipitation Probability"
@@ -4286,16 +4406,34 @@ text_sensor:
     name: "Forecast Hour 4 Pressure"
     entity_id: input_text.forecast_hour_4_pressure
     id: forecast_hour4_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_pressure
+            text: !lambda |-
+              return x + " mb";
 
   - platform: homeassistant
     name: "Forecast Hour 4 UV Index"
     entity_id: input_text.forecast_hour_4_uv_index
     id: forecast_hour4_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_uv
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 4 Wind Bearing"
     entity_id: input_text.forecast_hour_4_wind_bearing
     id: forecast_hour4_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_wind_dir
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 4 Wind Gust Speed"
@@ -4306,6 +4444,12 @@ text_sensor:
     name: "Forecast Hour 4 Wind Speed"
     entity_id: input_text.forecast_hour_4_wind_speed
     id: forecast_hour4_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_wind
+            text: !lambda |-
+              return x + " mph";
 
   # Hour 5
   - platform: homeassistant
@@ -4405,11 +4549,23 @@ text_sensor:
     name: "Forecast Hour 5 Humidity"
     entity_id: input_text.forecast_hour_5_humidity
     id: forecast_hour5_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_humid
+            text: !lambda |-
+              return x + "%";
 
   - platform: homeassistant
     name: "Forecast Hour 5 Precipitation"
     entity_id: input_text.forecast_hour_5_precipitation
     id: forecast_hour5_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_precip_amt
+            text: !lambda |-
+              return x + " in";
 
   - platform: homeassistant
     name: "Forecast Hour 5 Precipitation Probability"
@@ -4426,16 +4582,34 @@ text_sensor:
     name: "Forecast Hour 5 Pressure"
     entity_id: input_text.forecast_hour_5_pressure
     id: forecast_hour5_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_pressure
+            text: !lambda |-
+              return x + " mb";
 
   - platform: homeassistant
     name: "Forecast Hour 5 UV Index"
     entity_id: input_text.forecast_hour_5_uv_index
     id: forecast_hour5_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_uv
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 5 Wind Bearing"
     entity_id: input_text.forecast_hour_5_wind_bearing
     id: forecast_hour5_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_wind_dir
+            text: !lambda |-
+              return x;
 
   - platform: homeassistant
     name: "Forecast Hour 5 Wind Gust Speed"
@@ -4446,67 +4620,12 @@ text_sensor:
     name: "Forecast Hour 5 Wind Speed"
     entity_id: input_text.forecast_hour_5_wind_speed
     id: forecast_hour5_wind_speed
-
-  # Hour 6
-  - platform: homeassistant
-    name: "Forecast Hour 6 Date"
-    entity_id: input_text.forecast_hour_6_date
-    id: forecast_hour6_date
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Temperature"
-    entity_id: input_text.forecast_hour_6_temperature
-    id: forecast_hour6_temperature
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Apparent Temperature"
-    entity_id: input_text.forecast_hour_6_apparent_temperature
-    id: forecast_hour6_apparent_temperature
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Condition"
-    entity_id: input_text.forecast_hour_6_condition
-    id: forecast_hour6_condition
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Humidity"
-    entity_id: input_text.forecast_hour_6_humidity
-    id: forecast_hour6_humidity
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Precipitation"
-    entity_id: input_text.forecast_hour_6_precipitation
-    id: forecast_hour6_precipitation
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Precipitation Probability"
-    entity_id: input_text.forecast_hour_6_precipitation_probability
-    id: forecast_hour6_precipitation_probability
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Pressure"
-    entity_id: input_text.forecast_hour_6_pressure
-    id: forecast_hour6_pressure
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 UV Index"
-    entity_id: input_text.forecast_hour_6_uv_index
-    id: forecast_hour6_uv_index
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Wind Bearing"
-    entity_id: input_text.forecast_hour_6_wind_bearing
-    id: forecast_hour6_wind_bearing
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Wind Gust Speed"
-    entity_id: input_text.forecast_hour_6_wind_gust_speed
-    id: forecast_hour6_wind_gust_speed
-
-  - platform: homeassistant
-    name: "Forecast Hour 6 Wind Speed"
-    entity_id: input_text.forecast_hour_6_wind_speed
-    id: forecast_hour6_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_wind
+            text: !lambda |-
+              return x + " mph";
 
 
   # # 10-day forecast precipitation amount from Home Assistant
@@ -5886,17 +6005,17 @@ lvgl:
             bg_opa: COVER
             border_width: 0
             radius: 8
-            pad_all: 8
+            pad_all: 6
             scrollbar_mode: "OFF"
             layout:
               type: flex
               flex_flow: column
-              pad_row: 3
+              pad_row: 2
             widgets:
               - label:
                   id: lbl_hourly_hour1_header
                   text: "Hour +1"
-                  text_font: montserrat_16
+                  text_font: montserrat_14
                   text_color: my_white
               - obj:
                   width: 100%
@@ -5932,12 +6051,32 @@ lvgl:
                   widgets:
                     - label:
                         text: "Feels:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_feels
                         text: "--°"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_humid
+                        text: "--%"
+                        text_font: montserrat_10
                         text_color: my_white
               - obj:
                   width: 100%
@@ -5952,35 +6091,135 @@ lvgl:
                   widgets:
                     - label:
                         text: "Precip:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_precip
                         text: "--%"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 2 Card
         - obj:
             width: 170
             height: SIZE_CONTENT
             align: TOP_MID
-            y: 155
+            y: 245
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
             radius: 8
-            pad_all: 8
+            pad_all: 6
             scrollbar_mode: "OFF"
             layout:
               type: flex
               flex_flow: column
-              pad_row: 3
+              pad_row: 2
             widgets:
               - label:
                   id: lbl_hourly_hour2_header
                   text: "Hour +2"
-                  text_font: montserrat_16
+                  text_font: montserrat_14
                   text_color: my_white
               - obj:
                   width: 100%
@@ -6016,12 +6255,32 @@ lvgl:
                   widgets:
                     - label:
                         text: "Feels:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_feels
                         text: "--°"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_humid
+                        text: "--%"
+                        text_font: montserrat_10
                         text_color: my_white
               - obj:
                   width: 100%
@@ -6036,35 +6295,135 @@ lvgl:
                   widgets:
                     - label:
                         text: "Precip:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_precip
                         text: "--%"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 3 Card
         - obj:
             width: 170
             height: SIZE_CONTENT
             align: TOP_MID
-            y: 275
+            y: 455
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
             radius: 8
-            pad_all: 8
+            pad_all: 6
             scrollbar_mode: "OFF"
             layout:
               type: flex
               flex_flow: column
-              pad_row: 3
+              pad_row: 2
             widgets:
               - label:
                   id: lbl_hourly_hour3_header
                   text: "Hour +3"
-                  text_font: montserrat_16
+                  text_font: montserrat_14
                   text_color: my_white
               - obj:
                   width: 100%
@@ -6100,12 +6459,32 @@ lvgl:
                   widgets:
                     - label:
                         text: "Feels:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_feels
                         text: "--°"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_humid
+                        text: "--%"
+                        text_font: montserrat_10
                         text_color: my_white
               - obj:
                   width: 100%
@@ -6120,35 +6499,135 @@ lvgl:
                   widgets:
                     - label:
                         text: "Precip:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_precip
                         text: "--%"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 4 Card
         - obj:
             width: 170
             height: SIZE_CONTENT
             align: TOP_MID
-            y: 395
+            y: 665
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
             radius: 8
-            pad_all: 8
+            pad_all: 6
             scrollbar_mode: "OFF"
             layout:
               type: flex
               flex_flow: column
-              pad_row: 3
+              pad_row: 2
             widgets:
               - label:
                   id: lbl_hourly_hour4_header
                   text: "Hour +4"
-                  text_font: montserrat_16
+                  text_font: montserrat_14
                   text_color: my_white
               - obj:
                   width: 100%
@@ -6184,12 +6663,32 @@ lvgl:
                   widgets:
                     - label:
                         text: "Feels:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_feels
                         text: "--°"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_humid
+                        text: "--%"
+                        text_font: montserrat_10
                         text_color: my_white
               - obj:
                   width: 100%
@@ -6204,35 +6703,135 @@ lvgl:
                   widgets:
                     - label:
                         text: "Precip:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_precip
                         text: "--%"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 5 Card
         - obj:
             width: 170
             height: SIZE_CONTENT
             align: TOP_MID
-            y: 515
+            y: 875
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
             radius: 8
-            pad_all: 8
+            pad_all: 6
             scrollbar_mode: "OFF"
             layout:
               type: flex
               flex_flow: column
-              pad_row: 3
+              pad_row: 2
             widgets:
               - label:
                   id: lbl_hourly_hour5_header
                   text: "Hour +5"
-                  text_font: montserrat_16
+                  text_font: montserrat_14
                   text_color: my_white
               - obj:
                   width: 100%
@@ -6268,12 +6867,32 @@ lvgl:
                   widgets:
                     - label:
                         text: "Feels:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_feels
                         text: "--°"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_humid
+                        text: "--%"
+                        text_font: montserrat_10
                         text_color: my_white
               - obj:
                   width: 100%
@@ -6288,22 +6907,113 @@ lvgl:
                   widgets:
                     - label:
                         text: "Precip:"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_precip
                         text: "--%"
-                        text_font: montserrat_12
+                        text_font: montserrat_10
                         text_color: my_teal
-
-        # Swipe or scroll indication at bottom
-        - label:
-            text: "Swipe for Hour 6 >"
-            align: BOTTOM_MID
-            y: -5
-            text_font: montserrat_14
-            text_color: my_gray
-            text_align: CENTER
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         - obj:
             id: nav_button_hourly
