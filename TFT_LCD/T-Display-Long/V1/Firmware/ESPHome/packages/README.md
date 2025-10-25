@@ -47,6 +47,77 @@ Provides UI/display support for WiFi status on devices with LVGL displays:
 - Requires sensor: `wifi_signal_db`
 - Requires globals: `boot_complete`, `current_page_index`
 
+### LVGL WiFi Page Package (`lvgl-wifi-page.yaml`)
+
+Provides the LVGL WiFi statistics page WITHOUT WireGuard information:
+- WiFi statistics display (SSID, signal strength, IP address)
+- WiFi signal strength bar with gradient indicator (included)
+- Navigation button for page transitions
+- Optimized layout for WiFi-only displays
+
+**Includes:**
+- WiFi signal gradient (red to green, weak to strong)
+
+**Dependencies:**
+- Requires `wifi-display.yaml` for update logic
+- Requires LVGL display configuration
+- Requires colors: `my_white`, `my_gray`
+- Requires fonts: `montserrat_18`, `montserrat_20`
+- Requires script: `page_transition_cleanup`
+- Requires globals: `current_page_index`, `last_auto_rotation_time`
+
+### LVGL WiFi + WireGuard Page Package (`lvgl-wifi-wireguard-page.yaml`)
+
+Provides the LVGL WiFi statistics page WITH WireGuard information:
+- WiFi statistics display (SSID, signal strength, IP address)
+- WireGuard statistics (status, VPN IP, endpoint, handshake time)
+- WiFi signal strength bar with gradient indicator (included)
+- Navigation button for page transitions
+- Full-featured layout with both WiFi and VPN information
+
+**Includes:**
+- WiFi signal gradient (red to green, weak to strong)
+
+**Dependencies:**
+- Requires `wifi-display.yaml` for WiFi update logic
+- Requires `wireguard-display.yaml` for WireGuard update logic
+- Requires LVGL display configuration
+- Requires colors: `my_white`, `my_gray`, `my_teal`
+- Requires fonts: `montserrat_18`, `montserrat_20`
+- Requires script: `page_transition_cleanup`
+- Requires globals: `current_page_index`, `last_auto_rotation_time`
+
+### Time Update Script - Basic Package (`time-update-basic.yaml`)
+
+Provides time display update scripts for devices WITHOUT WireGuard:
+- Uses Home Assistant time source only
+- Updates time displays on AirQ page and vertical clock page
+- Includes colon blinking functionality for clock displays
+- Optimized rendering with performance tracking
+
+**Dependencies:**
+- Requires time component: `ha_time`
+- Requires LVGL widgets: `timeVal`, `vclock_hours`, `vclock_minutes`, `vclock_ampm`, `vclock_date`, `vclock_day_top`, `vclock_colon`
+- Requires switches: `time_format`, `colon_blink_enabled`
+- Requires globals: `time_update_last_started`, `time_update_needs_render`, `time_update_last_text`, `time_update_last_duration`, `colon_blink_state`, `current_page_index`
+
+### Time Update Script - WireGuard Package (`time-update-wireguard.yaml`)
+
+Provides time display update scripts for devices WITH WireGuard:
+- Automatically switches between SNTP and Home Assistant time based on WireGuard state
+- When WireGuard enabled: uses SNTP time (required for WireGuard)
+- When WireGuard disabled: uses Home Assistant time
+- Updates time displays on AirQ page and vertical clock page
+- Includes colon blinking functionality for clock displays
+- Optimized rendering with performance tracking
+
+**Dependencies:**
+- Requires `wireguard.yaml` package (for `wireguard_enabled` switch)
+- Requires time components: `ha_time`, `sntp_time`
+- Requires LVGL widgets: `timeVal`, `vclock_hours`, `vclock_minutes`, `vclock_ampm`, `vclock_date`, `vclock_day_top`, `vclock_colon`
+- Requires switches: `time_format`, `colon_blink_enabled`, `wireguard_enabled`
+- Requires globals: `time_update_last_started`, `time_update_needs_render`, `time_update_last_text`, `time_update_last_duration`, `colon_blink_state`, `current_page_index`
+
 #### Usage
 
 1. **Include the package in your device configuration:**
@@ -122,11 +193,17 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-# Include WiFi display package
+# Include WiFi display package and basic time update
 packages:
   wifi_display: !include packages/wifi-display.yaml
+  time_update: !include packages/time-update-basic.yaml
 
-# Your LVGL display configuration with required widgets...
+# Your LVGL display configuration
+display:
+  - platform: ...
+    pages:
+      - !include packages/lvgl-wifi-page.yaml
+      # ... your other pages ...
 ```
 
 **3. Device with display - WiFi + WireGuard status:**
@@ -149,11 +226,20 @@ packages:
   wireguard: !include packages/wireguard.yaml
   wifi_display: !include packages/wifi-display.yaml
   wireguard_display: !include packages/wireguard-display.yaml
+  time_update: !include packages/time-update-wireguard.yaml
 
-# Your LVGL display configuration with required widgets...
+# Your LVGL display configuration
+display:
+  - platform: ...
+    # ... other display config ...
+    pages:
+      # Include the WiFi + WireGuard page
+      - !include packages/lvgl-wifi-wireguard-page.yaml
+      # ... your other pages ...
 ```
 
-**4. Basic device - WireGuard with custom allowed IPs:**
+
+**5. Basic device - WireGuard with custom allowed IPs:**
 
 ```yaml
 packages:
@@ -166,6 +252,38 @@ wireguard:
     - 10.0.0.0/24
     - 172.16.0.0/16
 ```
+
+## Usage Notes
+
+### LVGL Page Packages
+
+The LVGL page packages (`lvgl-wifi-page.yaml` and `lvgl-wifi-wireguard-page.yaml`) are **page definitions** that must be included within your LVGL display's `pages:` section, not in the top-level `packages:` section.
+
+**Correct usage:**
+```yaml
+display:
+  - platform: lvgl
+    pages:
+      - !include packages/lvgl-wifi-page.yaml  # Correct!
+```
+
+**Incorrect usage:**
+```yaml
+packages:
+  wifi_page: !include packages/lvgl-wifi-page.yaml  # Wrong! This won't work
+```
+
+### Choosing Between WiFi Page Variants
+
+- Use `lvgl-wifi-page.yaml` if you want **WiFi status only** (no VPN information)
+  - Simpler, cleaner layout
+  - Less screen space used
+  - Perfect for devices without WireGuard
+
+- Use `lvgl-wifi-wireguard-page.yaml` if you want **WiFi + WireGuard status**
+  - Shows complete network information
+  - Displays VPN connection details
+  - Requires both `wifi-display.yaml` and `wireguard-display.yaml` packages
 
 ## Creating New Packages
 
