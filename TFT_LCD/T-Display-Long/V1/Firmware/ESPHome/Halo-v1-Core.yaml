@@ -145,6 +145,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: safe_mode
+    type: bool
+    restore_value: no
+    initial_value: 'false'  # Set to true during OTA or other critical operations
   - id: time_update_last_started
     type: int
     restore_value: no
@@ -852,7 +856,7 @@ interval:
     then:
       - if:
           condition:
-            lambda: 'return id(boot_complete);'
+            lambda: 'return id(boot_complete) && !id(safe_mode);'
           then:
             - lambda: |-
                 lv_obj_t *scr = lv_scr_act();
@@ -1317,7 +1321,7 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return id(boot_complete);'
+            lambda: 'return id(boot_complete) && !id(safe_mode);'
           then:
             - delay: 50ms  # Small delay to prevent rapid successive calls
             - lambda: |-
