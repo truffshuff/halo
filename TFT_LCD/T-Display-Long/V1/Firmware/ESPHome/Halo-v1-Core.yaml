@@ -1318,29 +1318,33 @@ script:
   - id: page_transition_cleanup
     mode: single  # Prevent multiple simultaneous executions
     then:
-      - lambda: |-
-          // Safety check: Only run if LVGL is fully initialized
-          lv_obj_t *scr = lv_scr_act();
-          if (scr == NULL) {
-            ESP_LOGW("lvgl", "Page transition cleanup skipped - LVGL not initialized yet");
-            return;
-          }
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - lambda: |-
+                // Safety check: Only run if LVGL is fully initialized
+                lv_obj_t *scr = lv_scr_act();
+                if (scr == NULL) {
+                  ESP_LOGW("lvgl", "Page transition cleanup skipped - LVGL not initialized yet");
+                  return;
+                }
 
-          // Log current memory state before cleanup
-          ESP_LOGD("lvgl", "Page transition cleanup starting - Free heap: %d", esp_get_free_heap_size());
+                // Log current memory state before cleanup
+                ESP_LOGD("lvgl", "Page transition cleanup starting - Free heap: %d", esp_get_free_heap_size());
 
-          // Clear all cached strings to free memory
-          id(time_update_last_text).clear();
-          id(weather_last_condition).clear();
+                // Clear all cached strings to free memory
+                id(time_update_last_text).clear();
+                id(weather_last_condition).clear();
 
-          // Force LVGL to invalidate current screen and redraw
-          lv_obj_invalidate(scr);
+                // Force LVGL to invalidate current screen and redraw
+                lv_obj_invalidate(scr);
 
-          // Force immediate display flush to prevent buffer buildup
-          lv_refr_now(NULL);
+                // Force immediate display flush to prevent buffer buildup
+                lv_refr_now(NULL);
 
-          // Log memory state after cleanup
-          ESP_LOGD("lvgl", "Page transition cleanup complete - Free heap: %d", esp_get_free_heap_size());
+                // Log memory state after cleanup
+                ESP_LOGD("lvgl", "Page transition cleanup complete - Free heap: %d", esp_get_free_heap_size());
 
   - id: time_update
     mode: restart
