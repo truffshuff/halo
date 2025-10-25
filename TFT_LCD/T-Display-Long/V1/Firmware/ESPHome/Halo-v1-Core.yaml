@@ -8229,7 +8229,7 @@ lvgl:
             on_press:
               - logger.log: "Extended forecast 'More' button on 8-9 PRESSED! going to 10!"
               - lvgl.page.show:
-                  id: forecast_days_10_page
+                  id: forecast_day_10_page
                   animation: OUT_LEFT
                   time: 300ms
 
