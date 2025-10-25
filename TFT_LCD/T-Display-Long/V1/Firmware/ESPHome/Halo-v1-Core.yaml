@@ -1297,6 +1297,25 @@ time:
       - script.execute: time_update
 
 script:
+  - id: page_transition_cleanup
+    then:
+      - lambda: |-
+          // Log current memory state before cleanup
+          ESP_LOGD("lvgl", "Page transition cleanup starting - Free heap: %d", esp_get_free_heap_size());
+
+          // Clear all cached strings to free memory
+          id(time_update_last_text).clear();
+          id(weather_last_condition).clear();
+
+          // Force LVGL to invalidate current screen and redraw
+          lv_obj_invalidate(lv_scr_act());
+
+          // Force immediate display flush to prevent buffer buildup
+          lv_refr_now(NULL);
+
+          // Log memory state after cleanup
+          ESP_LOGD("lvgl", "Page transition cleanup complete - Free heap: %d", esp_get_free_heap_size());
+
   - id: time_update
     mode: restart
     then:
@@ -1706,6 +1725,101 @@ sensor:
     unit_of_measurement: "%"
     accuracy_decimals: 1
     update_interval: 60s
+    entity_category: "diagnostic"
+
+  # LVGL-specific memory diagnostics
+  - platform: template
+    name: "LVGL Memory Used"
+    lambda: |-
+      lv_mem_monitor_t mon;
+      lv_mem_monitor(&mon);
+      return mon.used_size;
+    unit_of_measurement: "bytes"
+    update_interval: 10s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "LVGL Memory Free"
+    lambda: |-
+      lv_mem_monitor_t mon;
+      lv_mem_monitor(&mon);
+      return mon.free_size;
+    unit_of_measurement: "bytes"
+    update_interval: 10s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "LVGL Memory Fragmentation"
+    lambda: |-
+      lv_mem_monitor_t mon;
+      lv_mem_monitor(&mon);
+      return mon.frag_pct;
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 10s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "LVGL Memory Usage"
+    lambda: |-
+      lv_mem_monitor_t mon;
+      lv_mem_monitor(&mon);
+      return mon.used_pct;
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 10s
+    entity_category: "diagnostic"
+
+  # DMA-capable memory monitoring
+  - platform: template
+    name: "DMA Capable Heap Free"
+    lambda: return heap_caps_get_free_size(MALLOC_CAP_DMA);
+    unit_of_measurement: "bytes"
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "DMA Capable Largest Block"
+    lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
+    unit_of_measurement: "bytes"
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  # PSRAM monitoring (if available)
+  - platform: template
+    name: "PSRAM Free"
+    lambda: |-
+      size_t psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+      if (psram_free > 0) {
+        return psram_free;
+      }
+      return 0;  // No PSRAM available
+    unit_of_measurement: "bytes"
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  # Total heap across all types
+  - platform: template
+    name: "Total Free Heap (All)"
+    lambda: return heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    unit_of_measurement: "bytes"
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  # Minimum free heap since boot (indicates worst-case memory pressure)
+  - platform: template
+    name: "Min Free Heap Ever"
+    lambda: return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+    unit_of_measurement: "bytes"
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  # Display refresh rate monitor
+  - platform: template
+    name: "Display Refresh Count"
+    id: display_refresh_counter
+    internal: true
+    update_interval: never
     entity_category: "diagnostic"
 
   - platform: uptime
@@ -5348,10 +5462,24 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 20%  # Reduced to 20% to prevent BLE malloc failures during init
+  buffer_size: 25%  # Increased from 20% to 25% for better performance (BLE disabled)
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
+  log_level: WARN  # Reduce logging overhead
+
+  # Force memory cleanup during idle periods
+  on_idle:
+    timeout: 1s
+    then:
+      - lambda: |-
+          // Force LVGL memory cleanup during idle
+          lv_mem_monitor_t mon;
+          lv_mem_monitor(&mon);
+          if (mon.frag_pct > 50) {
+            ESP_LOGW("lvgl", "High fragmentation: %d%%, forcing cleanup", mon.frag_pct);
+            lv_obj_clean(lv_scr_act());
+          }
   
   gradients:
     - id: wifi_signal_gradient
@@ -5374,6 +5502,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
+        - script.execute: page_transition_cleanup
         - lambda: |-
             id(current_page_index) = 0;
             id(time_update_last_text).clear();
@@ -5461,6 +5590,7 @@ lvgl:
       #bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
+        - script.execute: page_transition_cleanup
         - lambda: |-
             id(current_page_index) = 1;  // AirQ_page
             id(time_update_last_text).clear();
@@ -6025,6 +6155,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
+        - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 2;'  # wifi_page
       widgets:
         - label:
@@ -6137,6 +6268,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
+        - script.execute: page_transition_cleanup
         - lambda: |-
             id(current_page_index) = 3;  // weather_forecast_page
             id(weather_last_condition).clear();
@@ -6327,6 +6459,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
+        - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 4;'  # hourly_forecast_page
       widgets:
         # Page Header
@@ -6998,6 +7131,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
+        - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 4;'  # Same as hourly_forecast_page
       widgets:
         # Page Header
@@ -7667,6 +7801,7 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
+        - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 5;'  # daily_forecast_page
       widgets:
         # Page Header
@@ -7818,6 +7953,8 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
       widgets:
         - label:
             text: "Extended Forecast"
@@ -7985,6 +8122,8 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
       widgets:
         - label:
             text: "Extended Forecast"
@@ -8152,6 +8291,8 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
       widgets:
         - label:
             text: "Extended Forecast"
@@ -8319,6 +8460,8 @@ lvgl:
       bg_opa: COVER
       scrollbar_mode: "OFF"
       skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
       widgets:
         - label:
             text: "Extended Forecast"
