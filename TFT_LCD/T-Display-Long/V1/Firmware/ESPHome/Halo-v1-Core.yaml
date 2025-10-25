@@ -847,6 +847,24 @@ interval:
           then:
             - script.execute: time_update
 
+  # LVGL memory fragmentation monitoring - runs after boot complete
+  - interval: 30s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - lambda: |-
+                lv_obj_t *scr = lv_scr_act();
+                if (scr != NULL) {
+                  lv_mem_monitor_t mon;
+                  lv_mem_monitor(&mon);
+                  if (mon.frag_pct > 60) {
+                    ESP_LOGW("lvgl", "High LVGL fragmentation: %d%%, forcing cleanup", mon.frag_pct);
+                    lv_obj_clean(scr);
+                  }
+                }
+
   - interval: 1s
     then:
       - if:
@@ -5496,25 +5514,6 @@ lvgl:
   disp_bg_image: none
   log_level: WARN  # Reduce logging overhead
 
-  # Force memory cleanup during idle periods
-  on_idle:
-    timeout: 1s
-    then:
-      - lambda: |-
-          // Safety check: Only run if LVGL is fully initialized
-          lv_obj_t *scr = lv_scr_act();
-          if (scr == NULL) {
-            return;  // Skip if not initialized
-          }
-
-          // Force LVGL memory cleanup during idle
-          lv_mem_monitor_t mon;
-          lv_mem_monitor(&mon);
-          if (mon.frag_pct > 50) {
-            ESP_LOGW("lvgl", "High fragmentation: %d%%, forcing cleanup", mon.frag_pct);
-            lv_obj_clean(scr);
-          }
-  
   gradients:
     - id: wifi_signal_gradient
       direction: hor
