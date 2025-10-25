@@ -1507,7 +1507,7 @@ number:
           format: "Page rotation interval changed to %d seconds"
           args: ['(int)x']
 
-  # Page rotation order numbers (1-5, lower numbers show first)
+  # Page rotation order numbers (1-6, lower numbers show first)
   - platform: template
     name: "Page Order: AirQ Page"
     id: page_order_AirQ
@@ -1515,7 +1515,7 @@ number:
     restore_value: true
     initial_value: 1
     min_value: 1
-    max_value: 5
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -1533,7 +1533,7 @@ number:
     restore_value: true
     initial_value: 2
     min_value: 1
-    max_value: 5
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -1551,7 +1551,7 @@ number:
     restore_value: true
     initial_value: 3
     min_value: 1
-    max_value: 5
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -1569,7 +1569,7 @@ number:
     restore_value: true
     initial_value: 4
     min_value: 1
-    max_value: 5
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -1581,13 +1581,31 @@ number:
           args: ['(int)x']
 
   - platform: template
-    name: "Page Order: Vertical Clock Page"
-    id: page_order_vertical_clock
+    name: "Page Order: Hourly Forecast Page"
+    id: page_order_hourly_forecast
     icon: mdi:numeric
     restore_value: true
     initial_value: 5
     min_value: 1
-    max_value: 5
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_hourly_forecast_order) = (int)x;'
+      - logger.log:
+          format: "Hourly forecast page order set to %d"
+          args: ['(int)x']
+
+  - platform: template
+    name: "Page Order: Vertical Clock Page"
+    id: page_order_vertical_clock
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 6
+    min_value: 1
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
