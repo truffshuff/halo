@@ -1056,11 +1056,21 @@ interval:
                                               animation: OUT_LEFT
                                               time: 300ms
                                         else:
-                                          - logger.log: "AUTO PAGE ROTATION -> 3-Day Forecast Page"
-                                    - lvgl.page.show:
-                                        id: vertical_clock_page
-                                        animation: OUT_LEFT
-                                        time: 300ms
+                                          - if:
+                                              condition:
+                                                lambda: 'return id(current_page_index) == 5;'  # daily_forecast_page
+                                              then:
+                                                - logger.log: "AUTO PAGE ROTATION -> Daily Forecast Page"
+                                                - lvgl.page.show:
+                                                    id: daily_forecast_page
+                                                    animation: OUT_LEFT
+                                                    time: 300ms
+                                              else:
+                                                - logger.log: "AUTO PAGE ROTATION -> Unknown page index, defaulting to Vertical Clock"
+                                                - lvgl.page.show:
+                                                    id: vertical_clock_page
+                                                    animation: OUT_LEFT
+                                                    time: 300ms
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
