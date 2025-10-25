@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.24.1423"
+  version: "25.10.25.1929"
   device_description: ${name} - v${version}.
 
 # Include modular packages
@@ -7899,4 +7899,4 @@ esphome:
                             else:
                               - logger.log: "Showing AirQ page"
                               - lvgl.page.show: AirQ_page
-        - logger.log: "Boot sequence complete"
+        - logger.log: "Boot sequence complete"# Test comment
