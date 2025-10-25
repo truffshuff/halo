@@ -5439,7 +5439,7 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - lambda: |-
-            id(current_page_index) = 1;  # main_page
+            id(current_page_index) = 1;  // main_page
             id(time_update_last_text).clear();
         - script.execute: time_update
       widgets:
@@ -6093,7 +6093,7 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - lambda: |-
-            id(current_page_index) = 3;  # weather_forecast_page
+            id(current_page_index) = 3;  // weather_forecast_page
             id(weather_last_condition).clear();
         - script.execute: update_weather_icon_color
       widgets:
@@ -8598,15 +8598,15 @@ esphome:
         - lambda: |-
             const std::string &choice = id(default_page_select_boot).state;
             if (choice == "WiFi") {
-              id(default_page_index) = 2;  # wifi_page
+              id(default_page_index) = 2;  // wifi_page
             } else if (choice == "Weather") {
-                id(default_page_index) = 3;  # weather_forecast_page
+                id(default_page_index) = 3;  // weather_forecast_page
             } else if (choice == "Daily Forecast") {
-              id(default_page_index) = 5;  # daily_forecast_page
+              id(default_page_index) = 5;  // daily_forecast_page
             } else if (choice == "Vertical Clock") {
-              id(default_page_index) = 0;  # vertical_clock_page
+              id(default_page_index) = 0;  // vertical_clock_page
             } else {
-              id(default_page_index) = 1;  # main_page (default)
+              id(default_page_index) = 1;  // main_page (default)
             }
         - logger.log:
             format: "Setting default page (index: %d)"
