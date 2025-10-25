@@ -1,0 +1,156 @@
+# LVGL WiFi + WireGuard Page Package
+# This package provides the LVGL WiFi status page WITH WireGuard information
+#
+# Usage in your LVGL display configuration:
+#   display:
+#     - platform: ...
+#       pages:
+#         - !include packages/lvgl-wifi-wireguard-page.yaml
+#
+# This package provides:
+#   - WiFi statistics (SSID, signal strength, IP address)
+#   - WireGuard statistics (status, VPN IP, endpoint, handshake)
+#   - WiFi signal strength bar with gradient
+#   - Navigation button for page transitions
+#
+# Dependencies:
+#   - Requires wifi-display.yaml package for WiFi update logic
+#   - Requires wireguard-display.yaml package for WireGuard update logic
+#   - Requires LVGL display configuration in main config
+#   - Requires colors: my_white, my_gray, my_teal
+#   - Requires fonts: montserrat_18, montserrat_20
+#   - Requires script: page_transition_cleanup
+#   - Requires global: current_page_index, last_auto_rotation_time
+
+# WiFi signal gradient (used by signal bar)
+gradients:
+  - id: wifi_signal_gradient
+    direction: hor
+    dither: none
+    stops:
+      - color: 0xFF0000  # Red - weak signal
+        position: 0
+      - color: 0xFF8000  # Orange
+        position: 64
+      - color: 0xFFFF00  # Yellow
+        position: 128
+      - color: 0x80FF00  # Yellow-green
+        position: 192
+      - color: 0x00FF00  # Green - strong signal
+        position: 255
+
+# WiFi & WireGuard Page (Full version with VPN info)
+pages:
+  - id: wifi_page
+  bg_color: 0x000000
+  bg_opa: COVER
+  scrollbar_mode: "OFF"
+  on_load:
+    - script.execute: page_transition_cleanup
+    - lambda: 'id(current_page_index) = 2;'  # wifi_page
+  widgets:
+    - label:
+        text: "WiFi & VPN \nStatistics"
+        align: CENTER
+        x: 0
+        y: -300
+        text_font: montserrat_20
+        text_color: my_white
+        text_align: CENTER
+    - label:
+        id: wifi_ssid_label
+        text: "SSID: ...\n"
+        align: LEFT_MID
+        x: 10
+        y: -250
+        text_font: montserrat_18
+        text_color: my_white
+    - label:
+        id: wifi_signal_label
+        text: "Signal: ..."
+        align: LEFT_MID
+        x: 10
+        y: -230
+        text_font: montserrat_18
+        text_color: my_white
+    - bar:
+        id: wifi_signal_bar
+        align: CENTER
+        x: 0
+        y: -200
+        width: 160
+        height: 10
+        min_value: -100
+        max_value: -30
+        value: -100
+        bg_color: my_gray
+        indicator:
+          bg_grad: wifi_signal_gradient
+
+    - label:
+        id: wifi_ip_label
+        text: "IP: ..."
+        align: LEFT_MID
+        x: 10
+        y: -175
+        text_font: montserrat_18
+        text_color: my_white
+    - label:
+        text: "WireGuard"
+        align: CENTER
+        x: 0
+        y: -100
+        text_font: montserrat_20
+        text_color: my_teal
+    - label:
+        id: wg_status_label
+        text: "Status: Disabled"
+        align: LEFT_MID
+        x: 10
+        y: -50
+        text_font: montserrat_18
+        text_color: my_gray
+    - label:
+        id: wg_address_label
+        text: "VPN IP: ..."
+        align: LEFT_MID
+        x: 10
+        y: 0
+        text_font: montserrat_18
+        text_color: my_white
+    - label:
+        id: wg_endpoint_label
+        text: "Endpoint: ..."
+        align: LEFT_MID
+        x: 10
+        y: 50
+        text_font: montserrat_18
+        text_color: my_white
+    - label:
+        id: wg_handshake_label
+        text: "Last Handshake: ..."
+        align: LEFT_MID
+        x: 10
+        y: 125
+        text_font: montserrat_18
+        text_color: my_white
+        text_align: LEFT
+    - obj:
+        id: nav_button_wifi
+        align: TOP_RIGHT
+        x: 0
+        y: 0
+        width: 100
+        height: 100
+        bg_opa: 0
+        border_width: 0
+        clickable: true
+        on_press:
+          - logger.log: "WiFi page nav button PRESSED!"
+          - lambda: |-
+              ESP_LOGI("touch", "Navigation button touched");
+              id(last_auto_rotation_time) = millis();
+              ESP_LOGD("touch", "Auto-rotation timer reset");
+          - lvgl.page.next:
+              animation: OUT_LEFT
+              time: 300ms
