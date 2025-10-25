@@ -520,7 +520,7 @@ interval:
                 then:
                   - if:
                       condition:
-                        lambda: 'return !id(wifi_stat_connected_state) && id(current_page_index) == 1;'
+                        lambda: 'return !id(wifi_stat_connected_state) && id(current_page_index) == 0;'
                       then:
                         - lvgl.widget.update:
                             id: wifi_stat
@@ -708,7 +708,7 @@ interval:
           else:
             - if:
                 condition:
-                  lambda: 'return id(wifi_stat_connected_state) && id(current_page_index) == 1;'
+                  lambda: 'return id(wifi_stat_connected_state) && id(current_page_index) == 0;'
                 then:
                   - lvgl.widget.update:
                       id: wifi_stat
@@ -716,7 +716,7 @@ interval:
             - lambda: 'id(wifi_stat_connected_state) = false;'
             - if:
                 condition:
-                  lambda: 'return id(wifi_logo_visible) && id(current_page_index) == 1;'
+                  lambda: 'return id(wifi_logo_visible) && id(current_page_index) == 0;'
                 then:
                   - lvgl.widget.hide:
                       id: ym_image
@@ -8055,35 +8055,22 @@ text:
 esphome:
   name: ${name}
   on_boot:
-    # Very early boot - set page before LVGL first render
-    - priority: 600
+    - priority: 800  # Very early - before components load
       then:
-        - if:
-            condition:
-              lambda: 'return id(default_page_select_boot).state == std::string("Vertical Clock");'
-            then:
-              - logger.log: "Pre-render: Setting Vertical Clock as initial page"
-              - lvgl.page.show: vertical_clock_page
-    # Main boot sequence
+        - delay: 50ms  # Brief delay for LVGL to initialize
+        - lvgl.page.show: vertical_clock_page
+        - logger.log: "Set initial page to Vertical Clock"
     - priority: -100
       then:
         - logger.log: "Boot sequence starting (priority -100)"
         - light.turn_off: rgb_light
-        # Ensure the very first visible page is the Vertical Clock if selected by default,
-        # before any long init delay. This prevents briefly showing the Main page at power-on.
-        - if:
-            condition:
-              lambda: 'return id(default_page_select_boot).state == std::string("Vertical Clock");'
-            then:
-              - logger.log: "Early show: Vertical Clock page"
-              - lvgl.page.show: vertical_clock_page
-        - delay: 10s  # Increased from 1s to allow display controller to fully initialize after OTA
+        - delay: 1s  # Brief delay for LVGL to initialize
         - lambda: |-
             const std::string &choice = id(default_page_select_boot).state;
             if (choice == "WiFi") {
               id(default_page_index) = 1;
             } else if (choice == "Weather") {
-              id(default_page_index) = 2;
+                id(default_page_index) = 2;
             } else if (choice == "Daily Forecast") {
               id(default_page_index) = 3;
             } else if (choice == "Vertical Clock") {
@@ -8101,13 +8088,13 @@ esphome:
               - logger.log: "Showing Vertical Clock page"
               - lvgl.page.show: vertical_clock_page
             else:
-            - if:
-                condition:
-                  lambda: 'return id(default_page_index) == 1;'
-                then:
-                  - logger.log: "Showing WiFi page"
-                  - lvgl.page.show: wifi_page
-                else:
+              - if:
+                  condition:
+                    lambda: 'return id(default_page_index) == 1;'
+                  then:
+                    - logger.log: "Showing WiFi page"
+                    - lvgl.page.show: wifi_page
+                  else:
                   - if:
                       condition:
                         lambda: 'return id(default_page_index) == 2;'
