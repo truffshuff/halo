@@ -29,6 +29,24 @@
 # Required sensors in your main config:
 #   - wifi_signal_db: WiFi RSSI sensor
 
+# LVGL configuration for WiFi display
+lvgl:
+  gradients:
+    - id: wifi_signal_gradient
+      direction: hor
+      dither: none
+      stops:
+        - color: 0xFF0000  # Red - weak signal
+          position: 0
+        - color: 0xFF8000  # Orange
+          position: 64
+        - color: 0xFFFF00  # Yellow
+          position: 128
+        - color: 0x80FF00  # Yellow-green
+          position: 192
+        - color: 0x00FF00  # Green - strong signal
+          position: 255
+
 # Global variables for WiFi display state tracking
 globals:
   - id: wifi_stat_connected_state
