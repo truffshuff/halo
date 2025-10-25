@@ -851,20 +851,6 @@ interval:
           then:
             - script.execute: time_update
 
-  # LVGL memory cleanup - runs after boot complete (every 60s as preventive maintenance)
-  - interval: 60s
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_complete) && !id(ota_in_progress);'
-          then:
-            - lambda: |-
-                lv_obj_t *scr = lv_scr_act();
-                if (scr != NULL) {
-                  ESP_LOGD("lvgl", "Periodic LVGL cleanup - Free heap: %d", esp_get_free_heap_size());
-                  lv_obj_clean(scr);
-                }
-
   - interval: 1s
     then:
       - if:
