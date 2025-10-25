@@ -42,13 +42,13 @@ gradients:
 # WiFi & WireGuard Page (Full version with VPN info)
 pages:
   - id: wifi_page
-  bg_color: 0x000000
-  bg_opa: COVER
-  scrollbar_mode: "OFF"
-  on_load:
-    - script.execute: page_transition_cleanup
-    - lambda: 'id(current_page_index) = 2;'  # wifi_page
-  widgets:
+    bg_color: 0x000000
+    bg_opa: COVER
+    scrollbar_mode: "OFF"
+    on_load:
+      - script.execute: page_transition_cleanup
+      - lambda: 'id(current_page_index) = 2;'  # wifi_page
+    widgets:
     - label:
         text: "WiFi & VPN \nStatistics"
         align: CENTER
