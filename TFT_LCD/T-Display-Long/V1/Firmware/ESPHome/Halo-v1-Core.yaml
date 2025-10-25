@@ -510,7 +510,7 @@ select:
           id(default_page_index) = idx;
 
 interval:
-  - interval: 15s  # Increased from 10s to reduce memory churn
+  - interval: 2s  # Reduced from 15s for faster WiFi status updates on AirQ page
     then:
       - if:
           condition:
