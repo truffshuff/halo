@@ -1,0 +1,77 @@
+# WireGuard Package
+# Include this package in any device configuration to enable WireGuard VPN functionality
+#
+# Usage:
+#   packages:
+#     wireguard: !include packages/wireguard.yaml
+#
+# Required secrets (add to your secrets.yaml):
+#   wg_address: Your WireGuard interface IP (e.g., 10.0.0.2)
+#   wg_netmask: Your WireGuard netmask (e.g., 255.255.255.0)
+#   wg_prikey: Your WireGuard private key
+#   wg_peerport: Your WireGuard peer port (e.g., 51820)
+#   wg_peerendpt: Your WireGuard server IP (e.g., 1.2.3.4)
+#   wg_pubkey: Your WireGuard server public key
+#   wg_shrdkey: Your WireGuard preshared key (optional)
+
+# WireGuard configuration
+wireguard:
+  id: wg0
+  address: !secret wg_address
+  netmask: !secret wg_netmask
+  private_key: !secret wg_prikey
+  peer_port: !secret wg_peerport
+  peer_endpoint: !secret wg_peerendpt
+  peer_public_key: !secret wg_pubkey
+  peer_preshared_key: !secret wg_shrdkey
+  peer_allowed_ips:
+    - 192.168.1.0/24
+  peer_persistent_keepalive: 25
+  require_connection_to_proceed: false
+
+# WireGuard sensors
+sensor:
+  - platform: wireguard
+    wireguard_id: wg0
+    latest_handshake:
+      name: "WireGuard Latest Handshake"
+      id: wireguard_handshake
+
+# WireGuard binary sensors
+binary_sensor:
+  - platform: wireguard
+    wireguard_id: wg0
+    status:
+      name: "WireGuard Status"
+      id: wireguard_status
+    enabled:
+      name: "WireGuard Enabled"
+      id: wireguard_enabled_sensor
+
+# WireGuard text sensors
+text_sensor:
+  - platform: wireguard
+    wireguard_id: wg0
+    address:
+      name: "WireGuard Address"
+      id: wireguard_address_text
+
+# WireGuard enable/disable switch
+switch:
+  - platform: template
+    name: "Enable WireGuard"
+    id: wireguard_enabled
+    icon: mdi:vpn
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - logger.log: "Switching to SNTP time source for WireGuard"
+      - delay: 500ms
+      - wireguard.enable:
+          id: wg0
+      - logger.log: "WireGuard enabled"
+    on_turn_off:
+      - wireguard.disable:
+          id: wg0
+      - logger.log: "WireGuard disabled"
