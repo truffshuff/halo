@@ -1729,13 +1729,13 @@ sensor:
 
   # LVGL-specific memory diagnostics
   - platform: template
-    name: "LVGL Memory Used"
+    name: "LVGL Total Size"
     lambda: |-
       lv_mem_monitor_t mon;
       lv_mem_monitor(&mon);
-      return mon.used_size;
+      return mon.total_size;
     unit_of_measurement: "bytes"
-    update_interval: 10s
+    update_interval: 60s
     entity_category: "diagnostic"
 
   - platform: template
@@ -1744,6 +1744,26 @@ sensor:
       lv_mem_monitor_t mon;
       lv_mem_monitor(&mon);
       return mon.free_size;
+    unit_of_measurement: "bytes"
+    update_interval: 10s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "LVGL Largest Free Block"
+    lambda: |-
+      lv_mem_monitor_t mon;
+      lv_mem_monitor(&mon);
+      return mon.free_biggest_size;
+    unit_of_measurement: "bytes"
+    update_interval: 10s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "LVGL Max Used"
+    lambda: |-
+      lv_mem_monitor_t mon;
+      lv_mem_monitor(&mon);
+      return mon.max_used;
     unit_of_measurement: "bytes"
     update_interval: 10s
     entity_category: "diagnostic"
