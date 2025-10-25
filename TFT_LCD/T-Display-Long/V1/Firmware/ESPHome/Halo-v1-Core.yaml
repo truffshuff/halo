@@ -1115,12 +1115,12 @@ api:
             call.perform();
           }
       - delay: 500ms
-      # BLE tracker disabled to prevent heap exhaustion
-      # - esp32_ble_tracker.start_scan:
-      #     continuous: true
-  # on_client_disconnected:
-      # BLE tracker disabled to prevent heap exhaustion
-      # - esp32_ble_tracker.stop_scan:
+      #BLE tracker disabled to prevent heap exhaustion
+      - esp32_ble_tracker.start_scan:
+          continuous: true
+  on_client_disconnected:
+      #BLE tracker disabled to prevent heap exhaustion
+      - esp32_ble_tracker.stop_scan:
           
   services:
     #Co2 Calibration Service
