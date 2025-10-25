@@ -847,8 +847,8 @@ interval:
           then:
             - script.execute: time_update
 
-  # LVGL memory fragmentation monitoring - runs after boot complete
-  - interval: 30s
+  # LVGL memory cleanup - runs after boot complete (every 60s as preventive maintenance)
+  - interval: 60s
     then:
       - if:
           condition:
@@ -857,12 +857,8 @@ interval:
             - lambda: |-
                 lv_obj_t *scr = lv_scr_act();
                 if (scr != NULL) {
-                  lv_mem_monitor_t mon;
-                  lv_mem_monitor(&mon);
-                  if (mon.frag_pct > 60) {
-                    ESP_LOGW("lvgl", "High LVGL fragmentation: %d%%, forcing cleanup", mon.frag_pct);
-                    lv_obj_clean(scr);
-                  }
+                  ESP_LOGD("lvgl", "Periodic LVGL cleanup - Free heap: %d", esp_get_free_heap_size());
+                  lv_obj_clean(scr);
                 }
 
   - interval: 1s
@@ -954,29 +950,29 @@ interval:
               std::vector<int> page_indices;  // Maps to the page in sorted order
 
               // Collect enabled pages with their orders (use index to identify page)
-              // Index: 0=AirQ, 1=wifi, 2=weather, 3=hourly_forecast, 4=daily_forecast, 5=vertical_clock
+              // Index: 0=vertical_clock, 1=AirQ, 2=wifi, 3=weather, 4=hourly_forecast, 5=daily_forecast
+              if (id(page_rotation_vertical_clock_enabled)) {
+                page_orders.push_back(id(page_rotation_vertical_clock_order));
+                page_indices.push_back(0);
+              }
               if (id(page_rotation_AirQ_enabled)) {
                 page_orders.push_back(id(page_rotation_AirQ_order));
-                page_indices.push_back(0);
+                page_indices.push_back(1);
               }
               if (id(page_rotation_wifi_enabled)) {
                 page_orders.push_back(id(page_rotation_wifi_order));
-                page_indices.push_back(1);
+                page_indices.push_back(2);
               }
               if (id(page_rotation_weather_enabled)) {
                 page_orders.push_back(id(page_rotation_weather_order));
-                page_indices.push_back(2);
+                page_indices.push_back(3);
               }
               if (id(page_rotation_hourly_forecast_enabled)) {
                 page_orders.push_back(id(page_rotation_hourly_forecast_order));
-                page_indices.push_back(3);
+                page_indices.push_back(4);
               }
               if (id(page_rotation_daily_forecast_enabled)) {
                 page_orders.push_back(id(page_rotation_daily_forecast_order));
-                page_indices.push_back(4);
-              }
-              if (id(page_rotation_vertical_clock_enabled)) {
-                page_orders.push_back(id(page_rotation_vertical_clock_order));
                 page_indices.push_back(5);
               }
 
@@ -1316,22 +1312,23 @@ time:
 
 script:
   - id: page_transition_cleanup
-    mode: single  # Prevent multiple simultaneous executions
+    mode: queued  # Queue executions instead of warning about duplicates
+    max_runs: 2   # Allow up to 2 queued runs
     then:
       - if:
           condition:
             lambda: 'return id(boot_complete);'
           then:
+            - delay: 50ms  # Small delay to prevent rapid successive calls
             - lambda: |-
                 // Safety check: Only run if LVGL is fully initialized
                 lv_obj_t *scr = lv_scr_act();
                 if (scr == NULL) {
-                  ESP_LOGW("lvgl", "Page transition cleanup skipped - LVGL not initialized yet");
-                  return;
+                  return;  // Silently skip if not initialized
                 }
 
                 // Log current memory state before cleanup
-                ESP_LOGD("lvgl", "Page transition cleanup starting - Free heap: %d", esp_get_free_heap_size());
+                ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %d", esp_get_free_heap_size());
 
                 // Clear all cached strings to free memory
                 id(time_update_last_text).clear();
@@ -1342,9 +1339,6 @@ script:
 
                 // Force immediate display flush to prevent buffer buildup
                 lv_refr_now(NULL);
-
-                // Log memory state after cleanup
-                ESP_LOGD("lvgl", "Page transition cleanup complete - Free heap: %d", esp_get_free_heap_size());
 
   - id: time_update
     mode: restart
@@ -1755,69 +1749,6 @@ sensor:
     unit_of_measurement: "%"
     accuracy_decimals: 1
     update_interval: 60s
-    entity_category: "diagnostic"
-
-  # LVGL-specific memory diagnostics
-  - platform: template
-    name: "LVGL Total Size"
-    lambda: |-
-      lv_mem_monitor_t mon;
-      lv_mem_monitor(&mon);
-      return mon.total_size;
-    unit_of_measurement: "bytes"
-    update_interval: 60s
-    entity_category: "diagnostic"
-
-  - platform: template
-    name: "LVGL Memory Free"
-    lambda: |-
-      lv_mem_monitor_t mon;
-      lv_mem_monitor(&mon);
-      return mon.free_size;
-    unit_of_measurement: "bytes"
-    update_interval: 10s
-    entity_category: "diagnostic"
-
-  - platform: template
-    name: "LVGL Largest Free Block"
-    lambda: |-
-      lv_mem_monitor_t mon;
-      lv_mem_monitor(&mon);
-      return mon.free_biggest_size;
-    unit_of_measurement: "bytes"
-    update_interval: 10s
-    entity_category: "diagnostic"
-
-  - platform: template
-    name: "LVGL Max Used"
-    lambda: |-
-      lv_mem_monitor_t mon;
-      lv_mem_monitor(&mon);
-      return mon.max_used;
-    unit_of_measurement: "bytes"
-    update_interval: 10s
-    entity_category: "diagnostic"
-
-  - platform: template
-    name: "LVGL Memory Fragmentation"
-    lambda: |-
-      lv_mem_monitor_t mon;
-      lv_mem_monitor(&mon);
-      return mon.frag_pct;
-    unit_of_measurement: "%"
-    accuracy_decimals: 0
-    update_interval: 10s
-    entity_category: "diagnostic"
-
-  - platform: template
-    name: "LVGL Memory Usage"
-    lambda: |-
-      lv_mem_monitor_t mon;
-      lv_mem_monitor(&mon);
-      return mon.used_pct;
-    unit_of_measurement: "%"
-    accuracy_decimals: 0
-    update_interval: 10s
     entity_category: "diagnostic"
 
   # DMA-capable memory monitoring
