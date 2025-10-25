@@ -24,17 +24,17 @@ esp32:
 #   authorizer: none
 
 # Temporarily disabled to prevent heap exhaustion and malloc failures
-esp32_ble_tracker:
-  id: ble_tracker
-  scan_parameters:
-    interval: 1100ms
-    window: 1100ms
-    active: true
-    continuous: false
+# esp32_ble_tracker:
+#   id: ble_tracker
+#   scan_parameters:
+#     interval: 1100ms
+#     window: 1100ms
+#     active: true
+#     continuous: false
 
-bluetooth_proxy:
-  active: true
-  connection_slots: 1  # Reduced from 3 to 1 to lower BLE memory usage
+# bluetooth_proxy:
+#   active: true
+#   connection_slots: 1  # Reduced from 3 to 1 to lower BLE memory usage
 
 external_components:
   - source: github://truffshuff/esphome-components
@@ -1115,12 +1115,12 @@ api:
             call.perform();
           }
       - delay: 500ms
-      #BLE tracker disabled to prevent heap exhaustion
-      - esp32_ble_tracker.start_scan:
-          continuous: true
-  on_client_disconnected:
-      #BLE tracker disabled to prevent heap exhaustion
-      - esp32_ble_tracker.stop_scan:
+  #     #BLE tracker disabled to prevent heap exhaustion
+  #     - esp32_ble_tracker.start_scan:
+  #         continuous: true
+  # on_client_disconnected:
+  #     #BLE tracker disabled to prevent heap exhaustion
+  #     - esp32_ble_tracker.stop_scan:
           
   services:
     #Co2 Calibration Service
