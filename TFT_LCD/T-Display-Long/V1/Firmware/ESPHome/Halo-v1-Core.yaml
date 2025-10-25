@@ -211,43 +211,7 @@ globals:
   - id: wifi_ip_needs_render
     type: bool
     restore_value: no
-    initial_value: 'false'
-  # - id: wg_status_last_text
-  #   type: std::string
-  #   restore_value: no
-  #   initial_value: ""
-  # - id: wg_status_needs_render
-  #   type: bool
-  #   restore_value: no
-  #   initial_value: 'false'
-  # - id: wg_status_connected_state
-  #   type: bool
-  #   restore_value: no
-  #   initial_value: 'false'
-  # - id: wg_status_color_needs_render
-  #   type: bool
-  #   restore_value: no
-  #   initial_value: 'false'
-  # - id: wg_address_last_text
-  #   type: std::string
-  #   restore_value: no
-  #   initial_value: ""
-  # - id: wg_address_needs_render
-  #   type: bool
-  #   restore_value: no
-  #   initial_value: 'false'
-  # - id: wg_handshake_last_text
-  #   type: std::string
-  #   restore_value: no
-  #   initial_value: ""
-  # - id: wg_handshake_needs_render
-  #   type: bool
-  #   restore_value: no
-  #   initial_value: 'false'
-  # - id: wg_endpoint_initialized
-  #   type: bool
-  #   restore_value: no
-  #   initial_value: 'false'
+    initial_value: 'false' 
   # Sensor UI update batching
   - id: sensor_ui_dirty
     type: bool
