@@ -510,7 +510,7 @@ select:
           id(default_page_index) = idx;
 
 interval:
-  - interval: 10s  # Reduced from 15s for faster WiFi status updates on AirQ page
+  - interval: 5s  # Reduced from 15s for faster WiFi status updates on AirQ page
     then:
       - if:
           condition:
@@ -1727,14 +1727,14 @@ sensor:
     name: "Free Heap"
     lambda: return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   - platform: template
     name: "Largest Free Block"
     lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   - platform: template
@@ -1748,7 +1748,7 @@ sensor:
       return 0.0;
     unit_of_measurement: "%"
     accuracy_decimals: 1
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   # DMA-capable memory monitoring
@@ -1756,14 +1756,14 @@ sensor:
     name: "DMA Capable Heap Free"
     lambda: return heap_caps_get_free_size(MALLOC_CAP_DMA);
     unit_of_measurement: "bytes"
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   - platform: template
     name: "DMA Capable Largest Block"
     lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
     unit_of_measurement: "bytes"
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   # PSRAM monitoring (if available)
@@ -1776,7 +1776,7 @@ sensor:
       }
       return 0;  // No PSRAM available
     unit_of_measurement: "bytes"
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   # Total heap across all types
@@ -1784,7 +1784,7 @@ sensor:
     name: "Total Free Heap (All)"
     lambda: return heap_caps_get_free_size(MALLOC_CAP_8BIT);
     unit_of_measurement: "bytes"
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   # Minimum free heap since boot (indicates worst-case memory pressure)
@@ -1792,7 +1792,7 @@ sensor:
     name: "Min Free Heap Ever"
     lambda: return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
-    update_interval: 60s
+    update_interval: 30s
     entity_category: "diagnostic"
 
   # Display refresh rate monitor
