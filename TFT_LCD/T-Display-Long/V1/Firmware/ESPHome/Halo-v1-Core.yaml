@@ -84,7 +84,7 @@ globals:
     restore_value: no
     initial_value: '0'
   # Page rotation settings - which pages are included
-  - id: page_rotation_main_enabled
+  - id: page_rotation_AirQ_enabled
     type: bool
     restore_value: yes
     initial_value: 'true'
@@ -109,7 +109,7 @@ globals:
     restore_value: yes
     initial_value: 'true'
   # Page rotation order (1-5, 0 means disabled)
-  - id: page_rotation_main_order
+  - id: page_rotation_AirQ_order
     type: int
     restore_value: yes
     initial_value: '1'
@@ -328,18 +328,18 @@ switch:
 
   # Page rotation selection switches
   - platform: template
-    name: "Page Rotation: Main Page"
-    id: page_rotation_main_switch
+    name: "Page Rotation: AirQ Page"
+    id: page_rotation_AirQ_switch
     icon: mdi:view-dashboard
     restore_mode: RESTORE_DEFAULT_ON
     optimistic: true
     entity_category: "config"
     on_turn_on:
-      - lambda: 'id(page_rotation_main_enabled) = true;'
-      - logger.log: "Main page enabled in rotation"
+      - lambda: 'id(page_rotation_AirQ_enabled) = true;'
+      - logger.log: "AirQ page enabled in rotation"
     on_turn_off:
-      - lambda: 'id(page_rotation_main_enabled) = false;'
-      - logger.log: "Main page disabled in rotation"
+      - lambda: 'id(page_rotation_AirQ_enabled) = false;'
+      - logger.log: "AirQ page disabled in rotation"
 
   - platform: template
     name: "Page Rotation: WiFi Page"
@@ -490,7 +490,7 @@ select:
     entity_category: "config"
     options:
       - "Vertical Clock"
-      - "Main"
+      - "AirQ"
       - "WiFi"
       - "Weather"
       - "Daily Forecast"
@@ -522,7 +522,7 @@ interval:
                 then:
                   - if:
                       condition:
-                        lambda: 'return !id(wifi_stat_connected_state) && id(current_page_index) == 1;'  # main_page
+                        lambda: 'return !id(wifi_stat_connected_state) && id(current_page_index) == 1;'  # AirQ_page
                       then:
                         - lvgl.widget.update:
                             id: wifi_stat
@@ -710,7 +710,7 @@ interval:
           else:
             - if:
                 condition:
-                  lambda: 'return id(wifi_stat_connected_state) && id(current_page_index) == 1;'  # main_page
+                  lambda: 'return id(wifi_stat_connected_state) && id(current_page_index) == 1;'  # AirQ_page
                 then:
                   - lvgl.widget.update:
                       id: wifi_stat
@@ -718,7 +718,7 @@ interval:
             - lambda: 'id(wifi_stat_connected_state) = false;'
             - if:
                 condition:
-                  lambda: 'return id(wifi_logo_visible) && id(current_page_index) == 1;'  # main_page
+                  lambda: 'return id(wifi_logo_visible) && id(current_page_index) == 1;'  # AirQ_page
                 then:
                   - lvgl.widget.hide:
                       id: ym_image
@@ -936,9 +936,9 @@ interval:
               std::vector<int> page_indices;  // Maps to the page in sorted order
 
               // Collect enabled pages with their orders (use index to identify page)
-              // Index: 0=main, 1=wifi, 2=weather, 3=hourly_forecast, 4=daily_forecast, 5=vertical_clock
-              if (id(page_rotation_main_enabled)) {
-                page_orders.push_back(id(page_rotation_main_order));
+              // Index: 0=AirQ, 1=wifi, 2=weather, 3=hourly_forecast, 4=daily_forecast, 5=vertical_clock
+              if (id(page_rotation_AirQ_enabled)) {
+                page_orders.push_back(id(page_rotation_AirQ_order));
                 page_indices.push_back(0);
               }
               if (id(page_rotation_wifi_enabled)) {
@@ -1014,11 +1014,11 @@ interval:
                 else:
                   - if:
                       condition:
-                        lambda: 'return id(current_page_index) == 1;'  # main_page
+                        lambda: 'return id(current_page_index) == 1;'  # AirQ_page
                       then:
-                        - logger.log: "AUTO PAGE ROTATION -> Main Page"
+                        - logger.log: "AUTO PAGE ROTATION -> AirQ Page"
                         - lvgl.page.show:
-                            id: main_page
+                            id: AirQ_page
                             animation: OUT_LEFT
                             time: 300ms
                       else:
@@ -1126,9 +1126,9 @@ api:
       then:
         - if:
             condition:
-              lambda: 'return page_name == "main" || page_name == "Main";'
+              lambda: 'return page_name == "AirQ" || page_name == "AirQ";'
             then:
-              - lvgl.page.show: main_page
+              - lvgl.page.show: AirQ_page
             else:
               - if:
                   condition:
@@ -1327,7 +1327,7 @@ script:
           }
       - if:
           condition:
-            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 1;'  # main_page
+            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 1;'  # AirQ_page
           then:
             - lvgl.label.update:
                 id: timeVal
@@ -1509,8 +1509,8 @@ number:
 
   # Page rotation order numbers (1-5, lower numbers show first)
   - platform: template
-    name: "Page Order: Main Page"
-    id: page_order_main
+    name: "Page Order: AirQ Page"
+    id: page_order_AirQ
     icon: mdi:numeric
     restore_value: true
     initial_value: 1
@@ -1521,9 +1521,9 @@ number:
     step: 1
     mode: box
     on_value:
-      - lambda: 'id(page_rotation_main_order) = (int)x;'
+      - lambda: 'id(page_rotation_AirQ_order) = (int)x;'
       - logger.log:
-          format: "Main page order set to %d"
+          format: "AirQ page order set to %d"
           args: ['(int)x']
 
   - platform: template
@@ -5240,7 +5240,7 @@ light:
             Color led_color;
             int page = id(current_page_index);
 
-            // Main page (1) - show AQI color
+            // AirQ page (1) - show AQI color
             if (page == 1) {
               float aqi = id(computed_halo_aqi).state;
               if (std::isnan(aqi) || aqi <= 50) {
@@ -5433,13 +5433,13 @@ lvgl:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
-    - id: main_page
+    - id: AirQ_page
       bg_color: my_black
       #bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
         - lambda: |-
-            id(current_page_index) = 1;  // main_page
+            id(current_page_index) = 1;  // AirQ_page
             id(time_update_last_text).clear();
         - script.execute: time_update
       widgets:
@@ -5965,7 +5965,7 @@ lvgl:
             y: 299
             text: "%"
         - obj:
-            id: nav_button_main
+            id: nav_button_AirQ
             align: TOP_RIGHT
             x: 0
             y: 0
@@ -5975,7 +5975,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_press:
-              - logger.log: "Main page nav button PRESSED!"
+              - logger.log: "AirQ page nav button PRESSED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -8606,7 +8606,7 @@ esphome:
             } else if (choice == "Vertical Clock") {
               id(default_page_index) = 0;  // vertical_clock_page
             } else {
-              id(default_page_index) = 1;  // main_page (default)
+              id(default_page_index) = 1;  // AirQ_page (default)
             }
         - logger.log:
             format: "Setting default page (index: %d)"
@@ -8639,6 +8639,6 @@ esphome:
                               - logger.log: "Showing Daily Forecast page"
                               - lvgl.page.show: daily_forecast_page
                             else:
-                              - logger.log: "Showing Main page"
-                              - lvgl.page.show: main_page
+                              - logger.log: "Showing AirQ page"
+                              - lvgl.page.show: AirQ_page
         - logger.log: "Boot sequence complete"
