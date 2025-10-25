@@ -1298,8 +1298,16 @@ time:
 
 script:
   - id: page_transition_cleanup
+    mode: single  # Prevent multiple simultaneous executions
     then:
       - lambda: |-
+          // Safety check: Only run if LVGL is fully initialized
+          lv_obj_t *scr = lv_scr_act();
+          if (scr == NULL) {
+            ESP_LOGW("lvgl", "Page transition cleanup skipped - LVGL not initialized yet");
+            return;
+          }
+
           // Log current memory state before cleanup
           ESP_LOGD("lvgl", "Page transition cleanup starting - Free heap: %d", esp_get_free_heap_size());
 
@@ -1308,7 +1316,7 @@ script:
           id(weather_last_condition).clear();
 
           // Force LVGL to invalidate current screen and redraw
-          lv_obj_invalidate(lv_scr_act());
+          lv_obj_invalidate(scr);
 
           // Force immediate display flush to prevent buffer buildup
           lv_refr_now(NULL);
@@ -5493,12 +5501,18 @@ lvgl:
     timeout: 1s
     then:
       - lambda: |-
+          // Safety check: Only run if LVGL is fully initialized
+          lv_obj_t *scr = lv_scr_act();
+          if (scr == NULL) {
+            return;  // Skip if not initialized
+          }
+
           // Force LVGL memory cleanup during idle
           lv_mem_monitor_t mon;
           lv_mem_monitor(&mon);
           if (mon.frag_pct > 50) {
             ESP_LOGW("lvgl", "High fragmentation: %d%%, forcing cleanup", mon.frag_pct);
-            lv_obj_clean(lv_scr_act());
+            lv_obj_clean(scr);
           }
   
   gradients:
