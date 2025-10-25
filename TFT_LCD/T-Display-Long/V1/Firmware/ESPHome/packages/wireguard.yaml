@@ -28,7 +28,7 @@ wireguard:
     - 192.168.1.0/24
     - 10.6.0.1/32
     - 10.6.0.2/32
-  peer_persistent_keepalive: 25
+  peer_persistent_keepalive: 25s
   require_connection_to_proceed: false
 
 # WireGuard sensors
