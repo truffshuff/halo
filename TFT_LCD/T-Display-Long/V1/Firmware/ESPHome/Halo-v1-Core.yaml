@@ -20,22 +20,6 @@ esp32:
     # platform_version: 6.9.0
     # version: 5.3.1
 
-# esp32_improv:
-#   authorizer: none
-
-# Temporarily disabled to prevent heap exhaustion and malloc failures
-# esp32_ble_tracker:
-#   id: ble_tracker
-#   scan_parameters:
-#     interval: 1100ms
-#     window: 1100ms
-#     active: true
-#     continuous: false
-
-# bluetooth_proxy:
-#   active: true
-#   connection_slots: 1  # Reduced from 3 to 1 to lower BLE memory usage
-
 external_components:
   - source: github://truffshuff/esphome-components
     components: [axs15231, sy6970]
@@ -43,7 +27,6 @@ external_components:
   - source: github://pr#7770 # RMT driver, remove rmt_channel when using esp-idf
     components: [ remote_base, remote_receiver, remote_transmitter, esp32_rmt, esp32_rmt_led_strip ]
     refresh: 0s
-
 
 spi:
   id: lily_spi
@@ -229,42 +212,42 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: wg_status_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wg_status_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_status_connected_state
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_status_color_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_address_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wg_address_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_handshake_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wg_handshake_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_endpoint_initialized
-    type: bool
-    restore_value: no
-    initial_value: 'false'
+  # - id: wg_status_last_text
+  #   type: std::string
+  #   restore_value: no
+  #   initial_value: ""
+  # - id: wg_status_needs_render
+  #   type: bool
+  #   restore_value: no
+  #   initial_value: 'false'
+  # - id: wg_status_connected_state
+  #   type: bool
+  #   restore_value: no
+  #   initial_value: 'false'
+  # - id: wg_status_color_needs_render
+  #   type: bool
+  #   restore_value: no
+  #   initial_value: 'false'
+  # - id: wg_address_last_text
+  #   type: std::string
+  #   restore_value: no
+  #   initial_value: ""
+  # - id: wg_address_needs_render
+  #   type: bool
+  #   restore_value: no
+  #   initial_value: 'false'
+  # - id: wg_handshake_last_text
+  #   type: std::string
+  #   restore_value: no
+  #   initial_value: ""
+  # - id: wg_handshake_needs_render
+  #   type: bool
+  #   restore_value: no
+  #   initial_value: 'false'
+  # - id: wg_endpoint_initialized
+  #   type: bool
+  #   restore_value: no
+  #   initial_value: 'false'
   # Sensor UI update batching
   - id: sensor_ui_dirty
     type: bool
