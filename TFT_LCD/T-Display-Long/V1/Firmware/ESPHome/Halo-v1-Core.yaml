@@ -1,16 +1,23 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.26.0714"
+  version: "25.10.26.1402"
   device_description: ${name} - v${version}.
 
 # Include modular packages
 packages:
   page_registry: !include packages/page-registry.yaml
-  #esp32_improv: !include packages/esp32_improv.yaml
-  # For Bluetooth Proxy you need ble_tracker enabled
-  #esp32_ble_tracker: !include packages/esp32_ble_tracker.yaml
-  #bluetooth_proxy: !include packages/bluetooth_proxy.yaml
+
+  # BLE packages (optional - see packages/README-BLE-INTEGRATION.md)
+  # OPTION 1: BLE DISABLED (default) - Use BLE stubs (recommended):
+  ble_stubs: !include packages/ble-stubs.yaml
+  # OPTION 2: BLE ENABLED - Comment out the line above and uncomment this:
+  # ble_core: !include packages/ble-core.yaml
+  # WARNING: Enabling BLE can cause heap exhaustion and crashes!
+  # Reduce LVGL buffer_size to 15-20% if enabling BLE
+  # Monitor heap usage via memory_stats package
+
+  vertical_clock: !include packages/vertical-clock-core.yaml
   wireguard: !include packages/wireguard.yaml
   wifi_display: !include packages/wifi-display.yaml
   wireguard_display: !include packages/wireguard-display.yaml
@@ -30,6 +37,23 @@ packages:
   # With WireGuard (SNTP/HA switching): !include packages/time-update-wireguard.yaml
   # Without WireGuard (HA only): !include packages/time-update-basic.yaml
   time_update: !include packages/time-update-wireguard.yaml
+
+  # AirQ packages (optional - see packages/README-AIRQ-INTEGRATION.md)
+  # OPTION 1: AirQ ENABLED (default) - Use these 2 packages:
+  airq: !include packages/airq-core.yaml
+  airq_display: !include packages/airq-display.yaml
+  # OPTION 2: AirQ DISABLED - Comment out the 2 lines above and uncomment this:
+  # airq_stubs: !include packages/airq-stubs.yaml
+  # Note: Also comment out airq-display.yaml in the lvgl pages section below
+  # Note: Also remove "AirQ" option from the "Default Page" select if desired
+
+  # WiFi packages (optional - see packages/README-WIFI-INTEGRATION.md)
+  # OPTION 1: WiFi ENABLED (default) - Use wifi-core package:
+  wifi_core: !include packages/wifi-core.yaml
+  # OPTION 2: WiFi DISABLED - Comment out the line above and uncomment this:
+  # wifi_stubs: !include packages/wifi-stubs.yaml
+  # Note: Also comment out wifi-display and lvgl-wifi page includes below
+  # Note: Also remove "WiFi" option from the "Default Page" select if desired
 
 psram:
   mode: octal
@@ -94,31 +118,13 @@ globals:
     restore_value: no
     initial_value: '0'
   # Page rotation settings - which pages are included
-  - id: page_rotation_AirQ_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-  - id: page_rotation_wifi_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-  - id: page_rotation_vertical_clock_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
+  # Note: page_rotation_AirQ_enabled is defined in airq-core.yaml or airq-stubs.yaml
+  # Note: page_rotation_wifi_enabled is defined in wifi-core.yaml or wifi-stubs.yaml
+  # Note: page_rotation_vertical_clock_enabled is defined in vertical-clock-core.yaml
   # Page rotation order (1-5, 0 means disabled)
-  - id: page_rotation_AirQ_order
-    type: int
-    restore_value: yes
-    initial_value: '1'
-  - id: page_rotation_wifi_order
-    type: int
-    restore_value: yes
-    initial_value: '2'
-  - id: page_rotation_vertical_clock_order
-    type: int
-    restore_value: yes
-    initial_value: '6'
+  # Note: page_rotation_AirQ_order is defined in airq-core.yaml or airq-stubs.yaml
+  # Note: page_rotation_wifi_order is defined in wifi-core.yaml or wifi-stubs.yaml
+  # Note: page_rotation_vertical_clock_order is defined in vertical-clock-core.yaml
   - id: default_page_index
     type: int
     restore_value: yes
@@ -151,10 +157,7 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: colon_blink_state
-    type: bool
-    restore_value: no
-    initial_value: 'true'
+  # Note: colon_blink_state is defined in vertical-clock-core.yaml
   - id: display_backlight_is_on
     type: bool
     restore_value: no
@@ -190,63 +193,13 @@ switch:
     restore_mode: RESTORE_DEFAULT_ON
     optimistic: true
     entity_category: "config"
-  - platform: template
-    name: "24h Clock Format"
-    id: time_format
-    icon: mdi:clock-digital
-    restore_mode: RESTORE_DEFAULT_OFF
-    optimistic: true
-    entity_category: "config"
-  - platform: template
-    name: "Clock Colon Blink"
-    id: colon_blink_enabled
-    icon: mdi:timer-outline
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
 
   # Page rotation selection switches
-  - platform: template
-    name: "Page Rotation: AirQ Page"
-    id: page_rotation_AirQ_switch
-    icon: mdi:view-dashboard
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(page_rotation_AirQ_enabled) = true;'
-      - logger.log: "AirQ page enabled in rotation"
-    on_turn_off:
-      - lambda: 'id(page_rotation_AirQ_enabled) = false;'
-      - logger.log: "AirQ page disabled in rotation"
-
-  - platform: template
-    name: "Page Rotation: WiFi Page"
-    id: page_rotation_wifi_switch
-    icon: mdi:wifi
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(page_rotation_wifi_enabled) = true;'
-      - logger.log: "WiFi page enabled in rotation"
-    on_turn_off:
-      - lambda: 'id(page_rotation_wifi_enabled) = false;'
-      - logger.log: "WiFi page disabled in rotation"
-
-  - platform: template
-    name: "Page Rotation: Vertical Clock Page"
-    id: page_rotation_vertical_clock_switch
-    icon: mdi:clock-outline
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(page_rotation_vertical_clock_enabled) = true;'
-      - logger.log: "Vertical clock page enabled in rotation"
-    on_turn_off:
-      - lambda: 'id(page_rotation_vertical_clock_enabled) = false;'
-      - logger.log: "Vertical clock page disabled in rotation"
+  # Note: "24h Clock Format" switch is defined in vertical-clock-core.yaml
+  # Note: "Clock Colon Blink" switch is defined in vertical-clock-core.yaml
+  # Note: "Page Rotation: Vertical Clock Page" switch is defined in vertical-clock-core.yaml
+  # Note: "Page Rotation: AirQ Page" switch is defined in airq-core.yaml
+  # Note: "Page Rotation: WiFi Page" switch is defined in wifi-core.yaml
 
 select:
   - platform: template
@@ -327,10 +280,11 @@ select:
     entity_category: "config"
     options:
       - "Vertical Clock"
+      # AirQ page option (comment out if AirQ packages are disabled)
       - "AirQ"
+      # WiFi page option (comment out if WiFi packages are disabled)
       - "WiFi"
-      # Weather page options (uncomment if weather packages are enabled)
-      # Note: If you disable weather packages, comment out these 3 lines:
+      # Weather page options (comment out if weather packages are disabled)
       - "Weather"
       - "Daily Forecast"
       - "Hourly Forecast"
@@ -341,12 +295,14 @@ select:
       - lambda: |-
           int idx = 0;
           const std::string &choice = id(default_page_select_boot).state;
-          if (choice == "WiFi") idx = 1;
+          // Core pages (always available unless commented out)
+          if (choice == "Vertical Clock") idx = 0;
+          else if (choice == "AirQ") idx = 1;  // Comment out if AirQ disabled
+          else if (choice == "WiFi") idx = 2;
           // Weather page mappings (comment out if weather packages are disabled)
-          else if (choice == "Weather") idx = 2;
-          else if (choice == "Daily Forecast") idx = 3;
-          else if (choice == "Hourly Forecast") idx = 4;
-          else if (choice == "Vertical Clock") idx = 0;
+          else if (choice == "Weather") idx = 3;
+          else if (choice == "Daily Forecast") idx = 4;
+          else if (choice == "Hourly Forecast") idx = 5;
           id(default_page_index) = idx;
 
 interval:
@@ -358,19 +314,7 @@ interval:
           then:
             - script.execute: time_update
 
-  - interval: 1s
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_complete) && id(current_page_index) == 0;'  # vertical_clock_page
-          then:
-            - lambda: |-
-                if (id(colon_blink_enabled).state) {
-                  id(colon_blink_state) = !id(colon_blink_state);
-                } else if (!id(colon_blink_state)) {
-                  id(colon_blink_state) = true;
-                }
-            - script.execute: update_colon_widget
+  # Note: 1s interval for colon blink is defined in vertical-clock-core.yaml
 
   - interval: 1s
     then:
@@ -438,15 +382,19 @@ interval:
               // Collect enabled pages with their orders (use index to identify page)
               // Index: 0=vertical_clock, 1=AirQ, 2=wifi, 3=weather, 4=hourly_forecast, 5=daily_forecast
 
-              // Core pages (always available)
+              // Core pages
               if (id(page_rotation_vertical_clock_enabled)) {
                 page_orders.push_back(id(page_rotation_vertical_clock_order));
                 page_indices.push_back(0);
               }
+              // AirQ page (conditionally available based on AirQ package)
+              // This global is provided by either airq-core.yaml or airq-stubs.yaml
               if (id(page_rotation_AirQ_enabled)) {
                 page_orders.push_back(id(page_rotation_AirQ_order));
                 page_indices.push_back(1);
               }
+              // WiFi page (conditionally available based on WiFi package)
+              // This global is provided by either wifi-core.yaml or wifi-stubs.yaml
               if (id(page_rotation_wifi_enabled)) {
                 page_orders.push_back(id(page_rotation_wifi_order));
                 page_indices.push_back(2);
@@ -616,41 +564,32 @@ api:
             call.perform();
           }
       - delay: 500ms
-  #     #BLE tracker disabled to prevent heap exhaustion
-  #     - esp32_ble_tracker.start_scan:
-  #         continuous: true
-  # on_client_disconnected:
-  #     #BLE tracker disabled to prevent heap exhaustion
-  #     - esp32_ble_tracker.stop_scan:
-          
+      # Note: BLE tracker start/stop on API connection is defined in ble-core.yaml
+
   services:
-    #Co2 Calibration Service
-    - service: calibrate_co2_value
-      variables:
-        co2_ppm: float
-      then:
-        - scd4x.perform_forced_calibration:
-            value: !lambda "return co2_ppm;"
-            id: scd40
-    - service: sen55_clean
-      then:
-        - sen5x.start_fan_autoclean: sen55
+    # Note: calibrate_co2_value and sen55_clean services are defined in airq-core.yaml
     - service: set_display_page
       variables:
         page_name: string
       then:
+        # IMPORTANT: If you disable a module, comment out its page handling below
+        # Otherwise you'll get compilation errors about missing page IDs
+
+        # AirQ page handling (comment out if airq-stubs.yaml is used)
         - if:
             condition:
               lambda: 'return page_name == "AirQ" || page_name == "AirQ";'
             then:
               - lvgl.page.show: AirQ_page
             else:
+              # WiFi page handling (comment out if wifi-stubs.yaml is used)
               - if:
                   condition:
                     lambda: 'return page_name == "wifi" || page_name == "WiFi";'
                   then:
                     - lvgl.page.show: wifi_page
                   else:
+                    # Weather page handling (comment out if weather-stubs.yaml is used)
                     - if:
                         condition:
                           lambda: 'return page_name == "weather" || page_name == "Weather";'
@@ -843,86 +782,11 @@ number:
           args: ['(int)x']
 
   # Page rotation order numbers (1-6, lower numbers show first)
-  - platform: template
-    name: "Page Order: AirQ Page"
-    id: page_order_AirQ
-    icon: mdi:numeric
-    restore_value: true
-    initial_value: 1
-    min_value: 1
-    max_value: 6
-    entity_category: "config"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(page_rotation_AirQ_order) = (int)x;'
-      - logger.log:
-          format: "AirQ page order set to %d"
-          args: ['(int)x']
+  # Note: "Page Order: Vertical Clock Page" number is defined in vertical-clock-core.yaml
+  # Note: "Page Order: AirQ Page" number is defined in airq-core.yaml
+  # Note: "Page Order: WiFi Page" number is defined in wifi-core.yaml
+  # Note: SEN55 Temperature/Humidity Offset numbers are defined in airq-core.yaml
 
-  - platform: template
-    name: "Page Order: WiFi Page"
-    id: page_order_wifi
-    icon: mdi:numeric
-    restore_value: true
-    initial_value: 2
-    min_value: 1
-    max_value: 6
-    entity_category: "config"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(page_rotation_wifi_order) = (int)x;'
-      - logger.log:
-          format: "WiFi page order set to %d"
-          args: ['(int)x']
-
-  - platform: template
-    name: "Page Order: Vertical Clock Page"
-    id: page_order_vertical_clock
-    icon: mdi:numeric
-    restore_value: true
-    initial_value: 6
-    min_value: 1
-    max_value: 6
-    entity_category: "config"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(page_rotation_vertical_clock_order) = (int)x;'
-      - logger.log:
-          format: "Vertical clock page order set to %d"
-          args: ['(int)x']
-
-  - platform: template
-    name: SEN55 Temperature Offset
-    id: sen55_temperature_offset
-    restore_value: true
-    initial_value: 6.0
-    min_value: -70.0
-    max_value: 70.0
-    entity_category: "CONFIG"
-    unit_of_measurement: "°C"
-    optimistic: true
-    update_interval: never
-    step: 0.1
-    mode: box
-  - platform: template
-    name: SEN55 Humidity Offset
-    id: sen55_humidity_offset
-    restore_value: true
-    initial_value: 0
-    min_value: -70.0
-    max_value: 70.0
-    entity_category: "CONFIG"
-    unit_of_measurement: "%"
-    optimistic: true
-    update_interval: never
-    step: 0.1
-    mode: box
 binary_sensor:
   - platform: status
     name: Online
@@ -948,11 +812,7 @@ sensor:
     id: sys_uptime
     update_interval: 60s
 
-  - platform: wifi_signal
-    name: RSSI
-    id: wifi_signal_db
-    update_interval: 60s
-    entity_category: "diagnostic"
+  # Note: wifi_signal (RSSI) sensor is defined in wifi-core.yaml
 
   - platform: template
     name: "Time Update Duration"
@@ -965,612 +825,13 @@ sensor:
     update_interval: never
 
   # Weather Icon Update Duration sensor moved to packages/weather-core.yaml
-
-  - platform: template
-    name: "Computed AQI"
-    id: computed_halo_aqi
-    unit_of_measurement: ""
-    accuracy_decimals: 0
-    device_class: "aqi"
-    state_class: "measurement"
-    update_interval: never  # We'll update it manually
-
-  - platform: scd4x
-    id: scd40
-    co2:
-      name: "CO2"
-      id: "co2"
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: co2_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%d", (int)x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 600;"
-              then:
-                - lvgl.label.update:
-                    id: co2_value
-                    text_color: my_green                     
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 1000;"
-                    then:
-                      - lvgl.label.update:
-                          id: co2_value
-                          text_color: my_yellow                         
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 1500;"
-                          then:
-                            - lvgl.label.update:
-                                id: co2_value
-                                text_color: my_orange                                 
-                          else:
-                            - lvgl.label.update:
-                                id: co2_value
-                                text_color: my_red                                                                              
-    automatic_self_calibration: false
-    update_interval: 30s  # Increased from 10s to reduce I2C blocking frequency
-    measurement_mode: "periodic"
-    i2c_id: lily_i2c
-    ambient_pressure_compensation_source: bme280pressure
-
-  - platform: mics_4514
-    id: mics4514
-    nitrogen_dioxide:
-      name: Nitrogen Dioxide
-      id: "no2"
-      filters:
-      - offset: -0.16
-      - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: no2_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.02f", x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 0.03;"  # Safe level typical indoors (ppm)
-              then:
-                - lvgl.label.update:
-                    id: no2_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 0.06;"  # Slightly elevated level (ppm)
-                    then:
-                      - lvgl.label.update:
-                          id: no2_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 0.1;"  # Moderately high level (ppm)
-                          then:
-                            - lvgl.label.update:
-                                id: no2_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: no2_value
-                                text_color: my_red  # High level, unsafe indoors (ppm)                          
-    carbon_monoxide:
-      name: Carbon Monoxide
-      id: "co"
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: co_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.02f", x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 15;"
-              then:
-                - lvgl.label.update:
-                    id: co_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 30;"
-                    then:
-                      - lvgl.label.update:
-                          id: co_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 36;"
-                          then:
-                            - lvgl.label.update:
-                                id: co_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: co_value
-                                text_color: my_red                      
-    hydrogen:
-      name: Hydrogen
-      id: "h2"
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: h2_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.02f", x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 0.4;"  # Safe level typical indoors
-              then:
-                - lvgl.label.update:
-                    id: h2_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 1.0;"  # Slightly elevated level
-                    then:
-                      - lvgl.label.update:
-                          id: h2_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 2.0;"  # Moderately high level
-                          then:
-                            - lvgl.label.update:
-                                id: h2_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: h2_value
-                                text_color: my_red  # High level, unsafe indoors                       
-    methane:
-      name: Methane
-      id: "ch4"
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: ch4_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.02f", x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 2.0;"  # Typical safe level
-              then:
-                - lvgl.label.update:
-                    id: ch4_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 10.0;"  # Elevated but not critical
-                    then:
-                      - lvgl.label.update:
-                          id: ch4_value
-                          text_color: my_yellow
-                    else:
-                      - lvgl.label.update:
-                          id: ch4_value
-                          text_color: my_red  # Critical level                                        
-    ethanol:
-      name: Ethanol
-      id: "ethanol"
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: ethanol_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.02f", x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 0.5;"  # Safe level
-              then:
-                - lvgl.label.update:
-                    id: ethanol_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 1.5;"  # Slightly elevated
-                    then:
-                      - lvgl.label.update:
-                          id: ethanol_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 3.0;"  # Moderate level
-                          then:
-                            - lvgl.label.update:
-                                id: ethanol_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: ethanol_value
-                                text_color: my_red  # High level                       
-    ammonia:
-      name: Ammonia
-      id: "nh3"
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: nh3_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.02f", x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 0.5;"  # Safe level typical indoors
-              then:
-                - lvgl.label.update:
-                    id: nh3_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 1.0;"  # Slightly elevated level
-                    then:
-                      - lvgl.label.update:
-                          id: nh3_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 2.0;"  # Moderately high level
-                          then:
-                            - lvgl.label.update:
-                                id: nh3_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: nh3_value
-                                text_color: my_red  # High level, unsafe indoors                            
-    update_interval: 40s  # Increased from 12s to reduce I2C blocking frequency
-    i2c_id: lily_i2c
-    address: 0x75
-
-  - platform: bme280_i2c
-    i2c_id: lily_i2c
-    temperature:
-      name: "BME280 Temperature"
-      oversampling: 2x
-      # filters:
-      #   - lambda: |-
-      #       return x;  
-    pressure:
-      name: "BME280 Pressure"
-      id: bme280pressure
-    humidity:
-      name: "BME280 Humidity"    
-
-  - platform: sen5x
-    id: sen55
-    pm_1_0:
-      name: "PM <1µm Weight concentration"
-      id: pm_1_0
-      accuracy_decimals: 1
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: pm1_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.01f", x);
-                return buffer;          
-    pm_2_5:
-      name: "PM <2.5µm Weight concentration"
-      id: pm_2_5
-      accuracy_decimals: 1
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: pm25_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.01f", x);
-                return buffer;
-          - lvgl.label.update:
-              id: aqi_value
-              text: !lambda |-
-                float val = x; // PM2.5 value
-                float aqi = 0.0;
-
-                if (val <= 9.0) {
-                  aqi = ((50.0 - 0.0) / (9.0 - 0.0)) * (val - 0.0) + 0.0;
-                } else if (val <= 35.4) {
-                  aqi = ((100.0 - 51.0) / (35.4 - 9.1)) * (val - 9.1) + 51.0;
-                } else if (val <= 55.4) {
-                  aqi = ((150.0 - 101.0) / (55.4 - 35.5)) * (val - 35.5) + 101.0;
-                } else if (val <= 125.4) {
-                  aqi = ((200.0 - 151.0) / (125.4 - 55.5)) * (val - 55.5) + 151.0;
-                } else if (val <= 225.4) {
-                  aqi = ((300.0 - 201.0) / (225.4 - 125.5)) * (val - 125.5) + 201.0;
-                } else if (val <= 500.4) {
-                  aqi = ((500.0 - 301.0) / (500.4 - 250.5)) * (val - 250.5) + 301.0;
-                } else {
-                  return "EVAC";
-                }
-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), " %d", (int)aqi);
-                return buffer;
-
-          - lvgl.widget.update:
-              id: aqi_widget
-              bg_color: !lambda |-
-                float val = x; // PM2.5 value
-                float aqi = 0.0;
-
-                if (val <= 9.0) {
-                  aqi = ((50.0 - 0.0) / (9.0 - 0.0)) * (val - 0.0) + 0.0;
-                } else if (val <= 35.4) {
-                  aqi = ((100.0 - 51.0) / (35.4 - 9.1)) * (val - 9.1) + 51.0;
-                } else if (val <= 55.4) {
-                  aqi = ((150.0 - 101.0) / (55.4 - 35.5)) * (val - 35.5) + 101.0;
-                } else if (val <= 125.4) {
-                  aqi = ((200.0 - 151.0) / (125.4 - 55.5)) * (val - 55.5) + 151.0;
-                } else if (val <= 225.4) {
-                  aqi = ((300.0 - 201.0) / (225.4 - 125.5)) * (val - 125.5) + 201.0;
-                } else if (val <= 500.4) {
-                  aqi = ((500.0 - 301.0) / (500.4 - 250.5)) * (val - 250.5) + 301.0;
-                } else {
-                  aqi = 500.0;
-                }
-                id(computed_halo_aqi).publish_state((int)aqi);
-
-                // Return color based on AQI
-                if (aqi <= 50) {
-                  return lv_color_hex(0x76fa76); // Green
-                } else if (aqi <= 100) {
-                  return lv_color_hex(0xFFFF00); // Yellow
-                } else if (aqi <= 150) {
-                  return lv_color_hex(0xFFA500); // Orange
-                } else if (aqi <= 200) {
-                  return lv_color_hex(0xFF0000); // Red
-                } else if (aqi <= 300) {
-                  return lv_color_hex(0x800080); // Purple
-                } else {
-                  return lv_color_hex(0x800000); // Maroon
-                }        
-
-    pm_4_0:
-      name: "PM <4µm Weight concentration"
-      id: pm_4_0
-      accuracy_decimals: 1
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: pm4_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.01f", x);
-                return buffer;       
-    pm_10_0:
-      name: "PM <10µm Weight concentration"
-      id: pm_10_0
-      accuracy_decimals: 1
-      filters:
-        - throttle_average: 2s
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: pm10_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%.01f", x);
-                return buffer;       
-    temperature:
-      name: "SEN55 Temperature"
-      accuracy_decimals: 1
-      filters:
-        - offset: !lambda return -1.0 * id(sen55_temperature_offset).state;
-        - throttle_average: 2s
-      on_value:
-        then:
-          - if:
-              condition:
-                lambda: "return temp_unit_changed;"
-              then:
-                - lvgl.label.update:
-                    id: temperature_units
-                    text: !lambda |-
-                      if(id(display_temperature_unit).state == "Fahrenheit")
-                        return "\u00B0F";
-                      else if(id(display_temperature_unit).state == "Kelvin")
-                        return "K";
-                      return "\u00B0C";
-                - globals.set:
-                    id: temp_unit_changed
-                    value: "false"
-          - lvgl.label.update:
-              id: temperature_value
-              text: !lambda |-
-                static char buffer[10];
-                if(id(display_temperature_unit).state == "Fahrenheit")
-                  snprintf(buffer, sizeof(buffer), "%.01f", (x * 9.0 / 5.0) + 32.0);
-                else if(id(display_temperature_unit).state == "Kelvin")
-                  snprintf(buffer, sizeof(buffer), "%.01f", x + 273.15);
-                else
-                  snprintf(buffer, sizeof(buffer), "%.01f", x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x >= 18 && x <= 24;"  # Comfortable temperature range (°C)
-              then:
-                - lvgl.label.update:
-                    id: temperature_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return (x > 24 && x <= 27) || (x >= 16 && x < 18);"  # Slightly uncomfortable (°C)
-                    then:
-                      - lvgl.label.update:
-                          id: temperature_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return (x > 27 && x <= 30) || (x >= 10 && x < 16);"  # Moderately uncomfortable (°C)
-                          then:
-                            - lvgl.label.update:
-                                id: temperature_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: temperature_value
-                                text_color: my_red  # Extreme discomfort or unsafe (°C)
-    humidity:
-      name: "SEN55 Humidity"
-      filters:
-        - lambda: return x - id(sen55_humidity_offset).state;
-      accuracy_decimals: 0
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: rh_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%d", (int)x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x >= 30 && x <= 50;"  # Optimal indoor comfort range (%)
-              then:
-                - lvgl.label.update:
-                    id: rh_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return (x > 50 && x <= 60) || (x >= 20 && x < 30);"  # Slightly out of comfort range (%)
-                    then:
-                      - lvgl.label.update:
-                          id: rh_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return (x > 60 && x <= 70) || (x >= 10 && x < 20);"  # Moderately uncomfortable (%)
-                          then:
-                            - lvgl.label.update:
-                                id: rh_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: rh_value
-                                text_color: my_red  # Very uncomfortable or potentially hazardous (%)                             
-    voc:
-      name: "SEN55 VOC"
-      id: sen55_voc
-      algorithm_tuning:
-        #https://sensirion.com/media/documents/25AB572C/62B463AA/Sensirion_Engineering_Guidelines_SEN5x.pdf
-        index_offset: 100
-        learning_time_offset_hours: 72
-        learning_time_gain_hours: 72
-        gating_max_duration_minutes: 180
-        std_initial: 50
-        gain_factor: 230
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: voc_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%3d", (int)x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x < 150;"
-              then:
-                - lvgl.label.update:
-                    id: voc_value
-                    text_color: my_green
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 250;"
-                    then:
-                      - lvgl.label.update:
-                          id: voc_value
-                          text_color: my_yellow
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 400;"
-                          then:
-                            - lvgl.label.update:
-                                id: voc_value
-                                text_color: my_orange
-                          else:
-                            - lvgl.label.update:
-                                id: voc_value
-                                text_color: my_red                      
-    i2c_id: lily_i2c
-    address: 0x69
-    update_interval: 60s  # Increased from 14s - SEN55 blocks for 4+ seconds per read!
-
+  # AirQ sensors (computed_aqi, scd4x, mics_4514, bme280, sen5x) moved to packages/airq-core.yaml
   # Weather sensors removed - now in packages/weather-sensors.yaml
 
 # Weather icon fonts (icons_20, icons_40, icons_50, icons_80, icons_100)
 # have been moved to packages/weather-pages.yaml
-
-font:
-  # Large fonts for vertical clock
-  - file: "gfonts://Montserrat"
-    id: montserrat_80
-    size: 80
-    bpp: 4
-    glyphs: " 0123456789:-"
-  - file: "gfonts://Montserrat"
-    id: montserrat_50
-    size: 50
-    bpp: 4
-    glyphs: " 0123456789APM-"
-  - file: "gfonts://Montserrat"
-    id: montserrat_24
-    size: 24
-    bpp: 4
-    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,:-"
+# Vertical clock fonts (montserrat_80, montserrat_50, montserrat_24)
+# have been moved to packages/vertical-clock-core.yaml
 
 light:
   # - platform: esp32_rmt_led_strip
@@ -1784,666 +1045,19 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 25%  # Increased from 20% to 25% for better performance (BLE disabled)
+  buffer_size: 25%  # Increased from 20% to 25% for better performance
+                    # IMPORTANT: If enabling BLE, reduce to 15-20% to prevent heap exhaustion
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
   log_level: WARN  # Reduce logging overhead
 
   pages:
-    - id: vertical_clock_page
-      bg_color: 0x000000
-      bg_opa: COVER
-      scrollbar_mode: "OFF"
-      on_load:
-        - script.execute: page_transition_cleanup
-        - lambda: |-
-            id(current_page_index) = 0;
-            id(time_update_last_text).clear();
-            id(colon_blink_state) = true;  // Ensure colon is visible when page loads
-        - script.execute: time_update
-        - script.execute: update_colon_widget
-      widgets:
-        # Large time display vertically centered
-        - label:
-            id: vclock_hours
-            align: CENTER
-            text_font: montserrat_80
-            text_color: my_white
-            x: 0
-            y: -120
-            text: "12"
-
-        - label:
-            id: vclock_colon
-            align: CENTER
-            text_font: montserrat_80
-            text_color: my_white
-            x: 0
-            y: -20
-            text: ":"
-
-        - label:
-            id: vclock_minutes
-            align: CENTER
-            text_font: montserrat_80
-            text_color: my_white
-            x: 0
-            y: 80
-            text: "00"
-
-        - label:
-            id: vclock_ampm
-            align: CENTER
-            text_font: montserrat_50
-            text_color: my_white
-            x: 0
-            y: 180
-            text: "AM"
-
-        # Date below time
-        - label:
-            id: vclock_date
-            align: CENTER
-            text_font: montserrat_24
-            text_color: my_gray
-            x: 0
-            y: 250
-            text: "Mon, Jan 1"
-
-        # Day of week at top
-        - label:
-            id: vclock_day_top
-            align: TOP_MID
-            text_font: montserrat_24
-            text_color: my_gray
-            x: 0
-            y: 20
-            text: "Monday"
-        - obj:
-            id: nav_button_vclock
-            align: TOP_RIGHT
-            x: 0
-            y: 0
-            width: 100
-            height: 100
-            bg_opa: 0
-            border_width: 0
-            clickable: true
-            on_press:
-              - logger.log: "Vertical Clock page nav button PRESSED!"
-              - lambda: |-
-                  ESP_LOGI("touch", "Navigation button touched");
-                  id(last_auto_rotation_time) = millis();
-                  ESP_LOGD("touch", "Auto-rotation timer reset");
-              - lvgl.page.next:
-                  animation: OUT_LEFT
-                  time: 300ms
-    - id: AirQ_page
-      bg_color: my_black
-      #bg_opa: COVER
-      scrollbar_mode: "OFF"
-      on_load:
-        - script.execute: page_transition_cleanup
-        - lambda: |-
-            id(current_page_index) = 1;  // AirQ_page
-            id(time_update_last_text).clear();
-        - script.execute: time_update
-        # Immediately update WiFi indicator when page loads
-        - if:
-            condition:
-              wifi.connected:
-            then:
-              - lvgl.widget.update:
-                  id: wifi_stat
-                  text_color: my_green
-              - lambda: 'id(wifi_stat_connected_state) = true;'
-            else:
-              - lvgl.widget.update:
-                  id: wifi_stat
-                  text_color: my_red
-              - lambda: 'id(wifi_stat_connected_state) = false;'
-      widgets:
-        - image:
-            id: ym_image          
-            src: ym_logo
-            align: CENTER
-            x: 80
-            y: -309
-        - label:
-            id: timeVal
-            align: LEFT_MID
-            text_font: montserrat_18
-            text_color: my_white
-            x: 2
-            y: -309
-            text: "00:00AM"
-        - label:
-            id: wifi_stat
-            align: CENTER
-            text_font: montserrat_18
-            text_color: my_gray
-            x: 42
-            y: -309
-            text: "\uF1EB"
-      # AQI box
-        - obj:
-            id: aqi_widget
-            #align: TOP_MID
-            x: 0
-            y: 24
-            width: 180
-            height: 42
-            bg_color: 0x76fa76
-            border_width: 0
-        - label:
-            id: aqi_label
-            align: LEFT_MID
-            text_font: montserrat_28
-            text_color: my_black
-            long_mode: WRAP
-            x: 2
-            y: -275
-            text: "AQI:"
-        - label:
-            id: aqi_value
-            align: LEFT_MID
-            text_font: montserrat_28
-            text_color: my_black
-            long_mode: WRAP
-            x: 90
-            y: -275
-            text: "000"                              
-      # Temperature box
-        - label:
-            id: temperature_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: -246
-            text: "TEMP:"               
-        - label:
-            id: temperature_value
-            align: CENTER
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: 0
-            y: -234
-            text: "000.0" 
-        - label:
-            id: temperature_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -8
-            y: -234
-            text: "\u00B0F"                     
-        - line:
-            points:
-              - 0, 106
-              - 180, 106
-            line_width: 1
-            line_color: 0x00dfff
-      # CO2 box
-        - label:
-            id: co2_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: -205
-            text: "CO2:"               
-        - label:
-            id: co2_value
-            align: CENTER
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: 0
-            y: -193
-            text: "0000" 
-        - label:
-            id: co2_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: -193
-            text: "PPM"                     
-        - line:
-            points:
-              - 0, 147
-              - 180, 147
-            line_width: 1
-            line_color: 0x00dfff                              
-      # PM1 box
-        - label:
-            id: pm1_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: -164
-            text: "PM1:"               
-        - label:
-            id: pm1_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: -152
-            text: "000.0" 
-        - label:
-            id: pm1_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: -152
-            text: "ug/m3"                     
-        - line:
-            points:
-              - 0, 188
-              - 180, 188
-            line_width: 1
-            line_color: 0x00dfff             
-      # PM2.5 box
-        - label:
-            id: pm25_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: -123
-            text: "PM2.5:"               
-        - label:
-            id: pm25_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: -111
-            text: "000.0" 
-        - label:
-            id: pm25_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: -111
-            text: "ug/m3"                     
-        - line:
-            points:
-              - 0, 229
-              - 180, 229
-            line_width: 1
-            line_color: 0x00dfff              
-      # PM4 box
-        - label:
-            id: pm4_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: -82
-            text: "PM4:"               
-        - label:
-            id: pm4_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: -70
-            text: "000.0" 
-        - label:
-            id: pm4_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: -70
-            text: "ug/m3"                     
-        - line:
-            points:
-              - 0, 270
-              - 180, 270
-            line_width: 1
-            line_color: 0x00dfff 
-      # PM10 box
-        - label:
-            id: pm10_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: -41
-            text: "PM10:"               
-        - label:
-            id: pm10_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: -29
-            text: "000.0" 
-        - label:
-            id: pm10_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: -29
-            text: "ug/m3"                     
-        - line:
-            points:
-              - 0, 311
-              - 180, 311
-            line_width: 1
-            line_color: 0x00dfff
-      # VOC box
-        - label:
-            id: voc_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: 0
-            text: "VOC:"               
-        - label:
-            id: voc_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 12
-            text: "000.0"               
-        - label:
-            id: voc_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 12
-            text: "IDX"                     
-        - line:
-            points:
-              - 0, 352
-              - 180, 352
-            line_width: 1
-            line_color: 0x00dfff
-      # CO box
-        - label:
-            id: co_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: 41
-            text: "CO:"               
-        - label:
-            id: co_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 53
-            text: "000.0" 
-        - label:
-            id: co_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 53
-            text: "PPM"                     
-        - line:
-            points:
-              - 0, 393
-              - 180, 393
-            line_width: 1
-            line_color: 0x00dfff
-      # Ethanol box
-        - label:
-            id: ethanol_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: SCROLL
-            width: 40
-            x: 2
-            y: 82
-            text: "C2H5OH:"           
-        - label:
-            id: ethanol_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 94
-            text: "000.0" 
-        - label:
-            id: ethanol_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 94
-            text: "PPM"                     
-        - line:
-            points:
-              - 0, 434
-              - 180, 434
-            line_width: 1
-            line_color: 0x00dfff
-      # Hydrogen box
-        - label:
-            id: h2_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: 124
-            text: "H2:"              
-        - label:
-            id: h2_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 135
-            text: "000.0" 
-        - label:
-            id: h2_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 135
-            text: "PPM"                     
-        - line:
-            points:
-              - 0, 475
-              - 180, 475
-            line_width: 1
-            line_color: 0x00dfff
-      # NO2 box
-        - label:
-            id: no2_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: 165
-            text: "NO2:"              
-        - label:
-            id: no2_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 176
-            text: "000.0" 
-        - label:
-            id: no2_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 176
-            text: "PPM"                     
-        - line:
-            points:
-              - 0, 516
-              - 180, 516
-            line_width: 1
-            line_color: 0x00dfff
-      # NH3 box
-        - label:
-            id: nh3_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: 206
-            text: "NH3:"              
-        - label:
-            id: nh3_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 217
-            text: "000.0" 
-        - label:
-            id: nh3_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 217
-            text: "PPM"                     
-        - line:
-            points:
-              - 0, 557
-              - 180, 557
-            line_width: 1
-            line_color: 0x00dfff
-      # CH4 box
-        - label:
-            id: ch4_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: 247
-            text: "CH4:"              
-        - label:
-            id: ch4_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 258
-            text: "000.0" 
-        - label:
-            id: ch4_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 258
-            text: "PPM"                     
-        - line:
-            points:
-              - 0, 598
-              - 180, 598
-            line_width: 1
-            line_color: 0x00dfff
-      # RH box
-        - label:
-            id: rh_label
-            align: LEFT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: 2
-            y: 287
-            text: "RH:"              
-        - label:
-            id: rh_value
-            align: RIGHT_MID
-            text_font: montserrat_28
-            text_color: my_white
-            long_mode: WRAP
-            x: -51
-            y: 299
-            text: "000.0" 
-        - label:
-            id: rh_units
-            align: RIGHT_MID
-            text_font: montserrat_14
-            text_color: my_white
-            long_mode: WRAP
-            x: -2
-            y: 299
-            text: "%"
-        - obj:
-            id: nav_button_AirQ
-            align: TOP_RIGHT
-            x: 0
-            y: 0
-            width: 100
-            height: 100
-            bg_opa: 0
-            border_width: 0
-            clickable: true
-            on_press:
-              - logger.log: "AirQ page nav button PRESSED!"
-              - lambda: |-
-                  ESP_LOGI("touch", "Navigation button touched");
-                  id(last_auto_rotation_time) = millis();
-                  ESP_LOGD("touch", "Auto-rotation timer reset");
-              - lvgl.page.next:
-                  animation: OUT_LEFT
-                  time: 300ms
+    # Vertical Clock page (core page)
+    - !include packages/vertical-clock-display.yaml
+    # AirQ page (optional - comment out to disable AirQ monitoring)
+    # Note: AirQ is ENABLED by default - See packages/README-AIRQ-INTEGRATION.md
+    - !include packages/airq-display.yaml
     # WiFi page - choose one of the following:
     # For WiFi + WireGuard: !include packages/lvgl-wifi-wireguard-page.yaml
     # For WiFi only: !include packages/lvgl-wifi-page.yaml
@@ -2474,17 +1088,22 @@ esphome:
         - delay: 1s  # Brief delay for LVGL to initialize
         - lambda: |-
             const std::string &choice = id(default_page_select_boot).state;
-            if (choice == "WiFi") {
+            // Core pages
+            if (choice == "Vertical Clock") {
+              id(default_page_index) = 0;  // vertical_clock_page
+            } else if (choice == "AirQ") {  // Comment out if AirQ disabled
+              id(default_page_index) = 1;  // AirQ_page
+            } else if (choice == "WiFi") {
               id(default_page_index) = 2;  // wifi_page
             // Weather page mappings (comment out if weather packages are disabled)
             } else if (choice == "Weather") {
-                id(default_page_index) = 3;  // weather_forecast_page
+              id(default_page_index) = 3;  // weather_forecast_page
             } else if (choice == "Daily Forecast") {
-              id(default_page_index) = 5;  // daily_forecast_page
-            } else if (choice == "Vertical Clock") {
-              id(default_page_index) = 0;  // vertical_clock_page
+              id(default_page_index) = 4;  // daily_forecast_page
+            } else if (choice == "Hourly Forecast") {
+              id(default_page_index) = 5;  // hourly_forecast_page
             } else {
-              id(default_page_index) = 1;  // AirQ_page (default)
+              id(default_page_index) = 0;  // Default to vertical clock if unknown
             }
         - logger.log:
             format: "Setting default page (index: %d)"
@@ -2498,26 +1117,33 @@ esphome:
             else:
               - if:
                   condition:
-                    lambda: 'return id(default_page_index) == 2;'  # wifi_page
+                    lambda: 'return id(default_page_index) == 1;'  # AirQ_page (comment out if AirQ disabled)
                   then:
-                    - logger.log: "Showing WiFi page"
-                    - lvgl.page.show: wifi_page
+                    - logger.log: "Showing AirQ page"
+                    - lvgl.page.show: AirQ_page
                   else:
-                  # Weather page boot logic (comment out if weather packages are disabled)
-                  - if:
-                      condition:
-                        lambda: 'return id(default_page_index) == 3;'  # weather_forecast_page
-                      then:
-                        - logger.log: "Showing Weather page"
-                        - lvgl.page.show: weather_forecast_page
-                      else:
+                    - if:
+                        condition:
+                          lambda: 'return id(default_page_index) == 2;'  # wifi_page
+                        then:
+                          - logger.log: "Showing WiFi page"
+                          - lvgl.page.show: wifi_page
+                        else:
+                        # Weather page boot logic (comment out if weather packages are disabled)
                         - if:
                             condition:
-                              lambda: 'return id(default_page_index) == 4 || id(default_page_index) == 5;'  # hourly/daily forecast
+                              lambda: 'return id(default_page_index) == 3;'  # weather_forecast_page
                             then:
-                              - logger.log: "Showing Daily Forecast page"
-                              - lvgl.page.show: daily_forecast_page
+                              - logger.log: "Showing Weather page"
+                              - lvgl.page.show: weather_forecast_page
                             else:
-                              - logger.log: "Showing AirQ page"
-                              - lvgl.page.show: AirQ_page
+                              - if:
+                                  condition:
+                                    lambda: 'return id(default_page_index) == 4 || id(default_page_index) == 5;'  # hourly/daily forecast
+                                  then:
+                                    - logger.log: "Showing Daily Forecast page"
+                                    - lvgl.page.show: daily_forecast_page
+                                  else:
+                                    - logger.log: "Unknown page index, defaulting to Vertical Clock"
+                                    - lvgl.page.show: vertical_clock_page
         - logger.log: "Boot sequence complete"# Test comment
