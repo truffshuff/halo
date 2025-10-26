@@ -248,7 +248,7 @@ number:
     icon: mdi:gauge
     unit_of_measurement: "%"
     on_value:
-      - lvgl.arc.update:
+      - lvgl.indicator.update:
           id: weather_temp_needle
           value: !lambda 'return (int)x;'
 

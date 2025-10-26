@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.25.2335"
+  version: "25.10.25.2341"
   device_description: ${name} - v${version}.
 
 # Include modular packages
@@ -964,15 +964,7 @@ sensor:
     entity_category: "diagnostic"
     update_interval: never
 
-  - platform: template
-    name: "Weather Icon Update Duration"
-    id: weather_icon_duration_sensor
-    internal: true  # Don't send to Home Assistant - internal diagnostic only
-    unit_of_measurement: "ms"
-    accuracy_decimals: 0
-    icon: "mdi:weather-lightning"
-    entity_category: "diagnostic"
-    update_interval: never
+  # Weather Icon Update Duration sensor moved to packages/weather-core.yaml
 
   - platform: template
     name: "Computed AQI"
