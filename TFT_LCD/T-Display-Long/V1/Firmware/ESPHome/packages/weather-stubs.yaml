@@ -1,0 +1,67 @@
+# Weather Stubs Package
+# Provides empty weather globals and controls when weather packages are DISABLED
+#
+# Usage:
+#   OPTION 1 - Weather ENABLED (default):
+#     packages:
+#       weather_core: !include packages/weather-core.yaml
+#       weather_sensors: !include packages/weather-sensors.yaml
+#       # DO NOT include weather-stubs.yaml
+#
+#   OPTION 2 - Weather DISABLED:
+#     packages:
+#       weather_stubs: !include packages/weather-stubs.yaml
+#       # DO NOT include weather-core, weather-sensors, or weather-pages
+#
+# This package provides stub/dummy versions of weather globals so that
+# Halo-v1-Core.yaml can reference them without compilation errors.
+#
+# IMPORTANT: Never include both weather-core and weather-stubs at the same time!
+
+# Weather-related globals (stub versions - always false/disabled)
+globals:
+  # Page rotation enable/disable for weather pages (always disabled)
+  - id: page_rotation_weather_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: page_rotation_daily_forecast_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: page_rotation_hourly_forecast_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # Page rotation order for weather pages (dummy values)
+  - id: page_rotation_weather_order
+    type: int
+    restore_value: no
+    initial_value: '99'
+  - id: page_rotation_daily_forecast_order
+    type: int
+    restore_value: no
+    initial_value: '99'
+  - id: page_rotation_hourly_forecast_order
+    type: int
+    restore_value: no
+    initial_value: '99'
+
+  # Weather display state tracking (dummy values)
+  - id: weather_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_condition
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: weather_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'

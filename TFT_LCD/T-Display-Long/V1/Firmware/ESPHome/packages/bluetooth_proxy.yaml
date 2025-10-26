@@ -1,0 +1,4 @@
+bluetooth_proxy:
+  active: true
+  #active: false
+  connection_slots: 3
