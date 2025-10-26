@@ -11,11 +11,20 @@ The Halo firmware uses a modular package system where you can:
 
 ## Package Types
 
+### Utility Packages (Optional System Features)
+- **Memory Statistics**: `memory-stats.yaml` (recommended for debugging)
+- **WiFi Display**: `wifi-display.yaml` (shows WiFi connection status on display)
+- **WireGuard VPN**: `wireguard.yaml` + `wireguard-display.yaml` + `time-update-wireguard.yaml`
+
 ### Feature Packages (Core + Display)
 - **AirQ**: `airq-core.yaml` + `airq-display.yaml` (or `airq-stubs.yaml` to disable)
 - **Weather**: `weather-core.yaml` + `weather-sensors.yaml` + `weather-fonts-text.yaml` (or `weather-stubs.yaml` to disable)
 - **WiFi Monitoring**: `wifi-core.yaml` (or `wifi-stubs.yaml` to disable)
 - **BLE**: `ble-core.yaml` (or `ble-stubs.yaml` to disable)
+
+**Note:** "WiFi Display" and "WiFi Monitoring" are different:
+- **WiFi Display** shows connection info (SSID, IP, signal strength) on all pages
+- **WiFi Monitoring** adds a dedicated page with detailed WiFi statistics
 
 ### LVGL Page Packages
 Choose ONE of these to define which pages appear on the display:

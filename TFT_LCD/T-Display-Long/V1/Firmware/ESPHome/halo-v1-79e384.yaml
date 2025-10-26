@@ -2,17 +2,24 @@
 # Halo Device Configuration Template
 # ============================================================================
 # Device: halo-v1-79e384
-# Current Configuration: AirQ Only (Clock + AirQ monitoring)
+# Current Configuration: AirQ Only (Clock + AirQ monitoring + utilities)
 #
-# This file is configured as a template with all options commented out.
+# This file is configured as a comprehensive template with all options shown.
 # To change features, simply comment/uncomment the appropriate package lines.
+#
+# Package Categories:
+#   - UTILITY: Memory stats, WiFi display, WireGuard VPN
+#   - FEATURES: AirQ, Weather, WiFi monitoring, BLE
+#   - PAGES: LVGL display pages matching enabled features
+#   - CORE: Essential Halo configuration (always include)
 #
 # Quick Start:
 #   1. Update device name and friendly_name below
-#   2. Choose which features to enable (uncomment the packages)
-#   3. Choose matching LVGL pages package
-#   4. Update the Default Page select options to match enabled pages
-#   5. Adjust buffer_size based on enabled features (see memory table below)
+#   2. Choose utility packages (memory_stats, wifi_display, wireguard)
+#   3. Choose which features to enable (uncomment the packages)
+#   4. Choose matching LVGL pages package
+#   5. Update the Default Page select options to match enabled pages
+#   6. Adjust buffer_size based on enabled features (see memory table below)
 # ============================================================================
 
 esphome:
@@ -87,6 +94,59 @@ logger:
 #    level: ERROR
 
 packages:
+  # ========================================
+  # UTILITY PACKAGES - System Features
+  # ========================================
+
+  # ----------------------------------------
+  # Memory Statistics - Debugging/Monitoring
+  # ----------------------------------------
+  # OPTION 1: Memory Stats ENABLED (recommended for development/debugging)
+  memory_stats:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml]
+    refresh: always
+
+  # OPTION 2: Memory Stats DISABLED (comment out above to disable)
+  # Note: Saves a small amount of memory but loses diagnostic capability
+
+  # ----------------------------------------
+  # WiFi Display - Connection Info Display
+  # ----------------------------------------
+  # OPTION 1: WiFi Display ENABLED (shows WiFi connection status)
+  wifi_display:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
+    refresh: always
+
+  # OPTION 2: WiFi Display DISABLED (comment out above to disable)
+  # Note: This is display of WiFi connection info, not the WiFi monitoring page
+
+  # ----------------------------------------
+  # WireGuard VPN - Secure Remote Access
+  # ----------------------------------------
+  # OPTION 1: WireGuard DISABLED (current selection)
+  # If disabled, Core uses time-update-basic.yaml
+
+  # OPTION 2: WireGuard ENABLED (uncomment all 3 packages to enable)
+  # wireguard:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml]
+  #   refresh: always
+  # wireguard_display:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
+  #   refresh: always
+  # time_update_wireguard:  # Overrides Core's time-update-basic.yaml
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
+  #   refresh: always
+
   # ========================================
   # FEATURE PACKAGES - Enable/Disable Features
   # ========================================
