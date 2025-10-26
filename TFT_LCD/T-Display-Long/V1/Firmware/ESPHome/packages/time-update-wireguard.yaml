@@ -123,20 +123,5 @@ script:
           }
           id(time_update_needs_render) = false;
 
-  - id: update_colon_widget
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(current_page_index) == 0;'  # vertical_clock_page
-          then:
-            - lvgl.widget.update:
-                id: vclock_colon
-                text_opa: !lambda |-
-                  if (!id(colon_blink_enabled).state) {
-                    if (!id(colon_blink_state)) {
-                      id(colon_blink_state) = true;  // Keep colon visible when blinking disabled
-                    }
-                    return LV_OPA_COVER;
-                  }
-                  return id(colon_blink_state) ? LV_OPA_COVER : LV_OPA_TRANSP;
+# Note: update_colon_widget script is defined in vertical-clock-core.yaml
+# It should not be redefined here to avoid duplicate script errors
