@@ -1,5 +1,7 @@
+# Forecast Days 8-9 Page
+# Extended forecast for days 8 and 9
 id: forecast_days_8_9_page
-  bg_color: 0x000000
+bg_color: 0x000000
 bg_opa: COVER
 scrollbar_mode: "OFF"
 skip: true
