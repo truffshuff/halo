@@ -10,8 +10,9 @@ The weather functionality has been **fully modularized** into separate packages!
 1. **page-registry.yaml** (33 lines) - Page name tracking
 2. **weather-core.yaml** (266 lines) - Globals, scripts, controls, switches
 3. **weather-sensors.yaml** (2,543 lines) - 125 Home Assistant sensor integrations
-4. **weather-pages.yaml** (2,767 lines) - 8 LVGL pages + 47 text sensors + 5 icon fonts
-5. **weather-stubs.yaml** (63 lines) - ✨ Stub globals for weather-disabled mode
+4. **weather-pages.yaml** (2,326 lines) - 8 LVGL page definitions only
+5. **weather-fonts-text.yaml** (441 lines) - 5 icon fonts + 47 text sensors
+6. **weather-stubs.yaml** (63 lines) - ✨ Stub globals for weather-disabled mode
 
 ### Total Lines Extracted: ~5,672 lines
 
@@ -81,10 +82,11 @@ packages:
   page_registry: !include packages/page-registry.yaml
 
   # Weather packages (optional)
-  # OPTION 1: Weather ENABLED (default) - Use these 2 packages:
+  # OPTION 1: Weather ENABLED (default) - Use these 3 packages:
   weather_core: !include packages/weather-core.yaml
   weather_sensors: !include packages/weather-sensors.yaml
-  # OPTION 2: Weather DISABLED - Comment out above and uncomment this:
+  weather_fonts_text: !include packages/weather-fonts-text.yaml
+  # OPTION 2: Weather DISABLED - Comment out 3 lines above and uncomment this:
   # weather_stubs: !include packages/weather-stubs.yaml
 ```
 
@@ -113,9 +115,10 @@ Weather can now be easily disabled without any compilation errors! Follow these 
 
 1. **In `Halo-v1-Core.yaml` packages section** (around line 21):
    ```yaml
-   # Comment out weather-core and weather-sensors:
+   # Comment out weather-core, weather-sensors, and weather-fonts-text:
    # weather_core: !include packages/weather-core.yaml
    # weather_sensors: !include packages/weather-sensors.yaml
+   # weather_fonts_text: !include packages/weather-fonts-text.yaml
 
    # Uncomment weather-stubs:
    weather_stubs: !include packages/weather-stubs.yaml
