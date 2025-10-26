@@ -1,6 +1,23 @@
+# ============================================================================
+# Halo Device Configuration Template
+# ============================================================================
+# Device: halo-v1-79e384
+# Current Configuration: AirQ Only (Clock + AirQ monitoring)
+#
+# This file is configured as a template with all options commented out.
+# To change features, simply comment/uncomment the appropriate package lines.
+#
+# Quick Start:
+#   1. Update device name and friendly_name below
+#   2. Choose which features to enable (uncomment the packages)
+#   3. Choose matching LVGL pages package
+#   4. Update the Default Page select options to match enabled pages
+#   5. Adjust buffer_size based on enabled features (see memory table below)
+# ============================================================================
+
 esphome:
-  name: halo-v1-79e384
-  friendly_name: Halo Air Quality Sensor Dev
+  name: halo-v1-79e384  # Change this to your device name
+  friendly_name: Halo Air Quality Sensor Dev  # Change this to your display name
   name_add_mac_suffix: false
   platformio_options:
     upload_speed: 921600
@@ -64,14 +81,24 @@ logger:
 #  port: 1883
 #  discovery: false
 #  topic_prefix: esphome/halo
-    
+
 #  log_topic:
 #    topic: esphome/halo/logs
 #    level: ERROR
 
 packages:
-  # Include specific packages this device needs
-  # ENABLED: AirQ monitoring
+  # ========================================
+  # FEATURE PACKAGES - Enable/Disable Features
+  # ========================================
+  # IMPORTANT: For each feature, choose EITHER the core package OR the stubs package
+  # - Core package = Feature ENABLED
+  # - Stubs package = Feature DISABLED
+  # Never include both core and stubs for the same feature!
+
+  # ----------------------------------------
+  # AirQ - Air Quality Monitoring
+  # ----------------------------------------
+  # OPTION 1: AirQ ENABLED (current selection)
   airq_core:
     url: https://github.com/truffshuff/halo/
     ref: main
@@ -83,24 +110,81 @@ packages:
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-display.yaml]
     refresh: always
 
-  # DISABLED: Weather, WiFi monitoring, BLE - use stubs
+  # OPTION 2: AirQ DISABLED (uncomment to disable, comment out above)
+  # airq_stubs:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-stubs.yaml]
+  #   refresh: always
+
+  # ----------------------------------------
+  # Weather - Weather Forecasting
+  # ----------------------------------------
+  # OPTION 1: Weather DISABLED (current selection)
   weather_stubs:
     url: https://github.com/truffshuff/halo/
     ref: main
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-stubs.yaml]
     refresh: always
+
+  # OPTION 2: Weather ENABLED (uncomment all 3 packages to enable, comment out stubs above)
+  # weather_core:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-core.yaml]
+  #   refresh: always
+  # weather_sensors:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-sensors.yaml]
+  #   refresh: always
+  # weather_fonts_text:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-fonts-text.yaml]
+  #   refresh: always
+
+  # ----------------------------------------
+  # WiFi Monitoring - WiFi Statistics Page
+  # ----------------------------------------
+  # OPTION 1: WiFi Monitoring DISABLED (current selection)
   wifi_stubs:
     url: https://github.com/truffshuff/halo/
     ref: main
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-stubs.yaml]
     refresh: always
+
+  # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
+  # wifi_core:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-core.yaml]
+  #   refresh: always
+
+  # ----------------------------------------
+  # BLE - Bluetooth Low Energy
+  # ----------------------------------------
+  # OPTION 1: BLE DISABLED (current selection - RECOMMENDED)
+  # WARNING: BLE can cause heap exhaustion! Only enable if absolutely needed.
+  # If enabling BLE, reduce LVGL buffer_size to 15-20% (see below)
   ble_stubs:
     url: https://github.com/truffshuff/halo/
     ref: main
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-stubs.yaml]
     refresh: always
 
-  # Import the rest from core
+  # OPTION 2: BLE ENABLED (uncomment to enable - NOT RECOMMENDED, comment out stubs above)
+  # ble_core:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core.yaml]
+  #   refresh: always
+
+  # ========================================
+  # CORE CONFIGURATION
+  # ========================================
+  # This imports the main Halo configuration
+  # Always keep this included!
   remote_package:
     url: https://github.com/truffshuff/halo/
     ref: main
@@ -108,39 +192,107 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: always
 
-# Override LVGL to include only enabled pages
-lvgl:
-  id: lvgl_main
-  displays:
-    - lily_display
-  touchscreens:
-    - lily_touch
-  buffer_size: 30%  # Increased since we're not loading weather/wifi pages
-  disp_bg_color: 0x000000
-  disp_bg_opa: COVER
-  disp_bg_image: none
-  log_level: WARN
+  # ========================================
+  # LVGL PAGES CONFIGURATION
+  # ========================================
+  # Choose ONE package that matches your enabled features above
+  # The pages package determines which screens appear on the display
+  #
+  # Available Options:
+  #   lvgl-pages-full.yaml          - All features (Clock, AirQ, WiFi, Weather)
+  #   lvgl-pages-airq-weather.yaml  - Clock + AirQ + Weather
+  #   lvgl-pages-airq-only.yaml     - Clock + AirQ (current selection)
+  #   lvgl-pages-weather.yaml       - Clock + Weather
+  #   lvgl-pages-clock-only.yaml    - Minimal clock only
 
-  pages:
-    # Only include pages for enabled features
-    - !include
-        url: https://github.com/truffshuff/halo/
-        ref: main
-        file: TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/vertical-clock-display.yaml
-    - !include
-        url: https://github.com/truffshuff/halo/
-        ref: main
-        file: TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-display.yaml
+  # CURRENT SELECTION: AirQ Only
+  lvgl_pages:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
+    refresh: always
 
-# Override Default Page select to only show available pages
+  # Uncomment ONE of these alternatives if you change features (comment out the above first):
+
+  # Full-featured (all pages)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full.yaml]
+  #   refresh: always
+
+  # AirQ + Weather
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-weather.yaml]
+  #   refresh: always
+
+  # Weather only
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather.yaml]
+  #   refresh: always
+
+  # Clock only
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-clock-only.yaml]
+  #   refresh: always
+
+# ============================================================================
+# DEFAULT PAGE SELECTOR - Customize for Enabled Features
+# ============================================================================
+# Update the options list to match the pages you included in LVGL pages above
+# Comment out options for pages that are disabled
+
 select:
   - platform: template
     name: Default Page
     id: default_page_select_boot
     entity_category: "config"
+
+    # CURRENT OPTIONS: AirQ Only (Clock + AirQ)
     options:
-      - "Vertical Clock"
-      - "AirQ"
+      - "Vertical Clock"  # Always available
+      - "AirQ"            # Available when airq_core is enabled
+      # - "WiFi"          # Available when wifi_core is enabled (currently disabled)
+      # - "Weather"       # Available when weather_core is enabled (currently disabled)
+      # - "Daily Forecast"   # Available when weather_core is enabled (currently disabled)
+      # - "Hourly Forecast"  # Available when weather_core is enabled (currently disabled)
+
+    # EXAMPLE OPTIONS for different configurations:
+    #
+    # Full-featured (all pages):
+    # options:
+    #   - "Vertical Clock"
+    #   - "AirQ"
+    #   - "WiFi"
+    #   - "Weather"
+    #   - "Daily Forecast"
+    #   - "Hourly Forecast"
+    #
+    # AirQ + Weather:
+    # options:
+    #   - "Vertical Clock"
+    #   - "AirQ"
+    #   - "Weather"
+    #   - "Daily Forecast"
+    #   - "Hourly Forecast"
+    #
+    # Weather only:
+    # options:
+    #   - "Vertical Clock"
+    #   - "Weather"
+    #   - "Daily Forecast"
+    #   - "Hourly Forecast"
+    #
+    # Clock only:
+    # options:
+    #   - "Vertical Clock"
+
     initial_option: "Vertical Clock"
     restore_value: true
     optimistic: true
@@ -148,6 +300,44 @@ select:
       - lambda: |-
           int idx = 0;
           const std::string &choice = id(default_page_select_boot).state;
+
+          // Page index mapping:
+          // 0 = Vertical Clock (always available)
+          // 1 = AirQ page
+          // 2 = WiFi page
+          // 3 = Weather page
+          // 4 = Daily Forecast page
+          // 5 = Hourly Forecast page
+
           if (choice == "Vertical Clock") idx = 0;
           else if (choice == "AirQ") idx = 1;
+          else if (choice == "WiFi") idx = 2;
+          else if (choice == "Weather") idx = 3;
+          else if (choice == "Daily Forecast") idx = 4;
+          else if (choice == "Hourly Forecast") idx = 5;
+
           id(default_page_index) = idx;
+
+# ============================================================================
+# LVGL BUFFER SIZE OPTIMIZATION
+# ============================================================================
+# Adjust buffer_size based on enabled features to optimize memory usage
+#
+# Memory Guidelines:
+#   Clock only:             30-35% (maximum available)
+#   Clock + AirQ:           28-32% (current: 30%)
+#   Clock + Weather:        25-28%
+#   Clock + AirQ + Weather: 26-28%
+#   Full featured:          25%
+#   With BLE enabled:       15-20% (BLE uses significant heap!)
+
+lvgl:
+  buffer_size: 30%  # Optimized for AirQ only configuration
+
+# Uncomment and adjust if you change features:
+# lvgl:
+#   buffer_size: 27%  # For AirQ + Weather
+# lvgl:
+#   buffer_size: 25%  # For full-featured
+# lvgl:
+#   buffer_size: 35%  # For clock only
