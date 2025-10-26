@@ -114,15 +114,17 @@ packages:
   # ----------------------------------------
   # WiFi Display - Connection Info Display
   # ----------------------------------------
-  # OPTION 1: WiFi Display ENABLED (shows WiFi connection status)
-  wifi_display:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
-    refresh: always
+  # OPTION 1: WiFi Display DISABLED (current selection - requires wifi_core to be enabled)
+  # Note: This displays WiFi connection info on pages like AirQ
+  # Requires wifi_core package to be enabled, not compatible with wifi_stubs
+  # wifi_display:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
+  #   refresh: always
 
-  # OPTION 2: WiFi Display DISABLED (comment out above to disable)
-  # Note: This is display of WiFi connection info, not the WiFi monitoring page
+  # OPTION 2: WiFi Display ENABLED (uncomment above to enable)
+  # WARNING: Only enable if wifi_core is enabled (not wifi_stubs)
 
   # ----------------------------------------
   # WireGuard VPN - Secure Remote Access
