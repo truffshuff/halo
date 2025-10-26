@@ -1,0 +1,129 @@
+################################################################################
+# VERTICAL CLOCK - Core Configuration
+# Description: Core functionality for vertical clock page
+# Provides: Globals, switches, numbers, intervals, scripts, and fonts
+# Dependencies: None (core component)
+# Mode: Default (always enabled)
+################################################################################
+
+globals:
+  # Page rotation settings - which pages are included
+  - id: page_rotation_vertical_clock_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Page rotation order (1-6, 0 means disabled)
+  - id: page_rotation_vertical_clock_order
+    type: int
+    restore_value: yes
+    initial_value: '6'
+
+  # Colon blink state for clock display
+  - id: colon_blink_state
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+switch:
+  # Page rotation selection switches
+  - platform: template
+    name: "Page Rotation: Vertical Clock Page"
+    id: page_rotation_vertical_clock_switch
+    icon: mdi:clock-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_vertical_clock_enabled) = true;'
+      - logger.log: "Vertical clock page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_vertical_clock_enabled) = false;'
+      - logger.log: "Vertical clock page disabled in rotation"
+
+  # Clock format and display options
+  - platform: template
+    name: "24h Clock Format"
+    id: time_format
+    icon: mdi:clock-digital
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    entity_category: "config"
+
+  - platform: template
+    name: "Clock Colon Blink"
+    id: colon_blink_enabled
+    icon: mdi:timer-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+
+number:
+  # Page rotation order numbers (1-6, lower numbers show first)
+  - platform: template
+    name: "Page Order: Vertical Clock Page"
+    id: page_order_vertical_clock
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 6
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_vertical_clock_order) = (int)x;'
+      - logger.log:
+          format: "Vertical clock page order set to %d"
+          args: ['(int)x']
+
+interval:
+  # Colon blink interval - runs every second when on vertical clock page
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete) && id(current_page_index) == 0;'  # vertical_clock_page
+          then:
+            - lambda: |-
+                if (id(colon_blink_enabled).state) {
+                  id(colon_blink_state) = !id(colon_blink_state);
+                } else if (!id(colon_blink_state)) {
+                  id(colon_blink_state) = true;
+                }
+            - script.execute: update_colon_widget
+
+script:
+  - id: update_colon_widget
+    mode: restart
+    then:
+      - lambda: |-
+          auto colon = id(vclock_colon);
+          if (colon != nullptr) {
+            if (id(colon_blink_state)) {
+              colon->set_text(":");
+            } else {
+              colon->set_text(" ");
+            }
+          }
+
+font:
+  # Large fonts for vertical clock
+  - file: "gfonts://Montserrat"
+    id: montserrat_80
+    size: 80
+    bpp: 4
+    glyphs: " 0123456789:-"
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_50
+    size: 50
+    bpp: 4
+    glyphs: " 0123456789APM-"
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_24
+    size: 24
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,:-"

@@ -1,0 +1,29 @@
+# ============================================================================
+# BLE Stubs Package - Empty Stub for BLE-Disabled Mode
+# ============================================================================
+# This package provides an empty configuration when BLE features are disabled.
+# BLE is DISABLED by default due to heap memory constraints.
+#
+# Usage:
+#   This is the DEFAULT configuration - BLE is disabled to prevent heap exhaustion
+#   To enable BLE: Comment out this package and uncomment ble-core.yaml
+#
+# Why BLE is disabled by default:
+#   - BLE tracker + Bluetooth Proxy use 50-80KB of heap memory
+#   - LVGL display with 25% buffer uses ~40KB
+#   - Multiple I2C sensors use ~15-20KB
+#   - WiFi + WireGuard use ~30KB
+#   - Total can exceed ESP32-S3's available heap (~200-250KB)
+#   - This causes random crashes, boot loops, and OOM errors
+#
+# When to enable BLE:
+#   - You NEED Home Assistant Bluetooth Proxy functionality
+#   - You can reduce LVGL buffer_size to 15-20%
+#   - You can disable some sensor features (AirQ, Weather, etc.)
+#   - You are willing to monitor heap usage closely
+#
+# Note: Similar pattern to airq-stubs.yaml, wifi-stubs.yaml, weather-stubs.yaml
+# ============================================================================
+
+# This file intentionally left empty
+# No BLE components are loaded when using this stub

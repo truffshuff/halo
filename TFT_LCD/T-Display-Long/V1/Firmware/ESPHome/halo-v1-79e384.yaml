@@ -1,0 +1,153 @@
+esphome:
+  name: halo-v1-79e384
+  friendly_name: Halo Air Quality Sensor Dev
+  name_add_mac_suffix: false
+  platformio_options:
+    upload_speed: 921600
+    board_build.flash_mode: qio
+    board_build.psram_type: opi
+    board_build.f_flash: 80000000L
+    board_build.f_cpu: 240000000L
+
+  min_version: 2025.6.2
+
+  project:
+    name: "yashmulgaonkar.Halo-v1"
+    version: "${version}"
+
+dashboard_import:
+  package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@main
+  import_full_config: true
+
+ota:
+  - platform: esphome
+    id: ota_default
+    # on_begin:
+    #   then:
+    #     - logger.log: "OTA Update starting - pausing display updates"
+    #     - lambda: |-
+    #         id(lily_display).set_update_interval(60000);  // Slow down to 1 update per minute during OTA
+    # on_end:
+    #   then:
+    #     - logger.log: "OTA Update complete - display will resume after reboot"
+
+wifi:
+  on_connect:
+    - delay: 5s # Gives time for improv results to be transmitted
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Halo Hotspot"
+    ap_timeout: 0s  # Start AP immediately if no WiFi configured
+
+# Override logger settings to reduce traffic and prevent crashes
+logger:
+  logs:
+    weather_color: WARN
+    time_update: WARN
+    scd4x: WARN
+    text: WARN
+    sensor: WARN
+    homeassistant.sensor: WARN
+    page_rotation: WARN
+    text_sensor: WARN
+    homeassistant.text_sensor: WARN
+    light: WARN
+    binary_sensor: WARN
+    number: WARN
+
+
+#mqtt:
+#  broker: 192.168.1.236
+#  username: hhutmqttesp2
+#  password: esp2mqtthhut
+#  port: 1883
+#  discovery: false
+#  topic_prefix: esphome/halo
+    
+#  log_topic:
+#    topic: esphome/halo/logs
+#    level: ERROR
+
+packages:
+  # Include specific packages this device needs
+  # ENABLED: AirQ monitoring
+  airq_core:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-core.yaml]
+    refresh: always
+  airq_display:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-display.yaml]
+    refresh: always
+
+  # DISABLED: Weather, WiFi monitoring, BLE - use stubs
+  weather_stubs:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-stubs.yaml]
+    refresh: always
+  wifi_stubs:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-stubs.yaml]
+    refresh: always
+  ble_stubs:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-stubs.yaml]
+    refresh: always
+
+  # Import the rest from core
+  remote_package:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+    refresh: always
+
+# Override LVGL to include only enabled pages
+lvgl:
+  id: lvgl_main
+  displays:
+    - lily_display
+  touchscreens:
+    - lily_touch
+  buffer_size: 30%  # Increased since we're not loading weather/wifi pages
+  disp_bg_color: 0x000000
+  disp_bg_opa: COVER
+  disp_bg_image: none
+  log_level: WARN
+
+  pages:
+    # Only include pages for enabled features
+    - !include
+        url: https://github.com/truffshuff/halo/
+        ref: main
+        file: TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/vertical-clock-display.yaml
+    - !include
+        url: https://github.com/truffshuff/halo/
+        ref: main
+        file: TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-display.yaml
+
+# Override Default Page select to only show available pages
+select:
+  - platform: template
+    name: Default Page
+    id: default_page_select_boot
+    entity_category: "config"
+    options:
+      - "Vertical Clock"
+      - "AirQ"
+    initial_option: "Vertical Clock"
+    restore_value: true
+    optimistic: true
+    on_value:
+      - lambda: |-
+          int idx = 0;
+          const std::string &choice = id(default_page_select_boot).state;
+          if (choice == "Vertical Clock") idx = 0;
+          else if (choice == "AirQ") idx = 1;
+          id(default_page_index) = idx;
