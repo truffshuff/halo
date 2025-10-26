@@ -293,3 +293,4 @@ To create a new package:
 2. Add configuration sections that can be reused
 3. Use `!secret` for sensitive values
 4. Document the package in this README
+# Test version update
