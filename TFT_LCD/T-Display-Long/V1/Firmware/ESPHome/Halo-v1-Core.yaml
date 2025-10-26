@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.26.1754"
+  version: "25.10.26.1832"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -285,36 +285,12 @@ select:
             call.perform();
           }
 
-  - platform: template
-    name: Default Page
-    id: default_page_select_boot
-    entity_category: "config"
-    options:
-      - "Vertical Clock"
-      # AirQ page option (comment out if AirQ packages are disabled)
-      - "AirQ"
-      # WiFi page option (comment out if WiFi packages are disabled)
-      - "WiFi"
-      # Weather page options (comment out if weather packages are disabled)
-      - "Weather"
-      - "Daily Forecast"
-      - "Hourly Forecast"
-    initial_option: "Vertical Clock"
-    restore_value: true
-    optimistic: true
-    on_value:
-      - lambda: |-
-          int idx = 0;
-          const std::string &choice = id(default_page_select_boot).state;
-          // Core pages (always available unless commented out)
-          if (choice == "Vertical Clock") idx = 0;
-          else if (choice == "AirQ") idx = 1;  // Comment out if AirQ disabled
-          else if (choice == "WiFi") idx = 2;
-          // Weather page mappings (comment out if weather packages are disabled)
-          else if (choice == "Weather") idx = 3;
-          else if (choice == "Daily Forecast") idx = 4;
-          else if (choice == "Hourly Forecast") idx = 5;
-          id(default_page_index) = idx;
+# ============================================================================
+# DEFAULT PAGE SELECTOR
+# ============================================================================
+# Note: The default page selector must be defined in device-specific files
+# (e.g., halo-v1-79e384.yaml) to match the enabled LVGL pages for that device.
+# This allows each device to have only the page options that are actually available.
 
 interval:
   - interval: 3s  # Reduced from 1s to decrease SPI bus contention
