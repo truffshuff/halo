@@ -195,6 +195,7 @@ number:
     entity_category: "config"
     optimistic: true
     step: 1
+    mode: box
     on_value:
       - lambda: 'id(page_rotation_weather_order) = (int)x;'
       - logger.log:
@@ -212,6 +213,7 @@ number:
     entity_category: "config"
     optimistic: true
     step: 1
+    mode: box
     on_value:
       - lambda: 'id(page_rotation_daily_forecast_order) = (int)x;'
       - logger.log:
@@ -229,6 +231,7 @@ number:
     entity_category: "config"
     optimistic: true
     step: 1
+    mode: box
     on_value:
       - lambda: 'id(page_rotation_hourly_forecast_order) = (int)x;'
       - logger.log:
