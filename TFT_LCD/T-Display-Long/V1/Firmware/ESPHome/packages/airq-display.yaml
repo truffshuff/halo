@@ -18,12 +18,12 @@ on_load:
         - lvgl.widget.update:
             id: wifi_stat
             text_color: my_green
-        - lambda: 'id(wifi_stat_connected_state) = true;'
+        - lambda: 'id(airq_wifi_stat_connected_state) = true;'
       else:
         - lvgl.widget.update:
             id: wifi_stat
             text_color: my_red
-        - lambda: 'id(wifi_stat_connected_state) = false;'
+        - lambda: 'id(airq_wifi_stat_connected_state) = false;'
 widgets:
   # Header: Logo, Time, WiFi Status
   - image:
