@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.26.1746"
+  version: "25.10.26.1752"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -578,7 +578,19 @@ api:
       # Note: BLE tracker start/stop on API connection is defined in ble-core.yaml
 
   services:
-    # Note: calibrate_co2_value and sen55_clean services are defined in airq-core.yaml
+    # AirQ sensor services (only work if AirQ packages are enabled)
+    - service: calibrate_co2_value
+      variables:
+        co2_ppm: float
+      then:
+        - scd4x.perform_forced_calibration:
+            value: !lambda "return co2_ppm;"
+            id: scd40
+    - service: sen55_clean
+      then:
+        - sen5x.start_fan_autoclean: sen55
+
+    # Display page control service
     - service: set_display_page
       variables:
         page_name: string
