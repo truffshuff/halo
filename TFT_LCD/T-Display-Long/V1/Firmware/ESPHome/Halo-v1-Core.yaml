@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.25.2330"
+  version: "25.10.25.2333"
   device_description: ${name} - v${version}.
 
 # Include modular packages
@@ -2458,8 +2458,8 @@ lvgl:
     - !include packages/lvgl-wifi-wireguard-page.yaml
     # Weather pages (optional - comment out to disable weather)
     # Note: Weather text sensors and fonts are in weather-fonts-text.yaml
-    # Note: Using !include (no dash) because weather-pages.yaml contains a list of 8 pages
-    !include packages/weather-pages.yaml
+    # Note: weather-pages.yaml is a YAML list that gets merged into pages
+    - !include packages/weather-pages.yaml
 
 esphome:
   name: ${name}
