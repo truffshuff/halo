@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.25.2323"
+  version: "25.10.25.2328"
   device_description: ${name} - v${version}.
 
 # Include modular packages
@@ -17,10 +17,11 @@ packages:
   memory_stats: !include packages/memory-stats.yaml
 
   # Weather packages (optional - see packages/README-WEATHER-INTEGRATION.md)
-  # OPTION 1: Weather ENABLED (default) - Use these 2 packages:
+  # OPTION 1: Weather ENABLED (default) - Use these 3 packages:
   weather_core: !include packages/weather-core.yaml
   weather_sensors: !include packages/weather-sensors.yaml
-  # OPTION 2: Weather DISABLED - Comment out the 2 lines above and uncomment this:
+  weather_fonts_text: !include packages/weather-fonts-text.yaml
+  # OPTION 2: Weather DISABLED - Comment out the 3 lines above and uncomment this:
   # weather_stubs: !include packages/weather-stubs.yaml
   # Note: Also comment out weather-pages.yaml in the lvgl display section below
   # Note: Also comment out weather options in the "Default Page" select
