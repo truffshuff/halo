@@ -2319,8 +2319,3 @@
                   time: 300ms
 
 # ===================================================================
-# WEATHER TEXT SENSORS (LVGL Widget Text Updaters)
-# ===================================================================
-# These text sensors allow updating LVGL label widgets from Home Assistant
-# They are internal (not exposed to HA) and just bridge sensor data to UI
-
