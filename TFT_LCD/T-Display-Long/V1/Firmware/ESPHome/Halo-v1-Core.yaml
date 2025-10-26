@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.26.1844"
+  version: "25.10.26.1912"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -438,24 +438,13 @@ interval:
               id(last_auto_rotation_time) = now;
               return true;
           then:
-            - if:
-                condition:
-                  lambda: 'return id(current_page_index) == 0;'  # vertical_clock_page
-                then:
-                  - logger.log: "AUTO PAGE ROTATION -> Vertical Clock Page"
-                  - lvgl.page.show:
-                      id: vertical_clock_page
-                      animation: OUT_LEFT
-                      time: 300ms
-                else:
-                  # Note: Page rotation only handles Vertical Clock in Core
-                  # Feature pages (AirQ, WiFi, Weather) must handle their own rotation
-                  # or be included via device-specific LVGL pages packages
-                  - logger.log:
-                      format: "AUTO PAGE ROTATION -> Page index %d (non-clock page)"
-                      args: ['id(current_page_index)']
-                      level: WARN
-                  - logger.log: "Core only handles Vertical Clock rotation - check feature packages"
+            # Note: Core no longer shows pages - device files must handle this
+            # The rotation logic above sets current_page_index, but device files
+            # must implement their own interval to actually show the pages
+            - logger.log:
+                format: "Core: Rotation scheduled to page index %d"
+                args: ['id(current_page_index)']
+                level: DEBUG
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect

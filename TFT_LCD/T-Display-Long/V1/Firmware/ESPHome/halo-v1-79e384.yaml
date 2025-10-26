@@ -403,28 +403,54 @@ lvgl:
 # ============================================================================
 # PAGE ROTATION HANDLING - Device Specific
 # ============================================================================
-# Handle page rotation for enabled pages (Core only handles Vertical Clock)
+# Core calculates which page to show and sets current_page_index, but doesn't
+# actually show the pages. Device files must watch current_page_index and show
+# the appropriate page based on which features are enabled.
+
 interval:
-  # Handle auto page rotation for AirQ page
-  - interval: 1s
+  - interval: 100ms  # Check frequently for page index changes
     then:
       - if:
           condition:
             lambda: |-
+              static int last_displayed_index = -1;
+
               if (!id(boot_complete)) return false;
-              if (!id(auto_page_rotation_enabled)) return false;
 
-              const uint32_t now = millis();
-              const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
+              // Check if page index changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
 
-              // Check if it's time to rotate AND we're trying to show AirQ page
-              if ((now - id(last_auto_rotation_time)) < interval_ms) return false;
-              if (id(current_page_index) != 1) return false;  // Only handle AirQ page (index 1)
-
+              last_displayed_index = current;
               return true;
           then:
-            - logger.log: "AUTO PAGE ROTATION -> AirQ Page"
-            - lvgl.page.show:
-                id: AirQ_page
-                animation: OUT_LEFT
-                time: 300ms
+            # Show the appropriate page based on current_page_index
+            # For AirQ-only config: 0 = Vertical Clock, 1 = AirQ
+            - if:
+                condition:
+                  lambda: 'return id(current_page_index) == 0;'
+                then:
+                  - logger.log: "Device: Showing Vertical Clock (index 0)"
+                  - lvgl.page.show:
+                      id: vertical_clock_page
+                      animation: OUT_LEFT
+                      time: 300ms
+                else:
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 1;'
+                      then:
+                        - logger.log: "Device: Showing AirQ page (index 1)"
+                        - lvgl.page.show:
+                            id: AirQ_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                        - logger.log:
+                            format: "Device: Unknown page index %d, defaulting to clock"
+                            args: ['id(current_page_index)']
+                            level: WARN
+                        - lvgl.page.show:
+                            id: vertical_clock_page
+                            animation: OUT_LEFT
+                            time: 300ms
