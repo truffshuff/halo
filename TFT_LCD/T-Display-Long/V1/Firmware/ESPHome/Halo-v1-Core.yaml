@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.25.2341"
+  version: "25.10.26.0714"
   device_description: ${name} - v${version}.
 
 # Include modular packages
@@ -342,7 +342,7 @@ select:
           int idx = 0;
           const std::string &choice = id(default_page_select_boot).state;
           if (choice == "WiFi") idx = 1;
-          # Weather page mappings (comment out if weather packages are disabled)
+          // Weather page mappings (comment out if weather packages are disabled)
           else if (choice == "Weather") idx = 2;
           else if (choice == "Daily Forecast") idx = 3;
           else if (choice == "Hourly Forecast") idx = 4;
