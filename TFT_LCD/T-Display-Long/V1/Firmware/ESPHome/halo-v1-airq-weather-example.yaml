@@ -68,6 +68,42 @@ logger:
 
 packages:
   # ========================================
+  # UTILITY PACKAGES
+  # ========================================
+
+  # Memory Statistics - recommended for debugging
+  memory_stats:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml]
+    refresh: always
+
+  # WiFi Display - shows connection info
+  wifi_display:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
+    refresh: always
+
+  # WireGuard VPN - DISABLED for this example
+  # Uncomment these 3 packages if you need WireGuard:
+  # wireguard:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml]
+  #   refresh: always
+  # wireguard_display:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
+  #   refresh: always
+  # time_update_wireguard:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
+  #   refresh: always
+
+  # ========================================
   # ENABLED FEATURES
   # ========================================
 

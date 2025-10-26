@@ -1,59 +1,70 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.26.1734"
+  version: "25.10.26.1744"
   device_description: ${name} - v${version}.
 
-# Include modular packages
+# ============================================================================
+# Core Packages - Minimal Required Configuration
+# ============================================================================
+# This file now contains ONLY the absolute essentials needed for all devices.
+# All optional features have been moved to device-specific configuration files.
+#
+# Device files should include (in this order):
+#   1. Optional feature packages (airq, weather, wifi, ble, wireguard, memory_stats)
+#   2. LVGL pages package matching enabled features
+#   3. This core package (import last to allow device overrides)
+#
+# See packages/README-DEVICE-CONFIGURATION.md for complete examples
+# See halo-v1-79e384.yaml for a template
+# ============================================================================
+
 packages:
+  # ============================================================================
+  # ESSENTIAL PACKAGES - Always Required
+  # ============================================================================
+  # These are the bare minimum needed for any Halo device to function
+
+  # Page registry - manages page rotation system
   page_registry: !include packages/page-registry.yaml
 
-  # BLE packages (optional - see packages/README-BLE-INTEGRATION.md)
-  # OPTION 1: BLE DISABLED (default) - Use BLE stubs (recommended):
-  ble_stubs: !include packages/ble-stubs.yaml
-  # OPTION 2: BLE ENABLED - Comment out the line above and uncomment this:
-  # ble_core: !include packages/ble-core.yaml
-  # WARNING: Enabling BLE can cause heap exhaustion and crashes!
-  # Reduce LVGL buffer_size to 15-20% if enabling BLE
-  # Monitor heap usage via memory_stats package
-
+  # Vertical clock - core display feature
   vertical_clock: !include packages/vertical-clock-core.yaml
-  wireguard: !include packages/wireguard.yaml
-  wifi_display: !include packages/wifi-display.yaml
-  wireguard_display: !include packages/wireguard-display.yaml
-  memory_stats: !include packages/memory-stats.yaml
 
-  # Weather packages (optional - see packages/README-WEATHER-INTEGRATION.md)
-  # OPTION 1: Weather ENABLED (default) - Use these 3 packages:
-  weather_core: !include packages/weather-core.yaml
-  weather_sensors: !include packages/weather-sensors.yaml
-  weather_fonts_text: !include packages/weather-fonts-text.yaml
-  # OPTION 2: Weather DISABLED - Comment out the 3 lines above and uncomment this:
-  # weather_stubs: !include packages/weather-stubs.yaml
-  # Note: Also comment out weather-pages.yaml in the lvgl display section below
-  # Note: Also comment out weather options in the "Default Page" select
+  # Time update script - basic version (no WireGuard dependency)
+  # Device files can override with time-update-wireguard.yaml if WireGuard is enabled
+  time_update: !include packages/time-update-basic.yaml
 
-  # Time update script - choose one:
-  # With WireGuard (SNTP/HA switching): !include packages/time-update-wireguard.yaml
-  # Without WireGuard (HA only): !include packages/time-update-basic.yaml
-  time_update: !include packages/time-update-wireguard.yaml
-
-  # AirQ packages (optional - see packages/README-AIRQ-INTEGRATION.md)
-  # OPTION 1: AirQ ENABLED (default) - Use these 2 packages:
-  airq: !include packages/airq-core.yaml
-  airq_display: !include packages/airq-display.yaml
-  # OPTION 2: AirQ DISABLED - Comment out the 2 lines above and uncomment this:
-  # airq_stubs: !include packages/airq-stubs.yaml
-  # Note: Also comment out airq-display.yaml in the lvgl pages section below
-  # Note: Also remove "AirQ" option from the "Default Page" select if desired
-
-  # WiFi packages (optional - see packages/README-WIFI-INTEGRATION.md)
-  # OPTION 1: WiFi ENABLED (default) - Use wifi-core package:
-  wifi_core: !include packages/wifi-core.yaml
-  # OPTION 2: WiFi DISABLED - Comment out the line above and uncomment this:
-  # wifi_stubs: !include packages/wifi-stubs.yaml
-  # Note: Also comment out wifi-display and lvgl-wifi page includes below
-  # Note: Also remove "WiFi" option from the "Default Page" select if desired
+  # ============================================================================
+  # OPTIONAL PACKAGES - NOW CONTROLLED BY DEVICE FILES
+  # ============================================================================
+  # The following packages have been REMOVED from Core.
+  # Include them in your device-specific configuration as needed:
+  #
+  # Memory Statistics (recommended for debugging):
+  #   - memory-stats.yaml
+  #
+  # WireGuard VPN:
+  #   - wireguard.yaml + wireguard-display.yaml + time-update-wireguard.yaml
+  #
+  # WiFi Display (connection info):
+  #   - wifi-display.yaml
+  #
+  # AirQ Monitoring:
+  #   - airq-core.yaml + airq-display.yaml (to enable)
+  #   - airq-stubs.yaml (to disable)
+  #
+  # Weather Forecasting:
+  #   - weather-core.yaml + weather-sensors.yaml + weather-fonts-text.yaml (to enable)
+  #   - weather-stubs.yaml (to disable)
+  #
+  # WiFi Monitoring Page:
+  #   - wifi-core.yaml (to enable)
+  #   - wifi-stubs.yaml (to disable)
+  #
+  # BLE (Bluetooth):
+  #   - ble-core.yaml (to enable - NOT RECOMMENDED, causes heap issues)
+  #   - ble-stubs.yaml (to disable - RECOMMENDED)
 
 psram:
   mode: octal
