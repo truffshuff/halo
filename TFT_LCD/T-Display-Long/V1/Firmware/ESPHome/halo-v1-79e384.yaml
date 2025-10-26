@@ -159,15 +159,11 @@ packages:
   # AirQ - Air Quality Monitoring
   # ----------------------------------------
   # OPTION 1: AirQ ENABLED (current selection)
+  # Note: airq-display.yaml is included via lvgl_pages package, not here
   airq_core:
     url: https://github.com/truffshuff/halo/
     ref: main
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-core.yaml]
-    refresh: always
-  airq_display:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-display.yaml]
     refresh: always
 
   # OPTION 2: AirQ DISABLED (uncomment to disable, comment out above)
