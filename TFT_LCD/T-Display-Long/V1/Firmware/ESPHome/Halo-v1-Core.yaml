@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.26.1744"
+  version: "25.10.26.1746"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -1151,4 +1151,4 @@ esphome:
                                   else:
                                     - logger.log: "Unknown page index, defaulting to Vertical Clock"
                                     - lvgl.page.show: vertical_clock_page
-        - logger.log: "Boot sequence complete"# Test comment
+        - logger.log: "Boot sequence complete"
