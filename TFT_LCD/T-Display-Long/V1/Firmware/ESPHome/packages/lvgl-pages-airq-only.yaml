@@ -18,7 +18,7 @@
 lvgl:
   pages:
     # Core pages - always available
-    - !include vertical-clock-display.yaml
+    - !include packages/vertical-clock-display.yaml
 
     # AirQ page - enabled
-    - !include airq-display.yaml
+    - !include packages/airq-display.yaml
