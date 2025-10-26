@@ -1,0 +1,24 @@
+# ============================================================================
+# LVGL Pages - AirQ Only Configuration
+# ============================================================================
+# This package defines LVGL pages for devices with only AirQ monitoring enabled
+#
+# Includes:
+#   - Vertical Clock page
+#   - AirQ page
+#
+# Excludes:
+#   - WiFi pages (disabled via wifi-stubs)
+#   - Weather pages (disabled via weather-stubs)
+#   - BLE pages (disabled via ble-stubs)
+#
+# Usage: Include this instead of the full lvgl section from Core
+# ============================================================================
+
+lvgl:
+  pages:
+    # Core pages - always available
+    - !include vertical-clock-display.yaml
+
+    # AirQ page - enabled
+    - !include airq-display.yaml

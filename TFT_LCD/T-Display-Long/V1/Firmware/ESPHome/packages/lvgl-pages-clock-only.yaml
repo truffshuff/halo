@@ -1,0 +1,21 @@
+# ============================================================================
+# LVGL Pages - Clock Only Configuration
+# ============================================================================
+# This package defines LVGL pages for minimal devices with only clock display
+#
+# Includes:
+#   - Vertical Clock page only
+#
+# Excludes:
+#   - AirQ pages (disabled via airq-stubs)
+#   - WiFi pages (disabled via wifi-stubs)
+#   - Weather pages (disabled via weather-stubs)
+#   - BLE pages (disabled via ble-stubs)
+#
+# Usage: Include this for minimal clock-only devices
+# ============================================================================
+
+lvgl:
+  pages:
+    # Core pages - clock only
+    - !include vertical-clock-display.yaml

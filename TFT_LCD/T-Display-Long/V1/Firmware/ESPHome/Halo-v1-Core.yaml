@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.26.1402"
+  version: "25.10.26.1734"
   device_description: ${name} - v${version}.
 
 # Include modular packages
@@ -1052,26 +1052,20 @@ lvgl:
   disp_bg_image: none
   log_level: WARN  # Reduce logging overhead
 
-  pages:
-    # Vertical Clock page (core page)
-    - !include packages/vertical-clock-display.yaml
-    # AirQ page (optional - comment out to disable AirQ monitoring)
-    # Note: AirQ is ENABLED by default - See packages/README-AIRQ-INTEGRATION.md
-    - !include packages/airq-display.yaml
-    # WiFi page - choose one of the following:
-    # For WiFi + WireGuard: !include packages/lvgl-wifi-wireguard-page.yaml
-    # For WiFi only: !include packages/lvgl-wifi-page.yaml
-    - !include packages/lvgl-wifi-wireguard-page.yaml
-    # Weather pages (optional - comment out all 8 lines below to disable weather)
-    # Note: Weather text sensors and fonts are in weather-fonts-text.yaml package
-    - !include packages/weather-page-forecast.yaml       # Page 3: Current weather
-    - !include packages/weather-page-hourly.yaml         # Page 4: Hourly forecast
-    - !include packages/weather-page-hourly-2.yaml       # Page 4 alternate: Hourly forecast
-    - !include packages/weather-page-daily.yaml          # Page 5: Daily forecast overview
-    - !include packages/weather-page-days-4-5.yaml       # Days 4-5 detailed
-    - !include packages/weather-page-days-6-7.yaml       # Days 6-7 detailed
-    - !include packages/weather-page-days-8-9.yaml       # Days 8-9 detailed
-    - !include packages/weather-page-day-10.yaml         # Day 10 detailed
+  # IMPORTANT: Pages are now defined in device-specific configs
+  # Include one of these packages in your device file:
+  #   - lvgl-pages-full.yaml (all features)
+  #   - lvgl-pages-airq-only.yaml (clock + AirQ)
+  #   - lvgl-pages-weather.yaml (clock + weather)
+  #   - lvgl-pages-clock-only.yaml (minimal clock)
+  #
+  # Example in device file:
+  # packages:
+  #   lvgl_pages:
+  #     url: https://github.com/truffshuff/halo/
+  #     ref: main
+  #     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
+  #     refresh: always
 
 esphome:
   name: ${name}
