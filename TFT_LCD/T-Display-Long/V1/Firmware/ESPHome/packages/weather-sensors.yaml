@@ -1,0 +1,2543 @@
+# Weather Sensors Package
+# Provides all Home Assistant weather sensor integrations
+#
+# Usage:
+#   packages:
+#     weather_sensors: !include packages/weather-sensors.yaml
+#
+# This package provides:
+#   - Current weather sensors (outdoor temp, precipitation, etc.)
+#   - 10-day forecast high/low temperatures
+#   - 10-day forecast conditions
+#   - 10-day forecast dates
+#   - 10-day forecast precipitation probabilities
+#
+# Required Home Assistant entities:
+#   - input_text.forecast_day_N_high_temperature (N = 1-10)
+#   - input_text.forecast_day_N_low_temperature (N = 1-10)
+#   - input_text.forecast_day_N_condition (N = 1-10)
+#   - input_text.forecast_day_N_date (N = 1-10)
+#   - input_text.forecast_day_N_precipitation_probability (N = 1-10)
+#   - sensor.outdoor_temperature (or your actual sensor name)
+#   - sensor.precipitation_today (or your actual sensor name)
+
+# Current weather sensors
+sensor:
+
+  # Feels like Temp from Home Assistant
+  - platform: homeassistant
+    name: "Today Feels Like Temp"
+    entity_id: sensor.st_00143056_feels_like
+    id: weather_today_tempap
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_today_tempap
+            text: !lambda |-
+              char buffer[20];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  # Current Temp from Home Assistant
+  - platform: homeassistant
+    name: "Current Temp"
+    entity_id: sensor.st_00143056_temperature
+    id: weather_today_outdoor_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_today_outdoor_temp
+            text: !lambda |-
+              char buffer[20];
+              snprintf(buffer, sizeof(buffer), "%.0f°F", x);
+              return buffer;
+
+  # Precipitation today from Home Assistant
+  - platform: homeassistant
+    name: "Precipitation Today"
+    entity_id: sensor.hhut_nearcast_precipitation_today
+    id: weather_precipitation_today
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_precipitation_today
+            text: !lambda |-
+              // Convert mm to inches (1 in = 25.4 mm) and show with one decimal
+              char buffer[20];
+              double inches = x / 25.4;
+              snprintf(buffer, sizeof(buffer), "%.2f in", inches);
+              return buffer;
+
+  # ===================================================================
+  # 10-DAY FORECAST HIGH TEMPERATURES
+  # EXTRACT FROM: Lines around 1820-2070 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  - platform: homeassistant
+    name: "Forecast Day 1 High Temp"
+    entity_id: input_text.forecast_day_1_high_temperature
+    id: forecast_day1_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_forecast_temphi
+            text: !lambda |-
+              char buffer[16];
+              if (isnan(x)) {
+                snprintf(buffer, sizeof(buffer), "H: --°");
+              } else {
+                snprintf(buffer, sizeof(buffer), "H: %.0f°", x);
+              }
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 2 High Temp"
+    entity_id: input_text.forecast_day_2_high_temperature
+    id: forecast_day2_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day2_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 3 High Temp"
+    entity_id: input_text.forecast_day_3_high_temperature
+    id: forecast_day3_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day3_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 4 High Temp"
+    entity_id: input_text.forecast_day_4_high_temperature
+    id: forecast_day4_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day4_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 5 High Temp"
+    entity_id: input_text.forecast_day_5_high_temperature
+    id: forecast_day5_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day5_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 6 High Temp"
+    entity_id: input_text.forecast_day_6_high_temperature
+    id: forecast_day6_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day6_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 7 High Temp"
+    entity_id: input_text.forecast_day_7_high_temperature
+    id: forecast_day7_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day7_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 8 High Temp"
+    entity_id: input_text.forecast_day_8_high_temperature
+    id: forecast_day8_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day8_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 9 High Temp"
+    entity_id: input_text.forecast_day_9_high_temperature
+    id: forecast_day9_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day9_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 10 High Temp"
+    entity_id: input_text.forecast_day_10_high_temperature
+    id: forecast_day10_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float low = id(forecast_day10_low_temp).state;
+              if (!isnan(x)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", x);
+                high_text = high_str;
+              }
+              if (!isnan(low)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", low);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  # ===================================================================
+  # 10-DAY FORECAST LOW TEMPERATURES
+  # EXTRACT FROM: Lines around 2071-2320 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  - platform: homeassistant
+    name: "Forecast Day 1 Low Temp"
+    entity_id: input_text.forecast_day_1_low_temperature
+    id: forecast_day1_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_forecast_templo
+            text: !lambda |-
+              char buffer[16];
+              if (isnan(x)) {
+                snprintf(buffer, sizeof(buffer), "L: --°");
+              } else {
+                snprintf(buffer, sizeof(buffer), "L: %.0f°", x);
+              }
+              return buffer;
+  
+  - platform: homeassistant
+    name: "Forecast Day 2 Low Temp"
+    entity_id: input_text.forecast_day_2_low_temperature
+    id: forecast_day2_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day2_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Low Temp"
+    entity_id: input_text.forecast_day_3_low_temperature
+    id: forecast_day3_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day3_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 4 Low Temp"
+    entity_id: input_text.forecast_day_4_low_temperature
+    id: forecast_day4_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day4_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Low Temp"
+    entity_id: input_text.forecast_day_5_low_temperature
+    id: forecast_day5_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day5_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Low Temp"
+    entity_id: input_text.forecast_day_6_low_temperature
+    id: forecast_day6_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day6_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Low Temp"
+    entity_id: input_text.forecast_day_7_low_temperature
+    id: forecast_day7_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day7_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Low Temp"
+    entity_id: input_text.forecast_day_8_low_temperature
+    id: forecast_day8_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day8_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Low Temp"
+    entity_id: input_text.forecast_day_9_low_temperature
+    id: forecast_day9_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day9_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Low Temp"
+    entity_id: input_text.forecast_day_10_low_temperature
+    id: forecast_day10_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_temps
+            text: !lambda |-
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              const char *high_text = "--";
+              const char *low_text = "--";
+              float high = id(forecast_day10_high_temp).state;
+              if (!isnan(high)) {
+                snprintf(high_str, sizeof(high_str), "%.0f", high);
+                high_text = high_str;
+              }
+              if (!isnan(x)) {
+                snprintf(low_str, sizeof(low_str), "%.0f", x);
+                low_text = low_str;
+              }
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+# Text sensors for weather conditions and dates
+text_sensor:
+  # ===================================================================
+  # 10-DAY FORECAST CONDITIONS
+  # EXTRACT FROM: Lines around 2368-3006 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # IMPORTANT: Each condition includes weather icon mapping logic
+  # ===================================================================
+
+  # 9-day forecast conditions from Home Assistant
+  # Day 1
+  - platform: homeassistant
+    name: "Forecast Day 1 Condition"
+    entity_id: input_text.forecast_day_1_condition
+    id: forecast_day1_condition
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: |-
+                std::string cond = id(forecast_day1_condition).state;
+                std::transform(cond.begin(), cond.end(), cond.begin(), ::tolower);
+                return cond != id(weather_last_condition);
+            then:
+              - lvgl.label.update:
+                  id: lbl_weather_forecast_condition_name
+                  text: !lambda 'return id(forecast_day1_condition).state;'
+              - lvgl.label.update:
+                  id: lbl_weather_forecast_condition_icon
+                  text: !lambda |-
+                    const std::string cond_b = id(forecast_day1_condition).state;
+                    std::string norm_b = cond_b;
+                    std::transform(norm_b.begin(), norm_b.end(), norm_b.begin(), ::tolower);
+                    if (norm_b.find("clear-night") != std::string::npos) {
+                      return "\U000F0594";  // weather-night
+                    } else if (norm_b.find("sunny") != std::string::npos || norm_b.find("clear") != std::string::npos) {
+                      return "\U000F0599";  // sunny
+                    } else if (norm_b.find("snowy-rainy") != std::string::npos) {
+                      return "\U000F0F35";  // weather-snowy-rainy
+                    } else if (norm_b.find("lightning-rainy") != std::string::npos || norm_b.find("lightning") != std::string::npos) {
+                      return "\U000F067E";  // lightning-rainy
+                    } else if (norm_b.find("partlycloudy") != std::string::npos) {
+                      return "\U000F0595";  // partlycloudy
+                    } else if (norm_b.find("cloudy") != std::string::npos) {
+                      return "\U000F0590";  // cloudy
+                    } else if (norm_b.find("rainy") != std::string::npos) {
+                      return "\U000F0597";  // rainy
+                    } else if (norm_b.find("snowy") != std::string::npos) {
+                      return "\U000F0598";  // snowy
+                    } else if (norm_b.find("fog") != std::string::npos) {
+                      return "\U000F0591";  // fog
+                    } else if (norm_b.find("windy") != std::string::npos) {
+                      return "\U000F059E";  // windy
+                    } else {
+                      return "\U000F14E4";  // weather-unknown
+                    }
+        - script.execute: update_weather_icon_color
+
+  - platform: homeassistant
+    name: "Forecast Day 2 Condition"
+    entity_id: input_text.forecast_day_2_condition
+    id: forecast_day2_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day2_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Condition"
+    entity_id: input_text.forecast_day_3_condition
+    id: forecast_day3_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day3_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 4 Condition"
+    entity_id: input_text.forecast_day_4_condition
+    id: forecast_day4_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day4_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Condition"
+    entity_id: input_text.forecast_day_5_condition
+    id: forecast_day5_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day5_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Condition"
+    entity_id: input_text.forecast_day_6_condition
+    id: forecast_day6_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day6_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Condition"
+    entity_id: input_text.forecast_day_7_condition
+    id: forecast_day7_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day7_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Condition"
+    entity_id: input_text.forecast_day_8_condition
+    id: forecast_day8_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day8_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Condition"
+    entity_id: input_text.forecast_day_9_condition
+    id: forecast_day9_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day9_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Condition"
+    entity_id: input_text.forecast_day_10_condition
+    id: forecast_day10_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_condition
+            text: !lambda 'return x;'
+        - lvgl.label.update:
+            id: lbl_forecast_day10_icon
+            text: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";  // weather-night
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";  // sunny
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";  // weather-snowy-rainy
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";  // lightning-rainy
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";  // partlycloudy
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";  // cloudy
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";  // rainy
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";  // snowy
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";  // fog
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059D";  // windy
+              } else {
+                return "\U000F14E4";  // weather-unknown
+              }
+            text_color: !lambda |-
+              const std::string condition = x;
+              std::string normalized = condition;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  # ===================================================================
+  # 10-DAY FORECAST DATES
+  # EXTRACT FROM: Lines around 3010-3104 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  # Day 1 Date
+  - platform: homeassistant
+    name: "Forecast Day 1 Date"
+    entity_id: input_text.forecast_day_1_date
+    id: forecast_day1_header
+
+  - platform: homeassistant
+    name: "Forecast Day 2 Date"
+    entity_id: input_text.forecast_day_2_date
+    id: forecast_day2_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Date"
+    entity_id: input_text.forecast_day_3_date
+    id: forecast_day3_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 4 Date"
+    entity_id: input_text.forecast_day_4_date
+    id: forecast_day4_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Date"
+    entity_id: input_text.forecast_day_5_date
+    id: forecast_day5_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Date"
+    entity_id: input_text.forecast_day_6_date
+    id: forecast_day6_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Date"
+    entity_id: input_text.forecast_day_7_date
+    id: forecast_day7_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Date"
+    entity_id: input_text.forecast_day_8_date
+    id: forecast_day8_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Date"
+    entity_id: input_text.forecast_day_9_date
+    id: forecast_day9_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Date"
+    entity_id: input_text.forecast_day_10_date
+    id: forecast_day10_header
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_header
+            text: !lambda 'return x;'
+
+  # ===================================================================
+  # 10-DAY FORECAST PRECIPITATION PROBABILITIES
+  # EXTRACT FROM: Lines around 3106-3236 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  # Day 1 Precipitation Probability
+  - platform: homeassistant
+    name: "Forecast Day 1 Precipitation Probability"
+    entity_id: input_text.forecast_day_1_precipitation_probability
+    id: forecast_day1_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_today_dailyprecipprob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 2 Precipitation Probability"
+    entity_id: input_text.forecast_day_2_precipitation_probability
+    id: forecast_day2_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 3 Precipitation Probability"
+    entity_id: input_text.forecast_day_3_precipitation_probability
+    id: forecast_day3_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+  
+  - platform: homeassistant
+    name: "Forecast Day 4 Precipitation Probability"
+    entity_id: input_text.forecast_day_4_precipitation_probability
+    id: forecast_day4_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day4_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 5 Precipitation Probability"
+    entity_id: input_text.forecast_day_5_precipitation_probability
+    id: forecast_day5_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day5_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 6 Precipitation Probability"
+    entity_id: input_text.forecast_day_6_precipitation_probability
+    id: forecast_day6_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day6_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 7 Precipitation Probability"
+    entity_id: input_text.forecast_day_7_precipitation_probability
+    id: forecast_day7_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day7_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 8 Precipitation Probability"
+    entity_id: input_text.forecast_day_8_precipitation_probability
+    id: forecast_day8_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day8_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 9 Precipitation Probability"
+    entity_id: input_text.forecast_day_9_precipitation_probability
+    id: forecast_day9_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day9_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+  - platform: homeassistant
+    name: "Forecast Day 10 Precipitation Probability"
+    entity_id: input_text.forecast_day_10_precipitation_probability
+    id: forecast_day10_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day10_precip_prob
+            text: !lambda |-
+              char buffer[30];
+              snprintf(buffer, sizeof(buffer), "Chance: %s%%", x.c_str());
+              return buffer;
+
+
+  # Hourly forecast sensors from Home Assistant (6 hours)
+  - platform: homeassistant
+    name: "Forecast Hour 1 Date"
+    entity_id: input_text.forecast_hour_1_date
+    id: forecast_hour1_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Temperature"
+    entity_id: input_text.forecast_hour_1_temperature
+    id: forecast_hour1_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Apparent Temperature"
+    entity_id: input_text.forecast_hour_1_apparent_temperature
+    id: forecast_hour1_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Condition"
+    entity_id: input_text.forecast_hour_1_condition
+    id: forecast_hour1_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Humidity"
+    entity_id: input_text.forecast_hour_1_humidity
+    id: forecast_hour1_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_humid
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Precipitation"
+    entity_id: input_text.forecast_hour_1_precipitation
+    id: forecast_hour1_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_precip_amt
+            text: !lambda |-
+              return x + " in";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Precipitation Probability"
+    entity_id: input_text.forecast_hour_1_precipitation_probability
+    id: forecast_hour1_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Pressure"
+    entity_id: input_text.forecast_hour_1_pressure
+    id: forecast_hour1_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_pressure
+            text: !lambda |-
+              return x + " mb";
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 UV Index"
+    entity_id: input_text.forecast_hour_1_uv_index
+    id: forecast_hour1_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_uv
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Wind Bearing"
+    entity_id: input_text.forecast_hour_1_wind_bearing
+    id: forecast_hour1_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_wind_dir
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_1_wind_gust_speed
+    id: forecast_hour1_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 1 Wind Speed"
+    entity_id: input_text.forecast_hour_1_wind_speed
+    id: forecast_hour1_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour1_wind
+            text: !lambda |-
+              return x + " mph";
+
+  # Hour 2
+  - platform: homeassistant
+    name: "Forecast Hour 2 Date"
+    entity_id: input_text.forecast_hour_2_date
+    id: forecast_hour2_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Temperature"
+    entity_id: input_text.forecast_hour_2_temperature
+    id: forecast_hour2_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Apparent Temperature"
+    entity_id: input_text.forecast_hour_2_apparent_temperature
+    id: forecast_hour2_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Condition"
+    entity_id: input_text.forecast_hour_2_condition
+    id: forecast_hour2_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Humidity"
+    entity_id: input_text.forecast_hour_2_humidity
+    id: forecast_hour2_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_humid
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Precipitation"
+    entity_id: input_text.forecast_hour_2_precipitation
+    id: forecast_hour2_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_precip_amt
+            text: !lambda |-
+              return x + " in";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Precipitation Probability"
+    entity_id: input_text.forecast_hour_2_precipitation_probability
+    id: forecast_hour2_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Pressure"
+    entity_id: input_text.forecast_hour_2_pressure
+    id: forecast_hour2_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_pressure
+            text: !lambda |-
+              return x + " mb";
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 UV Index"
+    entity_id: input_text.forecast_hour_2_uv_index
+    id: forecast_hour2_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_uv
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Wind Bearing"
+    entity_id: input_text.forecast_hour_2_wind_bearing
+    id: forecast_hour2_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_wind_dir
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_2_wind_gust_speed
+    id: forecast_hour2_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 2 Wind Speed"
+    entity_id: input_text.forecast_hour_2_wind_speed
+    id: forecast_hour2_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour2_wind
+            text: !lambda |-
+              return x + " mph";
+
+  # Hour 3
+  - platform: homeassistant
+    name: "Forecast Hour 3 Date"
+    entity_id: input_text.forecast_hour_3_date
+    id: forecast_hour3_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Temperature"
+    entity_id: input_text.forecast_hour_3_temperature
+    id: forecast_hour3_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Apparent Temperature"
+    entity_id: input_text.forecast_hour_3_apparent_temperature
+    id: forecast_hour3_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Condition"
+    entity_id: input_text.forecast_hour_3_condition
+    id: forecast_hour3_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Humidity"
+    entity_id: input_text.forecast_hour_3_humidity
+    id: forecast_hour3_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_humid
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Precipitation"
+    entity_id: input_text.forecast_hour_3_precipitation
+    id: forecast_hour3_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_precip_amt
+            text: !lambda |-
+              return x + " in";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Precipitation Probability"
+    entity_id: input_text.forecast_hour_3_precipitation_probability
+    id: forecast_hour3_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Pressure"
+    entity_id: input_text.forecast_hour_3_pressure
+    id: forecast_hour3_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_pressure
+            text: !lambda |-
+              return x + " mb";
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 UV Index"
+    entity_id: input_text.forecast_hour_3_uv_index
+    id: forecast_hour3_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_uv
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Wind Bearing"
+    entity_id: input_text.forecast_hour_3_wind_bearing
+    id: forecast_hour3_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_wind_dir
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_3_wind_gust_speed
+    id: forecast_hour3_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 3 Wind Speed"
+    entity_id: input_text.forecast_hour_3_wind_speed
+    id: forecast_hour3_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour3_wind
+            text: !lambda |-
+              return x + " mph";
+
+  # Hour 4
+  - platform: homeassistant
+    name: "Forecast Hour 4 Date"
+    entity_id: input_text.forecast_hour_4_date
+    id: forecast_hour4_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Temperature"
+    entity_id: input_text.forecast_hour_4_temperature
+    id: forecast_hour4_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Apparent Temperature"
+    entity_id: input_text.forecast_hour_4_apparent_temperature
+    id: forecast_hour4_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Condition"
+    entity_id: input_text.forecast_hour_4_condition
+    id: forecast_hour4_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Humidity"
+    entity_id: input_text.forecast_hour_4_humidity
+    id: forecast_hour4_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_humid
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Precipitation"
+    entity_id: input_text.forecast_hour_4_precipitation
+    id: forecast_hour4_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_precip_amt
+            text: !lambda |-
+              return x + " in";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Precipitation Probability"
+    entity_id: input_text.forecast_hour_4_precipitation_probability
+    id: forecast_hour4_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Pressure"
+    entity_id: input_text.forecast_hour_4_pressure
+    id: forecast_hour4_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_pressure
+            text: !lambda |-
+              return x + " mb";
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 UV Index"
+    entity_id: input_text.forecast_hour_4_uv_index
+    id: forecast_hour4_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_uv
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Wind Bearing"
+    entity_id: input_text.forecast_hour_4_wind_bearing
+    id: forecast_hour4_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_wind_dir
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_4_wind_gust_speed
+    id: forecast_hour4_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 4 Wind Speed"
+    entity_id: input_text.forecast_hour_4_wind_speed
+    id: forecast_hour4_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour4_wind
+            text: !lambda |-
+              return x + " mph";
+
+  # Hour 5
+  - platform: homeassistant
+    name: "Forecast Hour 5 Date"
+    entity_id: input_text.forecast_hour_5_date
+    id: forecast_hour5_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Temperature"
+    entity_id: input_text.forecast_hour_5_temperature
+    id: forecast_hour5_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Apparent Temperature"
+    entity_id: input_text.forecast_hour_5_apparent_temperature
+    id: forecast_hour5_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Condition"
+    entity_id: input_text.forecast_hour_5_condition
+    id: forecast_hour5_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Humidity"
+    entity_id: input_text.forecast_hour_5_humidity
+    id: forecast_hour5_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_humid
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Precipitation"
+    entity_id: input_text.forecast_hour_5_precipitation
+    id: forecast_hour5_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_precip_amt
+            text: !lambda |-
+              return x + " in";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Precipitation Probability"
+    entity_id: input_text.forecast_hour_5_precipitation_probability
+    id: forecast_hour5_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Pressure"
+    entity_id: input_text.forecast_hour_5_pressure
+    id: forecast_hour5_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_pressure
+            text: !lambda |-
+              return x + " mb";
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 UV Index"
+    entity_id: input_text.forecast_hour_5_uv_index
+    id: forecast_hour5_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_uv
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Wind Bearing"
+    entity_id: input_text.forecast_hour_5_wind_bearing
+    id: forecast_hour5_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_wind_dir
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_5_wind_gust_speed
+    id: forecast_hour5_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 5 Wind Speed"
+    entity_id: input_text.forecast_hour_5_wind_speed
+    id: forecast_hour5_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour5_wind
+            text: !lambda |-
+              return x + " mph";
+
+  # Hour 6 Forecast Sensors
+  - platform: homeassistant
+    name: "Forecast Hour 6 Date"
+    entity_id: input_text.forecast_hour_6_date
+    id: forecast_hour6_date
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_header
+            text: !lambda 'return x;'
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Temperature"
+    entity_id: input_text.forecast_hour_6_temperature
+    id: forecast_hour6_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_temp
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Apparent Temperature"
+    entity_id: input_text.forecast_hour_6_apparent_temperature
+    id: forecast_hour6_apparent_temperature
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_feels
+            text: !lambda |-
+              return x + "°";
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Condition"
+    entity_id: input_text.forecast_hour_6_condition
+    id: forecast_hour6_condition
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_icon
+            text: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return "\U000F0594";
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return "\U000F0599";
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return "\U000F0F35";
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return "\U000F067E";
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return "\U000F0595";
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return "\U000F0590";
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return "\U000F0597";
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return "\U000F0598";
+              } else if (normalized.find("fog") != std::string::npos) {
+                return "\U000F0591";
+              } else if (normalized.find("windy") != std::string::npos) {
+                return "\U000F059E";
+              } else {
+                return "\U000F14E4";
+              }
+            text_color: !lambda |-
+              std::string normalized = x;
+              std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+              if (normalized.find("clear-night") != std::string::npos) {
+                return lv_color_hex(0x6A5ACD);
+              } else if (normalized.find("sunny") != std::string::npos || normalized.find("clear") != std::string::npos) {
+                return lv_color_hex(0xFFD700);
+              } else if (normalized.find("snowy-rainy") != std::string::npos) {
+                return lv_color_hex(0xAFEEEE);
+              } else if (normalized.find("lightning-rainy") != std::string::npos || normalized.find("lightning") != std::string::npos) {
+                return lv_color_hex(0xFF1493);
+              } else if (normalized.find("partlycloudy") != std::string::npos) {
+                return lv_color_hex(0x87CEFA);
+              } else if (normalized.find("cloudy") != std::string::npos) {
+                return lv_color_hex(0xA9A9A9);
+              } else if (normalized.find("rainy") != std::string::npos) {
+                return lv_color_hex(0x4169E1);
+              } else if (normalized.find("snowy") != std::string::npos) {
+                return lv_color_hex(0xDCDCDC);
+              } else if (normalized.find("fog") != std::string::npos) {
+                return lv_color_hex(0xB0C4DE);
+              } else if (normalized.find("windy") != std::string::npos) {
+                return lv_color_hex(0x90EE90);
+              } else {
+                return lv_color_hex(0xFFFFFF);
+              }
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Humidity"
+    entity_id: input_text.forecast_hour_6_humidity
+    id: forecast_hour6_humidity
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_humid
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Precipitation"
+    entity_id: input_text.forecast_hour_6_precipitation
+    id: forecast_hour6_precipitation
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_precip_amt
+            text: !lambda |-
+              return x + " in";
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Precipitation Probability"
+    entity_id: input_text.forecast_hour_6_precipitation_probability
+    id: forecast_hour6_precipitation_probability
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_precip
+            text: !lambda |-
+              return x + "%";
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Pressure"
+    entity_id: input_text.forecast_hour_6_pressure
+    id: forecast_hour6_pressure
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_pressure
+            text: !lambda |-
+              return x + " mb";
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 UV Index"
+    entity_id: input_text.forecast_hour_6_uv_index
+    id: forecast_hour6_uv_index
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_uv
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Wind Bearing"
+    entity_id: input_text.forecast_hour_6_wind_bearing
+    id: forecast_hour6_wind_bearing
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_wind_dir
+            text: !lambda |-
+              return x;
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Wind Gust Speed"
+    entity_id: input_text.forecast_hour_6_wind_gust_speed
+    id: forecast_hour6_wind_gust_speed
+
+  - platform: homeassistant
+    name: "Forecast Hour 6 Wind Speed"
+    entity_id: input_text.forecast_hour_6_wind_speed
+    id: forecast_hour6_wind_speed
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_hourly_hour6_wind
+            text: !lambda |-
+              return x + " mph";
+
+# ===================================================================
+# EXTRACTION CHECKLIST
+# ===================================================================
+# [ ] Current weather sensors (outdoor temp, apparent temp, precipitation)
+# [ ] Forecast Day 1-10 High Temperatures
+# [ ] Forecast Day 1-10 Low Temperatures
+# [ ] Forecast Day 1-10 Conditions (with icon mapping)
+# [ ] Forecast Day 1-10 Dates
+# [ ] Forecast Day 1-10 Precipitation Probabilities
+# [ ] Verify all entity_id names match your Home Assistant setup
+# [ ] Verify all LVGL widget IDs exist (lbl_weather_*, lbl_forecast_*)
