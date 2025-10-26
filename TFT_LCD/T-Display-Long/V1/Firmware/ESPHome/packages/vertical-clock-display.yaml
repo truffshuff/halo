@@ -15,7 +15,7 @@ on_load:
   - lambda: |-
       id(current_page_index) = 0;
       id(time_update_last_text).clear();
-      id(colon_blink_state) = true;  # Ensure colon is visible when page loads
+      id(colon_blink_state) = true;  // Ensure colon is visible when page loads
   - script.execute: time_update
   - script.execute: update_colon_widget
 widgets:

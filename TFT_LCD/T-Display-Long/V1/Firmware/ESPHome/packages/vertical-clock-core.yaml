@@ -98,15 +98,17 @@ script:
   - id: update_colon_widget
     mode: restart
     then:
-      - lambda: |-
-          auto colon = id(vclock_colon);
-          if (colon != nullptr) {
-            if (id(colon_blink_state)) {
-              colon->set_text(":");
-            } else {
-              colon->set_text(" ");
-            }
-          }
+      - if:
+          condition:
+            lambda: 'return id(colon_blink_state);'
+          then:
+            - lvgl.label.update:
+                id: vclock_colon
+                text: ":"
+          else:
+            - lvgl.label.update:
+                id: vclock_colon
+                text: " "
 
 font:
   # Large fonts for vertical clock
