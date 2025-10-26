@@ -399,3 +399,32 @@ lvgl:
 #   buffer_size: 25%  # For full-featured
 # lvgl:
 #   buffer_size: 35%  # For clock only
+
+# ============================================================================
+# PAGE ROTATION HANDLING - Device Specific
+# ============================================================================
+# Handle page rotation for enabled pages (Core only handles Vertical Clock)
+interval:
+  # Handle auto page rotation for AirQ page
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(boot_complete)) return false;
+              if (!id(auto_page_rotation_enabled)) return false;
+
+              const uint32_t now = millis();
+              const uint32_t interval_ms = id(auto_page_rotation_interval) * 1000;
+
+              // Check if it's time to rotate AND we're trying to show AirQ page
+              if ((now - id(last_auto_rotation_time)) < interval_ms) return false;
+              if (id(current_page_index) != 1) return false;  // Only handle AirQ page (index 1)
+
+              return true;
+          then:
+            - logger.log: "AUTO PAGE ROTATION -> AirQ Page"
+            - lvgl.page.show:
+                id: AirQ_page
+                animation: OUT_LEFT
+                time: 300ms
