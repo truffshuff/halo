@@ -18,4 +18,4 @@
 lvgl:
   pages:
     # Core pages - clock only
-    - !include packages/vertical-clock-display.yaml
+    - !include vertical-clock-display.yaml
