@@ -46,19 +46,11 @@ switch:
       - lambda: 'id(page_rotation_AirQ_enabled) = false;'
       - logger.log: "AirQ page disabled in rotation"
 
-  
-services:
-  #Co2 Calibration Service
-  - service: calibrate_co2_value
-    variables:
-      co2_ppm: float
-    then:
-      - scd4x.perform_forced_calibration:
-          value: !lambda "return co2_ppm;"
-          id: scd40
-  - service: sen55_clean
-    then:
-      - sen5x.start_fan_autoclean: sen55
+
+# Note: Services are now defined in Halo-v1-Core.yaml under api: component
+# These services are available:
+#   - calibrate_co2_value: Calibrate SCD40 CO2 sensor
+#   - sen55_clean: Start SEN55 fan auto-clean cycle
 
 number:
   # Page rotation order numbers (1-6, lower numbers show first)
