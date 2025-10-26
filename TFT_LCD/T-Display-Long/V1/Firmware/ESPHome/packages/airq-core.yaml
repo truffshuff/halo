@@ -25,11 +25,17 @@ globals:
     type: bool
     restore_value: yes
     initial_value: 'true'
-  
+
   - id: page_rotation_AirQ_order
     type: int
     restore_value: yes
     initial_value: '1'
+
+  # WiFi status indicator state for AirQ page
+  - id: airq_wifi_stat_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 switch:
   - platform: template
@@ -64,6 +70,39 @@ api:
     - service: sen55_clean
       then:
         - sen5x.start_fan_autoclean: sen55
+
+# WiFi status indicator update for AirQ page
+# This is independent of wifi-display.yaml so AirQ page works standalone
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete) && id(current_page_index) == 1;'  # Only when on AirQ page
+          then:
+            - if:
+                condition:
+                  wifi.connected:
+                then:
+                  # WiFi connected - show green indicator
+                  - if:
+                      condition:
+                        lambda: 'return !id(airq_wifi_stat_connected_state);'
+                      then:
+                        - lvgl.widget.update:
+                            id: wifi_stat
+                            text_color: my_green
+                        - lambda: 'id(airq_wifi_stat_connected_state) = true;'
+                else:
+                  # WiFi disconnected - show red indicator
+                  - if:
+                      condition:
+                        lambda: 'return id(airq_wifi_stat_connected_state);'
+                      then:
+                        - lvgl.widget.update:
+                            id: wifi_stat
+                            text_color: my_red
+                        - lambda: 'id(airq_wifi_stat_connected_state) = false;'
 
 number:
   # Page rotation order numbers (1-6, lower numbers show first)
