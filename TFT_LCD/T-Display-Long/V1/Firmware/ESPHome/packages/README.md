@@ -298,74 +298,74 @@ The Halo codebase uses a **modular, dynamic page rotation system** that adapts t
 
 2. **LVGL Pages Packages** (lvgl-pages-*.yaml):
    - Each package defines which pages are included (e.g., Clock + AirQ, or Clock + Weather)
-   - Sets boolean substitution flags to indicate page existence:
-     - `page_exists_vertical_clock`: Always "true"
-     - `page_exists_airq`: "true" if AirQ page included
-     - `page_exists_wifi`: "true" if WiFi page included
-     - `page_exists_weather`: "true" if Weather page included
-     - `page_exists_hourly_forecast`: "true" if Hourly Forecast page included
-     - `page_exists_daily_forecast`: "true" if Daily Forecast page included
+   - **Embeds a page rotation handler** specific to that configuration
+   - The embedded handler only references pages that actually exist in that configuration
+   - This ensures compile-time safety - no references to non-existent page IDs
 
-3. **Page Rotation Handler** ([page-rotation-handler.yaml](page-rotation-handler.yaml)):
-   - Watches for changes to `current_page_index` (every 100ms)
-   - Uses the page existence flags to determine if a page is available
-   - Shows the appropriate page using `lvgl.page.show` actions
-   - Falls back to vertical clock if requested page doesn't exist
-
-4. **Device Files** (e.g., halo-v1-79e384.yaml):
-   - Simply include the `page-rotation-handler` package
-   - No hardcoded page references needed!
+3. **Device Files** (e.g., halo-v1-79e384.yaml):
+   - Simply include ONE lvgl_pages package
+   - The page rotation handler is automatically included
+   - No separate handler package needed!
    - Works with ANY combination of enabled/disabled modules
 
 ### Benefits
 
 - **Dynamic**: Works with any combination of modules without code changes
-- **Maintainable**: Add new pages by updating only the LVGL pages package
+- **Compile-time safe**: Each configuration only references page IDs that exist
+- **Maintainable**: Add new configurations by creating new LVGL pages packages
 - **Robust**: Automatically falls back to clock page if something goes wrong
 - **Clean**: Device files don't need to know which pages exist
+- **Optimized**: Each handler is tailored to its specific page set
+
+### Available LVGL Pages Configurations
+
+| Package | Pages Included | Use Case |
+|---------|----------------|----------|
+| **lvgl-pages-clock-only.yaml** | Clock only | Minimal display, maximum battery life |
+| **lvgl-pages-airq-only.yaml** | Clock + AirQ | Air quality monitoring |
+| **lvgl-pages-airq-wifi.yaml** | Clock + AirQ + WiFi | AirQ with network monitoring |
+| **lvgl-pages-weather.yaml** | Clock + Weather | Weather station |
+| **lvgl-pages-airq-weather.yaml** | Clock + AirQ + Weather | Combined air quality & weather |
+| **lvgl-pages-full.yaml** | Clock + AirQ + WiFi + Weather | All features enabled |
 
 ### Standard Page Indices
 
 | Index | Page Name | Always Available? |
 |-------|-----------|-------------------|
-| 0 | Vertical Clock | Yes |
+| 0 | Vertical Clock | Yes (in all configs) |
 | 1 | AirQ | Only if airq-core enabled |
 | 2 | WiFi | Only if wifi-core enabled |
 | 3 | Weather | Only if weather-core enabled |
 | 4 | Hourly Forecast | Only if weather-core enabled |
 | 5 | Daily Forecast | Only if weather-core enabled |
 
-### Page Rotation Handler Package (`page-rotation-handler.yaml`)
+### Usage Example
 
-Provides dynamic page display handling that adapts to module configuration:
-- Watches `current_page_index` global for changes
-- Checks page existence flags from LVGL pages packages
-- Shows appropriate page with animation
-- Falls back to vertical clock if page unavailable
-- Logging for debugging rotation behavior
-
-**Dependencies:**
-- Must be used AFTER an LVGL pages package (which defines page existence flags)
-- Requires globals: `boot_complete`, `current_page_index`
-- Requires LVGL pages with standard IDs: `vertical_clock_page`, `AirQ_page`, `wifi_page`, `weather_forecast_page`, etc.
-
-**Usage in device files:**
 ```yaml
 packages:
-  # First: Choose your LVGL pages configuration
+  # Enable AirQ feature
+  airq_core:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-core.yaml]
+    refresh: always
+
+  # Enable WiFi monitoring feature
+  wifi_core:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-core.yaml]
+    refresh: always
+
+  # Choose matching LVGL pages package (includes embedded page rotation handler)
   lvgl_pages:
     url: https://github.com/truffshuff/halo/
     ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
-    refresh: always
-
-  # Then: Include the page rotation handler
-  page_rotation_handler:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/page-rotation-handler.yaml]
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
     refresh: always
 ```
+
+That's it! The page rotation handler is automatically included and will work correctly.
 
 ## Creating New Packages
 

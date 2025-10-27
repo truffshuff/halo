@@ -259,12 +259,13 @@ packages:
   # Available Options:
   #   lvgl-pages-full.yaml          - All features (Clock, AirQ, WiFi, Weather)
   #   lvgl-pages-airq-weather.yaml  - Clock + AirQ + Weather
+  #   lvgl-pages-airq-wifi.yaml     - Clock + AirQ + WiFi
   #   lvgl-pages-airq-only.yaml     - Clock + AirQ (current selection)
   #   lvgl-pages-weather.yaml       - Clock + Weather
   #   lvgl-pages-clock-only.yaml    - Minimal clock only
 
   # CURRENT SELECTION: AirQ Only
-  # NOTE: The page rotation handler is embedded in each lvgl-pages package
+  # NOTE: Page rotation handler is automatically included in each lvgl-pages package!
   lvgl_pages:
     url: https://github.com/truffshuff/halo/
     ref: main
@@ -285,6 +286,13 @@ packages:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-weather.yaml]
+  #   refresh: always
+
+  # AirQ + WiFi
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
   #   refresh: always
 
   # Weather only
