@@ -1,20 +1,20 @@
 # ============================================================================
-# LVGL Pages - AirQ + WiFi Configuration (WiFi Only)
+# LVGL Pages - AirQ + WiFi + WireGuard Configuration
 # ============================================================================
-# This package defines LVGL pages for devices with AirQ and WiFi monitoring
+# This package defines LVGL pages for devices with AirQ, WiFi, and WireGuard
 #
 # Includes:
 #   - Vertical Clock page
 #   - AirQ page
-#   - WiFi page (NO WireGuard)
-#   - Page rotation handler (embedded, AirQ + WiFi)
+#   - WiFi + WireGuard page
+#   - Page rotation handler (embedded, AirQ + WiFi + WireGuard)
 #
 # Excludes:
-#   - WireGuard status (use lvgl-pages-airq-wifi-wireguard.yaml for WireGuard)
 #   - Weather pages (disabled via weather-stubs)
 #   - BLE pages (disabled via ble-stubs)
 #
-# Usage: Include this for devices with WiFi monitoring but NO WireGuard
+# Usage: Include this for devices with WiFi AND WireGuard VPN monitoring
+# Requirements: wifi_core, wireguard, and wireguard_display packages must be enabled
 # ============================================================================
 
 lvgl:
@@ -25,13 +25,13 @@ lvgl:
     # AirQ page - enabled
     - !include airq-display.yaml
 
-    # WiFi page (without WireGuard support)
-    - !include lvgl-wifi-page.yaml
+    # WiFi page (with WireGuard support)
+    - !include lvgl-wifi-wireguard-page.yaml
 
 # ============================================================================
-# PAGE ROTATION HANDLER - Embedded for AirQ + WiFi configuration
+# PAGE ROTATION HANDLER - Embedded for AirQ + WiFi + WireGuard configuration
 # ============================================================================
-# This handler supports: Clock, AirQ, and WiFi pages (no Weather)
+# This handler supports: Clock, AirQ, and WiFi+WireGuard pages (no Weather)
 
 interval:
   - interval: 100ms  # Check frequently for page index changes
@@ -75,12 +75,12 @@ interval:
                             animation: OUT_LEFT
                             time: 300ms
                       else:
-                        # Page 2: WiFi
+                        # Page 2: WiFi + WireGuard
                         - if:
                             condition:
                               lambda: 'return id(current_page_index) == 2;'
                             then:
-                              - logger.log: "Page rotation: Showing WiFi page (index 2)"
+                              - logger.log: "Page rotation: Showing WiFi+WireGuard page (index 2)"
                               - lvgl.page.show:
                                   id: wifi_page
                                   animation: OUT_LEFT

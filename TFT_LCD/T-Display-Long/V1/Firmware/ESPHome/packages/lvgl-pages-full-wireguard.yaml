@@ -1,19 +1,17 @@
 # ============================================================================
-# LVGL Pages - Full Configuration (WiFi Only)
+# LVGL Pages - Full Configuration WITH WireGuard
 # ============================================================================
 # This package defines LVGL pages for devices with all features enabled
 #
 # Includes:
 #   - Vertical Clock page
 #   - AirQ page
-#   - WiFi page (NO WireGuard)
+#   - WiFi + WireGuard page
 #   - Weather pages (forecast, hourly, daily, detailed day pages)
 #   - Page rotation handler (embedded, full configuration)
 #
-# Excludes:
-#   - WireGuard status (use lvgl-pages-full-wireguard.yaml for WireGuard)
-#
-# Usage: Include this for full-featured devices WITHOUT WireGuard
+# Usage: Include this for full-featured devices WITH WireGuard VPN
+# Requirements: wifi_core, wireguard, and wireguard_display packages must be enabled
 # ============================================================================
 
 lvgl:
@@ -24,8 +22,8 @@ lvgl:
     # AirQ page
     - !include airq-display.yaml
 
-    # WiFi page (without WireGuard support)
-    - !include lvgl-wifi-page.yaml
+    # WiFi page (with WireGuard support)
+    - !include lvgl-wifi-wireguard-page.yaml
 
     # Weather pages
     - !include weather-page-forecast.yaml       # Page 3: Current weather

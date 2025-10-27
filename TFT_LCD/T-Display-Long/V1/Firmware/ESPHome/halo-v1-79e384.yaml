@@ -256,13 +256,18 @@ packages:
   # Choose ONE package that matches your enabled features above
   # The pages package determines which screens appear on the display
   #
-  # Available Options:
-  #   lvgl-pages-full.yaml          - All features (Clock, AirQ, WiFi, Weather)
-  #   lvgl-pages-airq-weather.yaml  - Clock + AirQ + Weather
-  #   lvgl-pages-airq-wifi.yaml     - Clock + AirQ + WiFi
-  #   lvgl-pages-airq-only.yaml     - Clock + AirQ (current selection)
-  #   lvgl-pages-weather.yaml       - Clock + Weather
-  #   lvgl-pages-clock-only.yaml    - Minimal clock only
+  # Available Options (choose based on enabled features):
+  #   WITHOUT WireGuard:
+  #     lvgl-pages-clock-only.yaml        - Minimal clock only
+  #     lvgl-pages-airq-only.yaml         - Clock + AirQ (current selection)
+  #     lvgl-pages-airq-wifi.yaml         - Clock + AirQ + WiFi
+  #     lvgl-pages-weather.yaml           - Clock + Weather
+  #     lvgl-pages-airq-weather.yaml      - Clock + AirQ + Weather
+  #     lvgl-pages-full.yaml              - Clock + AirQ + WiFi + Weather
+  #
+  #   WITH WireGuard (requires wireguard + wireguard_display packages):
+  #     lvgl-pages-airq-wifi-wireguard.yaml  - Clock + AirQ + WiFi + WireGuard
+  #     lvgl-pages-full-wireguard.yaml       - All features + WireGuard
 
   # CURRENT SELECTION: AirQ Only
   # NOTE: Page rotation handler is automatically included in each lvgl-pages package!
@@ -274,25 +279,25 @@ packages:
 
   # Uncomment ONE of these alternatives if you change features (comment out the above first):
 
-  # Full-featured (all pages)
+  # Clock only
   # lvgl_pages:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full.yaml]
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-clock-only.yaml]
   #   refresh: always
 
-  # AirQ + Weather
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-weather.yaml]
-  #   refresh: always
-
-  # AirQ + WiFi
+  # AirQ + WiFi (no WireGuard)
   # lvgl_pages:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
+  #   refresh: always
+
+  # AirQ + WiFi + WireGuard
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi-wireguard.yaml]
   #   refresh: always
 
   # Weather only
@@ -302,11 +307,25 @@ packages:
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather.yaml]
   #   refresh: always
 
-  # Clock only
+  # AirQ + Weather
   # lvgl_pages:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-clock-only.yaml]
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-weather.yaml]
+  #   refresh: always
+
+  # Full-featured (no WireGuard)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full.yaml]
+  #   refresh: always
+
+  # Full-featured WITH WireGuard
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full-wireguard.yaml]
   #   refresh: always
 
 # ============================================================================
