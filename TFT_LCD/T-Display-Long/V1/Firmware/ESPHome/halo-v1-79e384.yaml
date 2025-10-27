@@ -401,56 +401,17 @@ lvgl:
 #   buffer_size: 35%  # For clock only
 
 # ============================================================================
-# PAGE ROTATION HANDLING - Device Specific
+# PAGE ROTATION HANDLING - Dynamic Handler
 # ============================================================================
-# Core calculates which page to show and sets current_page_index, but doesn't
-# actually show the pages. Device files must watch current_page_index and show
-# the appropriate page based on which features are enabled.
+# Core calculates which page to show and sets current_page_index.
+# The page-rotation-handler package watches current_page_index and dynamically
+# shows the appropriate page based on which LVGL pages package is included.
+#
+# This approach allows ANY combination of modules to work without hardcoding!
 
-interval:
-  - interval: 100ms  # Check frequently for page index changes
-    then:
-      - if:
-          condition:
-            lambda: |-
-              static int last_displayed_index = -1;
-
-              if (!id(boot_complete)) return false;
-
-              // Check if page index changed
-              int current = id(current_page_index);
-              if (current == last_displayed_index) return false;
-
-              last_displayed_index = current;
-              return true;
-          then:
-            # Show the appropriate page based on current_page_index
-            # For AirQ-only config: 0 = Vertical Clock, 1 = AirQ
-            - if:
-                condition:
-                  lambda: 'return id(current_page_index) == 0;'
-                then:
-                  - logger.log: "Device: Showing Vertical Clock (index 0)"
-                  - lvgl.page.show:
-                      id: vertical_clock_page
-                      animation: OUT_LEFT
-                      time: 300ms
-                else:
-                  - if:
-                      condition:
-                        lambda: 'return id(current_page_index) == 1;'
-                      then:
-                        - logger.log: "Device: Showing AirQ page (index 1)"
-                        - lvgl.page.show:
-                            id: AirQ_page
-                            animation: OUT_LEFT
-                            time: 300ms
-                      else:
-                        - logger.log:
-                            format: "Device: Unknown page index %d, defaulting to clock"
-                            args: ['id(current_page_index)']
-                            level: WARN
-                        - lvgl.page.show:
-                            id: vertical_clock_page
-                            animation: OUT_LEFT
-                            time: 300ms
+packages:
+  page_rotation_handler:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/page-rotation-handler.yaml]
+    refresh: always
