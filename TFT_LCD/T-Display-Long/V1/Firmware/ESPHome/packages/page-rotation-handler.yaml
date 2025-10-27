@@ -11,7 +11,7 @@
 #
 # How it works:
 #   1. Each LVGL pages package defines boolean flags for which pages exist
-#   2. This handler checks those flags at runtime
+#   2. This handler uses those flags to conditionally compile page display code
 #   3. When current_page_index changes, shows the appropriate page (if it exists)
 #   4. Falls back to vertical_clock_page if index not found
 #
@@ -70,41 +70,91 @@ interval:
                   page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
                   page_found = true;
                 }
+
+                ${{
+                  # Only include AirQ code if page exists
+                  if (page_exists_airq == "true") {
+                    return R"(
                 // Page 1: AirQ
-                else if (page_idx == 1 && ${page_exists_airq}) {
+                else if (page_idx == 1) {
                   ESP_LOGI("page_rotation", "Showing AirQ page");
                   auto page = id(AirQ_page);
                   page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
                   page_found = true;
                 }
+                    )";
+                  } else {
+                    return "";
+                  }
+                }}
+
+                ${{
+                  # Only include WiFi code if page exists
+                  if (page_exists_wifi == "true") {
+                    return R"(
                 // Page 2: WiFi
-                else if (page_idx == 2 && ${page_exists_wifi}) {
+                else if (page_idx == 2) {
                   ESP_LOGI("page_rotation", "Showing WiFi page");
                   auto page = id(wifi_page);
                   page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
                   page_found = true;
                 }
+                    )";
+                  } else {
+                    return "";
+                  }
+                }}
+
+                ${{
+                  # Only include Weather code if page exists
+                  if (page_exists_weather == "true") {
+                    return R"(
                 // Page 3: Weather
-                else if (page_idx == 3 && ${page_exists_weather}) {
+                else if (page_idx == 3) {
                   ESP_LOGI("page_rotation", "Showing Weather page");
                   auto page = id(weather_forecast_page);
                   page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
                   page_found = true;
                 }
+                    )";
+                  } else {
+                    return "";
+                  }
+                }}
+
+                ${{
+                  # Only include Hourly Forecast code if page exists
+                  if (page_exists_hourly_forecast == "true") {
+                    return R"(
                 // Page 4: Hourly Forecast
-                else if (page_idx == 4 && ${page_exists_hourly_forecast}) {
+                else if (page_idx == 4) {
                   ESP_LOGI("page_rotation", "Showing Hourly Forecast page");
                   auto page = id(weather_hourly_forecast_page);
                   page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
                   page_found = true;
                 }
+                    )";
+                  } else {
+                    return "";
+                  }
+                }}
+
+                ${{
+                  # Only include Daily Forecast code if page exists
+                  if (page_exists_daily_forecast == "true") {
+                    return R"(
                 // Page 5: Daily Forecast
-                else if (page_idx == 5 && ${page_exists_daily_forecast}) {
+                else if (page_idx == 5) {
                   ESP_LOGI("page_rotation", "Showing Daily Forecast page");
                   auto page = id(weather_daily_forecast_page);
                   page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
                   page_found = true;
                 }
+                    )";
+                  } else {
+                    return "";
+                  }
+                }}
 
                 // If page not found, fall back to vertical clock
                 if (!page_found) {
