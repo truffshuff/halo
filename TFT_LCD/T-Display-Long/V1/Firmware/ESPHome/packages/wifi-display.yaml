@@ -35,23 +35,9 @@
 #   - wifi_signal_db: WiFi RSSI sensor
 # ============================================================================
 
-# LVGL configuration for WiFi display
-lvgl:
-  gradients:
-    - id: wifi_signal_gradient
-      direction: hor
-      dither: none
-      stops:
-        - color: 0xFF0000  # Red - weak signal
-          position: 0
-        - color: 0xFF8000  # Orange
-          position: 64
-        - color: 0xFFFF00  # Yellow
-          position: 128
-        - color: 0x80FF00  # Yellow-green
-          position: 192
-        - color: 0x00FF00  # Green - strong signal
-          position: 255
+# NOTE: LVGL gradient (wifi_signal_gradient) is defined in the WiFi page files
+# (lvgl-wifi-page.yaml and lvgl-wifi-wireguard-page.yaml), not here.
+# This package only provides the display update logic.
 
 # Global variables for WiFi display state tracking (WiFi page only)
 globals:
