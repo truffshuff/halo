@@ -40,13 +40,13 @@ gradients:
 # WiFi Page (WiFi-only version without WireGuard)
 pages:
   - id: wifi_page
-  bg_color: 0x000000
-  bg_opa: COVER
-  scrollbar_mode: "OFF"
-  on_load:
-    - script.execute: page_transition_cleanup
-    - lambda: 'id(current_page_index) = 2;'  # wifi_page
-  widgets:
+    bg_color: 0x000000
+    bg_opa: COVER
+    scrollbar_mode: "OFF"
+    on_load:
+      - script.execute: page_transition_cleanup
+      - lambda: 'id(current_page_index) = 2;'  # wifi_page
+    widgets:
     - label:
         text: "WiFi Statistics"
         align: CENTER
