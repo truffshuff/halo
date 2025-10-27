@@ -15,6 +15,16 @@
 # Usage: Include this for minimal clock-only devices
 # ============================================================================
 
+# Define which pages exist in this configuration
+# These flags are used by page-rotation-handler.yaml to know which pages to show
+substitutions:
+  page_exists_vertical_clock: "true"
+  page_exists_airq: "false"
+  page_exists_wifi: "false"
+  page_exists_weather: "false"
+  page_exists_hourly_forecast: "false"
+  page_exists_daily_forecast: "false"
+
 lvgl:
   pages:
     # Core pages - clock only

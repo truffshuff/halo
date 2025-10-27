@@ -12,6 +12,16 @@
 # Usage: Include this for full-featured devices
 # ============================================================================
 
+# Define which pages exist in this configuration
+# These flags are used by page-rotation-handler.yaml to know which pages to show
+substitutions:
+  page_exists_vertical_clock: "true"
+  page_exists_airq: "true"
+  page_exists_wifi: "true"
+  page_exists_weather: "true"
+  page_exists_hourly_forecast: "true"
+  page_exists_daily_forecast: "true"
+
 lvgl:
   pages:
     # Core pages - always available
