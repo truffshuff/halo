@@ -5,6 +5,7 @@
 #
 # Includes:
 #   - Vertical Clock page only
+#   - Page rotation handler (embedded, clock-only)
 #
 # Excludes:
 #   - AirQ pages (disabled via airq-stubs)
@@ -15,17 +16,40 @@
 # Usage: Include this for minimal clock-only devices
 # ============================================================================
 
-# Define which pages exist in this configuration
-# These flags are used by page-rotation-handler.yaml to know which pages to show
-substitutions:
-  page_exists_vertical_clock: "true"
-  page_exists_airq: "false"
-  page_exists_wifi: "false"
-  page_exists_weather: "false"
-  page_exists_hourly_forecast: "false"
-  page_exists_daily_forecast: "false"
-
 lvgl:
   pages:
     # Core pages - clock only
     - !include vertical-clock-display.yaml
+
+# ============================================================================
+# PAGE ROTATION HANDLER - Embedded for clock-only configuration
+# ============================================================================
+# This handler is specific to this page configuration and only references
+# the Vertical Clock page (since that's all that exists).
+
+interval:
+  - interval: 100ms  # Check frequently for page index changes
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_displayed_index = -1;
+
+              // Don't do anything until boot is complete
+              if (!id(boot_complete)) return false;
+
+              // Check if page index has changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
+
+              // Page index changed
+              last_displayed_index = current;
+              ESP_LOGD("page_rotation", "Page index changed to %d", current);
+              return true;
+          then:
+            # Only vertical clock exists - always show it
+            - logger.log: "Page rotation: Showing Vertical Clock (only page available)"
+            - lvgl.page.show:
+                id: vertical_clock_page
+                animation: OUT_LEFT
+                time: 300ms
