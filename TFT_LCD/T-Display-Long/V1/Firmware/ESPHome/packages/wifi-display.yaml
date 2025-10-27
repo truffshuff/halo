@@ -18,6 +18,7 @@
 #   - wifi_signal_bar: Signal strength bar widget
 #   - wifi_ssid_label: SSID text label
 #   - wifi_ip_label: IP address text label
+#   - ha_status_icon: Home Assistant connection status icon
 #
 # Note: The wifi_stat indicator on the AirQ page is handled independently
 #       by airq-display.yaml, so the AirQ page works even if this package
@@ -31,8 +32,9 @@
 #   - my_green: Color for connected state
 #   - my_red: Color for disconnected state
 #
-# Required sensors in your main config:
+# Required sensors/binary_sensors in your main config:
 #   - wifi_signal_db: WiFi RSSI sensor
+#   - ink_ha_connected: Binary sensor for Home Assistant API connection status
 # ============================================================================
 
 # NOTE: LVGL gradient (wifi_signal_gradient) is defined in the WiFi page files
@@ -74,6 +76,14 @@ globals:
     restore_value: no
     initial_value: ""
   - id: wifi_ip_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_status_last_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_status_needs_render
     type: bool
     restore_value: no
     initial_value: 'false'
@@ -174,6 +184,21 @@ interval:
                             id: wifi_ip_label
                             text: !lambda 'return id(wifi_ip_last_text);'
                         - lambda: 'id(wifi_ip_needs_render) = false;'
+                  # Update Home Assistant connection status icon
+                  - lambda: |-
+                      bool ha_connected = id(ink_ha_connected).state;
+                      if (ha_connected != id(ha_status_last_state)) {
+                        id(ha_status_last_state) = ha_connected;
+                        id(ha_status_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(ha_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.widget.update:
+                            id: ha_status_icon
+                            text_color: !lambda 'return id(ink_ha_connected).state ? id(my_green) : id(my_gray);'
+                        - lambda: 'id(ha_status_needs_render) = false;'
                 else:
                   # WiFi disconnected - hide WiFi logo on AirQ page
                   - if:
@@ -247,3 +272,18 @@ interval:
                             id: wifi_ip_label
                             text: !lambda 'return id(wifi_ip_last_text);'
                         - lambda: 'id(wifi_ip_needs_render) = false;'
+                  # Update Home Assistant status icon (disconnected when WiFi is down)
+                  - lambda: |-
+                      bool ha_connected = false;  // WiFi disconnected, so HA is also disconnected
+                      if (ha_connected != id(ha_status_last_state)) {
+                        id(ha_status_last_state) = ha_connected;
+                        id(ha_status_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(ha_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.widget.update:
+                            id: ha_status_icon
+                            text_color: !lambda 'return id(my_gray);'
+                        - lambda: 'id(ha_status_needs_render) = false;'

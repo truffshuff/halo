@@ -138,6 +138,17 @@ widgets:
       text_font: montserrat_18
       text_color: my_white
       text_align: LEFT
+
+  # Home Assistant connection status icon
+  - label:
+      id: ha_status_icon
+      text: "\uF07D0"  # Home Assistant icon (MDI)
+      align: BOTTOM_MID
+      x: 0
+      y: -20
+      text_font: montserrat_80
+      text_color: my_gray  # Will be updated based on connection status
+
   - obj:
       id: nav_button_wifi
       align: TOP_RIGHT
