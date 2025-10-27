@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.27.1854"
+  version: "25.10.27.1901"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -803,6 +803,23 @@ lvgl:
   disp_bg_opa: COVER
   disp_bg_image: none
   log_level: WARN  # Reduce logging overhead
+
+  # Gradient definitions used by WiFi pages
+  gradients:
+    - id: wifi_signal_gradient
+      direction: hor
+      dither: none
+      stops:
+        - color: 0xFF0000  # Red - weak signal
+          position: 0
+        - color: 0xFF8000  # Orange
+          position: 64
+        - color: 0xFFFF00  # Yellow
+          position: 128
+        - color: 0x80FF00  # Yellow-green
+          position: 192
+        - color: 0x00FF00  # Green - strong signal
+          position: 255
 
   # IMPORTANT: Pages are now defined in device-specific configs
   # Include one of these packages in your device file:
