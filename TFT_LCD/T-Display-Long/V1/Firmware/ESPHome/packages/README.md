@@ -319,14 +319,25 @@ The Halo codebase uses a **modular, dynamic page rotation system** that adapts t
 
 ### Available LVGL Pages Configurations
 
+#### Without WireGuard
+
 | Package | Pages Included | Use Case |
 |---------|----------------|----------|
 | **lvgl-pages-clock-only.yaml** | Clock only | Minimal display, maximum battery life |
 | **lvgl-pages-airq-only.yaml** | Clock + AirQ | Air quality monitoring |
-| **lvgl-pages-airq-wifi.yaml** | Clock + AirQ + WiFi | AirQ with network monitoring |
+| **lvgl-pages-airq-wifi.yaml** | Clock + AirQ + WiFi | AirQ with WiFi monitoring (no VPN) |
 | **lvgl-pages-weather.yaml** | Clock + Weather | Weather station |
 | **lvgl-pages-airq-weather.yaml** | Clock + AirQ + Weather | Combined air quality & weather |
-| **lvgl-pages-full.yaml** | Clock + AirQ + WiFi + Weather | All features enabled |
+| **lvgl-pages-full.yaml** | Clock + AirQ + WiFi + Weather | All features (no VPN) |
+
+#### With WireGuard VPN
+
+| Package | Pages Included | Requirements | Use Case |
+|---------|----------------|--------------|----------|
+| **lvgl-pages-airq-wifi-wireguard.yaml** | Clock + AirQ + WiFi + WireGuard | wireguard, wireguard_display | AirQ with VPN monitoring |
+| **lvgl-pages-full-wireguard.yaml** | Clock + AirQ + WiFi + WireGuard + Weather | wireguard, wireguard_display | All features + VPN |
+
+**Note**: WireGuard configurations require the `wireguard` and `wireguard_display` packages to be enabled in your device configuration.
 
 ### Standard Page Indices
 
