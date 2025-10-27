@@ -264,22 +264,11 @@ packages:
   #   lvgl-pages-clock-only.yaml    - Minimal clock only
 
   # CURRENT SELECTION: AirQ Only
+  # NOTE: The page rotation handler is embedded in each lvgl-pages package
   lvgl_pages:
     url: https://github.com/truffshuff/halo/
     ref: main
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
-    refresh: always
-
-  # ========================================
-  # PAGE ROTATION HANDLER
-  # ========================================
-  # This package watches for page index changes and dynamically displays
-  # the appropriate page based on which LVGL pages are included above.
-  # No hardcoding needed - works with ANY module combination!
-  page_rotation_handler:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/page-rotation-handler.yaml]
     refresh: always
 
   # Uncomment ONE of these alternatives if you change features (comment out the above first):
@@ -415,13 +404,13 @@ lvgl:
 # ============================================================================
 # PAGE ROTATION HANDLING
 # ============================================================================
-# The page-rotation-handler package (included in packages section above)
-# handles all page rotation display logic dynamically.
+# Page rotation is now handled automatically! Each lvgl-pages package includes
+# an embedded page rotation handler specific to its configuration.
 #
 # How it works:
 #   - Core calculates which page to show and sets current_page_index
-#   - page-rotation-handler watches for index changes and shows the appropriate page
-#   - Works automatically with ANY combination of modules - no hardcoding needed!
+#   - The lvgl_pages package includes a handler that only references pages it defines
+#   - Works automatically with ANY module combination - no hardcoding needed!
 #
 # To add/remove pages: Simply change the lvgl_pages package above.
-# The handler adapts automatically based on which pages exist.
+# Each package has its own optimized handler that only references pages that exist.

@@ -11,7 +11,7 @@
 #
 # How it works:
 #   1. Each LVGL pages package defines boolean flags for which pages exist
-#   2. This handler uses those flags to conditionally compile page display code
+#   2. This handler uses cascading if-then-else to check each page
 #   3. When current_page_index changes, shows the appropriate page (if it exists)
 #   4. Falls back to vertical_clock_page if index not found
 #
@@ -57,108 +57,78 @@ interval:
               ESP_LOGD("page_rotation", "Page index changed to %d", current);
               return true;
           then:
-            - lambda: |-
-                int page_idx = id(current_page_index);
-                bool page_found = false;
-
-                ESP_LOGI("page_rotation", "Attempting to show page index %d", page_idx);
-
-                // Page 0: Vertical Clock (always exists)
-                if (page_idx == 0) {
-                  ESP_LOGI("page_rotation", "Showing Vertical Clock page");
-                  auto page = id(vertical_clock_page);
-                  page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
-                  page_found = true;
-                }
-
-                ${{
-                  # Only include AirQ code if page exists
-                  if (page_exists_airq == "true") {
-                    return R"(
-                // Page 1: AirQ
-                else if (page_idx == 1) {
-                  ESP_LOGI("page_rotation", "Showing AirQ page");
-                  auto page = id(AirQ_page);
-                  page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
-                  page_found = true;
-                }
-                    )";
-                  } else {
-                    return "";
-                  }
-                }}
-
-                ${{
-                  # Only include WiFi code if page exists
-                  if (page_exists_wifi == "true") {
-                    return R"(
-                // Page 2: WiFi
-                else if (page_idx == 2) {
-                  ESP_LOGI("page_rotation", "Showing WiFi page");
-                  auto page = id(wifi_page);
-                  page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
-                  page_found = true;
-                }
-                    )";
-                  } else {
-                    return "";
-                  }
-                }}
-
-                ${{
-                  # Only include Weather code if page exists
-                  if (page_exists_weather == "true") {
-                    return R"(
-                // Page 3: Weather
-                else if (page_idx == 3) {
-                  ESP_LOGI("page_rotation", "Showing Weather page");
-                  auto page = id(weather_forecast_page);
-                  page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
-                  page_found = true;
-                }
-                    )";
-                  } else {
-                    return "";
-                  }
-                }}
-
-                ${{
-                  # Only include Hourly Forecast code if page exists
-                  if (page_exists_hourly_forecast == "true") {
-                    return R"(
-                // Page 4: Hourly Forecast
-                else if (page_idx == 4) {
-                  ESP_LOGI("page_rotation", "Showing Hourly Forecast page");
-                  auto page = id(weather_hourly_forecast_page);
-                  page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
-                  page_found = true;
-                }
-                    )";
-                  } else {
-                    return "";
-                  }
-                }}
-
-                ${{
-                  # Only include Daily Forecast code if page exists
-                  if (page_exists_daily_forecast == "true") {
-                    return R"(
-                // Page 5: Daily Forecast
-                else if (page_idx == 5) {
-                  ESP_LOGI("page_rotation", "Showing Daily Forecast page");
-                  auto page = id(weather_daily_forecast_page);
-                  page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
-                  page_found = true;
-                }
-                    )";
-                  } else {
-                    return "";
-                  }
-                }}
-
-                // If page not found, fall back to vertical clock
-                if (!page_found) {
-                  ESP_LOGW("page_rotation", "Page index %d not available, falling back to Vertical Clock", page_idx);
-                  auto page = id(vertical_clock_page);
-                  page->show(lv_scr_load_anim_t::LV_SCR_LOAD_ANIM_OUT_LEFT, 300, 0);
-                }
+            # Page 0: Vertical Clock (always available)
+            - if:
+                condition:
+                  lambda: 'return id(current_page_index) == 0;'
+                then:
+                  - logger.log: "Page rotation: Showing Vertical Clock (index 0)"
+                  - lvgl.page.show:
+                      id: vertical_clock_page
+                      animation: OUT_LEFT
+                      time: 300ms
+                else:
+                  # Page 1: AirQ (only if enabled)
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 1 && ${page_exists_airq};'
+                      then:
+                        - logger.log: "Page rotation: Showing AirQ page (index 1)"
+                        - lvgl.page.show:
+                            id: AirQ_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                        # Page 2: WiFi (only if enabled)
+                        - if:
+                            condition:
+                              lambda: 'return id(current_page_index) == 2 && ${page_exists_wifi};'
+                            then:
+                              - logger.log: "Page rotation: Showing WiFi page (index 2)"
+                              - lvgl.page.show:
+                                  id: wifi_page
+                                  animation: OUT_LEFT
+                                  time: 300ms
+                            else:
+                              # Page 3: Weather (only if enabled)
+                              - if:
+                                  condition:
+                                    lambda: 'return id(current_page_index) == 3 && ${page_exists_weather};'
+                                  then:
+                                    - logger.log: "Page rotation: Showing Weather page (index 3)"
+                                    - lvgl.page.show:
+                                        id: weather_forecast_page
+                                        animation: OUT_LEFT
+                                        time: 300ms
+                                  else:
+                                    # Page 4: Hourly Forecast (only if enabled)
+                                    - if:
+                                        condition:
+                                          lambda: 'return id(current_page_index) == 4 && ${page_exists_hourly_forecast};'
+                                        then:
+                                          - logger.log: "Page rotation: Showing Hourly Forecast page (index 4)"
+                                          - lvgl.page.show:
+                                              id: weather_hourly_forecast_page
+                                              animation: OUT_LEFT
+                                              time: 300ms
+                                        else:
+                                          # Page 5: Daily Forecast (only if enabled)
+                                          - if:
+                                              condition:
+                                                lambda: 'return id(current_page_index) == 5 && ${page_exists_daily_forecast};'
+                                              then:
+                                                - logger.log: "Page rotation: Showing Daily Forecast page (index 5)"
+                                                - lvgl.page.show:
+                                                    id: weather_daily_forecast_page
+                                                    animation: OUT_LEFT
+                                                    time: 300ms
+                                              else:
+                                                # Unknown page or page not available - fall back to vertical clock
+                                                - logger.log:
+                                                    format: "Page rotation: Page index %d not available, falling back to Vertical Clock"
+                                                    args: ['id(current_page_index)']
+                                                    level: WARN
+                                                - lvgl.page.show:
+                                                    id: vertical_clock_page
+                                                    animation: OUT_LEFT
+                                                    time: 300ms
