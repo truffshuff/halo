@@ -8,12 +8,23 @@
 #   - Page rotation switch (enable/disable WiFi page in rotation)
 #   - Page rotation order number control
 #   - WiFi signal strength sensor (RSSI)
+#   - Home Assistant icon font for WiFi pages
 #
 # Dependencies:
 #   - WiFi component configured in main config
 #   - wifi-display.yaml or wireguard-display.yaml for display logic
 #   - lvgl-wifi-wireguard-page.yaml or lvgl-wifi-page.yaml for page definition
 # ============================================================================
+
+font:
+  # Material Design Icons font - 80pt for large Home Assistant status icon
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: ha_icon_80
+    size: 80
+    bpp: 4
+    glyphs: [
+      "\U000F07D0", # home-assistant icon
+      ]
 
 globals:
   # Page rotation settings - which pages are included

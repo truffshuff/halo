@@ -213,6 +213,8 @@ packages:
     refresh: always
 
   # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
+  # NOTE: Also uncomment wifi_display package in the UTILITY PACKAGES section above
+  # NOTE: wifi_core includes the HA icon font (ha_icon_80) for WiFi pages
   # wifi_core:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main

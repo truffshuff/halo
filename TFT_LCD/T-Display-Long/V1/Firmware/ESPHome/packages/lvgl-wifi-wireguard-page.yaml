@@ -14,11 +14,12 @@
 #   - Navigation button for page transitions
 #
 # Dependencies:
+#   - Requires wifi-core.yaml package (provides ha_icon_80 font)
 #   - Requires wifi-display.yaml package for WiFi update logic
 #   - Requires wireguard-display.yaml package for WireGuard update logic
 #   - Requires LVGL display configuration in main config
 #   - Requires colors: my_white, my_gray, my_teal
-#   - Requires fonts: montserrat_18, montserrat_20
+#   - Requires fonts: montserrat_18, montserrat_20, ha_icon_80
 #   - Requires script: page_transition_cleanup
 #   - Requires global: current_page_index, last_auto_rotation_time
 #   - Requires gradient: wifi_signal_gradient (define in main config)
@@ -142,11 +143,11 @@ widgets:
   # Home Assistant connection status icon
   - label:
       id: ha_status_icon
-      text: "\uF07D0"  # Home Assistant icon (MDI)
+      text: "\U000F07D0"  # Home Assistant icon (MDI)
       align: BOTTOM_MID
       x: 0
       y: -20
-      text_font: montserrat_80
+      text_font: ha_icon_80
       text_color: my_gray  # Will be updated based on connection status
 
   - obj:
