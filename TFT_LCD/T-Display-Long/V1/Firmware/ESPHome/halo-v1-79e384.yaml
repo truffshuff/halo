@@ -270,6 +270,18 @@ packages:
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
     refresh: always
 
+  # ========================================
+  # PAGE ROTATION HANDLER
+  # ========================================
+  # This package watches for page index changes and dynamically displays
+  # the appropriate page based on which LVGL pages are included above.
+  # No hardcoding needed - works with ANY module combination!
+  page_rotation_handler:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/page-rotation-handler.yaml]
+    refresh: always
+
   # Uncomment ONE of these alternatives if you change features (comment out the above first):
 
   # Full-featured (all pages)
@@ -401,17 +413,15 @@ lvgl:
 #   buffer_size: 35%  # For clock only
 
 # ============================================================================
-# PAGE ROTATION HANDLING - Dynamic Handler
+# PAGE ROTATION HANDLING
 # ============================================================================
-# Core calculates which page to show and sets current_page_index.
-# The page-rotation-handler package watches current_page_index and dynamically
-# shows the appropriate page based on which LVGL pages package is included.
+# The page-rotation-handler package (included in packages section above)
+# handles all page rotation display logic dynamically.
 #
-# This approach allows ANY combination of modules to work without hardcoding!
-
-packages:
-  page_rotation_handler:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/page-rotation-handler.yaml]
-    refresh: always
+# How it works:
+#   - Core calculates which page to show and sets current_page_index
+#   - page-rotation-handler watches for index changes and shows the appropriate page
+#   - Works automatically with ANY combination of modules - no hardcoding needed!
+#
+# To add/remove pages: Simply change the lvgl_pages package above.
+# The handler adapts automatically based on which pages exist.
