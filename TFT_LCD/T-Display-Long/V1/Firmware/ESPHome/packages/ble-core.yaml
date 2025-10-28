@@ -73,11 +73,11 @@ bluetooth_proxy:
 # ESP32 Improv Configuration (Optional)
 # Allows WiFi provisioning via BLE using the Improv standard
 # Useful for initial device setup without hardcoded credentials
-esp32_improv:
-  # Authorization mode
-  # none = no authorization required (open provisioning)
-  # Use with caution - anyone can provision the device
-  authorizer: none
+# esp32_improv:
+#   # Authorization mode
+#   # none = no authorization required (open provisioning)
+#   # Use with caution - anyone can provision the device
+#   authorizer: none
 
 # API Integration - Dynamic BLE Scanning
 # Automatically start/stop BLE scanning based on Home Assistant connection
