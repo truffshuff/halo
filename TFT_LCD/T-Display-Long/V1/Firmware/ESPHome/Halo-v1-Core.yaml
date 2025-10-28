@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.1510"
+  version: "25.10.28.1526"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -170,11 +170,11 @@ esp32:
       CONFIG_TCP_SYNMAXRTX: "8"
 
       # Memory debugging (optional - enable if still having issues)
-      # CONFIG_HEAP_TRACING_STANDALONE: "y"
-      # CONFIG_HEAP_TRACING: "y"
-      # CONFIG_HEAP_TASK_TRACKING: "y"                # Track which task allocates what
-      # CONFIG_HEAP_POISONING_LIGHT: "y"              # Detect memory corruption (minimal overhead)
-      # CONFIG_ESP_SYSTEM_MEMPROT_FEATURE: "n"        # Disable memory protection if it causes issues
+      CONFIG_HEAP_TRACING_STANDALONE: "y"
+      CONFIG_HEAP_TRACING: "y"
+      CONFIG_HEAP_TASK_TRACKING: "y"                # Track which task allocates what
+      CONFIG_HEAP_POISONING_LIGHT: "y"              # Detect memory corruption (minimal overhead)
+      CONFIG_ESP_SYSTEM_MEMPROT_FEATURE: "n"        # Disable memory protection if it causes issues
 
 external_components:
   - source: github://truffshuff/esphome-components
