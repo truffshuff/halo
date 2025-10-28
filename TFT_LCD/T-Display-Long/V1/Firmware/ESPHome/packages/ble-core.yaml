@@ -63,12 +63,12 @@ esp32_ble_tracker:
 bluetooth_proxy:
   # Enable/disable the proxy
   # true = proxy active, false = proxy disabled
-  active: false
+  active: true
 
   # Maximum number of simultaneous BLE connections
   # Default: 3, Range: 1-9
   # Higher values = more devices but more memory usage
-  connection_slots: 1
+  connection_slots: 3
 
 # ESP32 Improv Configuration (Optional)
 # Allows WiFi provisioning via BLE using the Improv standard
