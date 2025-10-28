@@ -29,7 +29,8 @@ esphome:
             if (!id(psram_buffers_initialized)) {
               ESP_LOGI("psram", "Allocating weather sensor buffers in PSRAM (early boot)...");
 
-              // Allocate buffers in PSRAM using heap_caps_malloc
+              // Allocate buffers in PSRAM using heap_caps_malloc with MALLOC_CAP_SPIRAM
+              // This FORCES allocation to external PSRAM, keeping internal heap free for BLE
               id(psram_weather_format_buffer) = (char*) heap_caps_malloc(256, MALLOC_CAP_SPIRAM);
               id(psram_temp_buffer) = (char*) heap_caps_malloc(64, MALLOC_CAP_SPIRAM);
               id(psram_condition_buffer) = (char*) heap_caps_malloc(128, MALLOC_CAP_SPIRAM);
@@ -43,6 +44,7 @@ esphome:
                 ESP_LOGI("psram", "  Total PSRAM used: 448 bytes");
                 ESP_LOGI("psram", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
                 ESP_LOGI("psram", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                ESP_LOGI("psram", "Largest internal block: %d bytes", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
               } else {
                 ESP_LOGE("psram", "✗ Failed to allocate PSRAM buffers!");
               }
