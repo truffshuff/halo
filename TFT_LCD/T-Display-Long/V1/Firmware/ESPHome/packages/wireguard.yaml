@@ -14,7 +14,8 @@
 #   wg_pubkey: Your WireGuard server public key
 #   wg_shrdkey: Your WireGuard preshared key (optional)
 
-# WireGuard configuration
+# WireGuard configuration with DELAYED INITIALIZATION
+# Delays WireGuard start by 20 seconds to free memory for BLE during boot
 wireguard:
   id: wg0
   address: !secret wg_address
@@ -30,6 +31,23 @@ wireguard:
     - 10.6.0.2/32
   peer_persistent_keepalive: 25s
   require_connection_to_proceed: false
+
+# Delay WireGuard initialization to free memory for BLE at boot
+esphome:
+  on_boot:
+    - priority: 50  # After setup() completes, before sensors (priority 100)
+      then:
+        - delay: 20s  # Wait 20 seconds for BLE to stabilize
+        - lambda: |-
+            ESP_LOGI("wireguard_delayed", "Enabling WireGuard after 20s delay...");
+            ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+        - if:
+            condition:
+              switch.is_on: wireguard_enabled
+            then:
+              - wireguard.enable:
+                  id: wg0
+              - logger.log: "✓ WireGuard enabled successfully"
 
 # WireGuard sensors
 sensor:
