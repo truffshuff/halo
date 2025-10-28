@@ -19,11 +19,15 @@
 
 esphome:
   on_boot:
-    - priority: -50
+    # CRITICAL: Run at priority -200 (VERY EARLY in boot sequence)
+    # This ensures PSRAM buffers are allocated BEFORE BLE initialization
+    # BLE initializes during setup(), which happens around priority 0
+    # By allocating PSRAM buffers early, we minimize memory fragmentation
+    - priority: -200
       then:
         - lambda: |-
             if (!id(psram_buffers_initialized)) {
-              ESP_LOGI("psram", "Allocating weather sensor buffers in PSRAM...");
+              ESP_LOGI("psram", "Allocating weather sensor buffers in PSRAM (early boot)...");
 
               // Allocate buffers in PSRAM using heap_caps_malloc
               id(psram_weather_format_buffer) = (char*) heap_caps_malloc(256, MALLOC_CAP_SPIRAM);
@@ -43,6 +47,15 @@ esphome:
                 ESP_LOGE("psram", "✗ Failed to allocate PSRAM buffers!");
               }
             }
+    
+    # Delay weather sensor Home Assistant connections until after BLE initializes
+    # This prevents the 70KB temporary memory spike from interfering with BLE
+    - priority: 100  # Run AFTER setup() completes (BLE initialized)
+      then:
+        - delay: 15s
+        - lambda: |-
+            ESP_LOGI("psram", "Weather sensors ready to connect (post-BLE)");
+            ESP_LOGI("psram", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 
 # Create custom C++ header for PSRAM allocation helpers
 # This will be automatically included in the build
