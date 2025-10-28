@@ -32,12 +32,44 @@ esphome:
     board_build.psram_type: opi
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
+    # Extra memory debugging flags
+    build_flags:
+      - -DCONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
+      - -DCONFIG_SPIRAM_USE_MALLOC=1
+      - -DBOARD_HAS_PSRAM
 
   min_version: 2025.6.2
 
   project:
     name: "yashmulgaonkar.Halo-v1"
     version: "${version}"
+  
+  # Add detailed memory tracking at each boot stage
+  on_boot:
+    - priority: 600  # Very early - before almost everything
+      then:
+        - lambda: |-
+            ESP_LOGI("memory_boot", "=== BOOT STAGE 1: Pre-initialization ===");
+            ESP_LOGI("memory_boot", "Free internal: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+            ESP_LOGI("memory_boot", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+            ESP_LOGI("memory_boot", "Largest internal block: %d bytes", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    
+    - priority: 0  # During setup()
+      then:
+        - lambda: |-
+            ESP_LOGI("memory_boot", "=== BOOT STAGE 2: During setup() (BLE initializing) ===");
+            ESP_LOGI("memory_boot", "Free internal: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+            ESP_LOGI("memory_boot", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+            ESP_LOGI("memory_boot", "Largest internal block: %d bytes", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    
+    - priority: -600  # Late in boot
+      then:
+        - lambda: |-
+            ESP_LOGI("memory_boot", "=== BOOT STAGE 3: Post-initialization ===");
+            ESP_LOGI("memory_boot", "Free internal: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+            ESP_LOGI("memory_boot", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+            ESP_LOGI("memory_boot", "Largest internal block: %d bytes", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+            ESP_LOGI("memory_boot", "Min free ever: %d bytes", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
 
 dashboard_import:
   package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@main
