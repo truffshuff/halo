@@ -1,0 +1,331 @@
+# ============================================================================
+# Weather Sensors with PSRAM Optimization - EXAMPLE
+# ============================================================================
+# This file demonstrates how to optimize weather sensors to use PSRAM
+# instead of internal heap, preventing out-of-memory crashes.
+#
+# Three approaches are shown:
+#   1. Simple: Using shared PSRAM buffers (from psram-helpers.yaml)
+#   2. Advanced: Using RAII PSRAMBuffer wrapper
+#   3. Automatic: Relying on CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL threshold
+#
+# Memory savings: ~25-50KB internal heap for 125 sensors
+# ============================================================================
+
+packages:
+  psram_helpers: !include psram-helpers.yaml
+
+# ============================================================================
+# APPROACH 1: SHARED PSRAM BUFFERS (Recommended for most use cases)
+# ============================================================================
+# Use pre-allocated buffers from psram-helpers.yaml
+# Benefits:
+#   - No allocation overhead on every update
+#   - Prevents heap fragmentation
+#   - Simple to implement
+# ============================================================================
+
+sensor:
+  # BEFORE: Stack allocation (uses internal heap)
+  # - platform: homeassistant
+  #   name: "Forecast Day 1 High Temp"
+  #   entity_id: input_text.forecast_day_1_high_temperature
+  #   id: forecast_day1_high_temp
+  #   on_value:
+  #     then:
+  #       - lvgl.label.update:
+  #           id: lbl_weather_forecast_temphi
+  #           text: !lambda |-
+  #             char buffer[16];  # <-- This uses 16 bytes of INTERNAL heap
+  #             snprintf(buffer, sizeof(buffer), "H: %.0f°", x);
+  #             return buffer;
+
+  # AFTER: Shared PSRAM buffer (saves internal heap)
+  - platform: homeassistant
+    name: "Forecast Day 1 High Temp"
+    entity_id: input_text.forecast_day_1_high_temperature
+    id: forecast_day1_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_forecast_temphi
+            text: !lambda |-
+              // Use shared PSRAM buffer (allocated once at boot)
+              if (id(psram_buffers_initialized) && id(psram_temp_buffer)) {
+                snprintf(id(psram_temp_buffer), 64, "H: %.0f°", x);
+                return id(psram_temp_buffer);
+              }
+              // Fallback to stack if PSRAM not available
+              char buffer[16];
+              snprintf(buffer, sizeof(buffer), "H: %.0f°", x);
+              return buffer;
+
+  # Complex formatting with multiple values
+  - platform: homeassistant
+    name: "Forecast Day 2 High Temp"
+    entity_id: input_text.forecast_day_2_high_temperature
+    id: forecast_day2_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day2_temps
+            text: !lambda |-
+              // BEFORE: This created 3 buffers totaling 48 bytes on stack
+              // char buffer[32];
+              // char high_str[8];
+              // char low_str[8];
+
+              // AFTER: Use single PSRAM buffer
+              if (id(psram_buffers_initialized) && id(psram_weather_format_buffer)) {
+                float low = id(forecast_day2_low_temp).state;
+
+                const char *high_text = "--";
+                const char *low_text = "--";
+
+                // Format high temp in first part of buffer
+                if (!isnan(x)) {
+                  snprintf(id(psram_weather_format_buffer), 64, "%.0f", x);
+                  high_text = id(psram_weather_format_buffer);
+                }
+
+                // Format low temp in second part of buffer
+                if (!isnan(low)) {
+                  snprintf(id(psram_weather_format_buffer) + 64, 64, "%.0f", low);
+                  low_text = id(psram_weather_format_buffer) + 64;
+                }
+
+                // Combine in third part of buffer
+                snprintf(id(psram_weather_format_buffer) + 128, 128, "H:%s° L:%s°", high_text, low_text);
+                return id(psram_weather_format_buffer) + 128;
+              }
+
+              // Fallback
+              char buffer[32];
+              char high_str[8];
+              char low_str[8];
+              float low = id(forecast_day2_low_temp).state;
+              const char *high_text = isnan(x) ? "--" : (snprintf(high_str, 8, "%.0f", x), high_str);
+              const char *low_text = isnan(low) ? "--" : (snprintf(low_str, 8, "%.0f", low), low_str);
+              snprintf(buffer, sizeof(buffer), "H:%s° L:%s°", high_text, low_text);
+              return buffer;
+
+# ============================================================================
+# APPROACH 2: RAII PSRAM BUFFER (Advanced, automatic cleanup)
+# ============================================================================
+# Use PSRAMBuffer wrapper for automatic memory management
+# Benefits:
+#   - Automatic cleanup (RAII pattern)
+#   - Type-safe
+#   - Good for complex calculations
+# Drawbacks:
+#   - Slight allocation overhead per update
+# ============================================================================
+
+sensor:
+  - platform: homeassistant
+    name: "Forecast Day 3 High Temp"
+    entity_id: input_text.forecast_day_3_high_temperature
+    id: forecast_day3_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_forecast_day3_temps
+            text: !lambda |-
+              // Use RAII wrapper - automatically allocates in PSRAM and frees on return
+              auto buffer = PSRAM_BUFFER(char, 128);
+              if (buffer) {
+                float low = id(forecast_day3_low_temp).state;
+                const char *high_text = "--";
+                const char *low_text = "--";
+
+                char temp_str[16];
+                if (!isnan(x)) {
+                  snprintf(temp_str, sizeof(temp_str), "%.0f", x);
+                  high_text = temp_str;
+                }
+                if (!isnan(low)) {
+                  snprintf(temp_str, sizeof(temp_str), "%.0f", low);
+                  low_text = temp_str;
+                }
+
+                snprintf(buffer.get(), buffer.size(), "H:%s° L:%s°", high_text, low_text);
+
+                // Need to copy to a persistent location since buffer will be freed
+                static std::string persistent;
+                persistent = buffer.get();
+                return persistent.c_str();
+              }
+
+              return "--";
+
+# ============================================================================
+# APPROACH 3: EXPLICIT PSRAM ALLOCATION (Maximum control)
+# ============================================================================
+# Manually allocate and free PSRAM memory
+# Benefits:
+#   - Maximum control over allocation/deallocation
+#   - Can use for very large buffers
+# Drawbacks:
+#   - Must manually free memory
+#   - More verbose
+# ============================================================================
+
+sensor:
+  - platform: homeassistant
+    name: "Forecast Day 4 High Temp"
+    entity_id: input_text.forecast_day_4_high_temperature
+    id: forecast_day4_high_temp
+    on_value:
+      then:
+        - lambda: |-
+            // Allocate buffer explicitly in PSRAM
+            char* buffer = PSRAM_ALLOC(char, 256);
+            if (buffer) {
+              float low = id(forecast_day4_low_temp).state;
+
+              snprintf(buffer, 256, "Day 4: H:%.0f° L:%.0f°",
+                      isnan(x) ? 0.0 : x,
+                      isnan(low) ? 0.0 : low);
+
+              // Update label
+              id(lbl_forecast_day4_temps).set_text(buffer);
+
+              // Must manually free when done
+              PSRAM_FREE(buffer);
+            } else {
+              ESP_LOGE("weather", "Failed to allocate PSRAM for Day 4 temp");
+            }
+
+# ============================================================================
+# APPROACH 4: STATIC PSRAM ALLOCATION (Persistent buffers)
+# ============================================================================
+# Allocate once and reuse - best for frequently updated sensors
+# Benefits:
+#   - Zero allocation overhead after first call
+#   - Fastest performance
+#   - No fragmentation
+# Drawbacks:
+#   - Memory stays allocated even when not in use
+# ============================================================================
+
+sensor:
+  - platform: homeassistant
+    name: "Current Outdoor Temperature"
+    entity_id: sensor.outdoor_temperature
+    id: outdoor_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_outdoor_temp
+            text: !lambda |-
+              // Allocate ONCE on first call, reuse forever
+              static char* psram_buffer = nullptr;
+              if (psram_buffer == nullptr) {
+                psram_buffer = PSRAM_ALLOC(char, 64);
+                ESP_LOGI("weather", "Allocated persistent PSRAM buffer for outdoor temp");
+              }
+
+              if (psram_buffer) {
+                snprintf(psram_buffer, 64, "%.1f°F", x);
+                return psram_buffer;
+              }
+
+              // Fallback if allocation failed
+              static char fallback[64];
+              snprintf(fallback, sizeof(fallback), "%.1f°F", x);
+              return fallback;
+
+# ============================================================================
+# TEXT SENSORS - String data optimization
+# ============================================================================
+
+text_sensor:
+  # Text sensors benefit even more from PSRAM since strings can be large
+  - platform: homeassistant
+    name: "Forecast Day 1 Condition"
+    entity_id: input_text.forecast_day_1_condition
+    id: forecast_day1_condition
+    on_value:
+      then:
+        - lambda: |-
+            // Use PSRAM_STRDUP to duplicate string in PSRAM
+            static char* condition_text = nullptr;
+
+            // Free previous allocation
+            if (condition_text) {
+              PSRAM_FREE(condition_text);
+            }
+
+            // Duplicate new string in PSRAM
+            condition_text = PSRAM_STRDUP(x.c_str());
+
+            if (condition_text) {
+              id(lbl_forecast_day1_condition).set_text(condition_text);
+            } else {
+              ESP_LOGE("weather", "Failed to allocate PSRAM for condition text");
+            }
+
+# ============================================================================
+# DIAGNOSTIC: Memory monitoring
+# ============================================================================
+
+interval:
+  - interval: 60s
+    then:
+      - lambda: |-
+          // Log memory stats every minute
+          LOG_MEMORY_STATS();
+
+sensor:
+  - platform: template
+    name: "Free Internal Heap"
+    id: free_internal_heap
+    lambda: 'return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);'
+    unit_of_measurement: "bytes"
+    accuracy_decimals: 0
+    update_interval: 10s
+    entity_category: diagnostic
+
+  - platform: template
+    name: "Free PSRAM"
+    id: free_psram
+    lambda: 'return heap_caps_get_free_size(MALLOC_CAP_SPIRAM);'
+    unit_of_measurement: "bytes"
+    accuracy_decimals: 0
+    update_interval: 10s
+    entity_category: diagnostic
+
+  - platform: template
+    name: "Min Free Internal Heap"
+    id: min_free_internal_heap
+    lambda: 'return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);'
+    unit_of_measurement: "bytes"
+    accuracy_decimals: 0
+    update_interval: 10s
+    entity_category: diagnostic
+
+# ============================================================================
+# RECOMMENDATION FOR YOUR 125 SENSORS
+# ============================================================================
+# For your weather-sensors.yaml with 125 sensors, I recommend:
+#
+# 1. Use APPROACH 1 (Shared PSRAM buffers) for most sensors
+#    - Simple to implement
+#    - Low overhead
+#    - Prevents fragmentation
+#
+# 2. Keep CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096" in Halo-v1-Core.yaml
+#    - This makes sensor objects themselves allocate in PSRAM
+#    - Combined with shared buffers = maximum savings
+#
+# 3. Expected results:
+#    - Internal heap freed: 60-100KB
+#    - PSRAM used: ~500KB-1MB
+#    - Stable operation with BLE + WiFi + Display + 125 sensors
+#
+# Implementation steps:
+#   1. Include psram-helpers.yaml in your device config
+#   2. Convert 10-20 sensors to use shared buffers (test)
+#   3. If stable, convert remaining sensors
+#   4. Monitor with memory diagnostic sensors above
+# ============================================================================
