@@ -143,7 +143,7 @@ packages:
   #   ref: main
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
   #   refresh: always
-  # time_update_wireguard:  # Overrides Core's time-update-basic.yaml
+  # time_update:  # IMPORTANT: Use same key as Core to override time-update-basic.yaml
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
@@ -213,8 +213,6 @@ packages:
     refresh: always
 
   # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
-  # NOTE: Also uncomment wifi_display package in the UTILITY PACKAGES section above
-  # NOTE: wifi_core includes the HA icon font (ha_icon_80) for WiFi pages
   # wifi_core:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
@@ -273,11 +271,11 @@ packages:
 
   # CURRENT SELECTION: AirQ Only
   # NOTE: Page rotation handler is automatically included in each lvgl-pages package!
-  lvgl_pages:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
-    refresh: always
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
+  #   refresh: always
 
   # Uncomment ONE of these alternatives if you change features (comment out the above first):
 
@@ -289,11 +287,11 @@ packages:
   #   refresh: always
 
   # AirQ + WiFi (no WireGuard)
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
-  #   refresh: always
+  lvgl_pages:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
+    refresh: always
 
   # AirQ + WiFi + WireGuard
   # lvgl_pages:
