@@ -13,24 +13,23 @@
 #   - Sufficient heap memory (can cause OOM if other features enabled)
 #
 # Performance Impact:
-#   - Memory: ~50-80KB heap usage (can exhaust heap with display features)
+#   - Memory: ~50-80KB heap usage (allocated in PSRAM when properly configured)
 #   - CPU: Moderate - BLE scanning is CPU intensive
 #   - Battery: High - continuous BLE scanning drains power
 #
 # IMPORTANT NOTES:
 #   - Bluetooth Proxy REQUIRES esp32_ble_tracker to function
-#   - BLE features are DISABLED by default due to heap exhaustion issues
-#   - Enabling BLE may cause crashes if combined with:
-#     - Large LVGL display configurations
-#     - Multiple sensors on I2C/SPI
-#     - WiFi + WireGuard simultaneously
+#   - PSRAM MUST be properly configured in Halo-v1-Core.yaml with:
+#     - CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y" (use PSRAM for BLE stack)
+#     - CONFIG_SPIRAM_USE_MALLOC: "y" (enable PSRAM allocations)
+#     - CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y" (allow stacks in PSRAM)
+#   - With proper PSRAM configuration, BLE can coexist with display + sensors
 #   - Test thoroughly after enabling BLE features
 #
 # Recommended Configuration:
-#   - Disable BLE if using full display + sensors (default)
-#   - Enable only if you need Home Assistant Bluetooth Proxy
+#   - Enable BLE only if PSRAM is properly configured (see Halo-v1-Core.yaml)
 #   - Monitor heap usage via memory_stats package
-#   - Consider reducing LVGL buffer_size if enabling BLE
+#   - Internal heap should remain > 100KB free with PSRAM offloading
 # ============================================================================
 
 # ESP32 BLE Tracker Configuration

@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.0908"
+  version: "25.10.28.0924"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -63,24 +63,70 @@ packages:
   #   - wifi-stubs.yaml (to disable)
   #
   # BLE (Bluetooth):
-  #   - ble-core.yaml (to enable - NOT RECOMMENDED, causes heap issues)
-  #   - ble-stubs.yaml (to disable - RECOMMENDED)
+  #   - ble-core.yaml (to enable - now supported with PSRAM configuration)
+  #   - ble-stubs.yaml (to disable if not needed)
 
 psram:
   mode: octal
-  # speed: 120MHz
+  speed: 80MHz  # Optimal speed for stability with BLE
 
 esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
   cpu_frequency: 240MHz
-  
+
   framework:
     type: esp-idf
     advanced:
       enable_idf_experimental_features: true
+      # ========================================================================
+      # PSRAM Configuration for BLE and Memory-Intensive Operations
+      # ========================================================================
+      # These settings configure ESP-IDF to use PSRAM for dynamic allocations
+      # instead of the limited internal heap, which prevents OOM crashes
+      # ========================================================================
+      ignore_efuse_mac_crc: false
     # platform_version: 6.9.0
     # version: 5.3.1
+    sdkconfig_options:
+      # Enable PSRAM support
+      CONFIG_SPIRAM_USE: "y"
+      CONFIG_SPIRAM_MODE_OCT: "y"
+
+      # Memory allocation strategy - Use PSRAM for large allocations
+      # This moves malloc() calls to PSRAM when size > threshold
+      CONFIG_SPIRAM_USE_MALLOC: "y"
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"  # Keep allocations < 16KB in internal RAM
+
+      # BLE-specific PSRAM configuration
+      # Move BLE controller memory to PSRAM to free internal heap
+      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM for NimBLE stack
+      CONFIG_BT_NIMBLE_USE_ESP_TIMER: "y"  # Use ESP timer for better performance
+
+      # LWIP (networking) PSRAM usage
+      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "32"  # Increase network buffers
+      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "12"
+      CONFIG_LWIP_UDP_RECVMBOX_SIZE: "12"
+
+      # Task stack allocation in PSRAM
+      # Move large task stacks to PSRAM to free internal RAM
+      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
+
+      # LVGL configuration for PSRAM
+      # Allow LVGL buffers to use PSRAM
+      CONFIG_LV_MEM_CUSTOM: "y"
+
+      # WiFi/BT coexistence optimization
+      CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM: "8"  # Reduce WiFi RX buffers
+      CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: "16"
+      CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: "16"
+
+      # Increase task watchdog timeout for BLE operations
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
+      # Memory debugging (optional - enable if still having issues)
+      # CONFIG_HEAP_TRACING_STANDALONE: "y"
+      # CONFIG_HEAP_TRACING: "y"
 
 external_components:
   - source: github://truffshuff/esphome-components
@@ -797,8 +843,9 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 25%  # Increased from 20% to 25% for better performance
-                    # IMPORTANT: If enabling BLE, reduce to 15-20% to prevent heap exhaustion
+  buffer_size: 30%  # Can now use larger buffers since LVGL uses PSRAM via CONFIG_LV_MEM_CUSTOM
+                    # With PSRAM enabled, display buffers are allocated in external RAM
+                    # This improves rendering performance without consuming internal heap
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
