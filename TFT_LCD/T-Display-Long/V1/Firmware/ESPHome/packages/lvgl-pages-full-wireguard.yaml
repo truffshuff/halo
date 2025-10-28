@@ -111,7 +111,7 @@ interval:
                                         then:
                                           - logger.log: "Page rotation: Showing Hourly Forecast page (index 4)"
                                           - lvgl.page.show:
-                                              id: weather_hourly_forecast_page
+                                              id: hourly_forecast_page
                                               animation: OUT_LEFT
                                               time: 300ms
                                         else:
@@ -122,7 +122,7 @@ interval:
                                               then:
                                                 - logger.log: "Page rotation: Showing Daily Forecast page (index 5)"
                                                 - lvgl.page.show:
-                                                    id: weather_daily_forecast_page
+                                                    id: daily_forecast_page
                                                     animation: OUT_LEFT
                                                     time: 300ms
                                               else:

@@ -112,31 +112,19 @@ packages:
   # Note: Saves a small amount of memory but loses diagnostic capability
 
   # ----------------------------------------
-  # WiFi Display - WiFi Status Updates
+  # WiFi Display - Connection Info Display
   # ----------------------------------------
-  # IMPORTANT: This package is REQUIRED when wifi_core is enabled!
-  #
-  # What it does:
-  #   - Updates WiFi signal strength, SSID, and IP address on WiFi pages
-  #   - Updates Home Assistant connection status icon
-  #   - Updates WiFi indicator on AirQ page
-  #   - Runs every 5 seconds to keep status current
-  #
-  # When to enable:
-  #   - REQUIRED if wifi_core is enabled (WiFi monitoring page)
-  #   - REQUIRED for both WiFi-only and WiFi+WireGuard configurations
-  #   - NOT needed if wifi_stubs is enabled (WiFi monitoring disabled)
-  #
-  # OPTION 1: WiFi Display DISABLED (current selection)
-  # Only use this option if wifi_stubs is enabled (no WiFi monitoring page)
-  # wifi_display:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
-  #   refresh: always
+  # OPTION 1: WiFi Display DISABLED (current selection - requires wifi_core to be enabled)
+  # Note: This displays WiFi connection info on pages like AirQ
+  # Requires wifi_core package to be enabled, not compatible with wifi_stubs
+  wifi_display:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
+    refresh: always
 
-  # OPTION 2: WiFi Display ENABLED (uncomment to enable)
-  # Enable this when wifi_core is enabled for WiFi monitoring page
+  # OPTION 2: WiFi Display ENABLED (uncomment above to enable)
+  # WARNING: Only enable if wifi_core is enabled (not wifi_stubs)
 
   # ----------------------------------------
   # WireGuard VPN - Secure Remote Access
@@ -145,25 +133,21 @@ packages:
   # If disabled, Core uses time-update-basic.yaml
 
   # OPTION 2: WireGuard ENABLED (uncomment all 3 packages to enable)
-  # IMPORTANT: Also requires:
-  #   1. wifi_display package (see WiFi Display section above)
-  #   2. wifi_core package (see WiFi Monitoring section below)
-  #   3. Script override section at end of file (see "WireGuard Script Override")
-  # wireguard:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml]
-  #   refresh: always
-  # wireguard_display:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
-  #   refresh: always
-  # time_update_wg:  # Use different key to avoid initial conflict with Core
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
-  #   refresh: always
+  wireguard:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml]
+    refresh: always
+  wireguard_display:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
+    refresh: always
+  time_update_wg:  # IMPORTANT: Use same key as Core to override time-update-basic.yaml
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
+    refresh: always
   
 
   # ========================================
@@ -196,28 +180,28 @@ packages:
   # Weather - Weather Forecasting
   # ----------------------------------------
   # OPTION 1: Weather DISABLED (current selection)
-  weather_stubs:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-stubs.yaml]
-    refresh: always
+  # weather_stubs:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-stubs.yaml]
+  #   refresh: always
 
   # OPTION 2: Weather ENABLED (uncomment all 3 packages to enable, comment out stubs above)
-  # weather_core:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-core.yaml]
-  #   refresh: always
-  # weather_sensors:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-sensors.yaml]
-  #   refresh: always
-  # weather_fonts_text:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-fonts-text.yaml]
-  #   refresh: always
+  weather_core:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-core.yaml]
+    refresh: always
+  weather_sensors:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-sensors.yaml]
+    refresh: always
+  weather_fonts_text:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-fonts-text.yaml]
+    refresh: always
 
   # ----------------------------------------
   # WiFi Monitoring - WiFi Statistics Page
@@ -230,8 +214,6 @@ packages:
   #   refresh: always
 
   # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
-  # IMPORTANT: Also requires wifi_display package (see WiFi Display section above)
-  # NOTE: wifi_core provides page rotation controls and Home Assistant icon font
   wifi_core:
     url: https://github.com/truffshuff/halo.git/
     ref: main
@@ -244,18 +226,18 @@ packages:
   # OPTION 1: BLE DISABLED (current selection - RECOMMENDED)
   # WARNING: BLE can cause heap exhaustion! Only enable if absolutely needed.
   # If enabling BLE, reduce LVGL buffer_size to 15-20% (see below)
-  ble_stubs:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-stubs.yaml]
-    refresh: always
+  # ble_stubs:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-stubs.yaml]
+  #   refresh: always
 
   # OPTION 2: BLE ENABLED (uncomment to enable - NOT RECOMMENDED, comment out stubs above)
-  # ble_core:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core.yaml]
-  #   refresh: always
+  ble_core:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core.yaml]
+    refresh: always
 
   # ========================================
   # CORE CONFIGURATION
@@ -313,11 +295,11 @@ packages:
   #   refresh: always
 
   # AirQ + WiFi + WireGuard
-  lvgl_pages:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi-wireguard.yaml]
-    refresh: always
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi-wireguard.yaml]
+  #   refresh: always
 
   # Weather only
   # lvgl_pages:
@@ -341,11 +323,11 @@ packages:
   #   refresh: always
 
   # Full-featured WITH WireGuard
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full-wireguard.yaml]
-  #   refresh: always
+  lvgl_pages:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full-wireguard.yaml]
+    refresh: always
 
 # ============================================================================
 # DEFAULT PAGE SELECTOR - Customize for Enabled Features
@@ -363,10 +345,10 @@ select:
     options:
       - "Vertical Clock"  # Always available
       - "AirQ"            # Available when airq_core is enabled
-      # - "WiFi"          # Available when wifi_core is enabled (currently disabled)
-      # - "Weather"       # Available when weather_core is enabled (currently disabled)
-      # - "Daily Forecast"   # Available when weather_core is enabled (currently disabled)
-      # - "Hourly Forecast"  # Available when weather_core is enabled (currently disabled)
+      - "WiFi"          # Available when wifi_core is enabled (currently disabled)
+      - "Weather"       # Available when weather_core is enabled (currently disabled)
+      - "Daily Forecast"   # Available when weather_core is enabled (currently disabled)
+      - "Hourly Forecast"  # Available when weather_core is enabled (currently disabled)
 
     # EXAMPLE OPTIONS for different configurations:
     #
@@ -437,7 +419,7 @@ select:
 #   With BLE enabled:       15-20% (BLE uses significant heap!)
 
 lvgl:
-  buffer_size: 30%  # Optimized for AirQ only configuration
+  buffer_size: 50%  # Optimized for AirQ only configuration
 
 # Uncomment and adjust if you change features:
 # lvgl:
@@ -460,24 +442,6 @@ lvgl:
 #
 # To add/remove pages: Simply change the lvgl_pages package above.
 # Each package has its own optimized handler that only references pages that exist.
-
-# ============================================================================
-# WIREGUARD SCRIPT OVERRIDE
-# ============================================================================
-# IMPORTANT: When WireGuard is enabled, you must remove Core's time_update script
-# to prevent conflicts with time-update-wireguard.yaml's time_update script.
-#
-# How it works:
-#   1. Core includes time-update-basic.yaml which defines a time_update script
-#   2. Your WireGuard time_update_wg package also defines a time_update script
-#   3. Without !remove, ESPHome sees duplicate IDs and fails
-#   4. The !remove directive removes Core's version before loading WireGuard's
-#
-# When to use:
-#   - ENABLE this section (uncomment) when WireGuard packages are enabled
-#   - DISABLE this section (comment out) when WireGuard is disabled
-#
-# Current status: ENABLED (WireGuard is active in this config)
-# ============================================================================
+# THEN, after Core is imported, remove its time_update script
 script:
-  - id: !remove time_update  # Remove Core's basic time_update to avoid conflict
+  - id: !remove time_update  # Remove Core's basic time update
