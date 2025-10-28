@@ -112,19 +112,31 @@ packages:
   # Note: Saves a small amount of memory but loses diagnostic capability
 
   # ----------------------------------------
-  # WiFi Display - Connection Info Display
+  # WiFi Display - WiFi Status Updates
   # ----------------------------------------
-  # OPTION 1: WiFi Display DISABLED (current selection - requires wifi_core to be enabled)
-  # Note: This displays WiFi connection info on pages like AirQ
-  # Requires wifi_core package to be enabled, not compatible with wifi_stubs
+  # IMPORTANT: This package is REQUIRED when wifi_core is enabled!
+  #
+  # What it does:
+  #   - Updates WiFi signal strength, SSID, and IP address on WiFi pages
+  #   - Updates Home Assistant connection status icon
+  #   - Updates WiFi indicator on AirQ page
+  #   - Runs every 5 seconds to keep status current
+  #
+  # When to enable:
+  #   - REQUIRED if wifi_core is enabled (WiFi monitoring page)
+  #   - REQUIRED for both WiFi-only and WiFi+WireGuard configurations
+  #   - NOT needed if wifi_stubs is enabled (WiFi monitoring disabled)
+  #
+  # OPTION 1: WiFi Display DISABLED (current selection)
+  # Only use this option if wifi_stubs is enabled (no WiFi monitoring page)
   # wifi_display:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
   #   refresh: always
 
-  # OPTION 2: WiFi Display ENABLED (uncomment above to enable)
-  # WARNING: Only enable if wifi_core is enabled (not wifi_stubs)
+  # OPTION 2: WiFi Display ENABLED (uncomment to enable)
+  # Enable this when wifi_core is enabled for WiFi monitoring page
 
   # ----------------------------------------
   # WireGuard VPN - Secure Remote Access
@@ -133,8 +145,10 @@ packages:
   # If disabled, Core uses time-update-basic.yaml
 
   # OPTION 2: WireGuard ENABLED (uncomment all 3 packages to enable)
-  # IMPORTANT: You must also add a script section AFTER the packages section to remove
-  # Core's time_update script. See "WireGuard Script Override" section at end of file.
+  # IMPORTANT: Also requires:
+  #   1. wifi_display package (see WiFi Display section above)
+  #   2. wifi_core package (see WiFi Monitoring section below)
+  #   3. Script override section at end of file (see "WireGuard Script Override")
   # wireguard:
   #   url: https://github.com/truffshuff/halo.git/
   #   ref: main
@@ -216,6 +230,8 @@ packages:
   #   refresh: always
 
   # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
+  # IMPORTANT: Also requires wifi_display package (see WiFi Display section above)
+  # NOTE: wifi_core provides page rotation controls and Home Assistant icon font
   wifi_core:
     url: https://github.com/truffshuff/halo.git/
     ref: main
