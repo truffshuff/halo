@@ -1,0 +1,14 @@
+# ============================================================================
+# Time Update Stubs - Placeholder for when WireGuard time update is used
+# ============================================================================
+# This is an empty stub file used when time-update-wireguard.yaml is enabled
+# in the device configuration. It prevents Core's time-update-basic.yaml from
+# being loaded.
+#
+# Usage:
+#   This file should NEVER be included directly in device configs.
+#   It's only used internally by Core when WireGuard time update is needed.
+# ============================================================================
+
+# This file intentionally left empty - no scripts defined
+# The time_update script will be provided by time-update-wireguard.yaml instead
