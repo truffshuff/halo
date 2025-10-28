@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.1458"
+  version: "25.10.28.1500"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -127,7 +127,7 @@ esp32:
 
       # WiFi/BT coexistence optimization
       CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"    # Allow WiFi/LWIP allocations in PSRAM
-      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "12"           # Extend watchdog for long BLE ops
+      
       # CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM: "8"  # Reduce WiFi RX buffers
       # CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: "16"
       # CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: "16"
@@ -140,7 +140,8 @@ esp32:
 
 
       # Increase task watchdog timeout for BLE operations
-      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+      # CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "12"           # Extend watchdog for long BLE ops
 
       # ========================================================================
       # HOME ASSISTANT API & SENSOR OPTIMIZATION
