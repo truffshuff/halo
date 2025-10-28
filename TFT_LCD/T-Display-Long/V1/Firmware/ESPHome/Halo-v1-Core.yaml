@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.1526"
+  version: "25.10.28.1543"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -97,7 +97,9 @@ esp32:
       # This moves malloc() calls to PSRAM when size > threshold
       CONFIG_SPIRAM_USE_MALLOC: "y"
       # CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"  # Keep allocations < 16KB in internal RAM
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "8192"  # Only keep <8KB in internal RAM (was 16KB)
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"   # AGGRESSIVE: Force most allocations to PSRAM
+                                                     # Sensors ~500-1200 bytes each = go to PSRAM
+                                                     # Only tiny allocations (<4KB) stay internal
       # BLE-specific PSRAM configuration
       # Move BLE controller memory to PSRAM to free internal heap
       CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM for NimBLE stack
