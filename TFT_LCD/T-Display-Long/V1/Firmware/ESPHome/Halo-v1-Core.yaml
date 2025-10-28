@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.1415"
+  version: "25.10.28.1426"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -142,11 +142,6 @@ esp32:
       # LWIP (networking) optimization for API traffic
       CONFIG_LWIP_MAX_SOCKETS: "16"  # Support more simultaneous connections
       CONFIG_LWIP_SO_RCVBUF: "y"  # Enable socket receive buffer
-
-      # String allocation optimization (sensors create many string objects)
-      # Force C++ std::string to use PSRAM for large allocations
-      CONFIG_COMPILER_CXX_EXCEPTIONS: "y"
-      CONFIG_COMPILER_CXX_RTTI: "y"
 
       # Memory debugging (optional - enable if still having issues)
       # CONFIG_HEAP_TRACING_STANDALONE: "y"
