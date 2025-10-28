@@ -229,21 +229,30 @@ packages:
   # ----------------------------------------
   # BLE - Bluetooth Low Energy
   # ----------------------------------------
-  # OPTION 1: BLE DISABLED (current selection - RECOMMENDED)
+  # OPTION 1: BLE DISABLED (comment out to disable)
   # WARNING: BLE can cause heap exhaustion! Only enable if absolutely needed.
-  # If enabling BLE, reduce LVGL buffer_size to 15-20% (see below)
   # ble_stubs:
   #   url: https://github.com/truffshuff/halo.git/
   #   ref: main
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-stubs.yaml]
   #   refresh: always
 
-  # OPTION 2: BLE ENABLED (uncomment to enable - NOT RECOMMENDED, comment out stubs above)
+  # OPTION 2: BLE ENABLED WITH DELAYED START (RECOMMENDED with PSRAM)
+  # Waits 10 seconds after boot for PSRAM optimization to free up memory
+  # This allows weather sensors to load, then moves them to PSRAM, THEN starts BLE
   ble_core:
     url: https://github.com/truffshuff/halo.git/
     ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core.yaml]
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core-delayed.yaml]
     refresh: always
+
+  # OPTION 3: BLE ENABLED IMMEDIATELY (NOT RECOMMENDED - will crash at boot)
+  # Use this ONLY if you have reduced LVGL buffer size to 20% or disabled other features
+  # ble_core_immediate:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core.yaml]
+  #   refresh: always
 
   # ========================================
   # CORE CONFIGURATION

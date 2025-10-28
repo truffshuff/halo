@@ -1,0 +1,158 @@
+# ============================================================================
+# BLE Core Package - DELAYED INITIALIZATION
+# ============================================================================
+# This package contains BLE scanner and Bluetooth Proxy with DELAYED startup.
+#
+# WHY DELAYED?
+#   - BLE needs 80-100KB internal heap at initialization
+#   - Weather sensors (125) initially use 70KB before PSRAM optimization kicks in
+#   - By delaying BLE start by 10 seconds, we allow:
+#     1. Weather sensors to load (uses internal heap temporarily)
+#     2. PSRAM optimization to kick in (moves sensors to PSRAM)
+#     3. Internal heap to be freed up (~70KB freed)
+#     4. BLE to initialize with plenty of memory available
+#
+# MEMORY TIMELINE:
+#   Boot (0s)      → 38KB free
+#   Sensors load (1-5s) → 20KB free (sensors using heap)
+#   PSRAM kicks in (5-8s) → 108KB free (sensors moved to PSRAM!)
+#   BLE starts (10s) → 108KB - 80KB = 28KB free ✅ Stable!
+#
+# Included Components:
+#   - ESP32 BLE Tracker (delayed start)
+#   - Bluetooth Proxy (Home Assistant integration)
+#   - ESP32 Improv (WiFi provisioning via BLE)
+#
+# IMPORTANT: This uses the SAME BLE configuration as ble-core.yaml but adds
+#            a 10-second delay before starting BLE scanning.
+# ============================================================================
+
+# Global flag to track if BLE should be auto-started
+globals:
+  - id: ble_delayed_start_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+# ESP32 BLE Tracker Configuration
+# Configured but NOT auto-started - we'll start it manually after delay
+esp32_ble_tracker:
+  id: ble_tracker
+  scan_parameters:
+    interval: 500ms
+    window: 40ms
+    active: true
+    continuous: false
+
+# Bluetooth Proxy Configuration
+bluetooth_proxy:
+  active: true
+  connection_slots: 3
+
+# ESP32 Improv Configuration
+esp32_improv:
+  authorizer: none
+
+# Delayed BLE Initialization
+# Wait 10 seconds after boot to allow weather sensors to load and PSRAM to kick in
+esphome:
+  on_boot:
+    - priority: -100  # Run after almost everything else
+      then:
+        - logger.log:
+            format: "BLE delayed start: Waiting 10 seconds for PSRAM optimization..."
+            level: INFO
+        - delay: 10s
+        - logger.log:
+            format: "BLE delayed start: Checking memory before starting BLE..."
+            level: INFO
+        - lambda: |-
+            size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+            ESP_LOGI("ble_delayed", "Free internal heap: %d bytes", free_heap);
+            if (free_heap >= 80000) {
+              ESP_LOGI("ble_delayed", "✓ Sufficient memory available, starting BLE...");
+            } else {
+              ESP_LOGW("ble_delayed", "⚠ Only %dKB free, BLE may be unstable (need 80KB+)", free_heap / 1024);
+              ESP_LOGI("ble_delayed", "  Starting BLE anyway - monitor for crashes");
+            }
+        - if:
+            condition:
+              lambda: 'return id(ble_delayed_start_enabled);'
+            then:
+              - logger.log:
+                  format: "BLE delayed start: Starting BLE tracker..."
+                  level: INFO
+              - esp32_ble_tracker.start_scan:
+                  continuous: false
+              - logger.log:
+                  format: "✓ BLE tracker started successfully!"
+                  level: INFO
+
+# API Integration - Dynamic BLE Scanning
+# Start/stop BLE scanning based on Home Assistant connection
+# NOTE: This will work even with delayed start since it checks connection state
+api:
+  on_client_connected:
+    - delay: 500ms
+    - logger.log:
+        format: "Home Assistant connected, starting BLE scan..."
+        level: INFO
+    - esp32_ble_tracker.start_scan:
+        continuous: true
+
+  on_client_disconnected:
+    - logger.log:
+        format: "Home Assistant disconnected, stopping BLE scan..."
+        level: INFO
+    - esp32_ble_tracker.stop_scan:
+
+# Manual BLE control buttons (optional - for debugging)
+# You can expose these to Home Assistant to manually control BLE
+button:
+  - platform: template
+    name: "Start BLE Scanning"
+    id: btn_start_ble
+    entity_category: diagnostic
+    on_press:
+      - logger.log: "Manual BLE start requested"
+      - esp32_ble_tracker.start_scan:
+          continuous: false
+
+  - platform: template
+    name: "Stop BLE Scanning"
+    id: btn_stop_ble
+    entity_category: diagnostic
+    on_press:
+      - logger.log: "Manual BLE stop requested"
+      - esp32_ble_tracker.stop_scan:
+
+# Memory monitoring - check if we have enough heap for BLE
+sensor:
+  - platform: template
+    name: "BLE Memory Check"
+    id: ble_memory_check
+    lambda: |-
+      size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+      // Return 1 if enough memory for BLE, 0 if not
+      return (free_heap >= 80000) ? 1.0 : 0.0;
+    update_interval: 30s
+    entity_category: diagnostic
+
+# Status text sensor showing BLE readiness
+text_sensor:
+  - platform: template
+    name: "BLE Status"
+    id: ble_status
+    lambda: |-
+      size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+      if (free_heap >= 100000) {
+        return {"Ready (Plenty of memory)"};
+      } else if (free_heap >= 80000) {
+        return {"Ready (Minimum memory)"};
+      } else {
+        char status[64];
+        snprintf(status, sizeof(status), "Low Memory (%dKB free, need 80KB)", free_heap / 1024);
+        return {status};
+      }
+    update_interval: 30s
+    entity_category: diagnostic
