@@ -133,21 +133,21 @@ packages:
   # If disabled, Core uses time-update-basic.yaml
 
   # OPTION 2: WireGuard ENABLED (uncomment all 3 packages to enable)
-  # wireguard:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml]
-  #   refresh: always
-  # wireguard_display:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
-  #   refresh: always
-  # time_update:  # IMPORTANT: Use same key as Core to override time-update-basic.yaml
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
-  #   refresh: always
+  wireguard:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml]
+    refresh: always
+  wireguard_display:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
+    refresh: always
+  time_update:  # IMPORTANT: Use same key as Core to override time-update-basic.yaml
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
+    refresh: always
 
   # ========================================
   # FEATURE PACKAGES - Enable/Disable Features
@@ -206,18 +206,18 @@ packages:
   # WiFi Monitoring - WiFi Statistics Page
   # ----------------------------------------
   # OPTION 1: WiFi Monitoring DISABLED (current selection)
-  wifi_stubs:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-stubs.yaml]
-    refresh: always
-
-  # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
-  # wifi_core:
+  # wifi_stubs:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-core.yaml]
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-stubs.yaml]
   #   refresh: always
+
+  # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
+  wifi_core:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-core.yaml]
+    refresh: always
 
   # ----------------------------------------
   # BLE - Bluetooth Low Energy
@@ -287,18 +287,18 @@ packages:
   #   refresh: always
 
   # AirQ + WiFi (no WireGuard)
-  lvgl_pages:
-    url: https://github.com/truffshuff/halo/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
-    refresh: always
-
-  # AirQ + WiFi + WireGuard
   # lvgl_pages:
   #   url: https://github.com/truffshuff/halo/
   #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi-wireguard.yaml]
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
   #   refresh: always
+
+  # AirQ + WiFi + WireGuard
+  lvgl_pages:
+    url: https://github.com/truffshuff/halo/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi-wireguard.yaml]
+    refresh: always
 
   # Weather only
   # lvgl_pages:
