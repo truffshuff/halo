@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.1426"
+  version: "25.10.28.1458"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -91,22 +91,29 @@ esp32:
       # Enable PSRAM support
       CONFIG_SPIRAM_USE: "y"
       CONFIG_SPIRAM_MODE_OCT: "y"
+      CONFIG_SPIRAM_SPEED_80M: "y"                 # Max stable PSRAM speed on S3
 
       # Memory allocation strategy - Use PSRAM for large allocations
       # This moves malloc() calls to PSRAM when size > threshold
       CONFIG_SPIRAM_USE_MALLOC: "y"
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"  # Keep allocations < 16KB in internal RAM
-
+      # CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"  # Keep allocations < 16KB in internal RAM
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "8192"  # Only keep <8KB in internal RAM (was 16KB)
       # BLE-specific PSRAM configuration
       # Move BLE controller memory to PSRAM to free internal heap
       CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM for NimBLE stack
       CONFIG_BT_NIMBLE_USE_ESP_TIMER: "y"  # Use ESP timer for better performance
+      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "4"         # Reduce if not using multiple devices
+      CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192" # Move BLE stack to PSRAM 
 
       # LWIP (networking) PSRAM usage
-      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "32"  # Increase network buffers
-      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "12"
-      CONFIG_LWIP_UDP_RECVMBOX_SIZE: "12"
-
+      
+      # CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "32"  # Increase network buffers
+      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "64"         # Bigger RX mailbox queue
+      # CONFIG_LWIP_TCP_RECVMBOX_SIZE: "12"
+      # CONFIG_LWIP_UDP_RECVMBOX_SIZE: "12"
+      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "24"
+      CONFIG_LWIP_UDP_RECVMBOX_SIZE: "24"
+      
       # Task stack allocation in PSRAM
       # Move large task stacks to PSRAM to free internal RAM
       CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
@@ -114,11 +121,23 @@ esp32:
       # LVGL configuration for PSRAM
       # Allow LVGL buffers to use PSRAM
       CONFIG_LV_MEM_CUSTOM: "y"
+      CONFIG_LV_MEM_CUSTOM_ALLOC_EXTERNAL: "y"      # Force LVGL to use PSRAM
+      CONFIG_LV_MEM_SIZE: "262144"                  # 256KB LVGL heap for large buffers
+
 
       # WiFi/BT coexistence optimization
-      CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM: "8"  # Reduce WiFi RX buffers
-      CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: "16"
-      CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: "16"
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"    # Allow WiFi/LWIP allocations in PSRAM
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "12"           # Extend watchdog for long BLE ops
+      # CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM: "8"  # Reduce WiFi RX buffers
+      # CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: "16"
+      # CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: "16"
+      CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM: "6"     # Fewer always-on buffers
+      CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: "24"   # More on-demand buffers
+      CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: "24"
+      CONFIG_ESP_WIFI_RX_BA_WIN: "32"
+      CONFIG_ESP_WIFI_TX_BA_WIN: "32"
+      CONFIG_ESP_WIFI_RX_MGMT_BUF_NUM: "32"
+
 
       # Increase task watchdog timeout for BLE operations
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
@@ -130,22 +149,31 @@ esp32:
       # ========================================================================
 
       # Increase API service call stack (many sensors = heavy API traffic)
-      CONFIG_FREERTOS_IDLE_TASK_STACKSIZE: "3072"  # Default 1536, increase for sensor load
-
+      # CONFIG_FREERTOS_IDLE_TASK_STACKSIZE: "3072"  # Default 1536, increase for sensor load
+      CONFIG_FREERTOS_IDLE_TASK_STACKSIZE: "4096"   # Was 3072
       # Move protocol buffers (API communication) to PSRAM
       # This helps with the large volume of HA sensor updates
-      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"  # Reserve 32KB internal for critical ops
-
+      # CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"  # Reserve 32KB internal for critical ops
+      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "16384"  # Reduce reserved internal heap (was 32KB)
       # Increase default task stack size for sensor processing
-      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"  # Default 3584, increase for many sensors
-
+      # CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"  # Default 3584, increase for many sensors
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "12288"      # Was 8192, increase for sensor-heavy loads
+      CONFIG_FREERTOS_THREAD_LOCAL_STORAGE_POINTERS: "2"
+      CONFIG_FREERTOS_USE_STATIC_TASK_CLEAN_UP: "y"
       # LWIP (networking) optimization for API traffic
-      CONFIG_LWIP_MAX_SOCKETS: "16"  # Support more simultaneous connections
+      # CONFIG_LWIP_MAX_SOCKETS: "16"  # Support more simultaneous connections
+      CONFIG_LWIP_MAX_SOCKETS: "24"                 # Support more open sockets
       CONFIG_LWIP_SO_RCVBUF: "y"  # Enable socket receive buffer
+      CONFIG_LWIP_SO_RCVBUF_DEFAULT: "8192"         # Per-socket receive buffer
+      CONFIG_TCP_MAXRTX: "16"
+      CONFIG_TCP_SYNMAXRTX: "8"
 
       # Memory debugging (optional - enable if still having issues)
       # CONFIG_HEAP_TRACING_STANDALONE: "y"
       # CONFIG_HEAP_TRACING: "y"
+      # CONFIG_HEAP_TASK_TRACKING: "y"                # Track which task allocates what
+      # CONFIG_HEAP_POISONING_LIGHT: "y"              # Detect memory corruption (minimal overhead)
+      # CONFIG_ESP_SYSTEM_MEMPROT_FEATURE: "n"        # Disable memory protection if it causes issues
 
 external_components:
   - source: github://truffshuff/esphome-components
