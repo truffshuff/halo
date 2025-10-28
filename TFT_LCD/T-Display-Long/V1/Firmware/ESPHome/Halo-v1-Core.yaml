@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.0924"
+  version: "25.10.28.0925"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -85,7 +85,6 @@ esp32:
       # These settings configure ESP-IDF to use PSRAM for dynamic allocations
       # instead of the limited internal heap, which prevents OOM crashes
       # ========================================================================
-      ignore_efuse_mac_crc: false
     # platform_version: 6.9.0
     # version: 5.3.1
     sdkconfig_options:
