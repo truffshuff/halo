@@ -432,9 +432,12 @@ select:
 #   Clock + AirQ + Weather: 26-28%
 #   Full featured:          25%
 #   With BLE enabled:       15-20% (BLE uses significant heap!)
+#
+# CURRENT: 20% for BLE + Weather + AirQ + WireGuard
+# This frees ~45KB at boot for BLE initialization
 
 lvgl:
-  buffer_size: 50%  # Optimized for AirQ only configuration
+  buffer_size: 20%  # Reduced for BLE compatibility
 
 # Uncomment and adjust if you change features:
 # lvgl:
