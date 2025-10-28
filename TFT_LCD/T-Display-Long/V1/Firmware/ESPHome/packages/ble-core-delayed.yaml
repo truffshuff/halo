@@ -127,10 +127,10 @@ api:
   on_client_connected:
   - delay: 500ms
   - logger.log:
-    format: "Home Assistant connected, starting BLE scan..."
-    level: INFO
+      format: "Home Assistant connected, starting BLE scan..."
+      level: INFO
   - esp32_ble_tracker.start_scan:
-    continuous: ${ble_scan_continuous_on_connect}
+      continuous: ${ble_scan_continuous_on_connect}
   - lambda: 'id(ble_scanning_active) = true;'
 
   on_client_disconnected:
