@@ -50,7 +50,7 @@ esp32_ble_tracker:
     # Active scanning - sends scan requests to get more device info
     # true = more info but higher power consumption
     # false = passive scanning, lower power
-    active: true
+    active: false
 
     # Continuous scanning mode
     # true = constant scanning (high power, immediate detection)
@@ -63,7 +63,7 @@ esp32_ble_tracker:
 bluetooth_proxy:
   # Enable/disable the proxy
   # true = proxy active, false = proxy disabled
-  active: true
+  active: false
 
   # Maximum number of simultaneous BLE connections
   # Default: 3, Range: 1-9
