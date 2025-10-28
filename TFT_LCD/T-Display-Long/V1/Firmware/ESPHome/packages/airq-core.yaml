@@ -52,6 +52,20 @@ switch:
       - lambda: 'id(page_rotation_AirQ_enabled) = false;'
       - logger.log: "AirQ page disabled in rotation"
 
+button:
+  - platform: template
+    name: "Calibrate SCD40 To 420ppm"
+    id: set_SCD40_calibrate
+    on_press:
+      - scd4x.perform_forced_calibration:
+          value: 420
+          id: scd40
+
+  - platform: template
+    name: "Clean SEN55"
+    id: clean_sen55
+    on_press:
+      - sen5x.start_fan_autoclean: sen55
 
 # AirQ-specific API services
 # These will be merged with the api: component from Core

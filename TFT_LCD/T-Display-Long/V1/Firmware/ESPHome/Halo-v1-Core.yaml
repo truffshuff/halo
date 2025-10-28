@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.0939"
+  version: "25.10.28.1124"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -881,6 +881,16 @@ lvgl:
   #     ref: main
   #     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
   #     refresh: always
+
+button:
+  - platform: restart
+    icon: mdi:power-cycle
+    name: "ESP Reboot"
+
+  - platform: factory_reset
+    disabled_by_default: True
+    name: "Factory Reset ESP"
+    id: factory_reset_all
 
 esphome:
   name: ${name}
