@@ -96,6 +96,14 @@ The ESP32-S3 has limited heap memory (~200-250KB available after system overhead
    ble_core: !include packages/ble-core.yaml
    ```
 
+   Or use the delayed + guarded variant and coexistence tuning (recommended when combining with Weather/AirQ):
+
+   ```yaml
+   packages:
+     ble_coexist_tuning: !include packages/ble-coexist-tuning.yaml
+     ble_core_delayed: !include packages/ble-core-delayed.yaml
+   ```
+
 3. **Monitor Heap Usage** (CRITICAL):
    - Watch Home Assistant sensor: `sensor.free_heap`
    - Heap should stay above **30-40 KB** at all times

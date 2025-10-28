@@ -43,6 +43,17 @@ esphome:
   project:
     name: "yashmulgaonkar.Halo-v1"
     version: "${version}"
+
+substitutions:
+  # BLE coexistence tuning for this device
+  ble_delay_seconds: "10"
+  ble_scan_interval_ms: "1100"
+  ble_scan_window_ms: "40"
+  ble_scan_active: "false"
+  ble_scan_continuous_on_connect: "true"
+  ble_proxy_slots: "1"
+  ble_heap_min_start: "80000"
+  ble_heap_min_keep_running: "60000"
   
   # Add detailed memory tracking at each boot stage
   on_boot:
@@ -268,23 +279,19 @@ packages:
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-stubs.yaml]
   #   refresh: always
 
-  # OPTION 2: BLE ENABLED (CURRENT - with early PSRAM allocation + delayed sensors)
-  # PSRAM buffers allocate at priority -200 (before BLE)
-  # BLE initializes during setup() with clean memory
-  # Weather sensors connect 15s later (prevents 70KB spike during BLE init)
-  ble_core:
+  # OPTION 2: BLE ENABLED WITH DELAYED + GUARDED SCANNING (recommended)
+  # BLE stack still initializes at boot, scanning is delayed and heap-guarded.
+  # Also apply coexistence tuning to reduce LVGL/logging footprint.
+  ble_coexist_tuning:
     url: https://github.com/truffshuff/halo.git/
     ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core.yaml]
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-coexist-tuning.yaml]
     refresh: always
-
-  # OPTION 3: BLE ENABLED WITH DELAYED SCANNING (alternative approach)
-  # Use this if Option 2 still has issues
-  # ble_core_delayed:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core-delayed.yaml]
-  #   refresh: always
+  ble_core_delayed:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core-delayed.yaml]
+    refresh: always
 
   # ========================================
   # CORE CONFIGURATION
