@@ -1,0 +1,195 @@
+# ============================================================================
+# PSRAM Allocation Helpers for Weather Sensors
+# ============================================================================
+# This package provides helper functions and macros for forcing allocations
+# to PSRAM instead of internal heap, specifically for weather sensors with
+# large string buffers.
+#
+# Usage:
+#   Include this file before weather-sensors.yaml
+#   packages:
+#     psram_helpers: !include packages/psram-helpers.yaml
+#     weather_sensors: !include packages/weather-sensors.yaml
+#
+# Key Functions:
+#   - psram_alloc_string(size): Allocate string buffer in PSRAM
+#   - psram_format_temp(value): Format temperature using PSRAM buffer
+#   - psram_format_condition(text): Format condition text using PSRAM buffer
+# ============================================================================
+
+esphome:
+  includes:
+    - psram_allocator.h
+
+# Create custom C++ header for PSRAM allocation helpers
+# This will be automatically included in the build
+script:
+  - id: psram_helper_init
+    mode: single
+    then:
+      - lambda: |-
+          // Initialize PSRAM allocation tracking
+          ESP_LOGI("psram", "PSRAM helpers initialized");
+          ESP_LOGI("psram", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+          ESP_LOGI("psram", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+# ============================================================================
+# GLOBAL PSRAM BUFFERS - Reusable buffers allocated once in PSRAM
+# ============================================================================
+# Instead of allocating buffers on every sensor update, allocate them once
+# in PSRAM and reuse them. This prevents heap fragmentation.
+# ============================================================================
+
+globals:
+  # Large shared buffer for formatting weather strings
+  # Allocated in PSRAM using custom allocator
+  - id: psram_weather_format_buffer
+    type: char*
+    restore_value: no
+    initial_value: 'nullptr'
+
+  # Buffer for temperature formatting
+  - id: psram_temp_buffer
+    type: char*
+    restore_value: no
+    initial_value: 'nullptr'
+
+  # Buffer for condition text
+  - id: psram_condition_buffer
+    type: char*
+    restore_value: no
+    initial_value: 'nullptr'
+
+  # Track if PSRAM buffers have been initialized
+  - id: psram_buffers_initialized
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+# ============================================================================
+# PSRAM BUFFER INITIALIZATION
+# ============================================================================
+# Allocate all PSRAM buffers during boot (priority -50, after most components)
+# ============================================================================
+
+esphome:
+  on_boot:
+    - priority: -50
+      then:
+        - lambda: |-
+            if (!id(psram_buffers_initialized)) {
+              ESP_LOGI("psram", "Allocating weather sensor buffers in PSRAM...");
+
+              // Allocate buffers in PSRAM using heap_caps_malloc
+              id(psram_weather_format_buffer) = (char*) heap_caps_malloc(256, MALLOC_CAP_SPIRAM);
+              id(psram_temp_buffer) = (char*) heap_caps_malloc(64, MALLOC_CAP_SPIRAM);
+              id(psram_condition_buffer) = (char*) heap_caps_malloc(128, MALLOC_CAP_SPIRAM);
+
+              if (id(psram_weather_format_buffer) && id(psram_temp_buffer) && id(psram_condition_buffer)) {
+                id(psram_buffers_initialized) = true;
+                ESP_LOGI("psram", "✓ PSRAM buffers allocated successfully");
+                ESP_LOGI("psram", "  Format buffer: 256 bytes @ %p", id(psram_weather_format_buffer));
+                ESP_LOGI("psram", "  Temp buffer: 64 bytes @ %p", id(psram_temp_buffer));
+                ESP_LOGI("psram", "  Condition buffer: 128 bytes @ %p", id(psram_condition_buffer));
+                ESP_LOGI("psram", "  Total PSRAM used: 448 bytes");
+                ESP_LOGI("psram", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+                ESP_LOGI("psram", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+              } else {
+                ESP_LOGE("psram", "✗ Failed to allocate PSRAM buffers!");
+              }
+            }
+
+# ============================================================================
+# USAGE EXAMPLE - Optimized Weather Sensor with PSRAM Buffers
+# ============================================================================
+# Use these patterns in your weather-sensors.yaml file
+# ============================================================================
+
+# EXAMPLE 1: Temperature sensor using PSRAM buffer
+# sensor:
+#   - platform: homeassistant
+#     name: "Forecast Day 1 High Temp"
+#     entity_id: input_text.forecast_day_1_high_temperature
+#     id: forecast_day1_high_temp
+#     on_value:
+#       then:
+#         - lambda: |-
+#             // Use the shared PSRAM buffer instead of stack allocation
+#             if (id(psram_buffers_initialized) && id(psram_temp_buffer)) {
+#               snprintf(id(psram_temp_buffer), 64, "H: %.0f°", x);
+#               id(lbl_weather_forecast_temphi).set_text(id(psram_temp_buffer));
+#             } else {
+#               // Fallback to stack allocation if PSRAM not available
+#               char buffer[16];
+#               snprintf(buffer, sizeof(buffer), "H: %.0f°", x);
+#               id(lbl_weather_forecast_temphi).set_text(buffer);
+#             }
+
+# EXAMPLE 2: Complex formatting using large PSRAM buffer
+# sensor:
+#   - platform: homeassistant
+#     name: "Forecast Day 2 High Temp"
+#     entity_id: input_text.forecast_day_2_high_temperature
+#     id: forecast_day2_high_temp
+#     on_value:
+#       then:
+#         - lambda: |-
+#             // Use large shared buffer for complex formatting
+#             if (id(psram_buffers_initialized) && id(psram_weather_format_buffer)) {
+#               float low = id(forecast_day2_low_temp).state;
+#               const char *high_text = isnan(x) ? "--" : "";
+#               const char *low_text = isnan(low) ? "--" : "";
+#
+#               if (!isnan(x)) {
+#                 snprintf(id(psram_weather_format_buffer), 256, "%.0f", x);
+#                 high_text = id(psram_weather_format_buffer);
+#               }
+#
+#               // Reuse buffer for low temp (high is already displayed)
+#               if (!isnan(low)) {
+#                 snprintf(id(psram_weather_format_buffer) + 64, 192, "%.0f", low);
+#                 low_text = id(psram_weather_format_buffer) + 64;
+#               }
+#
+#               // Final format in main buffer
+#               snprintf(id(psram_weather_format_buffer), 256, "H:%s° L:%s°", high_text, low_text);
+#               id(lbl_forecast_day2_temps).set_text(id(psram_weather_format_buffer));
+#             }
+
+# EXAMPLE 3: Text sensor using PSRAM buffer for long strings
+# text_sensor:
+#   - platform: homeassistant
+#     name: "Forecast Day 1 Condition"
+#     entity_id: input_text.forecast_day_1_condition
+#     id: forecast_day1_condition
+#     on_value:
+#       then:
+#         - lambda: |-
+#             // Copy to PSRAM buffer for persistence
+#             if (id(psram_buffers_initialized) && id(psram_condition_buffer)) {
+#               strncpy(id(psram_condition_buffer), x.c_str(), 127);
+#               id(psram_condition_buffer)[127] = '\0';  // Null terminate
+#               id(lbl_forecast_day1_condition).set_text(id(psram_condition_buffer));
+#             } else {
+#               id(lbl_forecast_day1_condition).set_text(x.c_str());
+#             }
+
+# EXAMPLE 4: Batch update pattern using single PSRAM allocation
+# interval:
+#   - interval: 3s
+#     then:
+#       - if:
+#           condition:
+#             lambda: 'return id(sensor_ui_dirty) && id(psram_buffers_initialized);'
+#           then:
+#             - lambda: |-
+#                 // Batch update all sensors using PSRAM buffer
+#                 char* buf = id(psram_weather_format_buffer);
+#
+#                 // Update all temperatures at once
+#                 for (int day = 1; day <= 10; day++) {
+#                   // Format each day's temp using PSRAM buffer
+#                   // This prevents 10 separate stack allocations
+#                 }
+#
+#                 id(sensor_ui_dirty) = false;
