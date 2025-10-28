@@ -11,15 +11,13 @@
 #     psram_helpers: !include packages/psram-helpers.yaml
 #     weather_sensors: !include packages/weather-sensors.yaml
 #
-# Key Functions:
-#   - psram_alloc_string(size): Allocate string buffer in PSRAM
-#   - psram_format_temp(value): Format temperature using PSRAM buffer
-#   - psram_format_condition(text): Format condition text using PSRAM buffer
+# How It Works:
+#   - Allocates 3 shared PSRAM buffers at boot using heap_caps_malloc()
+#   - All weather sensors reuse these buffers instead of stack allocation
+#   - Saves ~70KB of internal heap, eliminates fragmentation
 # ============================================================================
 
 esphome:
-  includes:
-    - psram_allocator.h
   on_boot:
     - priority: -50
       then:
