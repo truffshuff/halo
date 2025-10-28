@@ -478,13 +478,13 @@ select:
 #   Full featured:          25%
 #   With BLE enabled:       15-20% (BLE uses significant heap!)
 #
-# CURRENT: 15% buffer allocated in PSRAM for maximum internal heap savings!
-# LVGL buffer moved to PSRAM frees ~35KB internal heap for BLE
+# CURRENT: 15% buffer with aggressive PSRAM flags for maximum internal heap savings!
+# ESP-IDF flags force large allocations to PSRAM automatically (>4KB threshold)
+# LVGL buffer (~35KB) will automatically use PSRAM via CONFIG_SPIRAM_USE_MALLOC
 # Early PSRAM allocation + 60s delayed sensor connections allows BLE to coexist
 
 lvgl:
-  buffer_size: 15%
-  buffer_alloc: psram  # 🚀 CRITICAL: Force LVGL buffer to PSRAM, frees ~35KB internal!
+  buffer_size: 15%  # Will auto-allocate to PSRAM via ESP-IDF flags
 
 # Uncomment and adjust if you change features:
 # lvgl:
