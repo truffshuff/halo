@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.28.1133"
+  version: "25.10.28.1415"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -122,6 +122,31 @@ esp32:
 
       # Increase task watchdog timeout for BLE operations
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
+
+      # ========================================================================
+      # HOME ASSISTANT API & SENSOR OPTIMIZATION
+      # ========================================================================
+      # With 125+ weather sensors, API buffers and sensor objects need PSRAM
+      # ========================================================================
+
+      # Increase API service call stack (many sensors = heavy API traffic)
+      CONFIG_FREERTOS_IDLE_TASK_STACKSIZE: "3072"  # Default 1536, increase for sensor load
+
+      # Move protocol buffers (API communication) to PSRAM
+      # This helps with the large volume of HA sensor updates
+      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"  # Reserve 32KB internal for critical ops
+
+      # Increase default task stack size for sensor processing
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"  # Default 3584, increase for many sensors
+
+      # LWIP (networking) optimization for API traffic
+      CONFIG_LWIP_MAX_SOCKETS: "16"  # Support more simultaneous connections
+      CONFIG_LWIP_SO_RCVBUF: "y"  # Enable socket receive buffer
+
+      # String allocation optimization (sensors create many string objects)
+      # Force C++ std::string to use PSRAM for large allocations
+      CONFIG_COMPILER_CXX_EXCEPTIONS: "y"
+      CONFIG_COMPILER_CXX_RTTI: "y"
 
       # Memory debugging (optional - enable if still having issues)
       # CONFIG_HEAP_TRACING_STANDALONE: "y"
