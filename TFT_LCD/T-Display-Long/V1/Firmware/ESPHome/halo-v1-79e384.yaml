@@ -192,6 +192,12 @@ packages:
     ref: main
     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-core.yaml]
     refresh: always
+  # PSRAM Helpers - MUST be loaded BEFORE weather_sensors for memory optimization
+  psram_helpers:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/psram-helpers.yaml]
+    refresh: always
   weather_sensors:
     url: https://github.com/truffshuff/halo.git/
     ref: main

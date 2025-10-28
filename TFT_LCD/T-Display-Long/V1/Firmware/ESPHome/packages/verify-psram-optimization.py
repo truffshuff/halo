@@ -17,9 +17,13 @@ def check_file(filepath):
         'Uses psram_buffers_initialized': 'psram_buffers_initialized' in content,
         'Uses psram_temp_buffer': 'psram_temp_buffer' in content,
         'Uses psram_condition_buffer': 'psram_condition_buffer' in content,
-        'Has memory monitoring sensors': 'Free Internal Heap' in content,
         'Has PSRAM optimization header': 'PSRAM OPTIMIZATION ENABLED' in content,
     }
+    
+    # Optional check (memory sensors may be in separate memory-stats.yaml)
+    has_memory_sensors = 'Free Internal Heap' in content or 'Free Heap' in content
+    if has_memory_sensors:
+        checks['Has memory monitoring sensors'] = True
     
     # Count conversions
     psram_usage_count = content.count('id(psram_')
