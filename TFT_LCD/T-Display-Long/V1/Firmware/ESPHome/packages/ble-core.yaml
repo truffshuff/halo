@@ -50,7 +50,7 @@ esp32_ble_tracker:
     # Active scanning - sends scan requests to get more device info
     # true = more info but higher power consumption
     # false = passive scanning, lower power
-    active: false
+    active: true
 
     # Continuous scanning mode
     # true = constant scanning (high power, immediate detection)
@@ -68,7 +68,7 @@ bluetooth_proxy:
   # Maximum number of simultaneous BLE connections
   # Default: 3, Range: 1-9
   # Higher values = more devices but more memory usage
-  connection_slots: 3
+  connection_slots: 1
 
 # ESP32 Improv Configuration (Optional)
 # Allows WiFi provisioning via BLE using the Improv standard
