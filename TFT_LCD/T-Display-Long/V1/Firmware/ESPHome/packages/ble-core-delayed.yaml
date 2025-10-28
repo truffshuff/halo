@@ -1,34 +1,39 @@
 # ============================================================================
-# BLE Core Package - DELAYED SCANNING
+# BLE Core Package - DELAYED SCANNING (Tunable)
 # ============================================================================
-# This package contains BLE scanner and Bluetooth Proxy with DELAYED scanning.
+# This package contains BLE scanner and Bluetooth Proxy with DELAYED scanning,
+# plus optional memory guard to pause/resume scanning based on free heap.
 #
 # IMPORTANT: BLE stack ALWAYS initializes at boot and allocates 80-100KB.
-# This is unavoidable in ESPHome. To make room for BLE:
-#   - Reduce LVGL buffer_size to 20% (saves ~45KB)
-#   - PSRAM optimization saves another ~70KB during runtime
+# We mitigate by reducing LVGL buffers and moving heavy allocations to PSRAM.
 #
-# WHY DELAYED SCANNING (not initialization)?
-#   - BLE stack initializes at boot (can't prevent this)
-#   - But we delay SCANNING by 10 seconds
-#   - This gives weather sensors time to connect and receive data
-#   - PSRAM moves sensor buffers, freeing heap for BLE operations
-#
-# MEMORY TIMELINE:
-#   Boot (0s)      → 80KB free (with LVGL at 20%)
-#   BLE init (0s)  → BLE stack allocates 80KB
-#   Sensors (1-5s) → Sensors connect, using internal heap
-#   PSRAM (5-8s)   → Sensors moved to PSRAM, 70KB freed
-#   Scan (10s)     → BLE scanning starts with 70KB extra headroom
-#
-# ============================================================================
+substitutions:
+  # Delay before first scan to let PSRAM helpers/weather settle
+  ble_delay_seconds: "10"
+  # Scan parameters (tune per device)
+  ble_scan_interval_ms: "500"     # e.g. 500, 1100 for lower duty
+  ble_scan_window_ms: "40"        # e.g. 40, 110 for wider window
+  ble_scan_active: "false"        # passive scan saves heap/power
+  ble_scan_continuous_on_connect: "true"
+  # Bluetooth Proxy connection slots (reduce to save heap)
+  ble_proxy_slots: "1"
+  # Enable/disable Improv over BLE to save heap if not needed
+  ble_enable_improv: "false"
+  # Memory guard thresholds (internal heap in bytes)
+  ble_heap_min_start: "80000"     # need at least ~80KB to (re)start
+  ble_heap_min_keep_running: "60000"  # stop if below ~60KB
 
 # Global flag to track if BLE scanning should be auto-started
 globals:
+  # Control flags
   - id: ble_delayed_start_enabled
     type: bool
     restore_value: no
     initial_value: 'true'
+  - id: ble_scanning_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 # ESP32 BLE Tracker Configuration
 # NOTE: BLE stack initializes at boot (unavoidable)
@@ -36,42 +41,38 @@ globals:
 esp32_ble_tracker:
   id: ble_tracker
   scan_parameters:
-    interval: 500ms
-    window: 40ms
-    active: true
+    interval: ${ble_scan_interval_ms}ms
+    window: ${ble_scan_window_ms}ms
+    active: ${ble_scan_active}
     continuous: false
 
 # Bluetooth Proxy Configuration
 bluetooth_proxy:
   active: true
-  connection_slots: 3
+  connection_slots: ${ble_proxy_slots}
 
 # ESP32 Improv Configuration  
-esp32_improv:
-  authorizer: none
-
-# Delayed BLE SCANNING (not initialization)
-# Wait 10 seconds after boot to allow PSRAM optimization to free up memory
 esphome:
   on_boot:
     - priority: -100  # Run after almost everything else
       then:
         - logger.log:
-            format: "BLE delayed scan: Waiting 10 seconds for PSRAM optimization..."
+            format: "BLE delayed scan: Waiting %ss for PSRAM optimization..."
+            args: ['"${ble_delay_seconds}"']
             level: INFO
-        - delay: 10s
+        - delay: !lambda 'return (uint32_t) (atoi("${ble_delay_seconds}") * 1000);'
         - logger.log:
             format: "BLE delayed scan: Checking memory before starting scanning..."
             level: INFO
         - lambda: |-
             size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
             ESP_LOGI("ble_delayed", "Free internal heap: %d bytes", free_heap);
-            if (free_heap >= 50000) {
+            if (free_heap >= atoi("${ble_heap_min_start}")) {
               ESP_LOGI("ble_delayed", "✓ Good memory headroom, starting BLE scan...");
-            } else if (free_heap >= 28000) {
+            } else if (free_heap >= (atoi("${ble_heap_min_start}") - 20000)) {
               ESP_LOGI("ble_delayed", "✓ Minimum memory available, starting BLE scan...");
             } else {
-              ESP_LOGW("ble_delayed", "⚠ Only %dKB free, BLE may be unstable", free_heap / 1024);
+              ESP_LOGW("ble_delayed", "⚠ Only %dKB free, BLE may be unstable", (int)(free_heap / 1024));
             }
         - if:
             condition:
@@ -82,27 +83,62 @@ esphome:
                   level: INFO
               - esp32_ble_tracker.start_scan:
                   continuous: false
+              - lambda: 'id(ble_scanning_active) = true;'
               - logger.log:
                   format: "✓ BLE scanner started successfully!"
                   level: INFO
+
+# Optional Improv over BLE (disabled by default to save heap)
+esp32_improv:
+  # Optional: comment out this block entirely to save a bit of heap if not needed
+  authorizer: none
+
+# Delayed BLE SCANNING (not initialization)
+# Wait 10 seconds after boot to allow PSRAM optimization to free up memory
+interval:
+  - interval: 15s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ble_scanning_active) && heap_caps_get_free_size(MALLOC_CAP_INTERNAL) < (size_t)atoi("${ble_heap_min_keep_running}");'
+          then:
+            - logger.log:
+                format: "Heap low (%d bytes). Stopping BLE scan to recover."
+                args: ['(int)heap_caps_get_free_size(MALLOC_CAP_INTERNAL)']
+                level: WARN
+            - esp32_ble_tracker.stop_scan:
+            - lambda: 'id(ble_scanning_active) = false;'
+      - if:
+          condition:
+            lambda: 'return !id(ble_scanning_active) && heap_caps_get_free_size(MALLOC_CAP_INTERNAL) >= (size_t)atoi("${ble_heap_min_start}");'
+          then:
+            - logger.log:
+                format: "Heap recovered (%d bytes). Restarting BLE scan."
+                args: ['(int)heap_caps_get_free_size(MALLOC_CAP_INTERNAL)']
+                level: INFO
+            - esp32_ble_tracker.start_scan:
+                continuous: false
+            - lambda: 'id(ble_scanning_active) = true;'
 
 # API Integration - Dynamic BLE Scanning
 # Start/stop BLE scanning based on Home Assistant connection
 # NOTE: This will work even with delayed start since it checks connection state
 api:
   on_client_connected:
-    - delay: 500ms
-    - logger.log:
-        format: "Home Assistant connected, starting BLE scan..."
-        level: INFO
-    - esp32_ble_tracker.start_scan:
-        continuous: true
+  - delay: 500ms
+  - logger.log:
+    format: "Home Assistant connected, starting BLE scan..."
+    level: INFO
+  - esp32_ble_tracker.start_scan:
+    continuous: ${ble_scan_continuous_on_connect}
+  - lambda: 'id(ble_scanning_active) = true;'
 
   on_client_disconnected:
     - logger.log:
         format: "Home Assistant disconnected, stopping BLE scan..."
         level: INFO
     - esp32_ble_tracker.stop_scan:
+    - lambda: 'id(ble_scanning_active) = false;'
 
 # Manual BLE control buttons (optional - for debugging)
 # You can expose these to Home Assistant to manually control BLE
@@ -115,6 +151,7 @@ button:
       - logger.log: "Manual BLE start requested"
       - esp32_ble_tracker.start_scan:
           continuous: false
+      - lambda: 'id(ble_scanning_active) = true;'
 
   - platform: template
     name: "Stop BLE Scanning"
@@ -123,6 +160,7 @@ button:
     on_press:
       - logger.log: "Manual BLE stop requested"
       - esp32_ble_tracker.stop_scan:
+      - lambda: 'id(ble_scanning_active) = false;'
 
 # Memory monitoring - check if we have enough heap for BLE
 sensor:
