@@ -35,7 +35,8 @@ globals:
     initial_value: 'true'
 
 # ESP32 BLE Tracker Configuration
-# Configured but NOT auto-started - we'll start it manually after delay
+# CRITICAL: Set autostart: false to prevent BLE initialization at boot!
+# The BLE stack will NOT initialize until we call esp32_ble_tracker.start_scan
 esp32_ble_tracker:
   id: ble_tracker
   scan_parameters:
@@ -43,13 +44,16 @@ esp32_ble_tracker:
     window: 40ms
     active: true
     continuous: false
+  # CRITICAL: This prevents BLE stack initialization at boot
+  # BLE will NOT allocate memory until manually started
+  autostart: false
 
 # Bluetooth Proxy Configuration
 bluetooth_proxy:
   active: true
   connection_slots: 3
 
-# ESP32 Improv Configuration
+# ESP32 Improv Configuration  
 esp32_improv:
   authorizer: none
 
