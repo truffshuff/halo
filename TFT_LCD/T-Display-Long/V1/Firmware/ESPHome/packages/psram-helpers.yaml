@@ -20,6 +20,31 @@
 esphome:
   includes:
     - psram_allocator.h
+  on_boot:
+    - priority: -50
+      then:
+        - lambda: |-
+            if (!id(psram_buffers_initialized)) {
+              ESP_LOGI("psram", "Allocating weather sensor buffers in PSRAM...");
+
+              // Allocate buffers in PSRAM using heap_caps_malloc
+              id(psram_weather_format_buffer) = (char*) heap_caps_malloc(256, MALLOC_CAP_SPIRAM);
+              id(psram_temp_buffer) = (char*) heap_caps_malloc(64, MALLOC_CAP_SPIRAM);
+              id(psram_condition_buffer) = (char*) heap_caps_malloc(128, MALLOC_CAP_SPIRAM);
+
+              if (id(psram_weather_format_buffer) && id(psram_temp_buffer) && id(psram_condition_buffer)) {
+                id(psram_buffers_initialized) = true;
+                ESP_LOGI("psram", "✓ PSRAM buffers allocated successfully");
+                ESP_LOGI("psram", "  Format buffer: 256 bytes @ %p", id(psram_weather_format_buffer));
+                ESP_LOGI("psram", "  Temp buffer: 64 bytes @ %p", id(psram_temp_buffer));
+                ESP_LOGI("psram", "  Condition buffer: 128 bytes @ %p", id(psram_condition_buffer));
+                ESP_LOGI("psram", "  Total PSRAM used: 448 bytes");
+                ESP_LOGI("psram", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+                ESP_LOGI("psram", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+              } else {
+                ESP_LOGE("psram", "✗ Failed to allocate PSRAM buffers!");
+              }
+            }
 
 # Create custom C++ header for PSRAM allocation helpers
 # This will be automatically included in the build
@@ -65,39 +90,6 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-
-# ============================================================================
-# PSRAM BUFFER INITIALIZATION
-# ============================================================================
-# Allocate all PSRAM buffers during boot (priority -50, after most components)
-# ============================================================================
-
-esphome:
-  on_boot:
-    - priority: -50
-      then:
-        - lambda: |-
-            if (!id(psram_buffers_initialized)) {
-              ESP_LOGI("psram", "Allocating weather sensor buffers in PSRAM...");
-
-              // Allocate buffers in PSRAM using heap_caps_malloc
-              id(psram_weather_format_buffer) = (char*) heap_caps_malloc(256, MALLOC_CAP_SPIRAM);
-              id(psram_temp_buffer) = (char*) heap_caps_malloc(64, MALLOC_CAP_SPIRAM);
-              id(psram_condition_buffer) = (char*) heap_caps_malloc(128, MALLOC_CAP_SPIRAM);
-
-              if (id(psram_weather_format_buffer) && id(psram_temp_buffer) && id(psram_condition_buffer)) {
-                id(psram_buffers_initialized) = true;
-                ESP_LOGI("psram", "✓ PSRAM buffers allocated successfully");
-                ESP_LOGI("psram", "  Format buffer: 256 bytes @ %p", id(psram_weather_format_buffer));
-                ESP_LOGI("psram", "  Temp buffer: 64 bytes @ %p", id(psram_temp_buffer));
-                ESP_LOGI("psram", "  Condition buffer: 128 bytes @ %p", id(psram_condition_buffer));
-                ESP_LOGI("psram", "  Total PSRAM used: 448 bytes");
-                ESP_LOGI("psram", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-                ESP_LOGI("psram", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-              } else {
-                ESP_LOGE("psram", "✗ Failed to allocate PSRAM buffers!");
-              }
-            }
 
 # ============================================================================
 # USAGE EXAMPLE - Optimized Weather Sensor with PSRAM Buffers
