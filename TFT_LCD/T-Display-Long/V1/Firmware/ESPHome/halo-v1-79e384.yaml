@@ -433,11 +433,12 @@ select:
 #   Full featured:          25%
 #   With BLE enabled:       15-20% (BLE uses significant heap!)
 #
-# CURRENT: 20% for ALL features + BLE
-# Early PSRAM allocation + delayed sensor connections allows BLE to coexist
+# CURRENT: 15% for ALL features + BLE (aggressive memory saving)
+# Early PSRAM allocation + 30s delayed sensor connections allows BLE to coexist
+# Trade-off: Slower display updates, but all features working
 
 lvgl:
-  buffer_size: 20%  # Reduced for BLE compatibility with all features
+  buffer_size: 15%  # Minimum for BLE compatibility with all features
 
 # Uncomment and adjust if you change features:
 # lvgl:
