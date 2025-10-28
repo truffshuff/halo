@@ -30,53 +30,15 @@
 #   - input_text.forecast_day_N_precipitation_probability (N = 1-10)
 #   - sensor.outdoor_temperature (or your actual sensor name)
 #   - sensor.precipitation_today (or your actual sensor name)
-
-# ============================================================================
-# MEMORY MONITORING SENSORS
-# ============================================================================
-# Track internal heap and PSRAM usage to verify optimization is working
-
-sensor:
-  # Monitor free internal heap (should be higher with PSRAM optimization)
-  - platform: template
-    name: "Free Internal Heap"
-    id: free_internal_heap
-    lambda: 'return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);'
-    update_interval: 10s
-    unit_of_measurement: "bytes"
-    accuracy_decimals: 0
-    device_class: data_size
-    state_class: measurement
-    entity_category: diagnostic
-
-  # Monitor free PSRAM
-  - platform: template
-    name: "Free PSRAM"
-    id: free_psram
-    lambda: 'return heap_caps_get_free_size(MALLOC_CAP_SPIRAM);'
-    update_interval: 10s
-    unit_of_measurement: "bytes"
-    accuracy_decimals: 0
-    device_class: data_size
-    state_class: measurement
-    entity_category: diagnostic
-
-  # Monitor largest free internal block (fragmentation indicator)
-  - platform: template
-    name: "Largest Internal Block"
-    id: largest_internal_block
-    lambda: 'return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);'
-    update_interval: 10s
-    unit_of_measurement: "bytes"
-    accuracy_decimals: 0
-    device_class: data_size
-    state_class: measurement
-    entity_category: diagnostic
+#
+# NOTE: Memory monitoring sensors (Free Heap, PSRAM, Largest Block) are
+#       provided by the memory-stats.yaml package. No need to duplicate them here.
 
 # ============================================================================
 # CURRENT WEATHER SENSORS
 # ============================================================================
 
+sensor:
   # Feels like Temp from Home Assistant
   - platform: homeassistant
     name: "Today Feels Like Temp"
