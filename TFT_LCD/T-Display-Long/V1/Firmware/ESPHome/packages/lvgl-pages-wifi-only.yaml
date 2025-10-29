@@ -1,0 +1,146 @@
+# ============================================================================
+# LVGL Pages - WiFi Only Configuration (Config 3)
+# ============================================================================
+# This package defines LVGL pages for devices with WiFi monitoring only
+#
+# Includes:
+#   - Vertical Clock page
+#   - WiFi page (NO WireGuard)
+#   - Page rotation handler (embedded, Clock + WiFi)
+#
+# Excludes:
+#   - AirQ page (use airq-stubs)
+#   - WireGuard status (use lvgl-pages-wifi-wireguard.yaml for WireGuard)
+#   - Weather pages (use weather-stubs)
+#   - BLE pages (use ble-stubs)
+#
+# Memory Impact: ~85KB total, ~125KB free
+# BLE Compatible: YES (Config 3 + BLE)
+#
+# Usage: Config 3 - Clock + WiFi monitoring only
+# ============================================================================
+
+lvgl:
+  pages:
+    # Core pages - always available
+    - !include vertical-clock-display.yaml
+
+    # WiFi page (without WireGuard support)
+    - !include lvgl-wifi-page.yaml
+
+# ============================================================================
+# PAGE ROTATION HANDLER - Embedded for Clock + WiFi configuration
+# ============================================================================
+# This handler supports: Clock and WiFi pages only (no AirQ, no Weather)
+
+interval:
+  - interval: 100ms  # Check frequently for page index changes
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_displayed_index = -1;
+
+              // Don't do anything until boot is complete
+              if (!id(boot_complete)) return false;
+
+              // Check if page index has changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
+
+              // We have a page change - process it
+              last_displayed_index = current;
+
+              // Page mapping for Clock + WiFi:
+              // 0 = Vertical Clock
+              // 1 = WiFi page
+
+              switch(current) {
+                case 0:
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
+                  break;
+                case 1:
+                  id(lily_display).show_page(wifi_page);
+                  ESP_LOGD("page_rotation", "Showing WiFi page (index 1)");
+                  break;
+                default:
+                  // Invalid page index - show clock
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGW("page_rotation", "Invalid page index %d, showing clock", current);
+                  break;
+              }
+
+              return true;
+          then:
+            - logger.log:
+                format: "Page displayed successfully"
+                level: DEBUG
+
+# ============================================================================
+# TIME UPDATE SCRIPT - Override Core's basic time update
+# ============================================================================
+# This script runs every second to update the current page index
+# Supports automatic page rotation if enabled
+
+script:
+  - id: time_update
+    mode: restart
+    then:
+      - lambda: |-
+          // Get current time components
+          auto time = id(halo_time).now();
+          int hour = time.hour;
+          int minute = time.minute;
+          int second = time.second;
+          int day = time.day_of_month;
+          int month = time.month;
+          int year = time.year;
+          int day_of_week = time.day_of_week;
+
+          // Update clock page if visible
+          static int last_second = -1;
+          if (second != last_second) {
+            last_second = second;
+            // Clock updates happen automatically via time sensor
+          }
+
+          // Handle automatic page rotation
+          if (id(page_rotation_enabled)) {
+            uint32_t now = millis();
+            uint32_t elapsed = now - id(last_auto_rotation_time);
+            uint32_t rotation_interval = id(page_rotation_interval) * 1000;
+
+            if (elapsed >= rotation_interval) {
+              // Time to rotate to next page
+              id(last_auto_rotation_time) = now;
+
+              // Build list of enabled pages
+              std::vector<int> enabled_pages;
+
+              // Clock is always available
+              enabled_pages.push_back(0);
+
+              // WiFi page (if enabled)
+              if (id(page_rotation_wifi_enabled)) {
+                enabled_pages.push_back(1);
+              }
+
+              // Find current page in enabled list
+              int current_idx = id(current_page_index);
+              int current_pos = -1;
+              for (size_t i = 0; i < enabled_pages.size(); i++) {
+                if (enabled_pages[i] == current_idx) {
+                  current_pos = i;
+                  break;
+                }
+              }
+
+              // Move to next enabled page
+              if (current_pos >= 0 && enabled_pages.size() > 1) {
+                int next_pos = (current_pos + 1) % enabled_pages.size();
+                id(current_page_index) = enabled_pages[next_pos];
+                ESP_LOGD("page_rotation", "Auto-rotating to page %d", id(current_page_index));
+              }
+            }
+          }

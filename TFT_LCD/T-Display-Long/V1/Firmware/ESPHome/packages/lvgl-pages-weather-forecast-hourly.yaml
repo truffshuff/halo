@@ -1,0 +1,150 @@
+# ============================================================================
+# LVGL Pages - Weather Forecast + Hourly Configuration (Config 9)
+# ============================================================================
+# This package defines LVGL pages for devices with current + hourly forecasts
+#
+# Includes:
+#   - Vertical Clock page
+#   - Weather Forecast page (current conditions)
+#   - Hourly Forecast pages (Hours 1-6, across 2 pages)
+#   - Page rotation handler (embedded, Clock + Weather)
+#
+# Excludes:
+#   - AirQ page (use airq-stubs)
+#   - WiFi page (use wifi-stubs)
+#   - Daily forecast pages
+#
+# Memory Impact: ~155KB total, ~55KB free
+# BLE Compatible: NO (too much memory)
+#
+# Usage: Config 9 - Current + 6-hour detailed forecasts
+# Requires:
+#   - weather-sensors-current.yaml (8 sensors)
+#   - weather-sensors-hourly.yaml (72 sensors)
+# ============================================================================
+
+lvgl:
+  pages:
+    # Core pages - always available
+    - !include vertical-clock-display.yaml
+
+    # Weather pages
+    - !include weather-page-forecast.yaml      # Current forecast
+    - !include weather-page-hourly.yaml        # Hours 1-3
+    - !include weather-page-hourly-2.yaml      # Hours 4-6
+
+# ============================================================================
+# PAGE ROTATION HANDLER - Embedded for Clock + Weather Forecast + Hourly
+# ============================================================================
+# This handler supports: Clock, Forecast, and Hourly pages (3 weather pages total)
+
+interval:
+  - interval: 100ms  # Check frequently for page index changes
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_displayed_index = -1;
+
+              // Don't do anything until boot is complete
+              if (!id(boot_complete)) return false;
+
+              // Check if page index has changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
+
+              // We have a page change - process it
+              last_displayed_index = current;
+
+              // Page mapping for Clock + Weather Forecast + Hourly:
+              // 0 = Vertical Clock
+              // 1 = Weather Forecast (current)
+              // 2 = Hourly Forecast (Hours 1-3)
+              // 3 = Hourly Forecast (Hours 4-6)
+
+              switch(current) {
+                case 0:
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
+                  break;
+                case 1:
+                  id(lily_display).show_page(weather_forecast_page);
+                  ESP_LOGD("page_rotation", "Showing Weather Forecast page (index 1)");
+                  break;
+                case 2:
+                  id(lily_display).show_page(hourly_forecast_page);
+                  ESP_LOGD("page_rotation", "Showing Hourly Forecast Hours 1-3 (index 2)");
+                  break;
+                case 3:
+                  id(lily_display).show_page(hourly_forecast_page_2);
+                  ESP_LOGD("page_rotation", "Showing Hourly Forecast Hours 4-6 (index 3)");
+                  break;
+                default:
+                  // Invalid page index - show clock
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGW("page_rotation", "Invalid page index %d, showing clock", current);
+                  break;
+              }
+
+              return true;
+          then:
+            - logger.log:
+                format: "Page displayed successfully"
+                level: DEBUG
+
+# ============================================================================
+# TIME UPDATE SCRIPT - Override Core's basic time update
+# ============================================================================
+# Supports automatic page rotation through all weather pages
+
+script:
+  - id: time_update
+    mode: restart
+    then:
+      - lambda: |-
+          // Get current time components
+          auto time = id(halo_time).now();
+
+          // Handle automatic page rotation
+          if (id(page_rotation_enabled)) {
+            uint32_t now = millis();
+            uint32_t elapsed = now - id(last_auto_rotation_time);
+            uint32_t rotation_interval = id(page_rotation_interval) * 1000;
+
+            if (elapsed >= rotation_interval) {
+              id(last_auto_rotation_time) = now;
+
+              // Build list of enabled pages
+              std::vector<int> enabled_pages;
+
+              // Clock is always available
+              enabled_pages.push_back(0);
+
+              // Weather Forecast page
+              if (id(page_rotation_weather_enabled)) {
+                enabled_pages.push_back(1);
+              }
+
+              // Hourly Forecast pages (both pages)
+              if (id(page_rotation_hourly_forecast_enabled)) {
+                enabled_pages.push_back(2);
+                enabled_pages.push_back(3);
+              }
+
+              // Find current page and rotate to next
+              int current_idx = id(current_page_index);
+              int current_pos = -1;
+              for (size_t i = 0; i < enabled_pages.size(); i++) {
+                if (enabled_pages[i] == current_idx) {
+                  current_pos = i;
+                  break;
+                }
+              }
+
+              if (current_pos >= 0 && enabled_pages.size() > 1) {
+                int next_pos = (current_pos + 1) % enabled_pages.size();
+                id(current_page_index) = enabled_pages[next_pos];
+                ESP_LOGD("page_rotation", "Auto-rotating to page %d", id(current_page_index));
+              }
+            }
+          }

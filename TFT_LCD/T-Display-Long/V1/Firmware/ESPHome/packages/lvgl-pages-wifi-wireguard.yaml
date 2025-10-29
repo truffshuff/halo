@@ -1,0 +1,84 @@
+# ============================================================================
+# LVGL Pages - WiFi + WireGuard Configuration (Config 4)
+# ============================================================================
+# This package defines LVGL pages for devices with WiFi + WireGuard VPN
+#
+# Includes:
+#   - Vertical Clock page
+#   - WiFi page WITH WireGuard status
+#   - Page rotation handler (embedded, Clock + WiFi)
+#
+# Excludes:
+#   - AirQ page (use airq-stubs)
+#   - Weather pages (use weather-stubs)
+#   - BLE pages (use ble-stubs)
+#
+# Memory Impact: ~100KB total, ~110KB free
+# BLE Compatible: YES (Config 4 + BLE)
+#
+# Usage: Config 4 - Clock + WiFi monitoring + WireGuard VPN
+# Requires: wireguard.yaml, wireguard-display.yaml, time-update-wireguard.yaml
+# ============================================================================
+
+lvgl:
+  pages:
+    # Core pages - always available
+    - !include vertical-clock-display.yaml
+
+    # WiFi page WITH WireGuard support
+    - !include lvgl-wifi-wireguard-page.yaml
+
+# ============================================================================
+# PAGE ROTATION HANDLER - Embedded for Clock + WiFi + WireGuard configuration
+# ============================================================================
+# This handler supports: Clock and WiFi pages (with WireGuard)
+
+interval:
+  - interval: 100ms  # Check frequently for page index changes
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_displayed_index = -1;
+
+              // Don't do anything until boot is complete
+              if (!id(boot_complete)) return false;
+
+              // Check if page index has changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
+
+              // We have a page change - process it
+              last_displayed_index = current;
+
+              // Page mapping for Clock + WiFi + WireGuard:
+              // 0 = Vertical Clock
+              // 1 = WiFi page (with WireGuard status)
+
+              switch(current) {
+                case 0:
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
+                  break;
+                case 1:
+                  id(lily_display).show_page(wifi_page);
+                  ESP_LOGD("page_rotation", "Showing WiFi + WireGuard page (index 1)");
+                  break;
+                default:
+                  // Invalid page index - show clock
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGW("page_rotation", "Invalid page index %d, showing clock", current);
+                  break;
+              }
+
+              return true;
+          then:
+            - logger.log:
+                format: "Page displayed successfully"
+                level: DEBUG
+
+# ============================================================================
+# NOTE: time_update script comes from time-update-wireguard.yaml
+# ============================================================================
+# The WireGuard package overrides the time_update script to include
+# WireGuard status updates. No need to define it here.

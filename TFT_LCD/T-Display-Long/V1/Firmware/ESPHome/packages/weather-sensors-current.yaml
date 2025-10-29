@@ -1,0 +1,272 @@
+# ============================================================================
+# Weather Sensors - CURRENT WEATHER + DAY 1 FORECAST (Modular)
+# ============================================================================
+# This is the MINIMAL weather sensors package for BLE coexistence.
+#
+# ⚡ PSRAM OPTIMIZATION ENABLED ⚡
+# All string buffers use shared PSRAM buffers instead of internal heap
+#
+# MODULAR WEATHER SYSTEM:
+#   This package is part of a 3-part modular weather sensor system:
+#   1. weather-sensors-current.yaml  ← THIS FILE (8 sensors, ~5KB RAM)
+#   2. weather-sensors-daily.yaml    (45 sensors for days 2-10, ~30KB RAM)
+#   3. weather-sensors-hourly.yaml   (72 sensors for 6-hour forecast, ~45KB RAM)
+#
+# Usage:
+#   packages:
+#     psram_helpers: !include packages/psram-helpers.yaml  # REQUIRED first!
+#     weather_sensors_current: !include packages/weather-sensors-current.yaml
+#     # Optionally add:
+#     # weather_sensors_daily: !include packages/weather-sensors-daily.yaml
+#     # weather_sensors_hourly: !include packages/weather-sensors-hourly.yaml
+#
+# This package provides (8 sensors total):
+#   ✅ Current weather (3 sensors):
+#      - Current temperature
+#      - Feels like temperature
+#      - Precipitation today
+#   ✅ Day 1 forecast (5 sensors):
+#      - High temperature
+#      - Low temperature
+#      - Condition (with weather icon mapping)
+#      - Date
+#      - Precipitation probability
+#
+# 💾 Memory Impact:
+#   - RAM Usage: ~5KB (8 sensors × ~600 bytes average)
+#   - PSRAM buffers: Shared (from psram-helpers.yaml)
+#   - Compatible with BLE: YES! ✅
+#
+# Required Home Assistant entities:
+#   - sensor.st_00143056_temperature
+#   - sensor.st_00143056_feels_like
+#   - sensor.hhut_nearcast_precipitation_today
+#   - input_text.forecast_day_1_high_temperature
+#   - input_text.forecast_day_1_low_temperature
+#   - input_text.forecast_day_1_condition
+#   - input_text.forecast_day_1_date
+#   - input_text.forecast_day_1_precipitation_probability
+#
+# Dependencies:
+#   - psram-helpers.yaml (MUST be loaded before this)
+#   - weather-core.yaml (for scripts/globals)
+#   - weather-page-forecast.yaml (for display page)
+# ============================================================================
+
+# ============================================================================
+# CURRENT WEATHER SENSORS (3 sensors)
+# ============================================================================
+
+sensor:
+  # Feels like Temp from Home Assistant
+  - platform: homeassistant
+    name: "Today Feels Like Temp"
+    entity_id: sensor.st_00143056_feels_like
+    id: weather_today_tempap
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_today_tempap
+            text: !lambda |-
+              if (id(psram_buffers_initialized)) {
+                snprintf(id(psram_temp_buffer), 64, "%.0f°F", x);
+                return id(psram_temp_buffer);
+              }
+              return "--";
+
+  # Current Temp from Home Assistant
+  - platform: homeassistant
+    name: "Current Temp"
+    entity_id: sensor.st_00143056_temperature
+    id: weather_today_outdoor_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_today_outdoor_temp
+            text: !lambda |-
+              if (id(psram_buffers_initialized)) {
+                snprintf(id(psram_temp_buffer), 64, "%.0f°F", x);
+                return id(psram_temp_buffer);
+              }
+              return "--";
+
+  # Precipitation today from Home Assistant
+  - platform: homeassistant
+    name: "Precipitation Today"
+    entity_id: sensor.hhut_nearcast_precipitation_today
+    id: weather_precipitation_today
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_precipitation_today
+            text: !lambda |-
+              // Convert mm to inches (1 in = 25.4 mm) and show with one decimal
+              if (id(psram_buffers_initialized)) {
+                double inches = x / 25.4;
+                snprintf(id(psram_temp_buffer), 64, "%.2f in", inches);
+                return id(psram_temp_buffer);
+              }
+              return "--";
+
+  # ===================================================================
+  # 10-DAY FORECAST HIGH TEMPERATURES
+  # EXTRACT FROM: Lines around 1820-2070 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  - platform: homeassistant
+    name: "Forecast Day 1 High Temp"
+    entity_id: input_text.forecast_day_1_high_temperature
+    id: forecast_day1_high_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_forecast_temphi
+            text: !lambda |-
+              if (id(psram_buffers_initialized)) {
+                if (isnan(x)) {
+                  snprintf(id(psram_temp_buffer), 64, "H: --°");
+                } else {
+                  snprintf(id(psram_temp_buffer), 64, "H: %.0f°", x);
+                }
+                return id(psram_temp_buffer);
+              }
+              return "H: --";
+
+  
+
+  # ===================================================================
+  # 10-DAY FORECAST LOW TEMPERATURES
+  # EXTRACT FROM: Lines around 2071-2320 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  - platform: homeassistant
+    name: "Forecast Day 1 Low Temp"
+    entity_id: input_text.forecast_day_1_low_temperature
+    id: forecast_day1_low_temp
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_forecast_templo
+            text: !lambda |-
+              if (id(psram_buffers_initialized)) {
+                if (isnan(x)) {
+                  snprintf(id(psram_temp_buffer), 64, "L: --°");
+                } else {
+                  snprintf(id(psram_temp_buffer), 64, "L: %.0f°", x);
+                }
+                return id(psram_temp_buffer);
+              }
+              return "L: --°";
+  
+  
+
+# Text sensors for weather conditions and dates
+text_sensor:
+  # ===================================================================
+  # 10-DAY FORECAST CONDITIONS
+  # EXTRACT FROM: Lines around 2368-3006 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # IMPORTANT: Each condition includes weather icon mapping logic
+  # ===================================================================
+
+  # 9-day forecast conditions from Home Assistant
+  # Day 1
+  - platform: homeassistant
+    name: "Forecast Day 1 Condition"
+    entity_id: input_text.forecast_day_1_condition
+    id: forecast_day1_condition
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: |-
+                std::string cond = id(forecast_day1_condition).state;
+                std::transform(cond.begin(), cond.end(), cond.begin(), ::tolower);
+                return cond != id(weather_last_condition);
+            then:
+              - lvgl.label.update:
+                  id: lbl_weather_forecast_condition_name
+                  text: !lambda 'return id(forecast_day1_condition).state;'
+              - lvgl.label.update:
+                  id: lbl_weather_forecast_condition_icon
+                  text: !lambda |-
+                    const std::string cond_b = id(forecast_day1_condition).state;
+                    std::string norm_b = cond_b;
+                    std::transform(norm_b.begin(), norm_b.end(), norm_b.begin(), ::tolower);
+                    if (norm_b.find("clear-night") != std::string::npos) {
+                      return "\U000F0594";  // weather-night
+                    } else if (norm_b.find("sunny") != std::string::npos || norm_b.find("clear") != std::string::npos) {
+                      return "\U000F0599";  // sunny
+                    } else if (norm_b.find("snowy-rainy") != std::string::npos) {
+                      return "\U000F0F35";  // weather-snowy-rainy
+                    } else if (norm_b.find("lightning-rainy") != std::string::npos || norm_b.find("lightning") != std::string::npos) {
+                      return "\U000F067E";  // lightning-rainy
+                    } else if (norm_b.find("partlycloudy") != std::string::npos) {
+                      return "\U000F0595";  // partlycloudy
+                    } else if (norm_b.find("cloudy") != std::string::npos) {
+                      return "\U000F0590";  // cloudy
+                    } else if (norm_b.find("rainy") != std::string::npos) {
+                      return "\U000F0597";  // rainy
+                    } else if (norm_b.find("snowy") != std::string::npos) {
+                      return "\U000F0598";  // snowy
+                    } else if (norm_b.find("fog") != std::string::npos) {
+                      return "\U000F0591";  // fog
+                    } else if (norm_b.find("windy") != std::string::npos) {
+                      return "\U000F059E";  // windy
+                    } else {
+                      return "\U000F14E4";  // weather-unknown
+                    }
+        - script.execute: update_weather_icon_color
+
+  
+  # ===================================================================
+  # 10-DAY FORECAST DATES
+  # EXTRACT FROM: Lines around 3010-3104 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  # Day 1 Date
+  - platform: homeassistant
+    name: "Forecast Day 1 Date"
+    entity_id: input_text.forecast_day_1_date
+    id: forecast_day1_header
+
+
+  # ===================================================================
+  # 10-DAY FORECAST PRECIPITATION PROBABILITIES
+  # EXTRACT FROM: Lines around 3106-3236 in main config
+  # PATTERN: Copy all 10 days (Day 1-10)
+  # ===================================================================
+
+  # Day 1 Precipitation Probability
+  - platform: homeassistant
+    name: "Forecast Day 1 Precipitation Probability"
+    entity_id: input_text.forecast_day_1_precipitation_probability
+    id: forecast_day1_precip_prob
+    on_value:
+      then:
+        - lvgl.label.update:
+            id: lbl_weather_today_dailyprecipprob
+            text: !lambda |-
+              if (id(psram_buffers_initialized)) {
+                snprintf(id(psram_condition_buffer), 128, "Chance: %s%%", x.c_str());
+                return id(psram_condition_buffer);
+              }
+              return "Chance: --%";
+
+  
+  
+
+# ===================================================================
+# EXTRACTION CHECKLIST
+# ===================================================================
+# [ ] Current weather sensors (outdoor temp, apparent temp, precipitation)
+# [ ] Forecast Day 1-10 High Temperatures
+# [ ] Forecast Day 1-10 Low Temperatures
+# [ ] Forecast Day 1-10 Conditions (with icon mapping)
+# [ ] Forecast Day 1-10 Dates
+# [ ] Forecast Day 1-10 Precipitation Probabilities
+# [ ] Verify all entity_id names match your Home Assistant setup
+# [ ] Verify all LVGL widget IDs exist (lbl_weather_*, lbl_forecast_*)
