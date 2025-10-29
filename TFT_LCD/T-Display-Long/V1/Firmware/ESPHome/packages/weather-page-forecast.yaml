@@ -191,8 +191,3 @@ widgets:
         - lvgl.page.next:
             animation: OUT_LEFT
             time: 300ms
-
-# TODO: Extract and paste hourly_forecast_page here (lines ~5491-6835)
-# - id: hourly_forecast_page
-#   bg_color: 0x000000
-#   ...
