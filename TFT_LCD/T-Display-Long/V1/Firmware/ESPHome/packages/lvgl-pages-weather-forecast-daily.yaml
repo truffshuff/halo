@@ -1,0 +1,171 @@
+# ============================================================================
+# LVGL Pages - Weather Forecast + Daily Configuration (Config 8)
+# ============================================================================
+# This package defines LVGL pages for devices with current + daily forecasts
+#
+# Includes:
+#   - Vertical Clock page
+#   - Weather Forecast page (current conditions)
+#   - Daily Forecast pages (Days 2-10, across 5 pages)
+#   - Page rotation handler (embedded, Clock + Weather)
+#
+# Excludes:
+#   - AirQ page (use airq-stubs)
+#   - WiFi page (use wifi-stubs)
+#   - Hourly forecast pages
+#
+# Memory Impact: ~165KB total, ~45KB free
+# BLE Compatible: NO (too much memory)
+#
+# Usage: Config 8 - Full daily forecasts without hourly
+# Requires:
+#   - weather-sensors-current.yaml (8 sensors)
+#   - weather-sensors-daily.yaml (45 sensors)
+# ============================================================================
+
+lvgl:
+  pages:
+    # Core pages - always available
+    - !include vertical-clock-display.yaml
+
+    # Weather pages
+    - !include weather-page-forecast.yaml      # Current forecast
+    - !include weather-page-daily.yaml         # Days 2-3
+    - !include weather-page-days-4-5.yaml      # Days 4-5
+    - !include weather-page-days-6-7.yaml      # Days 6-7
+    - !include weather-page-days-8-9.yaml      # Days 8-9
+    - !include weather-page-day-10.yaml        # Day 10
+
+# ============================================================================
+# PAGE ROTATION HANDLER - Embedded for Clock + Weather Forecast + Daily
+# ============================================================================
+# This handler supports: Clock, Forecast, and Daily pages (6 weather pages total)
+
+interval:
+  - interval: 100ms  # Check frequently for page index changes
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_displayed_index = -1;
+
+              // Don't do anything until boot is complete
+              if (!id(boot_complete)) return false;
+
+              // Check if page index has changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
+
+              // We have a page change - process it
+              last_displayed_index = current;
+
+              // Page mapping for Clock + Weather Forecast + Daily:
+              // 0 = Vertical Clock
+              // 1 = Weather Forecast (current)
+              // 2 = Daily Forecast (Days 2-3)
+              // 3 = Daily Forecast (Days 4-5)
+              // 4 = Daily Forecast (Days 6-7)
+              // 5 = Daily Forecast (Days 8-9)
+              // 6 = Daily Forecast (Day 10)
+
+              switch(current) {
+                case 0:
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
+                  break;
+                case 1:
+                  id(lily_display).show_page(weather_forecast_page);
+                  ESP_LOGD("page_rotation", "Showing Weather Forecast page (index 1)");
+                  break;
+                case 2:
+                  id(lily_display).show_page(daily_forecast_page);
+                  ESP_LOGD("page_rotation", "Showing Daily Forecast Days 2-3 (index 2)");
+                  break;
+                case 3:
+                  id(lily_display).show_page(daily_forecast_page_4_5);
+                  ESP_LOGD("page_rotation", "Showing Daily Forecast Days 4-5 (index 3)");
+                  break;
+                case 4:
+                  id(lily_display).show_page(daily_forecast_page_6_7);
+                  ESP_LOGD("page_rotation", "Showing Daily Forecast Days 6-7 (index 4)");
+                  break;
+                case 5:
+                  id(lily_display).show_page(daily_forecast_page_8_9);
+                  ESP_LOGD("page_rotation", "Showing Daily Forecast Days 8-9 (index 5)");
+                  break;
+                case 6:
+                  id(lily_display).show_page(daily_forecast_page_10);
+                  ESP_LOGD("page_rotation", "Showing Daily Forecast Day 10 (index 6)");
+                  break;
+                default:
+                  // Invalid page index - show clock
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGW("page_rotation", "Invalid page index %d, showing clock", current);
+                  break;
+              }
+
+              return true;
+          then:
+            - logger.log:
+                format: "Page displayed successfully"
+                level: DEBUG
+
+# ============================================================================
+# TIME UPDATE SCRIPT - Override Core's basic time update
+# ============================================================================
+# Supports automatic page rotation through all weather pages
+
+script:
+  - id: time_update
+    mode: restart
+    then:
+      - lambda: |-
+          // Get current time components
+          auto time = id(halo_time).now();
+
+          // Handle automatic page rotation
+          if (id(page_rotation_enabled)) {
+            uint32_t now = millis();
+            uint32_t elapsed = now - id(last_auto_rotation_time);
+            uint32_t rotation_interval = id(page_rotation_interval) * 1000;
+
+            if (elapsed >= rotation_interval) {
+              id(last_auto_rotation_time) = now;
+
+              // Build list of enabled pages
+              std::vector<int> enabled_pages;
+
+              // Clock is always available
+              enabled_pages.push_back(0);
+
+              // Weather Forecast page
+              if (id(page_rotation_weather_enabled)) {
+                enabled_pages.push_back(1);
+              }
+
+              // Daily Forecast pages (all 5 pages)
+              if (id(page_rotation_daily_forecast_enabled)) {
+                enabled_pages.push_back(2);
+                enabled_pages.push_back(3);
+                enabled_pages.push_back(4);
+                enabled_pages.push_back(5);
+                enabled_pages.push_back(6);
+              }
+
+              // Find current page and rotate to next
+              int current_idx = id(current_page_index);
+              int current_pos = -1;
+              for (size_t i = 0; i < enabled_pages.size(); i++) {
+                if (enabled_pages[i] == current_idx) {
+                  current_pos = i;
+                  break;
+                }
+              }
+
+              if (current_pos >= 0 && enabled_pages.size() > 1) {
+                int next_pos = (current_pos + 1) % enabled_pages.size();
+                id(current_page_index) = enabled_pages[next_pos];
+                ESP_LOGD("page_rotation", "Auto-rotating to page %d", id(current_page_index));
+              }
+            }
+          }
