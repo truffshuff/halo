@@ -1,0 +1,61 @@
+# ============================================================================
+# BLE Core Package - Standard Configuration
+# ============================================================================
+# This package contains BLE scanner and Bluetooth Proxy functionality.
+#
+# REMOVED: Delayed scanning logic (didn't help with memory issues)
+# REMOVED: Sensor connection delays (didn't help with memory issues)
+#
+# The key to BLE+Weather coexistence is:
+#   1. Proper PSRAM configuration in Core (already done)
+#   2. Reduced LVGL buffer (15-20%)
+#   3. Using modular weather (enable only what you need)
+#
+# Memory allocation happens at initialization, so delays don't help.
+# Instead, we optimize what's enabled and how memory is allocated.
+# ============================================================================
+
+# ESP32 BLE Tracker Configuration
+esp32_ble_tracker:
+  id: ble_tracker
+  scan_parameters:
+    # Scan interval - how often to scan for devices
+    # Default: 320ms, Balanced: 500ms, Power-save: 1100ms
+    interval: 500ms
+
+    # Scan window - how long each scan lasts
+    # Default: 30ms, Balanced: 40ms, Power-save: 110ms
+    window: 40ms
+
+    # Active scanning - sends scan requests to get more device info
+    # true = more info but higher power consumption
+    # false = passive scanning, lower power
+    active: false
+
+    # Continuous scanning mode
+    # true = constant scanning (high power, immediate detection)
+    # false = on-demand scanning (lower power, delayed detection)
+    continuous: false
+
+# Bluetooth Proxy Configuration
+bluetooth_proxy:
+  active: true
+  connection_slots: 3
+
+# ESP32 Improv Configuration (Optional)
+# Allows WiFi provisioning via BLE
+esp32_improv:
+  authorizer: none
+
+# API Integration - Dynamic BLE Scanning
+# Automatically start/stop BLE scanning based on Home Assistant connection
+api:
+  on_client_connected:
+    - delay: 500ms
+    - logger.log: "Home Assistant connected, starting BLE scan..."
+    - esp32_ble_tracker.start_scan:
+        continuous: true
+
+  on_client_disconnected:
+    - logger.log: "Home Assistant disconnected, stopping BLE scan..."
+    - esp32_ble_tracker.stop_scan:

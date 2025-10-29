@@ -1,0 +1,466 @@
+# ============================================================================
+# Weather Forecast Basic Module
+# ============================================================================
+# Provides MINIMAL weather display with just the main forecast page
+#
+# This module includes:
+#   - Weather core functionality (globals, scripts, page rotation)
+#   - Weather icon fonts (100px, 80px, 50px, 40px, 20px)
+#   - LVGL text sensors for the forecast page
+#   - Main weather forecast page ONLY (no hourly/daily extended forecasts)
+#
+# Memory Impact: LOW (~15-20KB)
+#   - Icon fonts: ~10KB
+#   - Text sensors: ~2KB
+#   - Page definition: ~5KB
+#   - Scripts/globals: ~2KB
+#
+# Dependencies:
+#   - weather-sensors-module.yaml (for actual weather data from Home Assistant)
+#     OR provide weather sensors manually from HA
+#
+# Use Case:
+#   - You want BLE + minimal weather (just current forecast)
+#   - You don't need hourly or multi-day forecasts
+#   - Maximum memory savings while still showing some weather info
+#
+# Combine with:
+#   - weather-sensors-module.yaml for full functionality
+#   - weather-forecast-extended.yaml for hourly/daily pages
+# ============================================================================
+
+# ============================================================================
+# WEATHER CORE - From weather-core.yaml
+# ============================================================================
+
+# Weather-related globals
+globals:
+  # Page rotation enable/disable for weather pages
+  - id: page_rotation_weather_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_daily_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'false'  # Disabled in basic module
+  - id: page_rotation_hourly_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'false'  # Disabled in basic module
+
+  # Page rotation order for weather pages
+  - id: page_rotation_weather_order
+    type: int
+    restore_value: yes
+    initial_value: '3'
+  - id: page_rotation_daily_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '4'
+  - id: page_rotation_hourly_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '5'
+
+  # Weather display state tracking
+  - id: weather_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_condition
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: weather_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+# Weather icon color update script
+script:
+  - id: update_weather_icon_color
+    mode: restart
+    then:
+      - lambda: |-
+          id(weather_last_started) = millis();
+          id(weather_needs_render) = false;
+      - lambda: |-
+          std::string condition = id(forecast_day1_condition).state;
+          ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
+          if (condition.empty()) {
+            return;
+          }
+          std::string normalized = condition;
+          std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+          if (normalized != id(weather_last_condition)) {
+            id(weather_last_condition) = normalized;
+            id(weather_needs_render) = true;
+          }
+      - if:
+          condition:
+            lambda: 'return id(weather_needs_render);'
+          then:
+            - lvgl.label.update:
+                id: lbl_weather_forecast_condition_icon
+                text_color: !lambda |-
+                  const std::string condition = id(weather_last_condition);
+                  ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
+                  if (condition.find("clear-night") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Slate Blue color (night)");
+                    return lv_color_hex(0x6A5ACD);
+                  } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Gold color");
+                    return lv_color_hex(0xFFD700);
+                  } else if (condition.find("snowy-rainy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Cyan color (mixed precipitation)");
+                    return lv_color_hex(0xAFEEEE);
+                  } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Deep Pink color");
+                    return lv_color_hex(0xFF1493);
+                  } else if (condition.find("partlycloudy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Sky Blue color");
+                    return lv_color_hex(0x87CEFA);
+                  } else if (condition.find("cloudy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Dark Gray color");
+                    return lv_color_hex(0xA9A9A9);
+                  } else if (condition.find("rainy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Royal Blue color");
+                    return lv_color_hex(0x4169E1);
+                  } else if (condition.find("snowy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Gainsboro color");
+                    return lv_color_hex(0xDCDCDC);
+                  } else if (condition.find("fog") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Steel Blue color");
+                    return lv_color_hex(0xB0C4DE);
+                  } else if (condition.find("windy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Green color");
+                    return lv_color_hex(0x90EE90);
+                  } else {
+                    ESP_LOGD("weather_color", "Setting White color (default)");
+                    return lv_color_hex(0xFFFFFF);
+                  }
+      - lambda: |-
+          const uint32_t elapsed = millis() - id(weather_last_started);
+          id(weather_last_duration) = elapsed;
+          const bool rendered = id(weather_needs_render);
+          if (elapsed > 80) {
+            ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          } else {
+            ESP_LOGD("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          }
+          id(weather_needs_render) = false;
+
+# Weather page rotation controls (basic page only)
+switch:
+  - platform: template
+    name: "Page Rotation: Weather Page"
+    id: page_rotation_weather_switch
+    icon: mdi:weather-partly-cloudy
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_weather_enabled) = true;'
+      - logger.log: "Weather page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_weather_enabled) = false;'
+      - logger.log: "Weather page disabled in rotation"
+
+# Weather page order control
+number:
+  - platform: template
+    name: "Page Order: Weather Page"
+    id: page_order_weather
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 3
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_weather_order) = (int)x;'
+      - logger.log:
+          format: "Weather page order set to %d"
+          args: ['(int)x']
+
+  # Weather gauge control (for weather page needle)
+  - platform: template
+    name: "Weather Gauge Value"
+    id: weather_gauge_value
+    min_value: 0
+    max_value: 100
+    step: 1
+    mode: box
+    optimistic: true
+    entity_category: config
+    icon: mdi:gauge
+    unit_of_measurement: "%"
+    on_value:
+      - lvgl.indicator.update:
+          id: weather_temp_needle
+          value: !lambda 'return (int)x;'
+
+# Weather diagnostic sensor
+sensor:
+  - platform: template
+    name: "Weather Icon Update Duration"
+    id: weather_icon_duration_sensor
+    internal: true
+    unit_of_measurement: "ms"
+    accuracy_decimals: 0
+    icon: "mdi:weather-lightning"
+    entity_category: "diagnostic"
+    update_interval: never
+
+# ============================================================================
+# WEATHER ICON FONTS - From weather-fonts-text.yaml
+# ============================================================================
+
+font:
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_100
+    size: 100
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+
+# ============================================================================
+# LVGL TEXT SENSORS - Just for main forecast page
+# ============================================================================
+
+text:
+  # Weather Forecast Page - Main weather display
+  - platform: lvgl
+    name: weather_today_tempap
+    internal: true
+    widget: lbl_weather_today_tempap
+    mode: text
+  - platform: lvgl
+    name: weather_today_outdoor_temp
+    internal: true
+    widget: lbl_weather_today_outdoor_temp
+    mode: text
+
+# ============================================================================
+# LVGL PAGES - Main Weather Forecast Page ONLY
+# ============================================================================
+
+lvgl:
+  pages:
+    - id: weather_forecast_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: |-
+            id(current_page_index) = 3;  // weather_forecast_page
+            id(weather_last_condition).clear();
+        - script.execute: update_weather_icon_color
+      widgets:
+        # Large weather condition icon at top
+        - label:
+            text: "\U000F14E4"
+            id: lbl_weather_forecast_condition_icon
+            text_font: icons_100
+            text_align: CENTER
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 10
+
+        # Condition name below icon
+        - label:
+            text: "Unknown"
+            id: lbl_weather_forecast_condition_name
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 120
+
+        # Semicircle meter gauge for apparent temperature
+        - obj:
+            align: CENTER
+            x: 0
+            y: 100
+            width: 180
+            height: 180
+            bg_color: 0x000000
+            border_width: 0
+            pad_all: 10
+            widgets:
+              - meter:
+                  id: weather_temp_gauge
+                  height: 100%
+                  width: 100%
+                  border_width: 0
+                  align: CENTER
+                  bg_opa: TRANSP
+                  scales:
+                    - range_from: 0
+                      range_to: 100
+                      angle_range: 180
+                      rotation: 180
+                      ticks:
+                        count: 51
+                        width: 2
+                        length: 10
+                        color: 0x404040
+                      indicators:
+                        - tick_style:
+                            start_value: 0
+                            end_value: 100
+                            color_start: 0x0099FF
+                            color_end: 0xFF6600
+                    - range_from: 0
+                      range_to: 100
+                      angle_range: 180
+                      rotation: 180
+                      ticks:
+                        count: 0
+                      indicators:
+                        - line:
+                            id: weather_temp_needle
+                            width: 8
+                            r_mod: 2
+                            value: 50
+                            color: 0xFF0000
+              - obj:
+                  height: 100
+                  width: 100
+                  radius: 50
+                  align: CENTER
+                  border_width: 0
+                  bg_color: 0x000000
+
+        # Current apparent temperature in center of gauge
+        - label:
+            text: "--°"
+            id: lbl_weather_today_tempap
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            align: CENTER
+            x: 0
+            y: 120
+
+        # "Feels Like" label above temp
+        - label:
+            text: "Feels Like"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: CENTER
+            x: 0
+            y: 95
+
+        # Low temp stacked above gauge
+        - label:
+            text: "L: --°"
+            id: lbl_weather_forecast_templo
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_teal
+            align: CENTER
+            x: 0
+            y: -35
+
+        # High temp stacked above low temp
+        - label:
+            text: "H: --°"
+            id: lbl_weather_forecast_temphi
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_red
+            align: CENTER
+            x: 0
+            y: -70
+
+        # Today precipitation amt
+        - label:
+            text: "Amt Today: -- in"
+            id: lbl_weather_precipitation_today
+            text_align: CENTER
+            text_font: montserrat_18
+            text_color: my_teal
+            align: BOTTOM_MID
+            x: 0
+            y: -80
+
+        # Precipitation Chance
+        - label:
+            text: "Chance: --%"
+            id: lbl_weather_today_dailyprecipprob
+            text_align: CENTER
+            text_font: montserrat_18
+            text_color: my_teal
+            align: BOTTOM_MID
+            x: 0
+            y: -55
+
+        # Current temperature at bottom
+        - label:
+            text: "Now:"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: BOTTOM_MID
+            x: 0
+            y: -30
+
+        - label:
+            text: "--.- °C"
+            id: lbl_weather_today_outdoor_temp
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: BOTTOM_MID
+            x: 0
+            y: -5
+
+        # Navigation button (top right)
+        - obj:
+            id: nav_button_weather
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Weather page nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
