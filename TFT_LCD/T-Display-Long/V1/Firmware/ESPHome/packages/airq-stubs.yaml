@@ -26,8 +26,31 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  
+
   - id: page_rotation_AirQ_order
     type: int
     restore_value: no
     initial_value: '99'
+
+# Stub sensor to prevent compilation errors in LED effect logic
+sensor:
+  - platform: template
+    name: "Computed AQI (Stub)"
+    id: computed_halo_aqi
+    internal: true
+    update_interval: never
+    accuracy_decimals: 0
+    lambda: 'return NAN;'  # Always return NaN (not a number)
+
+# Stub LVGL label to prevent compilation errors in time_update script
+# The time_update script tries to update timeVal label on AirQ page
+# Even when AirQ is disabled, the script still references it, so we provide a stub
+lvgl:
+  objs:
+    - obj:  # Hidden container for stub label
+        id: airq_stub_container
+        hidden: true
+        widgets:
+          - label:
+              id: timeVal
+              text: "stub"

@@ -14,7 +14,23 @@ This happens because ESPHome evaluates package labels **before** fetching files 
 
 ## Solution: Two Compilation Methods
 
-### Method 1: Local Compilation (ESPHome CLI) - RECOMMENDED
+## ⚠️ IMPORTANT: Jinja2 Limitations
+
+**Jinja2 substitutions in `!include` paths only work with ESPHome CLI!**
+
+The Home Assistant ESPHome dashboard's YAML parser evaluates `!include` statements **before** processing Jinja2 substitutions, causing errors like:
+
+```
+Error reading file /config/esphome/packages/${airq_package_file}
+```
+
+**What this means:**
+- ✅ **ESPHome CLI**: Full Jinja2 dynamic configuration works perfectly
+- ❌ **HA Dashboard**: Must manually comment/uncomment packages
+
+---
+
+### Method 1: Local Compilation (ESPHome CLI) - RECOMMENDED ⭐
 
 **Advantages:**
 - Works perfectly with `!include` syntax
@@ -55,8 +71,10 @@ esphome upload halo-v1-79e384.yaml
 - Integrated with Home Assistant
 
 **Disadvantages:**
+- ❌ **No Jinja2 dynamic configuration** - Must manually edit packages
 - Requires copying files to `/config/esphome/` directory
 - More setup steps
+- More error-prone (easy to forget to update pages package)
 
 **Steps:**
 
@@ -67,8 +85,10 @@ You need to copy the following files from your GitHub repository to your Home As
 **Core files:**
 ```
 Halo-v1-Core.yaml
-halo-v1-79e384.yaml  (or your device-specific file)
+halo-v1-79e384-ha-manual.yaml  (manual package selection for HA dashboard)
 ```
+
+⚠️ **Use the `-ha-manual.yaml` version** which has manual package selection since Jinja2 doesn't work in HA dashboard!
 
 **Packages directory** (entire directory with all files):
 ```
@@ -282,7 +302,9 @@ Until this is fixed in ESPHome, local `!include` files are the only working solu
 
 | Method | Complexity | Speed | Jinja2 Support | Recommended |
 |--------|-----------|-------|----------------|-------------|
-| **CLI (Local)** | Easy | Fast | ✅ Yes | ✅ **YES** |
-| **HA Dashboard** | Medium | Medium | ✅ Yes | ⚠️ If needed |
+| **CLI (Local)** | Easy | Fast | ✅ **YES** - Full automatic config | ✅ **STRONGLY RECOMMENDED** |
+| **HA Dashboard** | Medium | Medium | ❌ **NO** - Manual package editing | ⚠️ Only if web UI required |
 
-**Best practice:** Use ESPHome CLI for compilation, and only use HA dashboard if you specifically need the web interface.
+**Best practice:** Use ESPHome CLI for compilation. The automatic Jinja2 configuration is worth it!
+
+**If you must use HA dashboard:** Use `halo-v1-79e384-ha-manual.yaml` and manually comment/uncomment packages.
