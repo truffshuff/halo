@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.30.1536"
+  version: "25.10.30.1537"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -590,9 +590,7 @@ api:
       - delay: 500ms
       # Note: BLE tracker start/stop on API connection is defined in ble-core.yaml
 
-  services:
-    # Note: Feature-specific services (calibrate_co2_value, sen55_clean) are defined in their respective packages
-    # Note: set_display_page service removed - use page rotation controls or device-specific services instead
+# Note: API services section removed - feature-specific services are defined in their respective packages
 
 i2c:
   - sda: 9
