@@ -115,6 +115,26 @@ substitutions:
       lvgl-pages-clock-only.yaml
     {%- endif -%}
 
+packages:
+  device_core: !include Halo-v1-Core.yaml
+  psram_helpers: !include packages/psram-helpers.yaml
+
+  # Automatic feature packages (Jinja2 conditional loading)
+  airq_auto: !include packages/${airq_package_file}
+  ble_auto: !include packages/${ble_package_file}
+  wifi_auto: !include packages/${wifi_package_file}
+  weather_auto: !include packages/${weather_package_file}
+  wireguard_auto: !include packages/${wireguard_package_file}
+  lvgl_pages: !include packages/${lvgl_pages_file}
+
+  # Memory statistics (conditional)
+  # memory_stats:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml
+  #   refresh: always
+
 # ============================================================================
 # ESPHOME CONFIGURATION
 # ============================================================================
@@ -208,93 +228,7 @@ captive_portal:
 # PACKAGE IMPORTS - Core Functionality
 # ============================================================================
 
-packages:
-  # Core device configuration (always required)
-  device_core:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
-    refresh: always
 
-  # PSRAM optimization helpers (conditional)
-  psram_helpers:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/psram-helpers.yaml
-    refresh: always
-    # Only load if PSRAM optimization is enabled
-    # NOTE: ESPHome 2025.10.0 dynamic auto-loading syntax (may need adjustment)
-    # For now, uncomment/comment this entire section to enable/disable
-
-  # Memory statistics (conditional)
-  # memory_stats:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files:
-  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml
-  #   refresh: always
-
-  # ============================================================================
-  # AUTOMATIC FEATURE PACKAGES (Jinja2 Conditional Loading)
-  # ============================================================================
-  # These packages automatically load core or stubs based on feature flags.
-  # No more manual commenting/uncommenting!
-
-  # AirQ: Loads airq-display.yaml OR airq-stubs.yaml automatically
-  airq_auto:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${airq_package_file}
-    refresh: always
-
-  # BLE: Loads ble-core-simplified.yaml OR ble-stubs.yaml automatically
-  ble_auto:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${ble_package_file}
-    refresh: always
-
-  # WiFi: Loads wifi-display.yaml OR wifi-stubs.yaml automatically
-  wifi_auto:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${wifi_package_file}
-    refresh: always
-
-  # Weather: Loads weather-ha-actions.yaml OR weather-stubs.yaml automatically
-  weather_auto:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${weather_package_file}
-    refresh: always
-
-  # WireGuard: Loads wireguard.yaml OR wireguard-stubs.yaml automatically
-  # Note: Only loads if both WiFi page AND WireGuard are enabled
-  wireguard_auto:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${wireguard_package_file}
-    refresh: always
-
-  # ============================================================================
-  # LVGL PAGES - Automatically Selected Based on Features
-  # ============================================================================
-  # The correct pages package is selected automatically based on your
-  # enabled features. Just change the feature flags above!
-
-  lvgl_pages:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${lvgl_pages_file}
-    refresh: always
 
 # ============================================================================
 # DEFAULT PAGE SELECTOR
