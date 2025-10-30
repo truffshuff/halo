@@ -321,19 +321,39 @@ packages:
   # Pick the pages package that matches your configuration above
   #
   # AVAILABLE PRE-BUILT PACKAGES:
-  #   lvgl-pages-clock-only.yaml          Config 1
-  #   lvgl-pages-airq-only.yaml           Config 2
-  #   lvgl-pages-airq-wifi.yaml           Config 5
-  #   lvgl-pages-weather.yaml             Config 12 (full weather, no AirQ/WiFi)
-  #   lvgl-pages-airq-weather.yaml        Config 12 + 13
-  #   lvgl-pages-full.yaml                Config 12 + 16 (no WireGuard)
-  #   lvgl-pages-full-wireguard.yaml      Config 12 + 16 + WireGuard
+  # BASIC CONFIGS (BLE Compatible):
+  #   lvgl-pages-clock-only.yaml                    Config 1
+  #   lvgl-pages-airq-only.yaml                     Config 2
+  #   lvgl-pages-wifi-only.yaml                     Config 3
+  #   lvgl-pages-wifi-wireguard.yaml                Config 4
+  #   lvgl-pages-airq-wifi.yaml                     Config 5
   #
-  # CUSTOM COMBINATIONS (need to create):
-  #   For Configs 3, 4, 6-11, 14-15, you'll need to create a custom pages
-  #   package that includes only the pages you want.
+  # MINIMAL WEATHER CONFIGS (Config 7 is BLE Compatible!):
+  #   lvgl-pages-weather-forecast-only.yaml         Config 7 (BLE Compatible!)
+  #   lvgl-pages-weather-forecast-daily.yaml        Config 8 (no BLE)
+  #   lvgl-pages-weather-forecast-hourly.yaml       Config 9 (no BLE)
+  #
+  # FULL WEATHER CONFIGS (No BLE - too much memory):
+  #   lvgl-pages-weather.yaml                       Config 12 (full weather)
+  #   lvgl-pages-airq-weather.yaml                  Config 13 (AirQ + full weather)
+  #
+  # MINIMAL WEATHER + OTHER FEATURES (No BLE):
+  #   lvgl-pages-airq-weather-forecast-only.yaml    Config 13a (AirQ + forecast only)
+  #   lvgl-pages-wifi-weather-forecast-only.yaml    Config 14a (WiFi + forecast only)
+  #   lvgl-pages-airq-wifi-weather-forecast.yaml    Config 16a (AirQ + WiFi + forecast)
+  #
+  # FULL FEATURED (No BLE):
+  #   lvgl-pages-full.yaml                          Config 16 (no WireGuard)
+  #   lvgl-pages-full-wireguard.yaml                Config 16 + WireGuard
+  #
+  # CONFIGS NEEDING CUSTOM PAGES (if desired):
+  #   Config 6: AirQ + WiFi + WireGuard
+  #   Config 10: Weather Daily only (no forecast)
+  #   Config 11: Weather Hourly only (no forecast)
+  #   Config 14: WiFi + Full Weather
+  #   Config 15: WiFi + WireGuard + Full Weather
 
-  # EXAMPLE: Full featured with WireGuard (Config 12 + 16 + WireGuard)
+  # EXAMPLE: Full featured with WireGuard (Config 16 + WireGuard)
   lvgl_pages:
     url: https://github.com/truffshuff/halo.git/
     ref: main
@@ -356,6 +376,20 @@ packages:
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
   #   refresh: always
 
+  # Config 3: Clock + WiFi
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-wifi-only.yaml]
+  #   refresh: always
+
+  # Config 4: Clock + WiFi + WireGuard
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-wifi-wireguard.yaml]
+  #   refresh: always
+
   # Config 5: Clock + AirQ + WiFi
   # lvgl_pages:
   #   url: https://github.com/truffshuff/halo.git/
@@ -363,7 +397,28 @@ packages:
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
   #   refresh: always
 
-  # Config 12: Clock + Full Weather
+  # Config 7: Clock + Weather Forecast Only (BLE COMPATIBLE!)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather-forecast-only.yaml]
+  #   refresh: always
+
+  # Config 8: Clock + Weather Forecast + Daily (no BLE)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather-forecast-daily.yaml]
+  #   refresh: always
+
+  # Config 9: Clock + Weather Forecast + Hourly (no BLE)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather-forecast-hourly.yaml]
+  #   refresh: always
+
+  # Config 12: Clock + Full Weather (Forecast + Daily + Hourly)
   # lvgl_pages:
   #   url: https://github.com/truffshuff/halo.git/
   #   ref: main
@@ -375,6 +430,27 @@ packages:
   #   url: https://github.com/truffshuff/halo.git/
   #   ref: main
   #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-weather.yaml]
+  #   refresh: always
+
+  # Config 13a: Clock + AirQ + Weather Forecast Only (no BLE)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-weather-forecast-only.yaml]
+  #   refresh: always
+
+  # Config 14a: Clock + WiFi + Weather Forecast Only (no BLE)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-wifi-weather-forecast-only.yaml]
+  #   refresh: always
+
+  # Config 16a: Clock + AirQ + WiFi + Weather Forecast Only (no BLE)
+  # lvgl_pages:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi-weather-forecast.yaml]
   #   refresh: always
 
 # ============================================================================
