@@ -1,0 +1,65 @@
+# ============================================================================
+# Feature Loader - Conditional Package Loading Based on Substitutions
+# ============================================================================
+# UNFORTUNATELY: ESPHome doesn't support conditional logic in YAML packages.
+# The YAML parser happens before substitution evaluation, so we can't do:
+#   ${feature_ble == "true" ? "ble-core" : "ble-stubs"}
+#
+# WORKAROUND OPTIONS:
+# 1. Use substitutions to control package filenames directly
+# 2. Use the approach below with fixed package names
+# 3. Keep manual commenting/uncommenting (current approach)
+#
+# This file demonstrates the DESIRED approach but won't work in ESPHome yet.
+# See: https://github.com/esphome/esphome/issues/xxxxx
+# ============================================================================
+
+# DESIRED (but doesn't work):
+# packages:
+#   airq_package:
+#     url: https://github.com/truffshuff/halo.git/
+#     ref: main
+#     files:
+#       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${airq_package_file}
+#     refresh: always
+
+# ACTUAL WORKAROUND:
+# Define substitutions for package filenames, then user changes them manually
+
+substitutions:
+  # User changes these based on enabled features
+  # If feature enabled: set to core package
+  # If feature disabled: set to stubs package
+  airq_package_file: "airq-stubs.yaml"
+  ble_package_file: "ble-stubs.yaml"
+  wifi_package_file: "wifi-stubs.yaml"
+  weather_package_file: "weather-stubs.yaml"
+
+packages:
+  airq_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${airq_package_file}
+    refresh: always
+
+  ble_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${ble_package_file}
+    refresh: always
+
+  wifi_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${wifi_package_file}
+    refresh: always
+
+  weather_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${weather_package_file}
+    refresh: always
