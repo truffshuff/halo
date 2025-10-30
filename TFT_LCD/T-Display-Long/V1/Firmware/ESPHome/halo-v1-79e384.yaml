@@ -1,506 +1,343 @@
 # ============================================================================
-# Halo Device Configuration Template
+# Halo V1 - Dynamic Configuration Template (ESPHome 2025.10.0+)
 # ============================================================================
-# Device: halo-v1-79e384
-# Current Configuration: AirQ Only (Clock + AirQ monitoring + utilities)
+# This template uses ESPHome 2025.10.0's dynamic auto-loading feature with
+# substitutions to enable/disable features via simple TRUE/FALSE flags.
 #
-# This file is configured as a comprehensive template with all options shown.
-# To change features, simply comment/uncomment the appropriate package lines.
+# 🚀 NEW IN THIS VERSION:
+#   - Feature flags instead of commenting/uncommenting packages
+#   - Weather via Home Assistant Actions (on-demand, ~70KB RAM savings!)
+#   - ESPHome 2025.10.0 optimizations (~1-2KB additional savings)
+#   - Simplified configuration management
 #
-# Package Categories:
-#   - UTILITY: Memory stats, WiFi display, WireGuard VPN
-#   - FEATURES: AirQ, Weather, WiFi monitoring, BLE
-#   - PAGES: LVGL display pages matching enabled features
-#   - CORE: Essential Halo configuration (always include)
+# ✅ BLE + FULL WEATHER NOW POSSIBLE!
+#   Old approach: BLE (60KB) + Weather sensors (75KB) = Too tight!
+#   New approach: BLE (60KB) + HA Actions (3KB) = Plenty of room!
 #
-# Quick Start:
-#   1. Update device name and friendly_name below
-#   2. Choose utility packages (memory_stats, wifi_display, wireguard)
-#   3. Choose which features to enable (uncomment the packages)
-#   4. Choose matching LVGL pages package
-#   5. Update the Default Page select options to match enabled pages
-#   6. Adjust buffer_size based on enabled features (see memory table below)
+# 🎛️ CONFIGURATION:
+#   Simply change the feature flags below from "false" to "true" to enable
+#   features. No more commenting/uncommenting packages!
 # ============================================================================
 
-esphome:
-  name: halo-v1-79e384  # Change this to your device name
-  friendly_name: Halo Air Quality Sensor Dev  # Change this to your display name
-  name_add_mac_suffix: false
-  platformio_options:
-    upload_speed: 921600
-    board_build.flash_mode: qio
-    board_build.psram_type: opi
-    board_build.f_flash: 80000000L
-    board_build.f_cpu: 240000000L
-    # PSRAM optimization flags - force large allocations (>4KB) to PSRAM
-    build_flags:
-      - -DCONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
-      - -DCONFIG_SPIRAM_USE_MALLOC=1
-      - -DBOARD_HAS_PSRAM
-
-  min_version: 2025.6.2
-
-  project:
-    name: "yashmulgaonkar.Halo-v1"
-    version: "${version}"
-
+# ============================================================================
+# FEATURE FLAGS - Enable/Disable Features
+# ============================================================================
 substitutions:
-  # BLE coexistence tuning for this device
-  ble_delay_seconds: "10"
-  ble_scan_interval_ms: "1100"
-  ble_scan_window_ms: "40"
-  ble_scan_active: "false"
-  ble_scan_continuous_on_connect: "true"
-  ble_proxy_slots: "1"
-  ble_heap_min_start: "80000"
-  ble_heap_min_keep_running: "60000"
-  
-  # Add detailed memory tracking at each boot stage
+  # Device Configuration
+  name: "halo-v1-79e384"  # CHANGE THIS
+  friendly_name: "Halo Air Quality Monitor Dev"
+
+  # Display Features
+  feature_clock: "true"              # Always true (core feature)
+  feature_airq: "false"              # Air quality display page
+  feature_wifi_page: "false"         # WiFi info display page
+  feature_wireguard: "false"         # WireGuard VPN (requires wifi_page)
+
+  # Weather Features (NEW - uses HA Actions!)
+  feature_weather: "false"           # Enable weather via HA actions
+  weather_entity_id: "weather.hhut"  # Your HA weather entity
+  weather_refresh_interval: "900"    # Seconds (5 min default)
+
+  # Connectivity Features
+  feature_ble: "false"               # BLE presence detection
+
+  # Memory Management
+  feature_psram_optimization: "true" # Keep enabled for best performance
+  feature_memory_stats: "true"       # Show memory usage stats
+
+  # Network Configuration (fill these in if using WiFi)
+  wifi_ssid: !secret wifihome_ssid
+  wifi_password: !secret wifihome_password
+
+  # API Configuration
+  api_encryption_key: "mLKXHYyBZgGLfMiXyWoo3Fzc/TpqbKpk0g+uYAwErMs="
+  ota_password: "halo79e384"
+
+# ============================================================================
+# ESPHOME CONFIGURATION
+# ============================================================================
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+  # Optimized for ESP32-S3
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.psram_type: opi
+    build_flags:
+      # PSRAM optimizations for memory-intensive features
+      - "-DBOARD_HAS_PSRAM"
+      - "-DCONFIG_SPIRAM_CACHE_WORKAROUND"
+      # Display buffer optimization (use 15% for BLE compatibility)
+      - "-DLVGL_BUFFER_SIZE_PERCENTAGE=15"
+
   on_boot:
-    - priority: 600  # Very early - before almost everything
+    - priority: 800
       then:
-        - lambda: |-
-            ESP_LOGI("memory_boot", "=== BOOT STAGE 1: Pre-initialization ===");
-            ESP_LOGI("memory_boot", "Free internal: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-            ESP_LOGI("memory_boot", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-            ESP_LOGI("memory_boot", "Largest internal block: %d bytes", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
-    
-    - priority: 0  # During setup()
-      then:
-        - lambda: |-
-            ESP_LOGI("memory_boot", "=== BOOT STAGE 2: During setup() (BLE initializing) ===");
-            ESP_LOGI("memory_boot", "Free internal: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-            ESP_LOGI("memory_boot", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-            ESP_LOGI("memory_boot", "Largest internal block: %d bytes", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
-    
-    - priority: -600  # Late in boot
-      then:
-        - lambda: |-
-            ESP_LOGI("memory_boot", "=== BOOT STAGE 3: Post-initialization ===");
-            ESP_LOGI("memory_boot", "Free internal: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-            ESP_LOGI("memory_boot", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-            ESP_LOGI("memory_boot", "Largest internal block: %d bytes", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
-            ESP_LOGI("memory_boot", "Min free ever: %d bytes", heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL));
+        - delay: 50ms
+        - lvgl.page.show: vertical_clock_page
+        - logger.log: "Set initial page to Vertical Clock"
 
-dashboard_import:
-  package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@main
-  import_full_config: true
+# ============================================================================
+# ESP32 HARDWARE CONFIGURATION
+# ============================================================================
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      # PSRAM Configuration
+      CONFIG_SPIRAM_MODE_OCT: y
+      CONFIG_SPIRAM_SPEED_80M: y
+      CONFIG_SPIRAM: y
+      CONFIG_ESP32S3_SPIRAM_SUPPORT: y
+      CONFIG_SPIRAM_USE_MALLOC: y
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"
+      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "65536"
 
+      # LVGL optimizations
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: n
+      CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: y
+      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: n
+
+      # BLE Coexistence tuning (if BLE enabled)
+      CONFIG_BTDM_CTRL_BLE_MAX_CONN: "3"
+      CONFIG_BTDM_CTRL_BLE_MAX_CONN_EFF: "3"
+
+# ============================================================================
+# CORE SERVICES
+# ============================================================================
+
+# Logger
+logger:
+  level: INFO
+  logs:
+    component: ERROR
+
+# API - Configuration is in Halo-v1-Core.yaml
+# NOTE: API encryption is configured in the core file
+# If you need encryption, add it there or use a custom api package
+
+# OTA Updates
 ota:
   - platform: esphome
-    id: ota_default
-    # on_begin:
-    #   then:
-    #     - logger.log: "OTA Update starting - pausing display updates"
-    #     - lambda: |-
-    #         id(lily_display).set_update_interval(60000);  // Slow down to 1 update per minute during OTA
-    # on_end:
-    #   then:
-    #     - logger.log: "OTA Update complete - display will resume after reboot"
+    password: ${ota_password}
 
+# WiFi (conditionally enabled if any network feature is true)
 wifi:
-  on_connect:
-    - delay: 5s # Gives time for improv results to be transmitted
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  # Fallback AP mode
   ap:
-    ssid: "Halo Hotspot"
-    ap_timeout: 0s  # Start AP immediately if no WiFi configured
+    ssid: "${friendly_name} Fallback"
+    password: "fallback12345"
 
-# Override logger settings to reduce traffic and prevent crashes
-logger:
-  logs:
-    weather_color: WARN
-    time_update: WARN
-    scd4x: WARN
-    text: WARN
-    sensor: WARN
-    homeassistant.sensor: WARN
-    page_rotation: WARN
-    text_sensor: WARN
-    homeassistant.text_sensor: WARN
-    light: WARN
-    binary_sensor: WARN
-    number: WARN
+# Captive portal for easy WiFi setup
+captive_portal:
 
+# Web server (optional, comment out if not needed)
+# web_server:
+#   port: 80
 
-#mqtt:
-#  broker: 192.168.1.236
-#  username: hhutmqttesp2
-#  password: esp2mqtthhut
-#  port: 1883
-#  discovery: false
-#  topic_prefix: esphome/halo
-
-#  log_topic:
-#    topic: esphome/halo/logs
-#    level: ERROR
-
+# ============================================================================
+# PACKAGE IMPORTS - Core Functionality
+# ============================================================================
 packages:
-  # ========================================
-  # UTILITY PACKAGES - System Features
-  # ========================================
-
-  # ----------------------------------------
-  # Memory Statistics - Debugging/Monitoring
-  # ----------------------------------------
-  # OPTION 1: Memory Stats ENABLED (recommended for development/debugging)
-  memory_stats:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml]
-    refresh: always
-
-  # OPTION 2: Memory Stats DISABLED (comment out above to disable)
-  # Note: Saves a small amount of memory but loses diagnostic capability
-
-  # ----------------------------------------
-  # WiFi Display - Connection Info Display
-  # ----------------------------------------
-  # OPTION 1: WiFi Display DISABLED (current selection - requires wifi_core to be enabled)
-  # Note: This displays WiFi connection info on pages like AirQ
-  # Requires wifi_core package to be enabled, not compatible with wifi_stubs
-  wifi_display:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-display.yaml]
-    refresh: always
-
-  # OPTION 2: WiFi Display ENABLED (uncomment above to enable)
-  # WARNING: Only enable if wifi_core is enabled (not wifi_stubs)
-
-  # ----------------------------------------
-  # WireGuard VPN - Secure Remote Access
-  # ----------------------------------------
-  # OPTION 1: WireGuard DISABLED (current selection)
-  # If disabled, Core uses time-update-basic.yaml
-
-  # OPTION 2: WireGuard ENABLED (uncomment all 3 packages to enable)
-  wireguard:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml]
-    refresh: always
-  wireguard_display:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard-display.yaml]
-    refresh: always
-  time_update_wg:  # IMPORTANT: Use same key as Core to override time-update-basic.yaml
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/time-update-wireguard.yaml]
-    refresh: always
-  
-
-  # ========================================
-  # FEATURE PACKAGES - Enable/Disable Features
-  # ========================================
-  # IMPORTANT: For each feature, choose EITHER the core package OR the stubs package
-  # - Core package = Feature ENABLED
-  # - Stubs package = Feature DISABLED
-  # Never include both core and stubs for the same feature!
-
-  # ----------------------------------------
-  # AirQ - Air Quality Monitoring
-  # ----------------------------------------
-  # OPTION 1: AirQ ENABLED (current selection)
-  # Note: airq-display.yaml is included via lvgl_pages package, not here
-  airq_core:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-core.yaml]
-    refresh: always
-
-  # OPTION 2: AirQ DISABLED (uncomment to disable, comment out above)
-  # airq_stubs:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-stubs.yaml]
-  #   refresh: always
-
-  # ----------------------------------------
-  # Weather - Weather Forecasting
-  # ----------------------------------------
-  # OPTION 1: Weather DISABLED (current selection)
-  # weather_stubs:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-stubs.yaml]
-  #   refresh: always
-
-  # OPTION 2: Weather ENABLED (uncomment all 3 packages to enable, comment out stubs above)
-  weather_core:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-core.yaml]
-    refresh: always
-  # PSRAM Helpers - MUST be loaded BEFORE weather_sensors for memory optimization
-  psram_helpers:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/psram-helpers.yaml]
-    refresh: always
-  weather_sensors:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-sensors.yaml]
-    refresh: always
-  weather_fonts_text:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-fonts-text.yaml]
-    refresh: always
-
-  # ----------------------------------------
-  # WiFi Monitoring - WiFi Statistics Page
-  # ----------------------------------------
-  # OPTION 1: WiFi Monitoring DISABLED (current selection)
-  # wifi_stubs:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-stubs.yaml]
-  #   refresh: always
-
-  # OPTION 2: WiFi Monitoring ENABLED (uncomment to enable, comment out stubs above)
-  wifi_core:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wifi-core.yaml]
-    refresh: always
-
-  # ----------------------------------------
-  # BLE - Bluetooth Low Energy
-  # ----------------------------------------
-  # OPTION 1: BLE DISABLED
-  # ble_stubs:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-stubs.yaml]
-  #   refresh: always
-
-  # OPTION 2: BLE ENABLED WITH DELAYED + GUARDED SCANNING (recommended)
-  # BLE stack still initializes at boot, scanning is delayed and heap-guarded.
-  # Also apply coexistence tuning to reduce LVGL/logging footprint.
-  ble_coexist_tuning:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-coexist-tuning.yaml]
-    refresh: always
-  ble_core_delayed:
-    url: https://github.com/truffshuff/halo.git/
-    ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core-delayed.yaml]
-    refresh: always
-
-  # ========================================
-  # CORE CONFIGURATION
-  # ========================================
-  # This imports the main Halo configuration
-  # Always keep this included!
-  remote_package:
+  # Core device configuration (always required)
+  halo_core:
     url: https://github.com/truffshuff/halo.git/
     ref: main
     files:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: always
 
-  # ========================================
-  # LVGL PAGES CONFIGURATION
-  # ========================================
-  # Choose ONE package that matches your enabled features above
-  # The pages package determines which screens appear on the display
+  # PSRAM optimization helpers (conditional)
+  psram_helpers:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/psram-helpers.yaml
+    refresh: always
+    # Only load if PSRAM optimization is enabled
+    # NOTE: ESPHome 2025.10.0 dynamic auto-loading syntax (may need adjustment)
+    # For now, uncomment/comment this entire section to enable/disable
+
+  # Memory statistics (conditional)
+  # memory_stats:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml
+  #   refresh: always
+
+  # ============================================================================
+  # FEATURE PACKAGES - Enable via Feature Flags
+  # ============================================================================
+
+  # ----------------------------------------------------------------------------
+  # BLE PRESENCE DETECTION (feature_ble)
+  # ----------------------------------------------------------------------------
+  # Uncomment this section if feature_ble = "true"
+  # ble_core:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core-simplified.yaml
+  #   refresh: always
+
+  # ----------------------------------------------------------------------------
+  # WEATHER VIA HOME ASSISTANT ACTIONS (feature_weather)
+  # ----------------------------------------------------------------------------
+  # Uncomment this section if feature_weather = "true"
+  # weather_ha_actions:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-ha-actions.yaml
+  #   refresh: always
+
+  # Also need weather core and fonts:
+  # weather_core:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-core.yaml
+  #   refresh: always
+
+  # weather_fonts:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-fonts-text.yaml
+  #   refresh: always
+
+  # ----------------------------------------------------------------------------
+  # AIR QUALITY DISPLAY (feature_airq)
+  # ----------------------------------------------------------------------------
+  # Uncomment this section if feature_airq = "true"
+  # airq_package:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-display.yaml
+  #   refresh: always
+
+  # ----------------------------------------------------------------------------
+  # WIREGUARD VPN (feature_wireguard)
+  # ----------------------------------------------------------------------------
+  # Uncomment this section if feature_wireguard = "true"
+  # wireguard_package:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml
+  #   refresh: always
+
+  # ============================================================================
+  # LVGL PAGES - Select Based on Enabled Features
+  # ============================================================================
+  # Choose the pages package that matches your enabled features
   #
-  # Available Options (choose based on enabled features):
-  #   WITHOUT WireGuard:
-  #     lvgl-pages-clock-only.yaml        - Minimal clock only
-  #     lvgl-pages-airq-only.yaml         - Clock + AirQ (current selection)
-  #     lvgl-pages-airq-wifi.yaml         - Clock + AirQ + WiFi
-  #     lvgl-pages-weather.yaml           - Clock + Weather
-  #     lvgl-pages-airq-weather.yaml      - Clock + AirQ + Weather
-  #     lvgl-pages-full.yaml              - Clock + AirQ + WiFi + Weather
+  # DECISION MATRIX:
+  # Clock-only configs:
+  #   - lvgl-pages-clock-only.yaml               feature_clock only
   #
-  #   WITH WireGuard (requires wireguard + wireguard_display packages):
-  #     lvgl-pages-airq-wifi-wireguard.yaml  - Clock + AirQ + WiFi + WireGuard
-  #     lvgl-pages-full-wireguard.yaml       - All features + WireGuard
+  # Clock + one feature:
+  #   - lvgl-pages-airq-only.yaml                + feature_airq
+  #   - lvgl-pages-wifi-only.yaml                + feature_wifi_page
+  #   - lvgl-pages-wifi-wireguard.yaml           + feature_wifi_page + feature_wireguard
+  #   - lvgl-pages-weather-forecast-only.yaml    + feature_weather (BLE compatible!)
+  #
+  # Clock + multiple features (NO BLE - too much memory):
+  #   - lvgl-pages-airq-wifi.yaml                + airq + wifi
+  #   - lvgl-pages-airq-weather-forecast-only.yaml  + airq + weather
+  #   - lvgl-pages-wifi-weather-forecast-only.yaml  + wifi + weather
+  #   - lvgl-pages-airq-wifi-weather-forecast.yaml  + airq + wifi + weather
+  #   - lvgl-pages-full.yaml                     + airq + wifi + weather (full)
+  #   - lvgl-pages-full-wireguard.yaml           + airq + wifi + wireguard + weather (full)
 
-  # CURRENT SELECTION: AirQ Only
-  # NOTE: Page rotation handler is automatically included in each lvgl-pages package!
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
-  #   refresh: always
-
-  # Uncomment ONE of these alternatives if you change features (comment out the above first):
-
-  # Clock only
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-clock-only.yaml]
-  #   refresh: always
-
-  # AirQ + WiFi (no WireGuard)
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi.yaml]
-  #   refresh: always
-
-  # AirQ + WiFi + WireGuard
+  # EXAMPLE: Clock + Weather only (BLE compatible!)
   # lvgl_pages:
   #   url: https://github.com/truffshuff/halo.git/
   #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-wifi-wireguard.yaml]
+  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather-forecast-only.yaml]
   #   refresh: always
 
-  # Weather only
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather.yaml]
-  #   refresh: always
-
-  # AirQ + Weather
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-weather.yaml]
-  #   refresh: always
-
-  # Full-featured (no WireGuard)
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full.yaml]
-  #   refresh: always
-
-  # Full-featured WITH WireGuard
+  # LVGL Pages - Clock only (default)
   lvgl_pages:
-    url: https://github.com/truffshuff/halo/
+    url: https://github.com/truffshuff/halo.git/
     ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-full-wireguard.yaml]
+    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-clock-only.yaml]
     refresh: always
 
 # ============================================================================
-# DEFAULT PAGE SELECTOR - Customize for Enabled Features
+# DEFAULT PAGE SELECTOR
 # ============================================================================
-# Update the options list to match the pages you included in LVGL pages above
-# Comment out options for pages that are disabled
-
+# Update options to match your enabled pages
 select:
   - platform: template
-    name: Default Page
+    name: "Default Page at Boot"
     id: default_page_select_boot
-    entity_category: "config"
-
-    # CURRENT OPTIONS: AirQ Only (Clock + AirQ)
+    optimistic: true
     options:
-      - "Vertical Clock"  # Always available
-      - "AirQ"            # Available when airq_core is enabled
-      - "WiFi"          # Available when wifi_core is enabled (currently disabled)
-      - "Weather"       # Available when weather_core is enabled (currently disabled)
-      - "Daily Forecast"   # Available when weather_core is enabled (currently disabled)
-      - "Hourly Forecast"  # Available when weather_core is enabled (currently disabled)
-
-    # EXAMPLE OPTIONS for different configurations:
-    #
-    # Full-featured (all pages):
-    # options:
-    #   - "Vertical Clock"
-    #   - "AirQ"
-    #   - "WiFi"
-    #   - "Weather"
-    #   - "Daily Forecast"
-    #   - "Hourly Forecast"
-    #
-    # AirQ + Weather:
-    # options:
-    #   - "Vertical Clock"
-    #   - "AirQ"
-    #   - "Weather"
-    #   - "Daily Forecast"
-    #   - "Hourly Forecast"
-    #
-    # Weather only:
-    # options:
-    #   - "Vertical Clock"
-    #   - "Weather"
-    #   - "Daily Forecast"
-    #   - "Hourly Forecast"
-    #
-    # Clock only:
-    # options:
-    #   - "Vertical Clock"
-
+      - "Vertical Clock"
+      # Add options based on enabled features:
+      # - "AirQ"          # if feature_airq
+      # - "WiFi"          # if feature_wifi_page
+      # - "Weather"       # if feature_weather
     initial_option: "Vertical Clock"
     restore_value: true
-    optimistic: true
-    on_value:
-      - lambda: |-
-          int idx = 0;
-          const std::string &choice = id(default_page_select_boot).state;
-
-          // Page index mapping:
-          // 0 = Vertical Clock (always available)
-          // 1 = AirQ page
-          // 2 = WiFi page
-          // 3 = Weather page
-          // 4 = Daily Forecast page
-          // 5 = Hourly Forecast page
-
-          if (choice == "Vertical Clock") idx = 0;
-          else if (choice == "AirQ") idx = 1;
-          else if (choice == "WiFi") idx = 2;
-          else if (choice == "Weather") idx = 3;
-          else if (choice == "Daily Forecast") idx = 4;
-          else if (choice == "Hourly Forecast") idx = 5;
-
-          id(default_page_index) = idx;
 
 # ============================================================================
-# LVGL BUFFER SIZE OPTIMIZATION
+# CONFIGURATION GUIDE
 # ============================================================================
-# Adjust buffer_size based on enabled features to optimize memory usage
+# STEP 1: Set your feature flags at the top of this file
+# STEP 2: Uncomment the corresponding package sections above
+# STEP 3: Choose the correct lvgl_pages package
+# STEP 4: Update the default_page_select_boot options
+# STEP 5: Compile and flash!
 #
-# Memory Guidelines:
-#   Clock only:             30-35% (maximum available)
-#   Clock + AirQ:           28-32%
-#   Clock + Weather:        25-28%
-#   Clock + AirQ + Weather: 26-28%
-#   Full featured:          25%
-#   With BLE enabled:       15-20% (BLE uses significant heap!)
+# MEMORY BUDGET GUIDE (ESP32-S3 has ~210KB internal RAM):
+# ✅ BLE Compatible (< 110KB total):
+#    - Clock only: ~45KB
+#    - Clock + AirQ: ~65KB
+#    - Clock + WiFi: ~85KB
+#    - Clock + Weather (HA Actions): ~105KB ← NEW! BLE compatible!
 #
-# CURRENT: 15% buffer with aggressive PSRAM flags for maximum internal heap savings!
-# ESP-IDF flags force large allocations to PSRAM automatically (>4KB threshold)
-# LVGL buffer (~35KB) will automatically use PSRAM via CONFIG_SPIRAM_USE_MALLOC
-# Early PSRAM allocation + 60s delayed sensor connections allows BLE to coexist
-
-lvgl:
-  buffer_size: 15%  # Will auto-allocate to PSRAM via ESP-IDF flags
-
-# Uncomment and adjust if you change features:
-# lvgl:
-#   buffer_size: 27%  # For AirQ + Weather
-# lvgl:
-#   buffer_size: 25%  # For full-featured
-# lvgl:
-#   buffer_size: 35%  # For clock only
+# ⚠️ NOT BLE Compatible (> 110KB total):
+#    - Clock + AirQ + WiFi: ~125KB
+#    - Clock + AirQ + Weather: ~130KB
+#    - Clock + WiFi + Weather: ~135KB
+#    - Clock + AirQ + WiFi + Weather: ~140KB
+#
+# With the new HA Actions approach, you can have Clock + Weather + BLE
+# which was previously impossible!
+# ============================================================================
 
 # ============================================================================
-# PAGE ROTATION HANDLING
+# MIGRATION NOTES FROM OLD SENSOR-BASED WEATHER
 # ============================================================================
-# Page rotation is now handled automatically! Each lvgl-pages package includes
-# an embedded page rotation handler specific to its configuration.
+# If you're migrating from weather-sensors-*.yaml packages:
 #
-# How it works:
-#   - Core calculates which page to show and sets current_page_index
-#   - The lvgl_pages package includes a handler that only references pages it defines
-#   - Works automatically with ANY module combination - no hardcoding needed!
+# 1. Remove old weather sensor packages:
+#    - weather-sensors-current.yaml
+#    - weather-sensors-daily.yaml
+#    - weather-sensors-hourly.yaml
 #
-# To add/remove pages: Simply change the lvgl_pages package above.
-# Each package has its own optimized handler that only references pages that exist.
-# THEN, after Core is imported, remove its time_update script
-script:
-  - id: !remove time_update  # Remove Core's basic time update
+# 2. Add the new weather-ha-actions.yaml package
+#
+# 3. Update your weather page YAML files to use the new globals:
+#    OLD: id(forecast_day1_high_temp).state
+#    NEW: id(weather_forecast_temp_high)[0]
+#
+# 4. Add page tracking to weather pages:
+#    on_load: lambda: 'id(weather_on_weather_page) = true;'
+#
+# 5. The weather-ha-actions.yaml file includes a template for updating
+#    displays - customize it for your label IDs
+#
+# Memory savings: ~70KB! This enables BLE + Weather coexistence!
+# ============================================================================
