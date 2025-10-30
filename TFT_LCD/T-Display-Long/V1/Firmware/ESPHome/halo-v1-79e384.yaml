@@ -92,6 +92,9 @@ packages:
   # directory to /config/esphome/ first
   halo_v1_core: !include Halo-v1-Core.yaml
 
+  # Time update script (automatic selection based on AirQ)
+  time_update_script: !include packages/${'{{ "time-update-basic.yaml" if feature_airq | bool else "time-update-clock-only.yaml" }}'}
+
   # Automatic feature packages (Jinja2 conditional loading)
   airq_auto: !include packages/${airq_package_file}
   ble_auto: !include packages/${ble_package_file}
