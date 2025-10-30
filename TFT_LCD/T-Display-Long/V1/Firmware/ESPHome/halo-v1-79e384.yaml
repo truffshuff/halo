@@ -186,10 +186,22 @@ packages:
   #   refresh: always
 
 # ============================================================================
-# DEVICE-SPECIFIC OVERRIDES
+# ESPHOME CONFIGURATION
 # ============================================================================
-# The esphome: and esp32: sections are provided by the core file.
-# Only add overrides here if you need device-specific customizations.
+# Minimal required section - additional config comes from core file
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+# ============================================================================
+# ESP32 PLATFORM
+# ============================================================================
+# Platform definition required in main file - additional config from core file
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
 
 # ============================================================================
 # CORE SERVICES
