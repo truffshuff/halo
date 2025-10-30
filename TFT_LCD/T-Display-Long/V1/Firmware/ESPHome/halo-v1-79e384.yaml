@@ -120,7 +120,7 @@ packages:
     url: https://github.com/truffshuff/halo.git
     ref: main
     files:
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/meta/Halo-v1-Core-Meta.yaml
     refresh: always
 
   psram_helpers:
