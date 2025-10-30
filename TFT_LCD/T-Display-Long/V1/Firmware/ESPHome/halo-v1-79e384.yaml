@@ -130,9 +130,9 @@ wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
 
-  # Fallback AP mode
+  # Fallback AP mode (SSID max 32 chars)
   ap:
-    ssid: "${friendly_name} Fallback"
+    ssid: "Halo-79e384-Fallback"
     password: "fallback12345"
 
 # Captive portal for easy WiFi setup
