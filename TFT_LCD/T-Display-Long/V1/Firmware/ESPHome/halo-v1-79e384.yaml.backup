@@ -1,0 +1,271 @@
+# ============================================================================
+# Halo V1 - Dynamic Configuration Template (ESPHome 2025.10.0+)
+# ============================================================================
+# This template uses ESPHome 2025.10.0's dynamic auto-loading feature with
+# substitutions to enable/disable features via simple TRUE/FALSE flags.
+#
+# 🚀 NEW IN THIS VERSION:
+#   - Feature flags instead of commenting/uncommenting packages
+#   - Weather via Home Assistant Actions (on-demand, ~70KB RAM savings!)
+#   - ESPHome 2025.10.0 optimizations (~1-2KB additional savings)
+#   - Simplified configuration management
+#
+# ✅ BLE + FULL WEATHER NOW POSSIBLE!
+#   Old approach: BLE (60KB) + Weather sensors (75KB) = Too tight!
+#   New approach: BLE (60KB) + HA Actions (3KB) = Plenty of room!
+#
+# 🎛️ CONFIGURATION:
+#   Simply change the feature flags below from "false" to "true" to enable
+#   features. No more commenting/uncommenting packages!
+# ============================================================================
+
+# ============================================================================
+# FEATURE FLAGS - Enable/Disable Features
+# ============================================================================
+substitutions:
+  # Device Configuration
+  name: "halo-v1-79e384"  # CHANGE THIS
+  friendly_name: "Halo Air Quality Monitor Dev"
+
+  # Display Features
+  feature_clock: "true"              # Always true (core feature)
+  feature_airq: "false"              # Air quality display page
+  feature_wifi_page: "false"         # WiFi info display page
+  feature_wireguard: "false"         # WireGuard VPN (requires wifi_page)
+
+  # Weather Features (NEW - uses HA Actions!)
+  feature_weather: "false"           # Enable weather via HA actions
+  weather_entity_id: "weather.hhut"  # Your HA weather entity
+  weather_refresh_interval: "900"    # Seconds (5 min default)
+
+  # Connectivity Features
+  feature_ble: "false"               # BLE presence detection
+
+  # Memory Management
+  feature_psram_optimization: "true" # Keep enabled for best performance
+  feature_memory_stats: "true"       # Show memory usage stats
+
+  # Network Configuration (fill these in if using WiFi)
+  wifi_ssid: !secret wifihome_ssid
+  wifi_password: !secret wifihome_password
+
+  # API Configuration
+  api_encryption_key: "mLKXHYyBZgGLfMiXyWoo3Fzc/TpqbKpk0g+uYAwErMs="
+  ota_password: "halo79e384"
+
+  # ============================================================================
+  # AUTOMATIC PACKAGE SELECTION (ESPHome 2025.7.0+ Jinja2 Support)
+  # ============================================================================
+  # These substitutions automatically select core or stub packages based on
+  # feature flags above. Change the feature flags and packages auto-update!
+
+  # AirQ package selection
+  airq_package_file: '{{ "airq-display.yaml" if feature_airq | bool else "airq-stubs.yaml" }}'
+
+  # BLE package selection
+  ble_package_file: '{{ "ble-core-simplified.yaml" if feature_ble | bool else "ble-stubs.yaml" }}'
+
+  # WiFi package selection
+  wifi_package_file: '{{ "wifi-display.yaml" if feature_wifi_page | bool else "wifi-stubs.yaml" }}'
+
+  # Weather package selection
+  weather_package_file: '{{ "weather-ha-actions.yaml" if feature_weather | bool else "weather-stubs.yaml" }}'
+
+  # WireGuard package selection (only loads if WiFi page is also enabled)
+  wireguard_package_file: '{{ "wireguard.yaml" if (feature_wireguard | bool and feature_wifi_page | bool) else "wireguard-stubs.yaml" }}'
+
+  # LVGL pages selection - automatically picks the right pages for your features!
+  #
+  # AUTO-SELECTED PAGES BASED ON YOUR FEATURES:
+  # - Clock only                          → lvgl-pages-clock-only.yaml
+  # - Clock + AirQ                        → lvgl-pages-airq-only.yaml
+  # - Clock + WiFi                        → lvgl-pages-wifi-only.yaml
+  # - Clock + WiFi + WireGuard            → lvgl-pages-wifi-wireguard.yaml
+  # - Clock + AirQ + WiFi                 → lvgl-pages-airq-wifi.yaml
+  # - Clock + Weather (BLE compatible!)   → lvgl-pages-weather-forecast-only.yaml
+  # - Clock + AirQ + Weather              → lvgl-pages-airq-weather-forecast-only.yaml
+  # - Clock + WiFi + Weather              → lvgl-pages-wifi-weather-forecast-only.yaml
+  # - Clock + AirQ + WiFi + Weather       → lvgl-pages-airq-wifi-weather-forecast.yaml
+  #
+  # Just change the feature flags above and the right pages load automatically!
+  lvgl_pages_file: >-
+    {%- set airq = feature_airq | bool -%}
+    {%- set wifi = feature_wifi_page | bool -%}
+    {%- set wg = feature_wireguard | bool -%}
+    {%- set weather = feature_weather | bool -%}
+    {%- if not airq and not wifi and not weather -%}
+      lvgl-pages-clock-only.yaml
+    {%- elif airq and not wifi and not weather -%}
+      lvgl-pages-airq-only.yaml
+    {%- elif not airq and wifi and not wg and not weather -%}
+      lvgl-pages-wifi-only.yaml
+    {%- elif not airq and wifi and wg and not weather -%}
+      lvgl-pages-wifi-wireguard.yaml
+    {%- elif airq and wifi and not wg and not weather -%}
+      lvgl-pages-airq-wifi.yaml
+    {%- elif not airq and not wifi and weather -%}
+      lvgl-pages-weather-forecast-only.yaml
+    {%- elif airq and not wifi and weather -%}
+      lvgl-pages-airq-weather-forecast-only.yaml
+    {%- elif not airq and wifi and weather -%}
+      lvgl-pages-wifi-weather-forecast-only.yaml
+    {%- elif airq and wifi and weather -%}
+      lvgl-pages-airq-wifi-weather-forecast.yaml
+    {%- else -%}
+      lvgl-pages-clock-only.yaml
+    {%- endif -%}
+
+# ============================================================================
+# PACKAGE IMPORTS
+# ============================================================================
+# Packages MUST come immediately after substitutions!
+packages:
+  # Core hardware and component configuration
+  # NOTE: Using !include for local compilation. For HA dashboard, copy Halo-v1-Core.yaml
+  # to /config/esphome/ directory first.
+  halo_v1_core: !include Halo-v1-Core.yaml
+
+  # Automatic feature packages (Jinja2 conditional loading)
+  airq_auto: !include packages/${airq_package_file}
+  ble_auto: !include packages/${ble_package_file}
+  wifi_auto: !include packages/${wifi_package_file}
+  weather_auto: !include packages/${weather_package_file}
+  wireguard_auto: !include packages/${wireguard_package_file}
+  lvgl_pages: !include packages/${lvgl_pages_file}
+
+  # Memory statistics (conditional)
+  # memory_stats:
+  #   url: https://github.com/truffshuff/halo.git/
+  #   ref: main
+  #   files:
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml
+  #   refresh: always
+
+# ============================================================================
+# ESPHOME CONFIGURATION
+# ============================================================================
+# Minimal required section - additional config comes from core file
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+# ============================================================================
+# ESP32 PLATFORM
+# ============================================================================
+# Platform definition required in main file - additional config from core file
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+# ============================================================================
+# CORE SERVICES
+# ============================================================================
+
+# Logger
+logger:
+  level: INFO
+  logs:
+    component: ERROR
+
+# API - Configuration is in Halo-v1-Core.yaml
+# NOTE: API encryption is configured in the core file
+# If you need encryption, add it there or use a custom api package
+
+# OTA Updates
+ota:
+  - platform: esphome
+    password: ${ota_password}
+
+# WiFi (conditionally enabled if any network feature is true)
+wifi:
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
+
+  # Fallback AP mode (SSID max 32 chars)
+  ap:
+    ssid: "Halo-79e384-Fallback"
+    password: "fallback12345"
+
+# Captive portal for easy WiFi setup
+captive_portal:
+
+# Web server (optional, comment out if not needed)
+# web_server:
+#   port: 80
+
+# ============================================================================
+# PACKAGE IMPORTS - Core Functionality
+# ============================================================================
+
+
+
+# ============================================================================
+# DEFAULT PAGE SELECTOR
+# ============================================================================
+# Update options to match your enabled pages
+select:
+  - platform: template
+    name: "Default Page at Boot"
+    id: default_page_select_boot
+    optimistic: true
+    options:
+      - "Vertical Clock"
+      # Add options based on enabled features:
+      # - "AirQ"          # if feature_airq
+      # - "WiFi"          # if feature_wifi_page
+      # - "Weather"       # if feature_weather
+    initial_option: "Vertical Clock"
+    restore_value: true
+
+# ============================================================================
+# CONFIGURATION GUIDE
+# ============================================================================
+# STEP 1: Set your feature flags at the top of this file
+# STEP 2: Uncomment the corresponding package sections above
+# STEP 3: Choose the correct lvgl_pages package
+# STEP 4: Update the default_page_select_boot options
+# STEP 5: Compile and flash!
+#
+# MEMORY BUDGET GUIDE (ESP32-S3 has ~210KB internal RAM):
+# ✅ BLE Compatible (< 110KB total):
+#    - Clock only: ~45KB
+#    - Clock + AirQ: ~65KB
+#    - Clock + WiFi: ~85KB
+#    - Clock + Weather (HA Actions): ~105KB ← NEW! BLE compatible!
+#
+# ⚠️ NOT BLE Compatible (> 110KB total):
+#    - Clock + AirQ + WiFi: ~125KB
+#    - Clock + AirQ + Weather: ~130KB
+#    - Clock + WiFi + Weather: ~135KB
+#    - Clock + AirQ + WiFi + Weather: ~140KB
+#
+# With the new HA Actions approach, you can have Clock + Weather + BLE
+# which was previously impossible!
+# ============================================================================
+
+# ============================================================================
+# MIGRATION NOTES FROM OLD SENSOR-BASED WEATHER
+# ============================================================================
+# If you're migrating from weather-sensors-*.yaml packages:
+#
+# 1. Remove old weather sensor packages:
+#    - weather-sensors-current.yaml
+#    - weather-sensors-daily.yaml
+#    - weather-sensors-hourly.yaml
+#
+# 2. Add the new weather-ha-actions.yaml package
+#
+# 3. Update your weather page YAML files to use the new globals:
+#    OLD: id(forecast_day1_high_temp).state
+#    NEW: id(weather_forecast_temp_high)[0]
+#
+# 4. Add page tracking to weather pages:
+#    on_load: lambda: 'id(weather_on_weather_page) = true;'
+#
+# 5. The weather-ha-actions.yaml file includes a template for updating
+#    displays - customize it for your label IDs
+#
+# Memory savings: ~70KB! This enables BLE + Weather coexistence!
+# ============================================================================
