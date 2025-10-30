@@ -207,6 +207,7 @@ captive_portal:
 # ============================================================================
 # PACKAGE IMPORTS - Core Functionality
 # ============================================================================
+
 packages:
   # Core device configuration (always required)
   core:
