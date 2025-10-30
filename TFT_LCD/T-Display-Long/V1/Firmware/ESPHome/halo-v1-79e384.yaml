@@ -53,6 +53,68 @@ substitutions:
   api_encryption_key: "mLKXHYyBZgGLfMiXyWoo3Fzc/TpqbKpk0g+uYAwErMs="
   ota_password: "halo79e384"
 
+  # ============================================================================
+  # AUTOMATIC PACKAGE SELECTION (ESPHome 2025.7.0+ Jinja2 Support)
+  # ============================================================================
+  # These substitutions automatically select core or stub packages based on
+  # feature flags above. Change the feature flags and packages auto-update!
+
+  # AirQ package selection
+  airq_package_file: '{{ "airq-display.yaml" if feature_airq | bool else "airq-stubs.yaml" }}'
+
+  # BLE package selection
+  ble_package_file: '{{ "ble-core-simplified.yaml" if feature_ble | bool else "ble-stubs.yaml" }}'
+
+  # WiFi package selection
+  wifi_package_file: '{{ "wifi-display.yaml" if feature_wifi_page | bool else "wifi-stubs.yaml" }}'
+
+  # Weather package selection
+  weather_package_file: '{{ "weather-ha-actions.yaml" if feature_weather | bool else "weather-stubs.yaml" }}'
+
+  # WireGuard package selection (only loads if WiFi page is also enabled)
+  wireguard_package_file: '{{ "wireguard.yaml" if (feature_wireguard | bool and feature_wifi_page | bool) else "wireguard-stubs.yaml" }}'
+
+  # LVGL pages selection - automatically picks the right pages for your features!
+  #
+  # AUTO-SELECTED PAGES BASED ON YOUR FEATURES:
+  # - Clock only                          → lvgl-pages-clock-only.yaml
+  # - Clock + AirQ                        → lvgl-pages-airq-only.yaml
+  # - Clock + WiFi                        → lvgl-pages-wifi-only.yaml
+  # - Clock + WiFi + WireGuard            → lvgl-pages-wifi-wireguard.yaml
+  # - Clock + AirQ + WiFi                 → lvgl-pages-airq-wifi.yaml
+  # - Clock + Weather (BLE compatible!)   → lvgl-pages-weather-forecast-only.yaml
+  # - Clock + AirQ + Weather              → lvgl-pages-airq-weather-forecast-only.yaml
+  # - Clock + WiFi + Weather              → lvgl-pages-wifi-weather-forecast-only.yaml
+  # - Clock + AirQ + WiFi + Weather       → lvgl-pages-airq-wifi-weather-forecast.yaml
+  #
+  # Just change the feature flags above and the right pages load automatically!
+  lvgl_pages_file: >-
+    {%- set airq = feature_airq | bool -%}
+    {%- set wifi = feature_wifi_page | bool -%}
+    {%- set wg = feature_wireguard | bool -%}
+    {%- set weather = feature_weather | bool -%}
+    {%- if not airq and not wifi and not weather -%}
+      lvgl-pages-clock-only.yaml
+    {%- elif airq and not wifi and not weather -%}
+      lvgl-pages-airq-only.yaml
+    {%- elif not airq and wifi and not wg and not weather -%}
+      lvgl-pages-wifi-only.yaml
+    {%- elif not airq and wifi and wg and not weather -%}
+      lvgl-pages-wifi-wireguard.yaml
+    {%- elif airq and wifi and not wg and not weather -%}
+      lvgl-pages-airq-wifi.yaml
+    {%- elif not airq and not wifi and weather -%}
+      lvgl-pages-weather-forecast-only.yaml
+    {%- elif airq and not wifi and weather -%}
+      lvgl-pages-airq-weather-forecast-only.yaml
+    {%- elif not airq and wifi and weather -%}
+      lvgl-pages-wifi-weather-forecast-only.yaml
+    {%- elif airq and wifi and weather -%}
+      lvgl-pages-airq-wifi-weather-forecast.yaml
+    {%- else -%}
+      lvgl-pages-clock-only.yaml
+    {%- endif -%}
+
 # ============================================================================
 # ESPHOME CONFIGURATION
 # ============================================================================
@@ -174,103 +236,63 @@ packages:
   #   refresh: always
 
   # ============================================================================
-  # FEATURE PACKAGES - Enable via Feature Flags
+  # AUTOMATIC FEATURE PACKAGES (Jinja2 Conditional Loading)
   # ============================================================================
+  # These packages automatically load core or stubs based on feature flags.
+  # No more manual commenting/uncommenting!
 
-  # ----------------------------------------------------------------------------
-  # BLE PRESENCE DETECTION (feature_ble)
-  # ----------------------------------------------------------------------------
-  # Uncomment this section if feature_ble = "true"
-  # ble_core:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files:
-  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/ble-core-simplified.yaml
-  #   refresh: always
+  # AirQ: Loads airq-display.yaml OR airq-stubs.yaml automatically
+  airq_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${airq_package_file}
+    refresh: always
 
-  # ----------------------------------------------------------------------------
-  # WEATHER VIA HOME ASSISTANT ACTIONS (feature_weather)
-  # ----------------------------------------------------------------------------
-  # Uncomment this section if feature_weather = "true"
-  # weather_ha_actions:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files:
-  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-ha-actions.yaml
-  #   refresh: always
+  # BLE: Loads ble-core-simplified.yaml OR ble-stubs.yaml automatically
+  ble_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${ble_package_file}
+    refresh: always
 
-  # Also need weather core and fonts:
-  # weather_core:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files:
-  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-core.yaml
-  #   refresh: always
+  # WiFi: Loads wifi-display.yaml OR wifi-stubs.yaml automatically
+  wifi_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${wifi_package_file}
+    refresh: always
 
-  # weather_fonts:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files:
-  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather-fonts-text.yaml
-  #   refresh: always
+  # Weather: Loads weather-ha-actions.yaml OR weather-stubs.yaml automatically
+  weather_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${weather_package_file}
+    refresh: always
 
-  # ----------------------------------------------------------------------------
-  # AIR QUALITY DISPLAY (feature_airq)
-  # ----------------------------------------------------------------------------
-  # Uncomment this section if feature_airq = "true"
-  # airq_package:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files:
-  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/airq-display.yaml
-  #   refresh: always
-
-  # ----------------------------------------------------------------------------
-  # WIREGUARD VPN (feature_wireguard)
-  # ----------------------------------------------------------------------------
-  # Uncomment this section if feature_wireguard = "true"
-  # wireguard_package:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files:
-  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/wireguard.yaml
-  #   refresh: always
+  # WireGuard: Loads wireguard.yaml OR wireguard-stubs.yaml automatically
+  # Note: Only loads if both WiFi page AND WireGuard are enabled
+  wireguard_auto:
+    url: https://github.com/truffshuff/halo.git/
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${wireguard_package_file}
+    refresh: always
 
   # ============================================================================
-  # LVGL PAGES - Select Based on Enabled Features
+  # LVGL PAGES - Automatically Selected Based on Features
   # ============================================================================
-  # Choose the pages package that matches your enabled features
-  #
-  # DECISION MATRIX:
-  # Clock-only configs:
-  #   - lvgl-pages-clock-only.yaml               feature_clock only
-  #
-  # Clock + one feature:
-  #   - lvgl-pages-airq-only.yaml                + feature_airq
-  #   - lvgl-pages-wifi-only.yaml                + feature_wifi_page
-  #   - lvgl-pages-wifi-wireguard.yaml           + feature_wifi_page + feature_wireguard
-  #   - lvgl-pages-weather-forecast-only.yaml    + feature_weather (BLE compatible!)
-  #
-  # Clock + multiple features (NO BLE - too much memory):
-  #   - lvgl-pages-airq-wifi.yaml                + airq + wifi
-  #   - lvgl-pages-airq-weather-forecast-only.yaml  + airq + weather
-  #   - lvgl-pages-wifi-weather-forecast-only.yaml  + wifi + weather
-  #   - lvgl-pages-airq-wifi-weather-forecast.yaml  + airq + wifi + weather
-  #   - lvgl-pages-full.yaml                     + airq + wifi + weather (full)
-  #   - lvgl-pages-full-wireguard.yaml           + airq + wifi + wireguard + weather (full)
+  # The correct pages package is selected automatically based on your
+  # enabled features. Just change the feature flags above!
 
-  # EXAMPLE: Clock + Weather only (BLE compatible!)
-  # lvgl_pages:
-  #   url: https://github.com/truffshuff/halo.git/
-  #   ref: main
-  #   files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-weather-forecast-only.yaml]
-  #   refresh: always
-
-  # LVGL Pages - Clock only (default)
   lvgl_pages:
     url: https://github.com/truffshuff/halo.git/
     ref: main
-    files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-clock-only.yaml]
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${lvgl_pages_file}
     refresh: always
 
 # ============================================================================
