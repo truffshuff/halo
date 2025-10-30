@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.30.1518"
+  version: "25.10.30.1536"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -544,6 +544,9 @@ interval:
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
+  # Encryption key - define api_encryption_key substitution in device YAML
+  encryption:
+    key: ${api_encryption_key}
   # Increase buffer sizes to handle sensor bursts
   # Default buffer is ~2KB, increase to 8KB
   # This prevents TCP buffer exhaustion during sensor cascades
