@@ -209,7 +209,7 @@ captive_portal:
 # ============================================================================
 packages:
   # Core device configuration (always required)
-  halo_core:
+  core:
     url: https://github.com/truffshuff/halo.git/
     ref: main
     files:
