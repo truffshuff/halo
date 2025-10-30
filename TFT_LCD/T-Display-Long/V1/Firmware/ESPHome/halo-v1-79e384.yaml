@@ -116,16 +116,62 @@ substitutions:
     {%- endif -%}
 
 packages:
-  device_core: !include Halo-v1-Core.yaml
-  psram_helpers: !include packages/psram-helpers.yaml
+  device_core:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+    refresh: always
+
+  psram_helpers:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/psram-helpers.yaml
+    refresh: always
 
   # Automatic feature packages (Jinja2 conditional loading)
-  airq_auto: !include packages/${airq_package_file}
-  ble_auto: !include packages/${ble_package_file}
-  wifi_auto: !include packages/${wifi_package_file}
-  weather_auto: !include packages/${weather_package_file}
-  wireguard_auto: !include packages/${wireguard_package_file}
-  lvgl_pages: !include packages/${lvgl_pages_file}
+  airq_auto:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${airq_package_file}
+    refresh: always
+
+  ble_auto:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${ble_package_file}
+    refresh: always
+
+  wifi_auto:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${wifi_package_file}
+    refresh: always
+
+  weather_auto:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${weather_package_file}
+    refresh: always
+
+  wireguard_auto:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${wireguard_package_file}
+    refresh: always
+
+  lvgl_pages:
+    url: https://github.com/truffshuff/halo.git
+    ref: main
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/${lvgl_pages_file}
+    refresh: always
 
   # Memory statistics (conditional)
   # memory_stats:
