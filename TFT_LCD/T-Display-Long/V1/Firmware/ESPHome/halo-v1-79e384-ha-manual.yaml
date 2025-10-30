@@ -42,6 +42,12 @@ packages:
   # === CORE PACKAGES (Always Required) ===
   halo_v1_core: !include Halo-v1-Core.yaml
 
+  # === TIME UPDATE SCRIPT (Choose based on AirQ) ===
+  # If AirQ is DISABLED, use clock-only version:
+  time_update_script: !include packages/time-update-clock-only.yaml
+  # If AirQ is ENABLED, use full version:
+  # time_update_script: !include packages/time-update-basic.yaml
+
   # === FEATURE PACKAGES (Choose one from each section) ===
 
   # --- Air Quality Monitoring ---

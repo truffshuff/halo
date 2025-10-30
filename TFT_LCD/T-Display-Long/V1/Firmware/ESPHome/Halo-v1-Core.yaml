@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.30.1850"
+  version: "25.10.30.1854"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -31,9 +31,12 @@ packages:
   # Vertical clock - core display feature
   vertical_clock: !include packages/vertical-clock-core.yaml
 
-  # Time update script - basic version (no WireGuard dependency)
-  # Device files can override with time-update-wireguard.yaml if WireGuard is enabled
-  time_update: !include packages/time-update-basic.yaml
+  # Time update script - NOW INCLUDED IN DEVICE FILES
+  # Device files should include the appropriate version:
+  #   - time-update-clock-only.yaml (if AirQ disabled)
+  #   - time-update-basic.yaml (if AirQ enabled, no WireGuard)
+  #   - time-update-wireguard.yaml (if WireGuard enabled)
+  # time_update: !include packages/time-update-basic.yaml  # REMOVED - include in device file
 
   # ============================================================================
   # OPTIONAL PACKAGES - NOW CONTROLLED BY DEVICE FILES
