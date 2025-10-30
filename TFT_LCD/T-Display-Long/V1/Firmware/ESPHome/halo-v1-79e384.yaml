@@ -115,64 +115,10 @@ substitutions:
       lvgl-pages-clock-only.yaml
     {%- endif -%}
 
-
-
 # ============================================================================
-# ESPHOME CONFIGURATION
+# PACKAGE IMPORTS
 # ============================================================================
-esphome:
-  name: ${name}
-  friendly_name: ${friendly_name}
-
-  # Optimized for ESP32-S3
-  platformio_options:
-    board_build.flash_mode: dio
-    board_build.psram_type: opi
-    build_flags:
-      # PSRAM optimizations for memory-intensive features
-      - "-DBOARD_HAS_PSRAM"
-      - "-DCONFIG_SPIRAM_CACHE_WORKAROUND"
-      # Display buffer optimization (use 15% for BLE compatibility)
-      - "-DLVGL_BUFFER_SIZE_PERCENTAGE=15"
-
-  on_boot:
-    - priority: 800
-      then:
-        - delay: 50ms
-        - lvgl.page.show: vertical_clock_page
-        - logger.log: "Set initial page to Vertical Clock"
-
-# ============================================================================
-# ESP32 HARDWARE CONFIGURATION
-# ============================================================================
-esp32:
-  board: esp32-s3-devkitc-1
-  variant: esp32s3
-  framework:
-    type: esp-idf
-    version: recommended
-    sdkconfig_options:
-      # PSRAM Configuration
-      CONFIG_SPIRAM_MODE_OCT: y
-      CONFIG_SPIRAM_SPEED_80M: y
-      CONFIG_SPIRAM: y
-      CONFIG_ESP32S3_SPIRAM_SUPPORT: y
-      CONFIG_SPIRAM_USE_MALLOC: y
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"
-      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "65536"
-
-      # LVGL optimizations
-      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: n
-      CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: y
-      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: n
-
-      # BLE Coexistence tuning (if BLE enabled)
-      CONFIG_BTDM_CTRL_BLE_MAX_CONN: "3"
-      CONFIG_BTDM_CTRL_BLE_MAX_CONN_EFF: "3"
-
-# ============================================================================
-# CORE SERVICES
-# ============================================================================
+# Packages MUST come immediately after substitutions!
 packages:
   halo_core:
     url: https://github.com/truffshuff/halo.git
@@ -238,6 +184,17 @@ packages:
   #   files:
   #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/memory-stats.yaml
   #   refresh: always
+
+# ============================================================================
+# DEVICE-SPECIFIC OVERRIDES
+# ============================================================================
+# The esphome: and esp32: sections are provided by the core file.
+# Only add overrides here if you need device-specific customizations.
+
+# ============================================================================
+# CORE SERVICES
+# ============================================================================
+
 # Logger
 logger:
   level: INFO
