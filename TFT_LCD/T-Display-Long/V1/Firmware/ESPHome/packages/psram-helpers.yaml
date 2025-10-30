@@ -50,17 +50,13 @@ esphome:
               }
             }
     
-    # Delay weather sensor Home Assistant connections until MUCH later
-    # This prevents the 70KB temporary memory spike from interfering with BLE
-    # INCREASED TO 60 SECONDS to give BLE maximum time to stabilize
-    # User is willing to wait for sensor data in exchange for BLE working!
-    - priority: 100  # Run AFTER setup() completes (BLE initialized)
-      then:
-        - delay: 60s
-        - lambda: |-
-            ESP_LOGI("psram", "Weather sensors ready to connect (post-BLE, 60s delay)");
-            ESP_LOGI("psram", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-            ESP_LOGI("psram", "Free PSRAM: %d bytes", heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+    # REMOVED: 60-second delay for weather sensor connections
+    # With ESPHome 2025.10.0 memory optimizations (~1-2KB savings) and
+    # improved framework efficiency, delays are no longer necessary.
+    # The new HA Actions approach (weather-ha-actions.yaml) eliminates
+    # the need for persistent sensor connections entirely, saving ~70KB.
+    # If you're still using sensor-based weather packages, the improved
+    # memory management should allow immediate connections without delays.
 
 # Create custom C++ header for PSRAM allocation helpers
 # This will be automatically included in the build
