@@ -32,6 +32,8 @@ substitutions:
   # Weather configuration (if enabled below)
   weather_entity_id: "weather.hhut"
   weather_refresh_interval: "900"
+  current_temp_sensor: "sensor.hhut_temperature"  # Your actual sensor
+  apparent_temp_sensor: "sensor.hhut_feels_like"  # Your actual sensor
 
   # Network Configuration
   wifi_ssid: !secret wifihome_ssid
@@ -50,19 +52,19 @@ substitutions:
   # Everything else updates automatically!
 
   # Air Quality Monitoring (AirQ)
-  airq_enabled: "true"          # "true" or "false"
+  airq_enabled: "false"          # "true" or "false"
 
   # BLE Presence Detection
   ble_enabled: "false"          # "true" or "false"
 
   # WiFi Info Display
-  wifi_enabled: "true"         # "true" or "false"
+  wifi_enabled: "false"         # "true" or "false"
 
   # Weather Display
-  weather_enabled: "false"      # "true" or "false"
+  weather_enabled: "true"      # "true" or "false"
 
   # WireGuard VPN (requires wifi_enabled above)
-  wireguard_enabled: "true"    # "true" or "false"
+  wireguard_enabled: "false"    # "true" or "false"
 
   # ============================================================================
   # LVGL PAGES - Must match your feature configuration above!
@@ -81,7 +83,7 @@ substitutions:
   # "airq-wifi-weather":    AirQ + WiFi + Weather
   # "airq-wifi-weather-wg": AirQ + WiFi + Weather + WireGuard
   #
-  lvgl_pages_combo: "airq-wifi-wireguard"
+  lvgl_pages_combo: "weather-only"
 
 # ============================================================================
 # PACKAGE IMPORTS - Controlled by SUBSTITUTIONS Above
@@ -119,9 +121,9 @@ packages:
   #
   # time_update_script: !include packages/time-update-clock-only.yaml
   # time_update_script: !include packages/time-update-wifi-only.yaml
-  # time_update_script: !include packages/time-update-basic.yaml
+  time_update_script: !include packages/time-update-basic.yaml
   # time_update_script: !include packages/time-update-wireguard-only.yaml
-  time_update_script: !include packages/time-update-wireguard.yaml
+  # time_update_script: !include packages/time-update-wireguard.yaml
 
   # === FEATURE PACKAGES ===
   # Instructions:
@@ -133,26 +135,26 @@ packages:
   # When a feature is disabled: uncomment the "*-stubs.yaml" line
 
   # Air Quality Monitoring (AirQ)
-  airq: !include packages/airq-core.yaml
-  # airq: !include packages/airq-stubs.yaml
+  # airq: !include packages/airq-core.yaml
+  airq: !include packages/airq-stubs.yaml
 
   # BLE Presence Detection
   # ble: !include packages/ble-core-simplified.yaml
   ble: !include packages/ble-stubs.yaml
 
   # WiFi Info Display
-  wifi_core: !include packages/wifi-core.yaml
-  wifi_display: !include packages/wifi-display.yaml
-  # wifi: !include packages/wifi-stubs.yaml
+  # wifi_core: !include packages/wifi-core.yaml
+  # wifi_display: !include packages/wifi-display.yaml
+  wifi: !include packages/wifi-stubs.yaml
 
   # Weather Display
-  # weather: !include packages/weather-ha-actions.yaml
-  weather: !include packages/weather-stubs.yaml
+  weather: !include packages/weather-ha-actions.yaml
+  # weather: !include packages/weather-stubs.yaml
 
   # WireGuard VPN (requires wifi_enabled = true)
-  wireguard: !include packages/wireguard.yaml
-  wireguard_display: !include packages/wireguard-display.yaml
-  # wireguard: !include packages/wireguard-stubs.yaml
+  # wireguard: !include packages/wireguard.yaml
+  # wireguard_display: !include packages/wireguard-display.yaml
+  wireguard: !include packages/wireguard-stubs.yaml
 
   # Memory Statistics (Optional - for debugging)
   memory_stats: !include packages/memory-stats.yaml
@@ -167,13 +169,13 @@ packages:
   # lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
-  # lvgl_pages: !include packages/lvgl-pages-weather-only.yaml
+  lvgl_pages: !include packages/lvgl-pages-weather-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wireguard-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-weather-forecast-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wifi-weather-forecast-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-wifi-weather-forecast.yaml
-  lvgl_pages: !include packages/lvgl-pages-airq-wifi-wireguard.yaml
+  # lvgl_pages: !include packages/lvgl-pages-airq-wifi-wireguard.yaml
   # lvgl_pages: !include packages/lvgl-pages-full-wireguard.yaml
 
 # ============================================================================
@@ -202,11 +204,14 @@ select:
     options:
       - "Vertical Clock"
       # Uncomment based on enabled features:
-      - "AirQ"          # if airq_enabled
-      - "WiFi"          # if wifi_enabled
-      # - "Weather"       # if weather_enabled
+      # - "AirQ"          # if airq_enabled
+      # - "WiFi"          # if wifi_enabled
+      - "Weather"       # if weather_enabled
     initial_option: "Vertical Clock"
     restore_value: true
+
+logger:
+  level: debug
 
 # ============================================================================
 # CONFIGURATION GUIDE

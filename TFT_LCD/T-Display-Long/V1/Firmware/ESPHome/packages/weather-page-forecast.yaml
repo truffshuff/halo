@@ -9,7 +9,11 @@ on_load:
   - lambda: |-
       id(current_page_index) = 3;  // weather_forecast_page
       id(weather_last_condition).clear();
+      id(weather_on_weather_page) = true;
+  - script.execute: fetch_weather_data
   - script.execute: update_weather_icon_color
+on_unload:
+  - lambda: 'id(weather_on_weather_page) = false;'
 widgets:
   # Large weather condition icon at top
   - label:
@@ -24,8 +28,12 @@ widgets:
 
   # Condition name below icon
   - label:
-      text: "Unknown"
       id: lbl_weather_forecast_condition_name
+      text: !lambda |-
+        if (id(weather_current_condition).empty()) {
+          return std::string("Unknown");
+        }
+        return id(weather_current_condition);
       text_align: CENTER
       text_font: montserrat_20
       text_color: my_white
@@ -90,8 +98,14 @@ widgets:
 
   # Current apparent temperature in center of gauge
   - label:
-      text: "--°"
       id: lbl_weather_today_tempap
+      text: !lambda |-
+        if (isnan(id(weather_current_apparent_temp))) {
+          return std::string("--°");
+        }
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
+        return std::string(buf);
       text_align: CENTER
       text_font: montserrat_28
       text_color: my_white
@@ -111,8 +125,14 @@ widgets:
 
   # Low temp stacked above gauge
   - label:
-      text: "L: --°"
       id: lbl_weather_forecast_templo
+      text: !lambda |-
+        if (isnan(id(weather_forecast_temp_low)[0])) {
+          return std::string("L: --°");
+        }
+        char buf[16];
+        snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
+        return std::string(buf);
       text_align: CENTER
       text_font: montserrat_28
       text_color: my_teal
@@ -122,8 +142,14 @@ widgets:
 
   # High temp stacked above low temp
   - label:
-      text: "H: --°"
       id: lbl_weather_forecast_temphi
+      text: !lambda |-
+        if (isnan(id(weather_forecast_temp_high)[0])) {
+          return std::string("H: --°");
+        }
+        char buf[16];
+        snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
+        return std::string(buf);
       text_align: CENTER
       text_font: montserrat_28
       text_color: my_red
@@ -131,21 +157,16 @@ widgets:
       x: 0
       y: -70
 
-  # Today precipitation amt
+  # Precipitation Chance
   - label:
-      text: "Amt Today: -- in"
-      id: lbl_weather_precipitation_today
-      text_align: CENTER
-      text_font: montserrat_18
-      text_color: my_teal
-      align: BOTTOM_MID
-      x: 0
-      y: -80
-
-  # Precipitation Chnace
-  - label:
-      text: "Chance: --%"
       id: lbl_weather_today_dailyprecipprob
+      text: !lambda |-
+        if (isnan(id(weather_forecast_precip_prob)[0])) {
+          return std::string("Chance: --%");
+        }
+        char buf[32];
+        snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
+        return std::string(buf);
       text_align: CENTER
       text_font: montserrat_18
       text_color: my_teal
@@ -164,8 +185,14 @@ widgets:
       y: -30
 
   - label:
-      text: "--.- °C"
       id: lbl_weather_today_outdoor_temp
+      text: !lambda |-
+        if (isnan(id(weather_current_temp))) {
+          return std::string("--.- °F");
+        }
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
+        return std::string(buf);
       text_align: CENTER
       text_font: montserrat_20
       text_color: my_white
