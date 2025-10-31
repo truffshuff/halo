@@ -141,10 +141,10 @@ script:
                 // The response format is: { "weather.entity_id": { "forecast": [...] } }
                 auto response_data = response;
 
-                if (response_data.count("${weather_entity_id}") > 0) {
+                if (response_data.containsKey("${weather_entity_id}")) {
                   auto entity_data = response_data["${weather_entity_id}"];
 
-                  if (entity_data.count("forecast") > 0) {
+                  if (entity_data.containsKey("forecast")) {
                     auto forecast_array = entity_data["forecast"];
 
                     int day_count = std::min((int)forecast_array.size(), 10);
@@ -154,22 +154,22 @@ script:
                       auto day = forecast_array[i];
 
                       // Extract temperature high
-                      if (day.count("temperature") > 0) {
+                      if (day.containsKey("temperature")) {
                         id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
                       }
 
                       // Extract temperature low
-                      if (day.count("templow") > 0) {
+                      if (day.containsKey("templow")) {
                         id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
                       }
 
                       // Extract condition
-                      if (day.count("condition") > 0) {
+                      if (day.containsKey("condition")) {
                         id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
                       }
 
                       // Extract precipitation probability
-                      if (day.count("precipitation_probability") > 0) {
+                      if (day.containsKey("precipitation_probability")) {
                         id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
                       }
                     }
@@ -195,10 +195,10 @@ script:
 
                 auto response_data = response;
 
-                if (response_data.count("${weather_entity_id}") > 0) {
+                if (response_data.containsKey("${weather_entity_id}")) {
                   auto entity_data = response_data["${weather_entity_id}"];
 
-                  if (entity_data.count("forecast") > 0) {
+                  if (entity_data.containsKey("forecast")) {
                     auto forecast_array = entity_data["forecast"];
 
                     int hour_count = std::min((int)forecast_array.size(), 24);
@@ -208,22 +208,22 @@ script:
                       auto hour = forecast_array[i];
 
                       // Extract temperature
-                      if (hour.count("temperature") > 0) {
+                      if (hour.containsKey("temperature")) {
                         id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
                       }
 
                       // Extract apparent temperature
-                      if (hour.count("apparent_temperature") > 0) {
+                      if (hour.containsKey("apparent_temperature")) {
                         id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
                       }
 
                       // Extract condition
-                      if (hour.count("condition") > 0) {
+                      if (hour.containsKey("condition")) {
                         id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
                       }
 
                       // Extract precipitation probability
-                      if (hour.count("precipitation_probability") > 0) {
+                      if (hour.containsKey("precipitation_probability")) {
                         id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
                       }
                     }
@@ -244,14 +244,14 @@ script:
 
                 auto response_data = response;
 
-                if (response_data.count("state") > 0) {
+                if (response_data.containsKey("state")) {
                   id(weather_current_condition) = response_data["state"].as<std::string>();
                 }
 
                 // Extract humidity from weather entity
-                if (response_data.count("attributes") > 0) {
+                if (response_data.containsKey("attributes")) {
                   auto attrs = response_data["attributes"];
-                  if (attrs.count("humidity") > 0) {
+                  if (attrs.containsKey("humidity")) {
                     id(weather_current_humidity) = attrs["humidity"].as<float>();
                   }
                 }
@@ -268,11 +268,12 @@ script:
 
                 auto response_data = response;
 
-                if (response_data.count("state") > 0) {
-                  std::string temp_str = response_data["state"].as<std::string>();
-                  try {
-                    id(weather_current_temp) = std::stof(temp_str);
-                  } catch (...) {
+                if (response_data.containsKey("state")) {
+                  // Try to parse as float directly
+                  float temp = response_data["state"].as<float>();
+                  if (!isnan(temp)) {
+                    id(weather_current_temp) = temp;
+                  } else {
                     ESP_LOGW("weather", "Failed to parse current temperature");
                     id(weather_current_temp) = NAN;
                   }
@@ -290,11 +291,12 @@ script:
 
                 auto response_data = response;
 
-                if (response_data.count("state") > 0) {
-                  std::string temp_str = response_data["state"].as<std::string>();
-                  try {
-                    id(weather_current_apparent_temp) = std::stof(temp_str);
-                  } catch (...) {
+                if (response_data.containsKey("state")) {
+                  // Try to parse as float directly
+                  float temp = response_data["state"].as<float>();
+                  if (!isnan(temp)) {
+                    id(weather_current_apparent_temp) = temp;
+                  } else {
                     ESP_LOGW("weather", "Failed to parse apparent temperature");
                     id(weather_current_apparent_temp) = NAN;
                   }
