@@ -55,6 +55,15 @@ script:
       #       - lvgl.label.update:
       #           id: timeVal
       #           text: !lambda 'return id(time_update_last_text);'
+      # AirQ page time update
+      - if:
+          condition:
+            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 1;'  # AirQ_page
+          then:
+            - lvgl.label.update:
+                id: timeVal
+                text: !lambda 'return id(time_update_last_text);'
+      # Vertical clock page time update
       - if:
           condition:
             lambda: 'return id(time_update_needs_render) && id(current_page_index) == 0;'  # vertical_clock_page
