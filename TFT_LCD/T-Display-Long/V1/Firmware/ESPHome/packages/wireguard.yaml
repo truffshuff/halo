@@ -39,15 +39,18 @@ esphome:
       then:
         - delay: 20s  # Wait 20 seconds for BLE to stabilize
         - lambda: |-
-            ESP_LOGI("wireguard_delayed", "Enabling WireGuard after 20s delay...");
+            ESP_LOGI("wireguard_delayed", "Checking WireGuard enable state after 20s delay...");
             ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+            ESP_LOGI("wireguard_delayed", "WireGuard switch state: %s", id(wireguard_enabled).state ? "ON" : "OFF");
         - if:
             condition:
-              switch.is_on: wireguard_enabled
+              lambda: 'return id(wireguard_enabled).state;'
             then:
               - wireguard.enable:
                   id: wg0
               - logger.log: "✓ WireGuard enabled successfully"
+            else:
+              - logger.log: "WireGuard switch is OFF, not enabling at boot"
 
 # WireGuard sensors
 sensor:
@@ -86,12 +89,13 @@ switch:
     optimistic: true
     entity_category: "config"
     on_turn_on:
-      - logger.log: "Switching to SNTP time source for WireGuard"
+      - logger.log: "WireGuard switch turned ON - enabling WireGuard"
       - delay: 500ms
       - wireguard.enable:
           id: wg0
-      - logger.log: "WireGuard enabled"
+      - logger.log: "✓ WireGuard enabled"
     on_turn_off:
+      - logger.log: "WireGuard switch turned OFF - disabling WireGuard"
       - wireguard.disable:
           id: wg0
-      - logger.log: "WireGuard disabled"
+      - logger.log: "✓ WireGuard disabled"
