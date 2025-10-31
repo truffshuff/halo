@@ -27,16 +27,22 @@
 #   - weather-page-*.yaml (for display pages)
 #
 # Required Home Assistant Setup:
-#   You need a weather entity in Home Assistant (e.g., weather.home)
-#   This can be from any weather integration: Met.no, OpenWeatherMap, etc.
+#   1. Weather entity for forecasts (e.g., weather.home)
+#      - Can be from any weather integration: Met.no, OpenWeatherMap, etc.
+#   2. Current temperature sensor (e.g., sensor.outdoor_temperature)
+#   3. Apparent/feels-like temperature sensor (e.g., sensor.feels_like_temperature)
 # ============================================================================
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 substitutions:
-  # Your Home Assistant weather entity ID
+  # Your Home Assistant weather entity ID (for forecasts)
   weather_entity_id: "weather.home"
+
+  # Your actual sensor entities for current conditions
+  current_temp_sensor: "sensor.outdoor_temperature"
+  apparent_temp_sensor: "sensor.feels_like_temperature"
 
   # Auto-refresh interval while on weather page (seconds)
   weather_refresh_interval: "300"  # 5 minutes
@@ -47,6 +53,11 @@ substitutions:
 globals:
   # Current weather
   - id: weather_current_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+
+  - id: weather_current_apparent_temp
     type: float
     restore_value: no
     initial_value: 'NAN'
@@ -80,6 +91,10 @@ globals:
 
   # Hourly forecast arrays (24 hours)
   - id: weather_hourly_temp
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_apparent_temp
     type: float[24]
     restore_value: no
 
@@ -199,6 +214,11 @@ script:
                   id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
                 }
 
+                // Extract apparent temperature
+                if (hour.count("apparent_temperature") > 0) {
+                  id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                }
+
                 // Extract condition
                 if (hour.count("condition") > 0) {
                   id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
@@ -214,31 +234,66 @@ script:
             }
           }
 
-      # Fetch current weather from the weather entity state
+      # Fetch current weather condition from the weather entity state
       - homeassistant.action:
           action: homeassistant.get_state
           data:
             entity_id: ${weather_entity_id}
           response_variable: current_weather
 
-      # Process current weather
+      # Process current weather condition
       - lambda: |-
-          ESP_LOGI("weather", "Processing current weather...");
+          ESP_LOGI("weather", "Processing current weather condition...");
 
           if (current_weather.count("state") > 0) {
             id(weather_current_condition) = current_weather["state"].as<std::string>();
           }
 
-          // Extract attributes
+          // Extract humidity from weather entity
           if (current_weather.count("attributes") > 0) {
             auto attrs = current_weather["attributes"];
-
-            if (attrs.count("temperature") > 0) {
-              id(weather_current_temp) = attrs["temperature"].as<float>();
-            }
-
             if (attrs.count("humidity") > 0) {
               id(weather_current_humidity) = attrs["humidity"].as<float>();
+            }
+          }
+
+      # Fetch current temperature from sensor
+      - homeassistant.action:
+          action: homeassistant.get_state
+          data:
+            entity_id: ${current_temp_sensor}
+          response_variable: current_temp
+
+      # Process current temperature
+      - lambda: |-
+          ESP_LOGI("weather", "Processing current temperature...");
+          if (current_temp.count("state") > 0) {
+            std::string temp_str = current_temp["state"].as<std::string>();
+            try {
+              id(weather_current_temp) = std::stof(temp_str);
+            } catch (...) {
+              ESP_LOGW("weather", "Failed to parse current temperature");
+              id(weather_current_temp) = NAN;
+            }
+          }
+
+      # Fetch apparent temperature from sensor
+      - homeassistant.action:
+          action: homeassistant.get_state
+          data:
+            entity_id: ${apparent_temp_sensor}
+          response_variable: apparent_temp
+
+      # Process apparent temperature
+      - lambda: |-
+          ESP_LOGI("weather", "Processing apparent temperature...");
+          if (apparent_temp.count("state") > 0) {
+            std::string temp_str = apparent_temp["state"].as<std::string>();
+            try {
+              id(weather_current_apparent_temp) = std::stof(temp_str);
+            } catch (...) {
+              ESP_LOGW("weather", "Failed to parse apparent temperature");
+              id(weather_current_apparent_temp) = NAN;
             }
           }
 
@@ -246,7 +301,10 @@ script:
           id(weather_last_update) = millis();
 
           ESP_LOGI("weather", "✓ Weather data fetch complete!");
-          ESP_LOGI("weather", "Current: %.1f°F, %s", id(weather_current_temp), id(weather_current_condition).c_str());
+          ESP_LOGI("weather", "Current: %.1f°F (feels like %.1f°F), %s",
+                   id(weather_current_temp),
+                   id(weather_current_apparent_temp),
+                   id(weather_current_condition).c_str());
 
       # Update the display
       - script.execute: update_weather_display

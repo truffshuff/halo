@@ -73,7 +73,7 @@ script:
           id(weather_last_started) = millis();
           id(weather_needs_render) = false;
       - lambda: |-
-          std::string condition = id(forecast_day1_condition).state;
+          std::string condition = id(weather_current_condition);
           ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
           if (condition.empty()) {
             return;
