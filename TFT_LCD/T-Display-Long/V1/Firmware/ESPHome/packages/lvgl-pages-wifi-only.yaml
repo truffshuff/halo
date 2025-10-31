@@ -48,34 +48,42 @@ interval:
               int current = id(current_page_index);
               if (current == last_displayed_index) return false;
 
-              // We have a page change - process it
+              // Page index changed
               last_displayed_index = current;
-
-              // Page mapping for Clock + WiFi:
-              // 0 = Vertical Clock
-              // 1 = WiFi page
-
-              switch(current) {
-                case 0:
-                  id(lily_display).show_page(vertical_clock_page);
-                  ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
-                  break;
-                case 1:
-                  id(lily_display).show_page(wifi_page);
-                  ESP_LOGD("page_rotation", "Showing WiFi page (index 1)");
-                  break;
-                default:
-                  // Invalid page index - show clock
-                  id(lily_display).show_page(vertical_clock_page);
-                  ESP_LOGW("page_rotation", "Invalid page index %d, showing clock", current);
-                  break;
-              }
-
+              ESP_LOGD("page_rotation", "Page index changed to %d", current);
               return true;
           then:
-            - logger.log:
-                format: "Page displayed successfully"
-                level: DEBUG
+            # Page 0: Vertical Clock (always available)
+            - if:
+                condition:
+                  lambda: 'return id(current_page_index) == 0;'
+                then:
+                  - logger.log: "Page rotation: Showing Vertical Clock (index 0)"
+                  - lvgl.page.show:
+                      id: vertical_clock_page
+                      animation: OUT_LEFT
+                      time: 300ms
+                else:
+                  # Page 2: WiFi (index 1 reserved for AirQ)
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 2;'
+                      then:
+                        - logger.log: "Page rotation: Showing WiFi page (index 2)"
+                        - lvgl.page.show:
+                            id: wifi_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                        # Unknown page - fall back to vertical clock
+                        - logger.log:
+                            format: "Page rotation: Page index %d not available, falling back to Vertical Clock"
+                            args: ['id(current_page_index)']
+                            level: WARN
+                        - lvgl.page.show:
+                            id: vertical_clock_page
+                            animation: OUT_LEFT
+                            time: 300ms
 
 # ============================================================================
 # NOTE: TIME UPDATE SCRIPT
