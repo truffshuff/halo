@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.30.2033"
+  version: "25.10.30.2036"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -958,7 +958,8 @@ esphome:
     - priority: -100
       then:
         - logger.log: "Boot sequence starting (priority -100)"
-        - lambda: 'auto call = id(rgb_light).turn_off(); call.perform();'  # Turn off RGB light
+        # Note: RGB light turn-off removed to avoid package loading order issues
+        # The startup_light_blink interval handles RGB light control
         - delay: 1s  # Brief delay for LVGL to initialize
         - lambda: |-
             const std::string &choice = id(default_page_select_boot).state;
