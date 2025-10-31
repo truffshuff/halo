@@ -50,6 +50,20 @@ switch:
     on_turn_on:
       - lambda: 'id(page_rotation_wifi_enabled) = true;'
       - logger.log: "WiFi page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
+          then:
+            - lambda: |-
+                id(wifi_signal_needs_render) = true;
+                id(wifi_signal_bar_needs_render) = true;
+                id(wifi_ssid_needs_render) = true;
+                id(wifi_ip_needs_render) = true;
+                id(ha_status_needs_render) = true;
+                id(wg_status_needs_render) = true;
+                id(wg_address_needs_render) = true;
+                id(wg_handshake_needs_render) = true;
     on_turn_off:
       - lambda: 'id(page_rotation_wifi_enabled) = false;'
       - logger.log: "WiFi page disabled in rotation"
@@ -73,6 +87,17 @@ number:
       - logger.log:
           format: "WiFi page order set to %d"
           args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
+          then:
+            - lambda: |-
+                id(wifi_signal_needs_render) = true;
+                id(wifi_signal_bar_needs_render) = true;
+                id(wifi_ssid_needs_render) = true;
+                id(wifi_ip_needs_render) = true;
+                id(ha_status_needs_render) = true;
 
 sensor:
   - platform: wifi_signal

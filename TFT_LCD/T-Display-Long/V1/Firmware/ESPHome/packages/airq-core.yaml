@@ -48,6 +48,12 @@ switch:
     on_turn_on:
       - lambda: 'id(page_rotation_AirQ_enabled) = true;'
       - logger.log: "AirQ page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 1;'  # Only if on AirQ page
+          then:
+            - script.execute: time_update
     on_turn_off:
       - lambda: 'id(page_rotation_AirQ_enabled) = false;'
       - logger.log: "AirQ page disabled in rotation"
@@ -137,6 +143,25 @@ number:
       - logger.log:
           format: "AirQ page order set to %d"
           args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 1;'  # Only if on AirQ page
+          then:
+            - script.execute: time_update
+            - if:
+                condition:
+                  wifi.connected:
+                then:
+                  - lvgl.widget.update:
+                      id: wifi_stat
+                      text_color: my_green
+                  - lambda: 'id(airq_wifi_stat_connected_state) = true;'
+                else:
+                  - lvgl.widget.update:
+                      id: wifi_stat
+                      text_color: my_red
+                  - lambda: 'id(airq_wifi_stat_connected_state) = false;'
 
   - platform: template
     name: SEN55 Temperature Offset
