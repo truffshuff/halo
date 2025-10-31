@@ -1,40 +1,27 @@
 # ============================================================================
-# Halo V1 - Dynamic Configuration (ESPHome 2025.10.0+)
+# Halo V1 - Manual Configuration for HA Dashboard
 # ============================================================================
-# This configuration uses Jinja2 ternary operators for automatic package
-# selection based on feature flags. Just change a flag from "false" to "true"
-# and the entire configuration updates automatically!
+# This version is for Home Assistant ESPHome Dashboard compilation.
+# Unlike the CLI version, HA dashboard doesn't support Jinja2 in !include paths.
+# You must manually comment/uncomment packages based on desired features.
 #
 # ✅ BLE + WEATHER NOW POSSIBLE!
 #   Old: BLE (60KB) + Weather sensors (75KB) = Too tight!
 #   New: BLE (60KB) + HA Actions (3KB) = Plenty of room!
 # ============================================================================
 
-# ============================================================================
-# FEATURE FLAGS - Enable/Disable Features
-# ============================================================================
 substitutions:
   # Device Identity
   name: "halo-v1-79e384"
   friendly_name: "Halo Air Quality Monitor Dev"
 
-  # Display Features
-  feature_clock: "true"              # Always true (core feature)
-  feature_airq: "false"              # Air quality display page
-  feature_wifi_page: "false"         # WiFi info display page
-  feature_wireguard: "false"         # WireGuard VPN (requires wifi_page)
+  # Core substitutions
+  version: "25.10.30.1828"
+  device_description: ${name} - v${version}.
 
-  # Weather Features (NEW - uses HA Actions!)
-  feature_weather: "false"           # Enable weather via HA actions
-  weather_entity_id: "weather.hhut"  # Your HA weather entity
-  weather_refresh_interval: "900"    # Seconds (15 min default)
-
-  # Connectivity Features
-  feature_ble: "false"               # BLE presence detection
-
-  # Memory Management
-  feature_psram_optimization: "true" # Keep enabled for best performance
-  feature_memory_stats: "true"       # Show memory usage stats
+  # Weather configuration (if enabled below)
+  weather_entity_id: "weather.hhut"
+  weather_refresh_interval: "900"
 
   # Network Configuration
   wifi_ssid: !secret wifihome_ssid
@@ -44,73 +31,87 @@ substitutions:
   api_encryption_key: "mLKXHYyBZgGLfMiXyWoo3Fzc/TpqbKpk0g+uYAwErMs="
   ota_password: "halo79e384"
 
-  # ============================================================================
-  # AUTOMATIC PACKAGE SELECTION (Jinja2)
-  # ============================================================================
-  # Change the feature flags above and packages auto-select!
-
-  airq_package_file: '{{ "airq-display.yaml" if feature_airq | bool else "airq-stubs.yaml" }}'
-  ble_package_file: '{{ "ble-core-simplified.yaml" if feature_ble | bool else "ble-stubs.yaml" }}'
-  wifi_package_file: '{{ "wifi-display.yaml" if feature_wifi_page | bool else "wifi-stubs.yaml" }}'
-  weather_package_file: '{{ "weather-ha-actions.yaml" if feature_weather | bool else "weather-stubs.yaml" }}'
-  wireguard_package_file: '{{ "wireguard.yaml" if (feature_wireguard | bool and feature_wifi_page | bool) else "wireguard-stubs.yaml" }}'
-
-  # LVGL pages - automatically picks the right combination!
-  lvgl_pages_file: >-
-    {%- set airq = feature_airq | bool -%}
-    {%- set wifi = feature_wifi_page | bool -%}
-    {%- set wg = feature_wireguard | bool -%}
-    {%- set weather = feature_weather | bool -%}
-    {%- if not airq and not wifi and not weather -%}
-      lvgl-pages-clock-only.yaml
-    {%- elif airq and not wifi and not weather -%}
-      lvgl-pages-airq-only.yaml
-    {%- elif not airq and wifi and not wg and not weather -%}
-      lvgl-pages-wifi-only.yaml
-    {%- elif not airq and wifi and wg and not weather -%}
-      lvgl-pages-wifi-wireguard.yaml
-    {%- elif airq and wifi and not wg and not weather -%}
-      lvgl-pages-airq-wifi.yaml
-    {%- elif not airq and not wifi and weather -%}
-      lvgl-pages-weather-forecast-only.yaml
-    {%- elif airq and not wifi and weather -%}
-      lvgl-pages-airq-weather-forecast-only.yaml
-    {%- elif not airq and wifi and weather -%}
-      lvgl-pages-wifi-weather-forecast-only.yaml
-    {%- elif airq and wifi and weather -%}
-      lvgl-pages-airq-wifi-weather-forecast.yaml
-    {%- else -%}
-      lvgl-pages-clock-only.yaml
-    {%- endif -%}
-
 # ============================================================================
-# PACKAGE IMPORTS
+# PACKAGE IMPORTS - MANUAL SELECTION
 # ============================================================================
+# Uncomment the packages you want to enable for this device.
+# Make sure to also select the matching LVGL pages package at the bottom!
+# ============================================================================
+
 packages:
-  # Core hardware/component configuration (includes nested packages)
-  # NOTE: For HA dashboard compilation, copy Halo-v1-Core.yaml and packages/
-  # directory to /config/esphome/ first
+  # === CORE PACKAGES (Always Required) ===
   halo_v1_core: !include Halo-v1-Core.yaml
 
-  # Time update script (automatic selection based on AirQ)
-  time_update_script: !include packages/${'{{ "time-update-basic.yaml" if feature_airq | bool else "time-update-clock-only.yaml" }}'}
+  # === TIME UPDATE SCRIPT (Choose based on AirQ) ===
+  # If AirQ is DISABLED, use clock-only version:
+  time_update_script: !include packages/time-update-clock-only.yaml
+  # If AirQ is ENABLED, use full version:
+  # time_update_script: !include packages/time-update-basic.yaml
 
-  # Automatic feature packages (Jinja2 conditional loading)
-  airq_auto: !include packages/${airq_package_file}
-  ble_auto: !include packages/${ble_package_file}
-  wifi_auto: !include packages/${wifi_package_file}
-  weather_auto: !include packages/${weather_package_file}
-  wireguard_auto: !include packages/${wireguard_package_file}
-  lvgl_pages: !include packages/${lvgl_pages_file}
+  # === FEATURE PACKAGES (Choose one from each section) ===
+
+  # --- Air Quality Monitoring ---
+  # Uncomment ONE of these:
+  # airq_enabled: !include packages/airq-display.yaml       # Enable AirQ sensors and display
+  airq_disabled: !include packages/airq-stubs.yaml          # Disable AirQ (saves ~20KB)
+
+  # --- BLE Presence Detection ---
+  # Uncomment ONE of these:
+  # ble_enabled: !include packages/ble-core-simplified.yaml  # Enable BLE tracking (uses 60KB!)
+  ble_disabled: !include packages/ble-stubs.yaml            # Disable BLE (saves 60KB)
+
+  # --- WiFi Info Display ---
+  # Uncomment ONE of these:
+  # wifi_enabled: !include packages/wifi-display.yaml        # Show WiFi connection info
+  wifi_disabled: !include packages/wifi-stubs.yaml          # Hide WiFi info (saves ~5KB)
+
+  # --- Weather Display ---
+  # Uncomment ONE of these:
+  # weather_enabled: !include packages/weather-ha-actions.yaml  # Enable weather via HA Actions (3KB!)
+  weather_disabled: !include packages/weather-stubs.yaml         # Disable weather (saves 3KB)
+
+  # --- WireGuard VPN ---
+  # Uncomment ONE of these (requires wifi_enabled above):
+  # wireguard_enabled: !include packages/wireguard.yaml      # Enable WireGuard VPN display
+  wireguard_disabled: !include packages/wireguard-stubs.yaml  # Disable WireGuard
+
+  # === LVGL PAGES (Choose ONE based on enabled features above) ===
+  #
+  # IMPORTANT: Must match your enabled features!
+  # Choose the pages file that matches your feature combination:
+  #
+  # No features enabled:
+  lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
+  #
+  # AirQ only:
+  # lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
+  #
+  # WiFi only:
+  # lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
+  #
+  # WiFi + WireGuard:
+  # lvgl_pages: !include packages/lvgl-pages-wifi-wireguard.yaml
+  #
+  # AirQ + WiFi:
+  # lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
+  #
+  # Weather only (BLE compatible!):
+  # lvgl_pages: !include packages/lvgl-pages-weather-forecast-only.yaml
+  #
+  # AirQ + Weather:
+  # lvgl_pages: !include packages/lvgl-pages-airq-weather-forecast-only.yaml
+  #
+  # WiFi + Weather:
+  # lvgl_pages: !include packages/lvgl-pages-wifi-weather-forecast-only.yaml
+  #
+  # AirQ + WiFi + Weather:
+  # lvgl_pages: !include packages/lvgl-pages-airq-wifi-weather-forecast.yaml
 
 # ============================================================================
 # DEVICE-SPECIFIC CONFIGURATION
 # ============================================================================
-# The halo_v1_core package provides: esphome, esp32, psram, logger, api, i2c,
-# spi, display, touchscreen, lights, sensors, switches, scripts, intervals, etc.
-# Only add device-specific settings or overrides below.
 
-# WiFi credentials (not in core file - each device needs its own)
+# WiFi credentials
 wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
@@ -118,14 +119,12 @@ wifi:
     ssid: "Halo-79e384-Fallback"
     password: "fallback12345"
 
-# OTA password
+# OTA
 ota:
   - platform: esphome
     password: ${ota_password}
 
-# ============================================================================
-# DEFAULT PAGE SELECTOR
-# ============================================================================
+# Default page selector (update options based on enabled features)
 select:
   - platform: template
     name: "Default Page at Boot"
@@ -133,28 +132,92 @@ select:
     optimistic: true
     options:
       - "Vertical Clock"
-      # Add options based on enabled features:
-      # - "AirQ"          # if feature_airq
-      # - "WiFi"          # if feature_wifi_page
-      # - "Weather"       # if feature_weather
+      # Uncomment based on enabled features:
+      # - "AirQ"          # if airq_enabled
+      # - "WiFi"          # if wifi_enabled
+      # - "Weather"       # if weather_enabled
     initial_option: "Vertical Clock"
     restore_value: true
 
 # ============================================================================
-# MEMORY BUDGET GUIDE
+# CONFIGURATION GUIDE
 # ============================================================================
-# ESP32-S3 has ~210KB internal RAM available
 #
-# ✅ BLE Compatible (< 110KB total):
-#    - Clock only: ~45KB
-#    - Clock + AirQ: ~65KB
-#    - Clock + WiFi: ~85KB
-#    - Clock + Weather (HA Actions): ~105KB ← NEW! BLE compatible!
+# EXAMPLE 1: Clock Only (Minimal, BLE compatible)
+# ------------------------------------------------
+# Features: Just the vertical clock
+# RAM Usage: ~45KB
+# BLE Compatible: Yes
 #
-# ⚠️ NOT BLE Compatible (> 110KB total):
-#    - Clock + AirQ + WiFi: ~125KB
-#    - Clock + AirQ + Weather: ~130KB
-#    - Clock + WiFi + Weather: ~135KB
+# Enabled packages:
+#   - airq_disabled
+#   - ble_disabled
+#   - wifi_disabled
+#   - weather_disabled
+#   - wireguard_disabled
+#   - lvgl_pages: lvgl-pages-clock-only.yaml
 #
-# With HA Actions, you can have Clock + Weather + BLE!
+# ============================================================================
+#
+# EXAMPLE 2: Weather Display with BLE (REVOLUTIONARY!)
+# -----------------------------------------------------
+# Features: Clock + Weather + BLE presence detection
+# RAM Usage: ~108KB
+# BLE Compatible: YES! (This was impossible before HA Actions!)
+#
+# Enabled packages:
+#   - airq_disabled
+#   - ble_enabled: !include packages/ble-core-simplified.yaml
+#   - wifi_disabled
+#   - weather_enabled: !include packages/weather-ha-actions.yaml
+#   - wireguard_disabled
+#   - lvgl_pages: !include packages/lvgl-pages-weather-forecast-only.yaml
+#
+# Default page options:
+#   - "Vertical Clock"
+#   - "Weather"
+#
+# ============================================================================
+#
+# EXAMPLE 3: Office Air Quality Monitor
+# --------------------------------------
+# Features: Clock + AirQ + WiFi info
+# RAM Usage: ~125KB
+# BLE Compatible: No (too much RAM)
+#
+# Enabled packages:
+#   - airq_enabled: !include packages/airq-display.yaml
+#   - ble_disabled
+#   - wifi_enabled: !include packages/wifi-display.yaml
+#   - weather_disabled
+#   - wireguard_disabled
+#   - lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
+#
+# Default page options:
+#   - "Vertical Clock"
+#   - "AirQ"
+#   - "WiFi"
+#
+# ============================================================================
+#
+# EXAMPLE 4: Full Features (Living Room Showcase)
+# -----------------------------------------------
+# Features: Everything enabled
+# RAM Usage: ~140KB
+# BLE Compatible: No (too much RAM)
+#
+# Enabled packages:
+#   - airq_enabled: !include packages/airq-display.yaml
+#   - ble_disabled (can't fit with all features)
+#   - wifi_enabled: !include packages/wifi-display.yaml
+#   - weather_enabled: !include packages/weather-ha-actions.yaml
+#   - wireguard_disabled
+#   - lvgl_pages: !include packages/lvgl-pages-airq-wifi-weather-forecast.yaml
+#
+# Default page options:
+#   - "Vertical Clock"
+#   - "AirQ"
+#   - "WiFi"
+#   - "Weather"
+#
 # ============================================================================
