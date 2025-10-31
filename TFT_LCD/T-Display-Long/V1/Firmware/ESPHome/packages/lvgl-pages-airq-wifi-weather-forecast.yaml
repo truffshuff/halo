@@ -58,44 +58,64 @@ interval:
               int current = id(current_page_index);
               if (current == last_displayed_index) return false;
 
-              // We have a page change - process it
+              // Page index changed
               last_displayed_index = current;
-
-              // Page mapping for Clock + AirQ + WiFi + Weather Forecast:
-              // 0 = Vertical Clock
-              // 1 = AirQ
-              // 2 = WiFi
-              // 3 = Weather Forecast
-
-              switch(current) {
-                case 0:
-                  id(lily_display).show_page(vertical_clock_page);
-                  ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
-                  break;
-                case 1:
-                  id(lily_display).show_page(AirQ_page);
-                  ESP_LOGD("page_rotation", "Showing AirQ page (index 1)");
-                  break;
-                case 2:
-                  id(lily_display).show_page(wifi_page);
-                  ESP_LOGD("page_rotation", "Showing WiFi page (index 2)");
-                  break;
-                case 3:
-                  id(lily_display).show_page(weather_forecast_page);
-                  ESP_LOGD("page_rotation", "Showing Weather Forecast page (index 3)");
-                  break;
-                default:
-                  // Invalid page index - show clock
-                  id(lily_display).show_page(vertical_clock_page);
-                  ESP_LOGW("page_rotation", "Invalid page index %d, showing clock", current);
-                  break;
-              }
-
+              ESP_LOGD("page_rotation", "Page index changed to %d", current);
               return true;
           then:
-            - logger.log:
-                format: "Page displayed successfully"
-                level: DEBUG
+            # Page 0: vertical_clock_page
+            - if:
+                condition:
+                  lambda: 'return id(current_page_index) == 0;'
+                then:
+                  - logger.log: "Page rotation: Showing vertical_clock_page (index 0)"
+                  - lvgl.page.show:
+                      id: vertical_clock_page
+                      animation: OUT_LEFT
+                      time: 300ms
+                else:
+                  # Page 1: AirQ_page
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 1;'
+                      then:
+                        - logger.log: "Page rotation: Showing AirQ_page (index 1)"
+                        - lvgl.page.show:
+                            id: AirQ_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                  # Page 2: wifi_page
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 2;'
+                      then:
+                        - logger.log: "Page rotation: Showing wifi_page (index 2)"
+                        - lvgl.page.show:
+                            id: wifi_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                  # Page 3: weather_forecast_page
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 3;'
+                      then:
+                        - logger.log: "Page rotation: Showing weather_forecast_page (index 3)"
+                        - lvgl.page.show:
+                            id: weather_forecast_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                        # Unknown page - fall back to vertical clock
+                        - logger.log:
+                            format: "Page rotation: Page index %d not available, falling back to Vertical Clock"
+                            args: ['id(current_page_index)']
+                            level: WARN
+                        - lvgl.page.show:
+                            id: vertical_clock_page
+                            animation: OUT_LEFT
+                            time: 300ms
 
 # ============================================================================
 # TIME UPDATE SCRIPT - Override Core's basic time update
