@@ -129,6 +129,7 @@ script:
           data:
             type: daily
             entity_id: ${weather_entity_id}
+          return_response: true
           capture_response: true
           on_success:
             - lambda: |-
@@ -179,6 +180,7 @@ script:
           data:
             type: hourly
             entity_id: ${weather_entity_id}
+          return_response: true
           capture_response: true
           on_success:
             - lambda: |-
@@ -222,43 +224,19 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
 
-      # Fetch current weather condition
+      # Fetch current temperature and apparent temp using template
       - homeassistant.action:
-          action: homeassistant.get_state
+          action: template.render
           data:
-            entity_id: ${weather_entity_id}
-          capture_response: true
-          on_success:
-            - lambda: |-
-                ESP_LOGI("weather", "✓ Current weather response received");
-                
-                if (response.containsKey("state")) {
-                  id(weather_current_condition) = response["state"].as<std::string>();
-                  ESP_LOGD("weather", "Condition: %s", id(weather_current_condition).c_str());
-                }
-                
-                if (response.containsKey("attributes")) {
-                  auto attrs = response["attributes"];
-                  if (attrs.containsKey("humidity")) {
-                    id(weather_current_humidity) = attrs["humidity"].as<float>();
-                  }
-                }
-          on_error:
-            - lambda: |-
-                ESP_LOGE("weather", "✗ Current weather fetch FAILED");
-
-      # Fetch current temperature
-      - homeassistant.action:
-          action: homeassistant.get_state
-          data:
-            entity_id: ${current_temp_sensor}
+            template: "{{ states('${current_temp_sensor}') }}"
+          return_response: true
           capture_response: true
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Current temp response received");
-                
-                if (response.containsKey("state")) {
-                  float temp = response["state"].as<float>();
+                if (response.containsKey("result")) {
+                  std::string temp_str = response["result"].as<std::string>();
+                  float temp = atof(temp_str.c_str());
                   if (!isnan(temp)) {
                     id(weather_current_temp) = temp;
                     ESP_LOGD("weather", "Temp: %.1f°F", temp);
@@ -268,27 +246,44 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Current temp fetch FAILED");
 
-      # Fetch apparent temperature
       - homeassistant.action:
-          action: homeassistant.get_state
+          action: template.render
           data:
-            entity_id: ${apparent_temp_sensor}
+            template: "{{ states('${apparent_temp_sensor}') }}"
+          return_response: true
           capture_response: true
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Apparent temp response received");
-                
-                if (response.containsKey("state")) {
-                  float temp = response["state"].as<float>();
+                if (response.containsKey("result")) {
+                  std::string temp_str = response["result"].as<std::string>();
+                  float temp = atof(temp_str.c_str());
                   if (!isnan(temp)) {
                     id(weather_current_apparent_temp) = temp;
                     ESP_LOGD("weather", "Feels like: %.1f°F", temp);
                   }
                 }
-                
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Apparent temp fetch FAILED");
+
+      - homeassistant.action:
+          action: template.render
+          data:
+            template: "{{ states('${weather_entity_id}') }}"
+          return_response: true
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "✓ Current condition response received");
+                if (response.containsKey("result")) {
+                  id(weather_current_condition) = response["result"].as<std::string>();
+                  ESP_LOGD("weather", "Condition: %s", id(weather_current_condition).c_str());
+                }
+
                 // Update timestamp
                 id(weather_last_update) = millis();
-                
+
                 ESP_LOGI("weather", "✓ Weather data fetch complete!");
                 ESP_LOGI("weather", "Current: %.1f°F (feels like %.1f°F), %s",
                          id(weather_current_temp),
@@ -296,7 +291,7 @@ script:
                          id(weather_current_condition).c_str());
           on_error:
             - lambda: |-
-                ESP_LOGE("weather", "✗ Apparent temp fetch FAILED");
+                ESP_LOGE("weather", "✗ Current condition fetch FAILED");
 
       # Update the display after fetching data
       - script.execute: update_weather_display
