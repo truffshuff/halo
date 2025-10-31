@@ -70,14 +70,17 @@ substitutions:
   # ============================================================================
   # After changing feature toggles above, update lvgl_pages_combo below:
   #
-  # "clock-only":        No features enabled
-  # "airq-only":         AirQ only
-  # "wifi-only":         WiFi only
-  # "weather-only":      Weather only
-  # "airq-wifi":         AirQ + WiFi
-  # "airq-weather":      AirQ + Weather
-  # "wifi-weather":      WiFi + Weather
-  # "airq-wifi-weather": AirQ + WiFi + Weather
+  # "clock-only":           No features enabled
+  # "airq-only":            AirQ only
+  # "wifi-only":            WiFi only
+  # "weather-only":         Weather only
+  # "wireguard-only":       WiFi + WireGuard (NO AirQ)
+  # "airq-wifi":            AirQ + WiFi
+  # "airq-weather":         AirQ + Weather
+  # "wifi-weather":         WiFi + Weather
+  # "airq-wifi-wireguard":  AirQ + WiFi + WireGuard
+  # "airq-wifi-weather":    AirQ + WiFi + Weather
+  # "airq-wifi-weather-wg": AirQ + WiFi + Weather + WireGuard
   #
   lvgl_pages_combo: "wifi-only"
 
@@ -95,11 +98,31 @@ packages:
   halo_v1_core: !include Halo-v1-Core.yaml
 
   # === TIME UPDATE SCRIPT ===
-  # Controlled by: airq_enabled substitution above
-  # When airq_enabled = "true":  use time-update-basic.yaml
-  # When airq_enabled = "false": use time-update-clock-only.yaml
-  time_update_script: !include packages/time-update-basic.yaml
+  # Choose based on your enabled features (see chart below)
+  # time-update-clock-only.yaml:       Clock-only mode (no AirQ, no WiFi, no Weather)
+  # time-update-wifi-only.yaml:        WiFi-only mode (WiFi + Clock, NO AirQ)
+  # time-update-basic.yaml:            AirQ mode (with optional Weather). Must have airq_enabled=true
+  # time-update-wireguard-only.yaml:   WiFi + WireGuard mode (no AirQ)
+  # time-update-wireguard.yaml:        WireGuard mode (requires AirQ + WiFi + WireGuard)
+  #
+  # CHART:
+  # Feature Combo                  | time_update package
+  # ============================== | ==========================
+  # Clock only                     | time-update-clock-only.yaml
+  # WiFi + Clock (your current)    | time-update-wifi-only.yaml ← USE THIS NOW
+  # AirQ + Clock                   | time-update-basic.yaml
+  # AirQ + WiFi                    | time-update-basic.yaml
+  # AirQ + Weather                 | time-update-basic.yaml
+  # WiFi + Weather                 | time-update-basic.yaml (or wifi-only if no AirQ)
+  # AirQ + WiFi + Weather          | time-update-basic.yaml
+  # WiFi + WireGuard (no AirQ)     | time-update-wireguard-only.yaml
+  # AirQ + WiFi + WireGuard        | time-update-wireguard.yaml
+  #
   # time_update_script: !include packages/time-update-clock-only.yaml
+  time_update_script: !include packages/time-update-wifi-only.yaml
+  # time_update_script: !include packages/time-update-basic.yaml
+  # time_update_script: !include packages/time-update-wireguard-only.yaml
+  # time_update_script: !include packages/time-update-wireguard.yaml
 
   # === FEATURE PACKAGES ===
   # Instructions:
@@ -145,10 +168,13 @@ packages:
   # lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
   lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-weather-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-wireguard-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-weather-forecast-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wifi-weather-forecast-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-wifi-weather-forecast.yaml
+  # lvgl_pages: !include packages/lvgl-pages-airq-wifi-wireguard.yaml
+  # lvgl_pages: !include packages/lvgl-pages-full-wireguard.yaml
 
 # ============================================================================
 # DEVICE-SPECIFIC CONFIGURATION

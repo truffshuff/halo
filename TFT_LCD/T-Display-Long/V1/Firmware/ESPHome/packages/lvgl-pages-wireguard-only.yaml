@@ -1,0 +1,91 @@
+# ============================================================================
+# LVGL Pages - WireGuard-Only Configuration
+# ============================================================================
+# This package defines LVGL pages for devices with WiFi + WireGuard VPN
+# (NO AirQ, NO Weather - just clock and VPN monitoring)
+#
+# Includes:
+#   - Vertical Clock page
+#   - WiFi + WireGuard page (combined, shows both WiFi and VPN status)
+#   - Page rotation handler (embedded, Clock + WiFi+VPN)
+#
+# Excludes:
+#   - AirQ page (use airq-stubs)
+#   - Weather pages (use weather-stubs)
+#   - BLE pages (use ble-stubs)
+#
+# Memory Impact: ~95KB total, ~115KB free
+# BLE Compatible: YES (WireGuard-only + BLE)
+#
+# Usage: WiFi + WireGuard (VPN) monitoring only
+# Requires:
+#   - wifi-core.yaml, wifi-display.yaml
+#   - wireguard.yaml, wireguard-display.yaml
+#   - time-update-wireguard-only.yaml (NOT time-update-wireguard.yaml!)
+# ============================================================================
+
+lvgl:
+  pages:
+    # Core pages - always available
+    - !include vertical-clock-display.yaml
+
+    # WiFi page WITH WireGuard support
+    - !include lvgl-wifi-wireguard-page.yaml
+
+# ============================================================================
+# PAGE ROTATION HANDLER - Embedded for Clock + WiFi + WireGuard configuration
+# ============================================================================
+# This handler supports: Clock and WiFi+WireGuard pages (NO AirQ)
+
+interval:
+  - interval: 100ms  # Check frequently for page index changes
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_displayed_index = -1;
+
+              // Don't do anything until boot is complete
+              if (!id(boot_complete)) return false;
+
+              // Check if page index has changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
+
+              // We have a page change - process it
+              last_displayed_index = current;
+
+              // Page mapping for Clock + WiFi + WireGuard:
+              // 0 = Vertical Clock
+              // 2 = WiFi + WireGuard page (index 1 is reserved for AirQ, we skip it)
+
+              switch(current) {
+                case 0:
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
+                  break;
+                case 2:
+                  id(lily_display).show_page(wifi_page);
+                  ESP_LOGD("page_rotation", "Showing WiFi + WireGuard page (index 2)");
+                  break;
+                default:
+                  // Invalid page index - show clock
+                  id(lily_display).show_page(vertical_clock_page);
+                  ESP_LOGW("page_rotation", "Invalid page index %d, showing clock", current);
+                  break;
+              }
+
+              return true;
+          then:
+            - logger.log:
+                format: "Page displayed successfully"
+                level: DEBUG
+
+# ============================================================================
+# TIME UPDATE SCRIPT - From time-update-wireguard-only.yaml
+# ============================================================================
+# The WireGuard package provides time_update script with SNTP/HA switching.
+# This version does NOT try to update AirQ timeVal widget (which doesn't exist).
+#
+# The time_update script is included from time-update-wireguard-only.yaml
+# which is designed specifically for WiFi + WireGuard only (NO AirQ).

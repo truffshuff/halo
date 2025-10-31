@@ -116,56 +116,16 @@ interval:
 # Supports automatic page rotation through all weather pages
 
 script:
-  - id: time_update
-    mode: restart
-    then:
-      - lambda: |-
-          // Get current time components
-          auto time = id(halo_time).now();
-
-          // Handle automatic page rotation
-          if (id(page_rotation_enabled)) {
-            uint32_t now = millis();
-            uint32_t elapsed = now - id(last_auto_rotation_time);
-            uint32_t rotation_interval = id(page_rotation_interval) * 1000;
-
-            if (elapsed >= rotation_interval) {
-              id(last_auto_rotation_time) = now;
-
-              // Build list of enabled pages
-              std::vector<int> enabled_pages;
-
-              // Clock is always available
-              enabled_pages.push_back(0);
-
-              // Weather Forecast page
-              if (id(page_rotation_weather_enabled)) {
-                enabled_pages.push_back(1);
-              }
-
-              // Daily Forecast pages (all 5 pages)
-              if (id(page_rotation_daily_forecast_enabled)) {
-                enabled_pages.push_back(2);
-                enabled_pages.push_back(3);
-                enabled_pages.push_back(4);
-                enabled_pages.push_back(5);
-                enabled_pages.push_back(6);
-              }
-
-              // Find current page and rotate to next
-              int current_idx = id(current_page_index);
-              int current_pos = -1;
-              for (size_t i = 0; i < enabled_pages.size(); i++) {
-                if (enabled_pages[i] == current_idx) {
-                  current_pos = i;
-                  break;
-                }
-              }
-
-              if (current_pos >= 0 && enabled_pages.size() > 1) {
-                int next_pos = (current_pos + 1) % enabled_pages.size();
-                id(current_page_index) = enabled_pages[next_pos];
-                ESP_LOGD("page_rotation", "Auto-rotating to page %d", id(current_page_index));
-              }
-            }
-          }
+# ============================================================================
+# NOTE: TIME UPDATE SCRIPT
+# ============================================================================
+# The time_update script is provided by the time-update-*.yaml package,
+# NOT by this file. This file only defines LVGL pages and page rotation handler.
+#
+# The time-update package handles:
+#   - Updating the vertical clock time display
+#   - Time format switching (12h/24h)
+#   - Clock colon blinking
+#   - SNTP/HA time source selection (for WireGuard configs)
+#
+# Page rotation (auto page switching) is handled by the interval above.
