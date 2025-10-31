@@ -91,25 +91,7 @@ switch:
       - wireguard.enable:
           id: wg0
       - logger.log: "WireGuard enabled"
-      # Force immediate display update when WireGuard is enabled
-      - if:
-          condition:
-            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
-          then:
-            - lambda: |-
-                id(wg_status_needs_render) = true;
-                id(wg_address_needs_render) = true;
-                id(wg_handshake_needs_render) = true;
     on_turn_off:
       - wireguard.disable:
           id: wg0
       - logger.log: "WireGuard disabled"
-      # Force immediate display update when WireGuard is disabled
-      - if:
-          condition:
-            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
-          then:
-            - lambda: |-
-                id(wg_status_needs_render) = true;
-                id(wg_address_needs_render) = true;
-                id(wg_handshake_needs_render) = true;
