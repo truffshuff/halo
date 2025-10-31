@@ -1,0 +1,5 @@
+# WireGuard Feature Disabled
+# This wrapper is included when wireguard_enabled: "false" in device config
+# It provides stubs to prevent compilation errors while disabling WireGuard
+
+wireguard_disabled_wrapper: !include wireguard-stubs.yaml

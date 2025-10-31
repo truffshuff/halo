@@ -1,0 +1,5 @@
+# AirQ Feature Enabled
+# This wrapper is included when airq_enabled: "true" in device config
+# It includes the full AirQ core package with all sensors and features
+
+airq_enabled_wrapper: !include airq-core.yaml
