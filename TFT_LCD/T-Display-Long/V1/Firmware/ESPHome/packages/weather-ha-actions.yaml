@@ -126,13 +126,17 @@ script:
       # Fetch daily forecast
       - homeassistant.action:
           action: weather.get_forecasts
-          data:
-            type: daily
-            entity_id: ${weather_entity_id}
-          return_response: true
           capture_response: true
+          data:
+            entity_id: ${weather_entity_id}
+            type: daily
+          
           on_success:
             - lambda: |-
+                std::string output;
+                serializeJsonPretty(response, output);
+                ESP_LOGI("weather", "Forecast JSON:\n%s", output.c_str());
+
                 ESP_LOGI("weather", "✓ Daily forecast response received");
                 
                 // Access the forecast data - response is already the root object
@@ -177,13 +181,16 @@ script:
       # Fetch hourly forecast
       - homeassistant.action:
           action: weather.get_forecasts
-          data:
-            type: hourly
-            entity_id: ${weather_entity_id}
-          return_response: true
           capture_response: true
+          data:
+            entity_id: ${weather_entity_id}
+            type: hourly
           on_success:
             - lambda: |-
+                std::string output;
+                serializeJsonPretty(response, output);
+                ESP_LOGI("weather", "Forecast JSON:\n%s", output.c_str());
+    
                 ESP_LOGI("weather", "✓ Hourly forecast response received");
                 
                 if (response.containsKey("${weather_entity_id}")) {
@@ -229,7 +236,6 @@ script:
           action: template.render
           data:
             template: "{{ states('${current_temp_sensor}') }}"
-          return_response: true
           capture_response: true
           on_success:
             - lambda: |-
@@ -250,7 +256,6 @@ script:
           action: template.render
           data:
             template: "{{ states('${apparent_temp_sensor}') }}"
-          return_response: true
           capture_response: true
           on_success:
             - lambda: |-
@@ -271,7 +276,6 @@ script:
           action: template.render
           data:
             template: "{{ states('${weather_entity_id}') }}"
-          return_response: true
           capture_response: true
           on_success:
             - lambda: |-
@@ -369,6 +373,62 @@ button:
     id: btn_refresh_weather
     on_press:
       - script.execute: fetch_weather_data
+
+  - platform: template
+    name: "Test Weather Call"
+    on_press:
+      - homeassistant.action:
+          action: weather.get_forecasts
+          capture_response: true
+          data:
+            entity_id: weather.hhut
+            type: daily
+          on_success:
+            - lambda: |-
+                ESP_LOGI("test", "Weather response:");
+                std::string output;
+                serializeJsonPretty(response, output);
+                ESP_LOGI("weather", "%s", output.c_str()); 
+          on_error:
+            - logger.log: "Failed to call weather.get_forecasts!"
+
+  - platform: template
+    name: "Test example from ESPHome"
+    on_press:
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            entity_id: weather.hhut
+            type: hourly
+          capture_response: true
+          response_template: "{{ response['weather.hhut']['forecast'][0]['temperature'] }}"
+          on_success:
+            - lambda: |-
+                float temperature = response["response"].as<float>();
+                ESP_LOGI("weather", "Temperature next hour: %.1f", temperature);
+
+  - platform: template
+    name: "Test Weather Forecast"
+    on_press:
+      - homeassistant.action:
+          action: template.render
+          capture_response: true
+          data:
+            # Pulls the full forecast attribute from your weather entity
+            template: >
+              {{ state_attr('weather.hhut', 'forecast') | tojson }}
+          on_success:
+            - lambda: |-
+                if (response.containsKey("result")) {
+                  // Pretty-print the forecast JSON to logs
+                  std::string forecast_json = response["result"].as<std::string>();
+                  ESP_LOGI("weather", "Forecast attribute JSON:\n%s", forecast_json.c_str());
+                } else {
+                  ESP_LOGW("weather", "No result key in forecast response!");
+                }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "❌ Forecast fetch FAILED!");
 
 # ============================================================================
 # INTERVAL - Auto-refresh while on weather page
