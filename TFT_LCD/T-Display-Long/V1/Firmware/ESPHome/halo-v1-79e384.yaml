@@ -150,7 +150,7 @@ packages:
   # Weather Display
   weather_core: !include packages/weather-core.yaml
   weather_ha_actions: !include packages/weather-ha-actions.yaml
-  weather_fonts: !include packages/weather-fonts-text.yaml
+  weather_fonts: !include packages/weather-fonts-only.yaml
   # weather: !include packages/weather-stubs.yaml
 
   # WireGuard VPN (requires wifi_enabled = true)
