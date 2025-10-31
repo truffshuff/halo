@@ -1,13 +1,17 @@
 # ============================================================================
-# Halo V1 - Manual Configuration for HA Dashboard
+# Halo V1 - Dynamic Configuration with Substitutions
 # ============================================================================
-# This version is for Home Assistant ESPHome Dashboard compilation.
-# Unlike the CLI version, HA dashboard doesn't support Jinja2 in !include paths.
-# You must manually comment/uncomment packages based on desired features.
+# ✨ SIMPLIFIED FEATURE CONTROL - No more commenting/uncommenting!
 #
-# ✅ BLE + WEATHER NOW POSSIBLE!
-#   Old: BLE (60KB) + Weather sensors (75KB) = Too tight!
-#   New: BLE (60KB) + HA Actions (3KB) = Plenty of room!
+# All features are now controlled via substitutions at the top:
+#   1. Edit feature toggles (airq_enabled, ble_enabled, etc.)
+#      Change "true" ↔ "false" to enable/disable
+#   2. Update lvgl_pages_combo to match your configuration
+#   3. All package includes update automatically!
+#
+# ✅ MEMORY OPTIMIZED
+#   BLE (60KB) + Weather (3KB) now coexist!
+#   Each feature can be independently enabled/disabled
 # ============================================================================
 
 substitutions:
@@ -31,84 +35,91 @@ substitutions:
   api_encryption_key: "mLKXHYyBZgGLfMiXyWoo3Fzc/TpqbKpk0g+uYAwErMs="
   ota_password: "halo79e384"
 
+  # ============================================================================
+  # FEATURE TOGGLES - Control which features are enabled
+  # ============================================================================
+  # Edit ONLY these feature toggles to enable/disable features:
+  # Change "enabled" ↔ "disabled" for each feature
+  # Then update lvgl_pages_combo below to match your configuration
+  # Everything else updates automatically!
+
+  # Air Quality Monitoring (AirQ)
+  airq_enabled: "true"          # "true" or "false"
+
+  # BLE Presence Detection
+  ble_enabled: "false"          # "true" or "false"
+
+  # WiFi Info Display
+  wifi_enabled: "false"         # "true" or "false"
+
+  # Weather Display
+  weather_enabled: "false"      # "true" or "false"
+
+  # WireGuard VPN (requires wifi_enabled above)
+  wireguard_enabled: "false"    # "true" or "false"
+
+  # ============================================================================
+  # LVGL PAGES - Must match your feature configuration above!
+  # ============================================================================
+  # After changing feature toggles above, update lvgl_pages_combo below:
+  #
+  # "clock-only":        No features enabled
+  # "airq-only":         AirQ only
+  # "wifi-only":         WiFi only
+  # "weather-only":      Weather only
+  # "airq-wifi":         AirQ + WiFi
+  # "airq-weather":      AirQ + Weather
+  # "wifi-weather":      WiFi + Weather
+  # "airq-wifi-weather": AirQ + WiFi + Weather
+  #
+  lvgl_pages_combo: "airq-only"
+
 # ============================================================================
-# PACKAGE IMPORTS - MANUAL SELECTION
+# PACKAGE IMPORTS - Controlled by SUBSTITUTIONS Above
 # ============================================================================
-# Uncomment the packages you want to enable for this device.
-# Make sure to also select the matching LVGL pages package at the bottom!
+# To change features, edit the substitutions section at the top:
+#   1. Change feature toggles (airq_feature, ble_feature, etc.)
+#   2. Change lvgl_pages_combo to match your feature combination
+#   3. All package includes will update automatically!
 # ============================================================================
 
 packages:
   # === CORE PACKAGES (Always Required) ===
   halo_v1_core: !include Halo-v1-Core.yaml
 
-  # === TIME UPDATE SCRIPT (Choose based on AirQ) ===
-  # If AirQ is DISABLED, use clock-only version:
-  # time_update_script: !include packages/time-update-clock-only.yaml
-  # If AirQ is ENABLED, use full version:
-  time_update_script: !include packages/time-update-basic.yaml
+  # === TIME UPDATE SCRIPT ===
+  # Automatically selected based on airq_enabled above:
+  # airq_enabled: "true"  → Uses time-update-basic.yaml
+  # airq_enabled: "false" → Uses time-update-clock-only.yaml
+  time_update_script: !include packages/time-update-${airq_enabled}.yaml
 
-  # === FEATURE PACKAGES (Choose one from each section) ===
+  # === FEATURE PACKAGES ===
+  # Edit the feature toggles at the top (substitutions section)
+  # Change "true" ↔ "false" to enable/disable features
+  # These package names use substitutions to automatically load the correct file
 
-  # --- Air Quality Monitoring ---
-  # Uncomment ONE of these:
-  airq_enabled: !include packages/airq-core.yaml          # Enable AirQ sensors and display
-  # airq_disabled: !include packages/airq-stubs.yaml          # Disable AirQ (saves ~20KB)
+  # Air Quality Monitoring (AirQ)
+  airq: !include packages/airq-${airq_enabled}.yaml
 
-  # --- BLE Presence Detection ---
-  # Uncomment ONE of these:
-  # ble_enabled: !include packages/ble-core-simplified.yaml  # Enable BLE tracking (uses 60KB!)
-  ble_disabled: !include packages/ble-stubs.yaml            # Disable BLE (saves 60KB)
+  # BLE Presence Detection
+  ble: !include packages/ble-${ble_enabled}.yaml
 
-  # --- WiFi Info Display ---
-  # Uncomment ONE of these:
-  # wifi_enabled: !include packages/wifi-display.yaml        # Show WiFi connection info
-  wifi_disabled: !include packages/wifi-stubs.yaml          # Hide WiFi info (saves ~5KB)
+  # WiFi Info Display
+  wifi: !include packages/wifi-${wifi_enabled}.yaml
 
-  # --- Weather Display ---
-  # Uncomment ONE of these:
-  # weather_enabled: !include packages/weather-ha-actions.yaml  # Enable weather via HA Actions (3KB!)
-  weather_disabled: !include packages/weather-stubs.yaml         # Disable weather (saves 3KB)
+  # Weather Display
+  weather: !include packages/weather-${weather_enabled}.yaml
 
-  # --- WireGuard VPN ---
-  # Uncomment ONE of these (requires wifi_enabled above):
-  # wireguard_enabled: !include packages/wireguard.yaml      # Enable WireGuard VPN display
-  wireguard_disabled: !include packages/wireguard-stubs.yaml  # Disable WireGuard
+  # WireGuard VPN (requires wifi_enabled = true)
+  wireguard: !include packages/wireguard-${wireguard_enabled}.yaml
 
-  # --- Memory Statistics (Optional - for debugging) ---
-  memory_stats: !include packages/memory-stats.yaml           # Enable memory monitoring
+  # Memory Statistics (Optional - for debugging)
+  memory_stats: !include packages/memory-stats.yaml
 
-  # === LVGL PAGES (Choose ONE based on enabled features above) ===
-  #
-  # IMPORTANT: Must match your enabled features!
-  # Choose the pages file that matches your feature combination:
-  #
-  # No features enabled:
-  # lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
-  #
-  # AirQ only:
-  lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
-  #
-  # WiFi only:
-  # lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
-  #
-  # WiFi + WireGuard:
-  # lvgl_pages: !include packages/lvgl-pages-wifi-wireguard.yaml
-  #
-  # AirQ + WiFi:
-  # lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
-  #
-  # Weather only (BLE compatible!):
-  # lvgl_pages: !include packages/lvgl-pages-weather-forecast-only.yaml
-  #
-  # AirQ + Weather:
-  # lvgl_pages: !include packages/lvgl-pages-airq-weather-forecast-only.yaml
-  #
-  # WiFi + Weather:
-  # lvgl_pages: !include packages/lvgl-pages-wifi-weather-forecast-only.yaml
-  #
-  # AirQ + WiFi + Weather:
-  # lvgl_pages: !include packages/lvgl-pages-airq-wifi-weather-forecast.yaml
+  # === LVGL PAGES ===
+  # Controlled by: lvgl_pages_combo substitution above (line 71)
+  # IMPORTANT: Update lvgl_pages_combo to match your feature configuration!
+  lvgl_pages: !include packages/lvgl-pages-${lvgl_pages_combo}.yaml
 
 # ============================================================================
 # DEVICE-SPECIFIC CONFIGURATION

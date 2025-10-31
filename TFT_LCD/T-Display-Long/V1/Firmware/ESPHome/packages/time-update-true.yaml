@@ -1,0 +1,5 @@
+# Time Update Script - AirQ Enabled
+# This wrapper is included when airq_enabled: "true" in device config
+# Uses the full time update script with AirQ sensor updates
+
+time_update_airq_enabled: !include time-update-basic.yaml

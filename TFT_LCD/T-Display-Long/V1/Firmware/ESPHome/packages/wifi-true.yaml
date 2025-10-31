@@ -1,0 +1,5 @@
+# WiFi Display Feature Enabled
+# This wrapper is included when wifi_enabled: "true" in device config
+# It includes the WiFi display package for showing connection info
+
+wifi_enabled_wrapper: !include wifi-display.yaml

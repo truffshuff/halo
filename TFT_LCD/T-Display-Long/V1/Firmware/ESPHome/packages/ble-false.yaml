@@ -1,0 +1,5 @@
+# BLE Feature Disabled
+# This wrapper is included when ble_enabled: "false" in device config
+# It provides stubs to prevent compilation errors while disabling BLE
+
+ble_disabled_wrapper: !include ble-stubs.yaml

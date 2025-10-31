@@ -1,0 +1,5 @@
+# BLE Feature Enabled
+# This wrapper is included when ble_enabled: "true" in device config
+# It includes the BLE core package for Bluetooth presence detection
+
+ble_enabled_wrapper: !include ble-core-simplified.yaml
