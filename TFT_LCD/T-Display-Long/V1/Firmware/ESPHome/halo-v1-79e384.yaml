@@ -52,7 +52,7 @@ packages:
 
   # --- Air Quality Monitoring ---
   # Uncomment ONE of these:
-  airq_enabled: !include packages/airq-display.yaml       # Enable AirQ sensors and display
+  airq_enabled: !include packages/airq-core.yaml          # Enable AirQ sensors and display
   # airq_disabled: !include packages/airq-stubs.yaml          # Disable AirQ (saves ~20KB)
 
   # --- BLE Presence Detection ---
