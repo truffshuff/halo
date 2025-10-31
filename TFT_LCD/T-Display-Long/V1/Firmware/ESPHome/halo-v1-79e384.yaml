@@ -27,7 +27,6 @@ substitutions:
   friendly_name: Halo Air Quality Monitor Dev
 
   # Core substitutions
-  version: "25.10.30.1828"
   device_description: ${name} - v${version}.
 
   # Weather configuration (if enabled below)
@@ -51,13 +50,13 @@ substitutions:
   # Everything else updates automatically!
 
   # Air Quality Monitoring (AirQ)
-  airq_enabled: "false"          # "true" or "false"
+  airq_enabled: "true"          # "true" or "false"
 
   # BLE Presence Detection
   ble_enabled: "false"          # "true" or "false"
 
   # WiFi Info Display
-  wifi_enabled: "true"         # "true" or "false"
+  wifi_enabled: "false"         # "true" or "false"
 
   # Weather Display
   weather_enabled: "false"      # "true" or "false"
@@ -82,7 +81,7 @@ substitutions:
   # "airq-wifi-weather":    AirQ + WiFi + Weather
   # "airq-wifi-weather-wg": AirQ + WiFi + Weather + WireGuard
   #
-  lvgl_pages_combo: "wifi-only"
+  lvgl_pages_combo: "airq-only"
 
 # ============================================================================
 # PACKAGE IMPORTS - Controlled by SUBSTITUTIONS Above
@@ -119,8 +118,8 @@ packages:
   # AirQ + WiFi + WireGuard        | time-update-wireguard.yaml
   #
   # time_update_script: !include packages/time-update-clock-only.yaml
-  time_update_script: !include packages/time-update-wifi-only.yaml
-  # time_update_script: !include packages/time-update-basic.yaml
+  # time_update_script: !include packages/time-update-wifi-only.yaml
+  time_update_script: !include packages/time-update-basic.yaml
   # time_update_script: !include packages/time-update-wireguard-only.yaml
   # time_update_script: !include packages/time-update-wireguard.yaml
 
@@ -134,17 +133,17 @@ packages:
   # When a feature is disabled: uncomment the "*-stubs.yaml" line
 
   # Air Quality Monitoring (AirQ)
-  # airq: !include packages/airq-core.yaml
-  airq: !include packages/airq-stubs.yaml
+  airq: !include packages/airq-core.yaml
+  # airq: !include packages/airq-stubs.yaml
 
   # BLE Presence Detection
   # ble: !include packages/ble-core-simplified.yaml
   ble: !include packages/ble-stubs.yaml
 
   # WiFi Info Display
-  wifi_core: !include packages/wifi-core.yaml
-  wifi_display: !include packages/wifi-display.yaml
-  # wifi: !include packages/wifi-stubs.yaml
+  # wifi_core: !include packages/wifi-core.yaml
+  # wifi_display: !include packages/wifi-display.yaml
+  wifi: !include packages/wifi-stubs.yaml
 
   # Weather Display
   # weather: !include packages/weather-ha-actions.yaml
@@ -164,9 +163,9 @@ packages:
   #   3. Comment out all other lvgl_pages lines
   #
   # IMPORTANT: Must match your feature configuration above!
-  # lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
+  lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
-  lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-weather-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wireguard-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
@@ -202,8 +201,8 @@ select:
     options:
       - "Vertical Clock"
       # Uncomment based on enabled features:
-      # - "AirQ"          # if airq_enabled
-      - "WiFi"          # if wifi_enabled
+      - "AirQ"          # if airq_enabled
+      # - "WiFi"          # if wifi_enabled
       # - "Weather"       # if weather_enabled
     initial_option: "Vertical Clock"
     restore_value: true

@@ -174,6 +174,29 @@ sensor:
     device_class: "aqi"
     state_class: "measurement"
     update_interval: never  # We'll update it manually
+    on_value:
+      then:
+        # Update LED effect when AQI changes if "AQI Color" effect is selected
+        - if:
+            condition:
+              lambda: 'return id(led_effect_select).state == "AQI Color";'
+            then:
+              - lambda: |-
+                  float aqi = x;
+                  if (std::isnan(aqi) || aqi <= 50) {
+                    auto call = id(rgb_light).turn_off();
+                    call.perform();
+                  } else {
+                    Color color;
+                    if (aqi <= 100) color = Color(255, 255, 0);       // yellow
+                    else if (aqi <= 150) color = Color(255, 165, 0);  // orange
+                    else if (aqi <= 200) color = Color(255, 0, 0);    // red
+                    else if (aqi <= 300) color = Color(128, 0, 128);  // purple
+                    else color = Color(128, 0, 0);                    // maroon
+                    auto call = id(rgb_light).turn_on();
+                    call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
+                    call.perform();
+                  }
 
   - platform: scd4x
     id: scd40
