@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.30.2110"
+  version: "25.10.30.2122"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -342,9 +342,8 @@ select:
       - "Fireworks"
       - "Strobe"
       - "Random Twinkle"
-      - "AQI Color"
-      # Note: "Weather Condition" and "Auto Context" removed from Core
-      # These should be added by weather-core.yaml if weather is enabled
+      # Note: "AQI Color" is added by airq-core.yaml if AirQ is enabled
+      # Note: "Weather Condition" and "Auto Context" are added by weather-core.yaml if weather is enabled
     initial_option: "None"
     restore_value: true
     optimistic: true

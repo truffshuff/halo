@@ -75,6 +75,9 @@ packages:
   # wireguard_enabled: !include packages/wireguard.yaml      # Enable WireGuard VPN display
   wireguard_disabled: !include packages/wireguard-stubs.yaml  # Disable WireGuard
 
+  # --- Memory Statistics (Optional - for debugging) ---
+  memory_stats: !include packages/memory-stats.yaml           # Enable memory monitoring
+
   # === LVGL PAGES (Choose ONE based on enabled features above) ===
   #
   # IMPORTANT: Must match your enabled features!

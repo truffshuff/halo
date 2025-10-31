@@ -12,10 +12,10 @@
 #   4. The firmware will compile without AirQ features
 #
 # IMPORTANT LIMITATIONS when AirQ is disabled:
-#   - LED Effects: Do NOT select "AQI Color" or "Auto Context" effects
-#     These depend on computed_halo_aqi sensor which won't exist
+#   - LED Effects: "AQI Color" should NOT appear in the LED Effect selector
+#     If it does appear, DO NOT select it - it requires the AirQ sensors
 #   - If selected, LEDs will remain off (safe fallback)
-#   - Recommended: Use "Rainbow Effect", "Color Wipe", or other effects
+#   - Recommended: Use "Rainbow Effect", "Color Wipe", or other effects instead
 #
 # Note: Similar pattern to weather-stubs.yaml for optional weather features
 # ============================================================================
