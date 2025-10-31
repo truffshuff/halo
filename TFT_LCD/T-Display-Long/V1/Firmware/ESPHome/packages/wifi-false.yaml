@@ -1,5 +1,0 @@
-# WiFi Display Feature Disabled
-# This wrapper is included when wifi_enabled: "false" in device config
-# It provides stubs to prevent compilation errors while disabling WiFi display
-
-wifi_disabled_wrapper: !include wifi-stubs.yaml

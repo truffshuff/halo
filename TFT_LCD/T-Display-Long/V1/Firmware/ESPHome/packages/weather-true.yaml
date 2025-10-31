@@ -1,5 +1,0 @@
-# Weather Feature Enabled
-# This wrapper is included when weather_enabled: "true" in device config
-# It includes the weather package with HA Actions support
-
-weather_enabled_wrapper: !include weather-ha-actions.yaml
