@@ -132,182 +132,182 @@ script:
           action: weather.get_forecasts
           data:
             type: daily
-          target:
             entity_id: ${weather_entity_id}
-          response_variable: daily_forecast
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "Processing daily forecast response...");
 
-      # Process daily forecast response
-      - lambda: |-
-          ESP_LOGI("weather", "Processing daily forecast response...");
+                // The response format is: { "weather.entity_id": { "forecast": [...] } }
+                auto response_data = response;
 
-          // The response format is: { "weather.entity_id": { "forecast": [...] } }
-          // We need to access: daily_forecast["${weather_entity_id}"]["forecast"]
+                if (response_data.count("${weather_entity_id}") > 0) {
+                  auto entity_data = response_data["${weather_entity_id}"];
 
-          if (daily_forecast.count("${weather_entity_id}") > 0) {
-            auto entity_data = daily_forecast["${weather_entity_id}"];
+                  if (entity_data.count("forecast") > 0) {
+                    auto forecast_array = entity_data["forecast"];
 
-            if (entity_data.count("forecast") > 0) {
-              auto forecast_array = entity_data["forecast"];
+                    int day_count = std::min((int)forecast_array.size(), 10);
+                    ESP_LOGI("weather", "Found %d days of forecast data", day_count);
 
-              int day_count = std::min((int)forecast_array.size(), 10);
-              ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+                    for (int i = 0; i < day_count; i++) {
+                      auto day = forecast_array[i];
 
-              for (int i = 0; i < day_count; i++) {
-                auto day = forecast_array[i];
+                      // Extract temperature high
+                      if (day.count("temperature") > 0) {
+                        id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                      }
 
-                // Extract temperature high
-                if (day.count("temperature") > 0) {
-                  id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                      // Extract temperature low
+                      if (day.count("templow") > 0) {
+                        id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                      }
+
+                      // Extract condition
+                      if (day.count("condition") > 0) {
+                        id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                      }
+
+                      // Extract precipitation probability
+                      if (day.count("precipitation_probability") > 0) {
+                        id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                      }
+                    }
+
+                    ESP_LOGI("weather", "✓ Daily forecast data stored");
+                  } else {
+                    ESP_LOGW("weather", "No 'forecast' key in response");
+                  }
+                } else {
+                  ESP_LOGW("weather", "Weather entity not found in response");
                 }
-
-                // Extract temperature low
-                if (day.count("templow") > 0) {
-                  id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
-                }
-
-                // Extract condition
-                if (day.count("condition") > 0) {
-                  id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
-                }
-
-                // Extract precipitation probability
-                if (day.count("precipitation_probability") > 0) {
-                  id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
-                }
-              }
-
-              ESP_LOGI("weather", "✓ Daily forecast data stored");
-            } else {
-              ESP_LOGW("weather", "No 'forecast' key in response");
-            }
-          } else {
-            ESP_LOGW("weather", "Weather entity not found in response");
-          }
 
       # Fetch hourly forecast
       - homeassistant.action:
           action: weather.get_forecasts
           data:
             type: hourly
-          target:
             entity_id: ${weather_entity_id}
-          response_variable: hourly_forecast
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "Processing hourly forecast response...");
 
-      # Process hourly forecast response
-      - lambda: |-
-          ESP_LOGI("weather", "Processing hourly forecast response...");
+                auto response_data = response;
 
-          if (hourly_forecast.count("${weather_entity_id}") > 0) {
-            auto entity_data = hourly_forecast["${weather_entity_id}"];
+                if (response_data.count("${weather_entity_id}") > 0) {
+                  auto entity_data = response_data["${weather_entity_id}"];
 
-            if (entity_data.count("forecast") > 0) {
-              auto forecast_array = entity_data["forecast"];
+                  if (entity_data.count("forecast") > 0) {
+                    auto forecast_array = entity_data["forecast"];
 
-              int hour_count = std::min((int)forecast_array.size(), 24);
-              ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+                    int hour_count = std::min((int)forecast_array.size(), 24);
+                    ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
 
-              for (int i = 0; i < hour_count; i++) {
-                auto hour = forecast_array[i];
+                    for (int i = 0; i < hour_count; i++) {
+                      auto hour = forecast_array[i];
 
-                // Extract temperature
-                if (hour.count("temperature") > 0) {
-                  id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                      // Extract temperature
+                      if (hour.count("temperature") > 0) {
+                        id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                      }
+
+                      // Extract apparent temperature
+                      if (hour.count("apparent_temperature") > 0) {
+                        id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                      }
+
+                      // Extract condition
+                      if (hour.count("condition") > 0) {
+                        id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                      }
+
+                      // Extract precipitation probability
+                      if (hour.count("precipitation_probability") > 0) {
+                        id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                      }
+                    }
+
+                    ESP_LOGI("weather", "✓ Hourly forecast data stored");
+                  }
                 }
-
-                // Extract apparent temperature
-                if (hour.count("apparent_temperature") > 0) {
-                  id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
-                }
-
-                // Extract condition
-                if (hour.count("condition") > 0) {
-                  id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
-                }
-
-                // Extract precipitation probability
-                if (hour.count("precipitation_probability") > 0) {
-                  id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
-                }
-              }
-
-              ESP_LOGI("weather", "✓ Hourly forecast data stored");
-            }
-          }
 
       # Fetch current weather condition from the weather entity state
       - homeassistant.action:
           action: homeassistant.get_state
           data:
             entity_id: ${weather_entity_id}
-          response_variable: current_weather
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "Processing current weather condition...");
 
-      # Process current weather condition
-      - lambda: |-
-          ESP_LOGI("weather", "Processing current weather condition...");
+                auto response_data = response;
 
-          if (current_weather.count("state") > 0) {
-            id(weather_current_condition) = current_weather["state"].as<std::string>();
-          }
+                if (response_data.count("state") > 0) {
+                  id(weather_current_condition) = response_data["state"].as<std::string>();
+                }
 
-          // Extract humidity from weather entity
-          if (current_weather.count("attributes") > 0) {
-            auto attrs = current_weather["attributes"];
-            if (attrs.count("humidity") > 0) {
-              id(weather_current_humidity) = attrs["humidity"].as<float>();
-            }
-          }
+                // Extract humidity from weather entity
+                if (response_data.count("attributes") > 0) {
+                  auto attrs = response_data["attributes"];
+                  if (attrs.count("humidity") > 0) {
+                    id(weather_current_humidity) = attrs["humidity"].as<float>();
+                  }
+                }
 
       # Fetch current temperature from sensor
       - homeassistant.action:
           action: homeassistant.get_state
           data:
             entity_id: ${current_temp_sensor}
-          response_variable: current_temp
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "Processing current temperature...");
 
-      # Process current temperature
-      - lambda: |-
-          ESP_LOGI("weather", "Processing current temperature...");
-          if (current_temp.count("state") > 0) {
-            std::string temp_str = current_temp["state"].as<std::string>();
-            try {
-              id(weather_current_temp) = std::stof(temp_str);
-            } catch (...) {
-              ESP_LOGW("weather", "Failed to parse current temperature");
-              id(weather_current_temp) = NAN;
-            }
-          }
+                auto response_data = response;
+
+                if (response_data.count("state") > 0) {
+                  std::string temp_str = response_data["state"].as<std::string>();
+                  try {
+                    id(weather_current_temp) = std::stof(temp_str);
+                  } catch (...) {
+                    ESP_LOGW("weather", "Failed to parse current temperature");
+                    id(weather_current_temp) = NAN;
+                  }
+                }
 
       # Fetch apparent temperature from sensor
       - homeassistant.action:
           action: homeassistant.get_state
           data:
             entity_id: ${apparent_temp_sensor}
-          response_variable: apparent_temp
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "Processing apparent temperature...");
 
-      # Process apparent temperature
-      - lambda: |-
-          ESP_LOGI("weather", "Processing apparent temperature...");
-          if (apparent_temp.count("state") > 0) {
-            std::string temp_str = apparent_temp["state"].as<std::string>();
-            try {
-              id(weather_current_apparent_temp) = std::stof(temp_str);
-            } catch (...) {
-              ESP_LOGW("weather", "Failed to parse apparent temperature");
-              id(weather_current_apparent_temp) = NAN;
-            }
-          }
+                auto response_data = response;
 
-          // Update timestamp
-          id(weather_last_update) = millis();
+                if (response_data.count("state") > 0) {
+                  std::string temp_str = response_data["state"].as<std::string>();
+                  try {
+                    id(weather_current_apparent_temp) = std::stof(temp_str);
+                  } catch (...) {
+                    ESP_LOGW("weather", "Failed to parse apparent temperature");
+                    id(weather_current_apparent_temp) = NAN;
+                  }
+                }
 
-          ESP_LOGI("weather", "✓ Weather data fetch complete!");
-          ESP_LOGI("weather", "Current: %.1f°F (feels like %.1f°F), %s",
-                   id(weather_current_temp),
-                   id(weather_current_apparent_temp),
-                   id(weather_current_condition).c_str());
+                // Update timestamp
+                id(weather_last_update) = millis();
 
-      # Update the display
-      - script.execute: update_weather_display
+                ESP_LOGI("weather", "✓ Weather data fetch complete!");
+                ESP_LOGI("weather", "Current: %.1f°F (feels like %.1f°F), %s",
+                         id(weather_current_temp),
+                         id(weather_current_apparent_temp),
+                         id(weather_current_condition).c_str());
 
   # Script to update LVGL display with fetched data
   - id: update_weather_display

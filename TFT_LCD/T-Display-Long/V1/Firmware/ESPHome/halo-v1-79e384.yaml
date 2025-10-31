@@ -119,9 +119,9 @@ packages:
   # WiFi + WireGuard (no AirQ)     | time-update-wireguard-only.yaml1
   # AirQ + WiFi + WireGuard        | time-update-wireguard.yaml1
   #
-  # time_update_script: !include packages/time-update-clock-only.yaml
+  time_update_script: !include packages/time-update-clock-only.yaml
   # time_update_script: !include packages/time-update-wifi-only.yaml
-  time_update_script: !include packages/time-update-basic.yaml
+  # time_update_script: !include packages/time-update-basic.yaml
   # time_update_script: !include packages/time-update-wireguard-only.yaml
   # time_update_script: !include packages/time-update-wireguard.yaml
 
@@ -148,7 +148,9 @@ packages:
   wifi: !include packages/wifi-stubs.yaml
 
   # Weather Display
-  weather: !include packages/weather-ha-actions.yaml
+  weather_core: !include packages/weather-core.yaml
+  weather_ha_actions: !include packages/weather-ha-actions.yaml
+  weather_fonts: !include packages/weather-fonts-text.yaml
   # weather: !include packages/weather-stubs.yaml
 
   # WireGuard VPN (requires wifi_enabled = true)
@@ -169,7 +171,7 @@ packages:
   # lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
-  lvgl_pages: !include packages/lvgl-pages-weather-only.yaml
+  lvgl_pages: !include packages/lvgl-pages-weather-forecast-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wireguard-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-weather-forecast-only.yaml
