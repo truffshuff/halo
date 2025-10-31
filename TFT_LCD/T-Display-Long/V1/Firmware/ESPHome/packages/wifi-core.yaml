@@ -51,6 +51,7 @@ switch:
       - lambda: 'id(page_rotation_wifi_enabled) = true;'
       - logger.log: "WiFi page enabled in rotation"
       # Force immediate display update when page rotation is enabled
+      # Note: WireGuard-specific flags removed - they're handled by wireguard-display.yaml
       - if:
           condition:
             lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
@@ -61,9 +62,6 @@ switch:
                 id(wifi_ssid_needs_render) = true;
                 id(wifi_ip_needs_render) = true;
                 id(ha_status_needs_render) = true;
-                id(wg_status_needs_render) = true;
-                id(wg_address_needs_render) = true;
-                id(wg_handshake_needs_render) = true;
     on_turn_off:
       - lambda: 'id(page_rotation_wifi_enabled) = false;'
       - logger.log: "WiFi page disabled in rotation"
