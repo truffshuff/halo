@@ -1,23 +1,27 @@
 # ============================================================================
-# LVGL Pages - WiFi Only Configuration (Config 3)
+# LVGL Pages - WireGuard-Only Configuration
 # ============================================================================
-# This package defines LVGL pages for devices with WiFi monitoring only
+# This package defines LVGL pages for devices with WiFi + WireGuard VPN
+# (NO AirQ, NO Weather - just clock and VPN monitoring)
 #
 # Includes:
 #   - Vertical Clock page
-#   - WiFi page (NO WireGuard)
-#   - Page rotation handler (embedded, Clock + WiFi)
+#   - WiFi + WireGuard page (combined, shows both WiFi and VPN status)
+#   - Page rotation handler (embedded, Clock + WiFi+VPN)
 #
 # Excludes:
 #   - AirQ page (use airq-stubs)
-#   - WireGuard status (use lvgl-pages-wifi-wireguard.yaml for WireGuard)
 #   - Weather pages (use weather-stubs)
 #   - BLE pages (use ble-stubs)
 #
-# Memory Impact: ~85KB total, ~125KB free
-# BLE Compatible: YES (Config 3 + BLE)
+# Memory Impact: ~95KB total, ~115KB free
+# BLE Compatible: YES (WireGuard-only + BLE)
 #
-# Usage: Config 3 - Clock + WiFi monitoring only
+# Usage: WiFi + WireGuard (VPN) monitoring only
+# Requires:
+#   - wifi-core.yaml, wifi-display.yaml
+#   - wireguard.yaml, wireguard-display.yaml
+#   - time-update-wireguard-only.yaml (NOT time-update-wireguard.yaml!)
 # ============================================================================
 
 lvgl:
@@ -25,13 +29,13 @@ lvgl:
     # Core pages - always available
     - !include vertical-clock-display.yaml
 
-    # WiFi page (without WireGuard support)
-    - !include lvgl-wifi-page.yaml
+    # WiFi page WITH WireGuard support
+    - !include lvgl-wifi-wireguard-page.yaml
 
 # ============================================================================
-# PAGE ROTATION HANDLER - Embedded for Clock + WiFi configuration
+# PAGE ROTATION HANDLER - Embedded for Clock + WiFi + WireGuard configuration
 # ============================================================================
-# This handler supports: Clock and WiFi pages only (no AirQ, no Weather)
+# This handler supports: Clock and WiFi+WireGuard pages (NO AirQ)
 
 interval:
   - interval: 100ms  # Check frequently for page index changes
@@ -51,18 +55,18 @@ interval:
               // We have a page change - process it
               last_displayed_index = current;
 
-              // Page mapping for Clock + WiFi:
+              // Page mapping for Clock + WiFi + WireGuard:
               // 0 = Vertical Clock
-              // 1 = WiFi page
+              // 2 = WiFi + WireGuard page (index 1 is reserved for AirQ, we skip it)
 
               switch(current) {
                 case 0:
                   id(lily_display).show_page(vertical_clock_page);
                   ESP_LOGD("page_rotation", "Showing Vertical Clock page (index 0)");
                   break;
-                case 1:
+                case 2:
                   id(lily_display).show_page(wifi_page);
-                  ESP_LOGD("page_rotation", "Showing WiFi page (index 1)");
+                  ESP_LOGD("page_rotation", "Showing WiFi + WireGuard page (index 2)");
                   break;
                 default:
                   // Invalid page index - show clock
@@ -78,15 +82,10 @@ interval:
                 level: DEBUG
 
 # ============================================================================
-# NOTE: TIME UPDATE SCRIPT
+# TIME UPDATE SCRIPT - From time-update-wireguard-only.yaml
 # ============================================================================
-# The time_update script is provided by the time-update-*.yaml package,
-# NOT by this file. This file only defines LVGL pages and page rotation handler.
+# The WireGuard package provides time_update script with SNTP/HA switching.
+# This version does NOT try to update AirQ timeVal widget (which doesn't exist).
 #
-# The time-update package (time-update-wifi-only.yaml for this config) handles:
-#   - Updating the vertical clock time display
-#   - Time format switching (12h/24h)
-#   - Clock colon blinking
-#   - SNTP/HA time source selection (for WireGuard configs)
-#
-# Page rotation (auto page switching) is handled by the interval below.
+# The time_update script is included from time-update-wireguard-only.yaml
+# which is designed specifically for WiFi + WireGuard only (NO AirQ).

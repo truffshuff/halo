@@ -1,18 +1,28 @@
-# Time Update Script - Basic Version (Home Assistant time only)
-# This package provides time display update scripts for devices WITHOUT WireGuard
+# ============================================================================
+# Time Update Script - WiFi-Only Version
+# ============================================================================
+# This package provides time update scripts for WiFi-Only configuration
+# (clock + WiFi, no AirQ, no weather, no WireGuard)
 #
 # Usage:
 #   packages:
-#     time_update: !include packages/time-update-basic.yaml
+#     time_update: !include packages/time-update-wifi-only.yaml
 #
 # This package provides:
-#   - time_update script that uses Home Assistant time only
+#   - time_update script that updates vertical clock page only
 #   - update_colon_widget script for clock colon blinking
-#   - Updates time displays on AirQ page and vertical clock page
+#   - No AirQ page time updates (timeVal)
+#   - No WireGuard mode switching
+#
+# Use this package when:
+#   - wifi_enabled: "true"
+#   - airq_enabled: "false"
+#   - weather_enabled: "false"
+#   - wireguard_enabled: "false"
 #
 # Dependencies:
 #   - Requires time component: ha_time
-#   - Requires LVGL widgets: timeVal, vclock_hours, vclock_minutes, vclock_ampm, vclock_date, vclock_day_top, vclock_colon
+#   - Requires LVGL widgets: vclock_hours, vclock_minutes, vclock_ampm, vclock_date, vclock_day_top, vclock_colon
 #   - Requires switch: time_format, colon_blink_enabled
 #   - Requires globals: time_update_last_started, time_update_needs_render, time_update_last_text, time_update_last_duration
 #   - Requires globals: colon_blink_state, current_page_index
@@ -46,15 +56,7 @@ script:
             id(time_update_last_text) = new_text;
             id(time_update_needs_render) = true;
           }
-      # AirQ page time update - commented out for wifi-only mode
-      # Uncomment when AirQ is enabled
-      # - if:
-      #     condition:
-      #       lambda: 'return id(time_update_needs_render) && id(current_page_index) == 1;'  # AirQ_page
-      #     then:
-      #       - lvgl.label.update:
-      #           id: timeVal
-      #           text: !lambda 'return id(time_update_last_text);'
+      # WiFi-only version: Only update vertical clock page (index 0)
       - if:
           condition:
             lambda: 'return id(time_update_needs_render) && id(current_page_index) == 0;'  # vertical_clock_page
@@ -110,8 +112,6 @@ script:
       - lambda: |-
           const uint32_t elapsed = millis() - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
-          // Removed publish_state to prevent TCP buffer overflow - store in global instead
-          // id(time_update_duration_sensor).publish_state(elapsed);
           const bool rendered = id(time_update_needs_render);
           if (elapsed > 40) {
             ESP_LOGW("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");

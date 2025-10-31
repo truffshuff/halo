@@ -40,6 +40,11 @@
 # NOTE: LVGL gradient (wifi_signal_gradient) is defined in the WiFi page files
 # (lvgl-wifi-page.yaml and lvgl-wifi-wireguard-page.yaml), not here.
 # This package only provides the display update logic.
+#
+# IMPORTANT: This package has been modified to work in both wifi-only and airq+wifi modes:
+#   - wifi-only mode (airq_enabled=false): AirQ page doesn't exist, so ym_image controls are commented out
+#   - airq+wifi mode (airq_enabled=true): Uncomment the ym_image sections below to show/hide
+#     the WiFi logo on the AirQ page header
 
 # Global variables for WiFi display state tracking (WiFi page only)
 globals:
