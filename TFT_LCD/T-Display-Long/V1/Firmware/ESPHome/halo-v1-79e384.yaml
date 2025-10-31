@@ -23,8 +23,8 @@
 
 substitutions:
   # Device Identity
-  name: "halo-v1-79e384"
-  friendly_name: "Halo Air Quality Monitor Dev"
+  name: halo-v1-79e384
+  friendly_name: Halo Air Quality Monitor Dev
 
   # Core substitutions
   version: "25.10.30.1828"
