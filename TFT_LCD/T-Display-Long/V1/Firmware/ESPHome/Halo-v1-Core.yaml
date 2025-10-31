@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.10.30.2109"
+  version: "25.10.30.2110"
   device_description: ${name} - v${version}.
 
 # ============================================================================
