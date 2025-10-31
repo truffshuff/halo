@@ -1,17 +1,24 @@
 # ============================================================================
-# Halo V1 - Dynamic Configuration with Substitutions
+# Halo V1 - Substitution-Based Configuration
 # ============================================================================
-# ✨ SIMPLIFIED FEATURE CONTROL - No more commenting/uncommenting!
+# FEATURE TOGGLES AT THE TOP (Lines 43-71)
 #
-# All features are now controlled via substitutions at the top:
-#   1. Edit feature toggles (airq_enabled, ble_enabled, etc.)
-#      Change "true" ↔ "false" to enable/disable
-#   2. Update lvgl_pages_combo to match your configuration
-#   3. All package includes update automatically!
+# Step 1: Edit substitutions to document your desired features
+#   - airq_enabled: "true" or "false"
+#   - ble_enabled: "true" or "false"
+#   - wifi_enabled: "true" or "false"
+#   - weather_enabled: "true" or "false"
+#   - wireguard_enabled: "true" or "false"
+#   - lvgl_pages_combo: match your feature combination
 #
-# ✅ MEMORY OPTIMIZED
-#   BLE (60KB) + Weather (3KB) now coexist!
-#   Each feature can be independently enabled/disabled
+# Step 2: Edit packages section (Lines 90-143)
+#   - Uncomment/comment package includes to match substitutions above
+#   - All enabled features should have their -core/.yaml includes uncommented
+#   - All disabled features should have their -stubs.yaml includes uncommented
+#
+# ✅ ORGANIZED & CLEAR
+#   All feature selections in one place (substitutions at top)
+#   Package includes kept synchronized with clear comments
 # ============================================================================
 
 substitutions:
@@ -88,38 +95,59 @@ packages:
   halo_v1_core: !include Halo-v1-Core.yaml
 
   # === TIME UPDATE SCRIPT ===
-  # Automatically selected based on airq_enabled above:
-  # airq_enabled: "true"  → Uses time-update-basic.yaml
-  # airq_enabled: "false" → Uses time-update-clock-only.yaml
-  time_update_script: !include packages/time-update-${airq_enabled}.yaml
+  # Controlled by: airq_enabled substitution above
+  # When airq_enabled = "true":  use time-update-basic.yaml
+  # When airq_enabled = "false": use time-update-clock-only.yaml
+  time_update_script: !include packages/time-update-basic.yaml
+  # time_update_script: !include packages/time-update-clock-only.yaml
 
   # === FEATURE PACKAGES ===
-  # Edit the feature toggles at the top (substitutions section)
-  # Change "true" ↔ "false" to enable/disable features
-  # These package names use substitutions to automatically load the correct file
+  # Instructions:
+  #   1. Change "true"/"false" in substitutions above (lines 43-55)
+  #   2. Uncomment/comment the matching includes below
+  #   3. Update lvgl_pages_combo to match your configuration
+  #
+  # When a feature is enabled: uncomment the "*-core.yaml" or "*-display.yaml" line
+  # When a feature is disabled: uncomment the "*-stubs.yaml" line
 
   # Air Quality Monitoring (AirQ)
-  airq: !include packages/airq-${airq_enabled}.yaml
+  airq: !include packages/airq-core.yaml
+  # airq: !include packages/airq-stubs.yaml
 
   # BLE Presence Detection
-  ble: !include packages/ble-${ble_enabled}.yaml
+  # ble: !include packages/ble-core-simplified.yaml
+  ble: !include packages/ble-stubs.yaml
 
   # WiFi Info Display
-  wifi: !include packages/wifi-${wifi_enabled}.yaml
+  # wifi: !include packages/wifi-display.yaml
+  wifi: !include packages/wifi-stubs.yaml
 
   # Weather Display
-  weather: !include packages/weather-${weather_enabled}.yaml
+  # weather: !include packages/weather-ha-actions.yaml
+  weather: !include packages/weather-stubs.yaml
 
   # WireGuard VPN (requires wifi_enabled = true)
-  wireguard: !include packages/wireguard-${wireguard_enabled}.yaml
+  # wireguard: !include packages/wireguard.yaml
+  wireguard: !include packages/wireguard-stubs.yaml
 
   # Memory Statistics (Optional - for debugging)
   memory_stats: !include packages/memory-stats.yaml
 
   # === LVGL PAGES ===
-  # Controlled by: lvgl_pages_combo substitution above (line 71)
-  # IMPORTANT: Update lvgl_pages_combo to match your feature configuration!
-  lvgl_pages: !include packages/lvgl-pages-${lvgl_pages_combo}.yaml
+  # Instructions:
+  #   1. Update lvgl_pages_combo substitution above (line 71) to match features
+  #   2. Uncomment the matching lvgl-pages-*.yaml line below
+  #   3. Comment out all other lvgl_pages lines
+  #
+  # IMPORTANT: Must match your feature configuration above!
+  lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-weather-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-airq-wifi.yaml
+  # lvgl_pages: !include packages/lvgl-pages-airq-weather-forecast-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-wifi-weather-forecast-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-airq-wifi-weather-forecast.yaml
 
 # ============================================================================
 # DEVICE-SPECIFIC CONFIGURATION

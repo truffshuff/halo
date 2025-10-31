@@ -1,34 +1,34 @@
-# Halo V1 Configuration Guide - Dynamic Substitutions
+# Halo V1 Configuration Guide - Substitution-Based Configuration
 
 ## Quick Start
 
-All features are now controlled via **substitutions** at the top of `halo-v1-79e384.yaml`. No more commenting/uncommenting!
+Features are controlled via **substitutions** at the top of `halo-v1-79e384.yaml`, with package includes organized clearly in the packages section.
 
-### Step 1: Edit Feature Toggles
+### Step 1: Edit Feature Toggles (Substitutions)
 
-Open `halo-v1-79e384.yaml` and find the substitutions section (around line 42-55). Change features from `"true"` to `"false"` or vice versa:
+Open `halo-v1-79e384.yaml` and find the substitutions section (lines 42-71). Set each feature to `"true"` or `"false"`:
 
 ```yaml
 substitutions:
   # Air Quality Monitoring (AirQ)
-  airq_enabled: "true"          # ← Change this
+  airq_enabled: "true"          # ← Set to "true" or "false"
 
   # BLE Presence Detection
-  ble_enabled: "false"          # ← Or this
+  ble_enabled: "false"          # ← Set to "true" or "false"
 
   # WiFi Info Display
-  wifi_enabled: "false"         # ← Or this
+  wifi_enabled: "false"         # ← Set to "true" or "false"
 
   # Weather Display
-  weather_enabled: "false"      # ← Or this
+  weather_enabled: "false"      # ← Set to "true" or "false"
 
   # WireGuard VPN (requires wifi_enabled = true)
-  wireguard_enabled: "false"    # ← Or this
+  wireguard_enabled: "false"    # ← Set to "true" or "false"
 ```
 
-### Step 2: Update LVGL Pages
+### Step 2: Update LVGL Pages Combo
 
-After changing features, update `lvgl_pages_combo` to match your configuration:
+Still in substitutions, set `lvgl_pages_combo` to match your feature configuration:
 
 ```yaml
 # "clock-only":        No features enabled
@@ -40,36 +40,40 @@ After changing features, update `lvgl_pages_combo` to match your configuration:
 # "wifi-weather":      WiFi + Weather
 # "airq-wifi-weather": AirQ + WiFi + Weather
 
-lvgl_pages_combo: "airq-only"  # ← Change to match above
+lvgl_pages_combo: "airq-only"  # ← Match your features above
 ```
 
-### Step 3: Done!
+### Step 3: Synchronize Packages Section
 
-Everything else happens automatically. The correct packages are included based on your feature toggles.
+Scroll down to the packages section (lines 90-143) and uncomment/comment includes to match your substitutions:
 
-## How It Works
+**For each enabled feature:** Uncomment the `-core.yaml` or `-display.yaml` line and comment the `-stubs.yaml` line
+**For each disabled feature:** Comment the `-core.yaml` or `-display.yaml` line and uncomment the `-stubs.yaml` line
 
-### Feature Toggles → Package Selection
+Example for AirQ enabled, BLE disabled:
+```yaml
+# Air Quality Monitoring (AirQ)
+airq: !include packages/airq-core.yaml         # ← UNCOMMENTED
+# airq: !include packages/airq-stubs.yaml
 
-Each feature toggle controls which package is loaded:
+# BLE Presence Detection
+# ble: !include packages/ble-core-simplified.yaml
+ble: !include packages/ble-stubs.yaml          # ← UNCOMMENTED
+```
 
-| Feature | `"true"` Package | `"false"` Package |
-|---------|---|---|
-| `airq_enabled` | `airq-core.yaml` | `airq-stubs.yaml` |
-| `ble_enabled` | `ble-core-simplified.yaml` | `ble-stubs.yaml` |
-| `wifi_enabled` | `wifi-display.yaml` | `wifi-stubs.yaml` |
-| `weather_enabled` | `weather-ha-actions.yaml` | `weather-stubs.yaml` |
-| `wireguard_enabled` | `wireguard.yaml` | `wireguard-stubs.yaml` |
+### Step 4: Update LVGL Pages Line
 
-### Automatic Package Resolution
+Still in packages section, uncomment the LVGL pages line matching your `lvgl_pages_combo` and comment others:
 
-The config uses wrapper files to handle this. For example:
-- When `airq_enabled: "true"`, ESPHome includes `airq-true.yaml`
-- `airq-true.yaml` includes the actual `airq-core.yaml`
-- When `airq_enabled: "false"`, ESPHome includes `airq-false.yaml`
-- `airq-false.yaml` includes the actual `airq-stubs.yaml`
+```yaml
+lvgl_pages: !include packages/lvgl-pages-airq-only.yaml     # ← UNCOMMENTED
+# lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
+# lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
+```
 
-This is transparent to you - just change the substitution!
+### Step 5: Compile!
+
+Done! Compile in ESPHome Dashboard.
 
 ## Examples
 

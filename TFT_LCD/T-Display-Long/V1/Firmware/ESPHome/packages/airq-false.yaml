@@ -1,5 +1,0 @@
-# AirQ Feature Disabled
-# This wrapper is included when airq_enabled: "false" in device config
-# It provides stubs to prevent compilation errors while disabling AirQ
-
-airq_disabled_wrapper: !include airq-stubs.yaml

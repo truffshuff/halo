@@ -1,5 +1,0 @@
-# WireGuard Feature Enabled
-# This wrapper is included when wireguard_enabled: "true" in device config
-# It includes the WireGuard package for VPN monitoring
-
-wireguard_enabled_wrapper: !include wireguard.yaml

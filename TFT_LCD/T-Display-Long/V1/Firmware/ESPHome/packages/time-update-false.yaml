@@ -1,5 +1,0 @@
-# Time Update Script - AirQ Disabled
-# This wrapper is included when airq_enabled: "false" in device config
-# Uses the clock-only time update script (lighter weight)
-
-time_update_airq_disabled: !include time-update-clock-only.yaml
