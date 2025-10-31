@@ -36,16 +36,12 @@
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-substitutions:
-  # Your Home Assistant weather entity ID (for forecasts)
-  weather_entity_id: "weather.home"
-
-  # Your actual sensor entities for current conditions
-  current_temp_sensor: "sensor.outdoor_temperature"
-  apparent_temp_sensor: "sensor.feels_like_temperature"
-
-  # Auto-refresh interval while on weather page (seconds)
-  weather_refresh_interval: "300"  # 5 minutes
+# NOTE: Entity IDs are defined in your device YAML file (e.g., halo-v1-79e384.yaml)
+# Required substitutions:
+#   - weather_entity_id: Your Home Assistant weather entity (e.g., "weather.hhut")
+#   - current_temp_sensor: Your temperature sensor (e.g., "sensor.hhut_temperature")
+#   - apparent_temp_sensor: Your feels-like sensor (e.g., "sensor.hhut_feels_like")
+#   - weather_refresh_interval: Auto-refresh interval in seconds (e.g., "900")
 
 # ============================================================================
 # GLOBALS - Lightweight storage for weather data
@@ -136,51 +132,46 @@ script:
           capture_response: true
           on_success:
             - lambda: |-
-                ESP_LOGI("weather", "Processing daily forecast response...");
-
-                // The response format is: { "weather.entity_id": { "forecast": [...] } }
-                auto response_data = response;
-
-                if (response_data.containsKey("${weather_entity_id}")) {
-                  auto entity_data = response_data["${weather_entity_id}"];
-
+                ESP_LOGI("weather", "✓ Daily forecast response received");
+                
+                // Access the forecast data - response is already the root object
+                if (response.containsKey("${weather_entity_id}")) {
+                  auto entity_data = response["${weather_entity_id}"];
+                  
                   if (entity_data.containsKey("forecast")) {
                     auto forecast_array = entity_data["forecast"];
-
                     int day_count = std::min((int)forecast_array.size(), 10);
                     ESP_LOGI("weather", "Found %d days of forecast data", day_count);
-
+                    
                     for (int i = 0; i < day_count; i++) {
                       auto day = forecast_array[i];
-
-                      // Extract temperature high
+                      
                       if (day.containsKey("temperature")) {
                         id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
                       }
-
-                      // Extract temperature low
+                      
                       if (day.containsKey("templow")) {
                         id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
                       }
-
-                      // Extract condition
+                      
                       if (day.containsKey("condition")) {
                         id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
                       }
-
-                      // Extract precipitation probability
+                      
                       if (day.containsKey("precipitation_probability")) {
                         id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
                       }
                     }
-
-                    ESP_LOGI("weather", "✓ Daily forecast data stored");
+                    ESP_LOGI("weather", "✓ Daily forecast stored");
                   } else {
-                    ESP_LOGW("weather", "No 'forecast' key in response");
+                    ESP_LOGW("weather", "No 'forecast' key in daily response");
                   }
                 } else {
-                  ESP_LOGW("weather", "Weather entity not found in response");
+                  ESP_LOGW("weather", "Entity '${weather_entity_id}' not found in daily response");
                 }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Daily forecast fetch FAILED");
 
       # Fetch hourly forecast
       - homeassistant.action:
@@ -191,48 +182,47 @@ script:
           capture_response: true
           on_success:
             - lambda: |-
-                ESP_LOGI("weather", "Processing hourly forecast response...");
-
-                auto response_data = response;
-
-                if (response_data.containsKey("${weather_entity_id}")) {
-                  auto entity_data = response_data["${weather_entity_id}"];
-
+                ESP_LOGI("weather", "✓ Hourly forecast response received");
+                
+                if (response.containsKey("${weather_entity_id}")) {
+                  auto entity_data = response["${weather_entity_id}"];
+                  
                   if (entity_data.containsKey("forecast")) {
                     auto forecast_array = entity_data["forecast"];
-
                     int hour_count = std::min((int)forecast_array.size(), 24);
                     ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
-
+                    
                     for (int i = 0; i < hour_count; i++) {
                       auto hour = forecast_array[i];
-
-                      // Extract temperature
+                      
                       if (hour.containsKey("temperature")) {
                         id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
                       }
-
-                      // Extract apparent temperature
+                      
                       if (hour.containsKey("apparent_temperature")) {
                         id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
                       }
-
-                      // Extract condition
+                      
                       if (hour.containsKey("condition")) {
                         id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
                       }
-
-                      // Extract precipitation probability
+                      
                       if (hour.containsKey("precipitation_probability")) {
                         id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
                       }
                     }
-
-                    ESP_LOGI("weather", "✓ Hourly forecast data stored");
+                    ESP_LOGI("weather", "✓ Hourly forecast stored");
+                  } else {
+                    ESP_LOGW("weather", "No 'forecast' key in hourly response");
                   }
+                } else {
+                  ESP_LOGW("weather", "Entity '${weather_entity_id}' not found in hourly response");
                 }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
 
-      # Fetch current weather condition from the weather entity state
+      # Fetch current weather condition
       - homeassistant.action:
           action: homeassistant.get_state
           data:
@@ -240,23 +230,24 @@ script:
           capture_response: true
           on_success:
             - lambda: |-
-                ESP_LOGI("weather", "Processing current weather condition...");
-
-                auto response_data = response;
-
-                if (response_data.containsKey("state")) {
-                  id(weather_current_condition) = response_data["state"].as<std::string>();
+                ESP_LOGI("weather", "✓ Current weather response received");
+                
+                if (response.containsKey("state")) {
+                  id(weather_current_condition) = response["state"].as<std::string>();
+                  ESP_LOGD("weather", "Condition: %s", id(weather_current_condition).c_str());
                 }
-
-                // Extract humidity from weather entity
-                if (response_data.containsKey("attributes")) {
-                  auto attrs = response_data["attributes"];
+                
+                if (response.containsKey("attributes")) {
+                  auto attrs = response["attributes"];
                   if (attrs.containsKey("humidity")) {
                     id(weather_current_humidity) = attrs["humidity"].as<float>();
                   }
                 }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Current weather fetch FAILED");
 
-      # Fetch current temperature from sensor
+      # Fetch current temperature
       - homeassistant.action:
           action: homeassistant.get_state
           data:
@@ -264,22 +255,20 @@ script:
           capture_response: true
           on_success:
             - lambda: |-
-                ESP_LOGI("weather", "Processing current temperature...");
-
-                auto response_data = response;
-
-                if (response_data.containsKey("state")) {
-                  // Try to parse as float directly
-                  float temp = response_data["state"].as<float>();
+                ESP_LOGI("weather", "✓ Current temp response received");
+                
+                if (response.containsKey("state")) {
+                  float temp = response["state"].as<float>();
                   if (!isnan(temp)) {
                     id(weather_current_temp) = temp;
-                  } else {
-                    ESP_LOGW("weather", "Failed to parse current temperature");
-                    id(weather_current_temp) = NAN;
+                    ESP_LOGD("weather", "Temp: %.1f°F", temp);
                   }
                 }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Current temp fetch FAILED");
 
-      # Fetch apparent temperature from sensor
+      # Fetch apparent temperature
       - homeassistant.action:
           action: homeassistant.get_state
           data:
@@ -287,64 +276,94 @@ script:
           capture_response: true
           on_success:
             - lambda: |-
-                ESP_LOGI("weather", "Processing apparent temperature...");
-
-                auto response_data = response;
-
-                if (response_data.containsKey("state")) {
-                  // Try to parse as float directly
-                  float temp = response_data["state"].as<float>();
+                ESP_LOGI("weather", "✓ Apparent temp response received");
+                
+                if (response.containsKey("state")) {
+                  float temp = response["state"].as<float>();
                   if (!isnan(temp)) {
                     id(weather_current_apparent_temp) = temp;
-                  } else {
-                    ESP_LOGW("weather", "Failed to parse apparent temperature");
-                    id(weather_current_apparent_temp) = NAN;
+                    ESP_LOGD("weather", "Feels like: %.1f°F", temp);
                   }
                 }
-
+                
                 // Update timestamp
                 id(weather_last_update) = millis();
-
+                
                 ESP_LOGI("weather", "✓ Weather data fetch complete!");
                 ESP_LOGI("weather", "Current: %.1f°F (feels like %.1f°F), %s",
                          id(weather_current_temp),
                          id(weather_current_apparent_temp),
                          id(weather_current_condition).c_str());
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Apparent temp fetch FAILED");
+
+      # Update the display after fetching data
+      - script.execute: update_weather_display
 
   # Script to update LVGL display with fetched data
   - id: update_weather_display
     mode: single
     then:
-      - lambda: |-
-          ESP_LOGI("weather", "Updating weather display...");
-
-          // Update current weather labels (if they exist)
-          // Note: These label IDs must match your weather-page-*.yaml files
-
-          // Current temperature
-          if (!isnan(id(weather_current_temp))) {
-            char temp_str[16];
-            snprintf(temp_str, sizeof(temp_str), "%.0f°F", id(weather_current_temp));
-            // id(lbl_weather_today_outdoor_temp).set_text(temp_str);
-          }
-
-          // Update forecast days (Day 1-10)
-          for (int i = 0; i < 10; i++) {
-            if (!isnan(id(weather_forecast_temp_high)[i])) {
-              // Update your forecast labels here
-              // Example: id(lbl_forecast_day1_high).set_text(...)
+      - lvgl.label.update:
+          id: lbl_weather_forecast_condition_name
+          text: !lambda |-
+            if (id(weather_current_condition).empty()) {
+              return std::string("Unknown");
             }
-          }
+            return id(weather_current_condition);
 
-          // Update hourly forecast (Hour 1-24)
-          for (int i = 0; i < 24; i++) {
-            if (!isnan(id(weather_hourly_temp)[i])) {
-              // Update your hourly labels here
-              // Example: id(lbl_hourly_temp_1).set_text(...)
+      - lvgl.label.update:
+          id: lbl_weather_today_outdoor_temp
+          text: !lambda |-
+            if (isnan(id(weather_current_temp))) {
+              return std::string("--.- °F");
             }
-          }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
+            return std::string(buf);
 
-          ESP_LOGI("weather", "✓ Display updated");
+      - lvgl.label.update:
+          id: lbl_weather_today_tempap
+          text: !lambda |-
+            if (isnan(id(weather_current_apparent_temp))) {
+              return std::string("--°");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
+            return std::string(buf);
+
+      - lvgl.label.update:
+          id: lbl_weather_forecast_temphi
+          text: !lambda |-
+            if (isnan(id(weather_forecast_temp_high)[0])) {
+              return std::string("H: --°");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
+            return std::string(buf);
+
+      - lvgl.label.update:
+          id: lbl_weather_forecast_templo
+          text: !lambda |-
+            if (isnan(id(weather_forecast_temp_low)[0])) {
+              return std::string("L: --°");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
+            return std::string(buf);
+
+      - lvgl.label.update:
+          id: lbl_weather_today_dailyprecipprob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[0])) {
+              return std::string("Chance: --%");
+            }
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
+            return std::string(buf);
+
+      - logger.log: "✓ Weather display labels updated"
 
 # ============================================================================
 # BUTTONS - Manual refresh controls
@@ -367,49 +386,5 @@ interval:
           condition:
             lambda: 'return id(weather_on_weather_page);'
           then:
-            - logger.log: "Auto-refreshing weather (on weather page)..."
+            - logger.log: "Auto-refreshing weather data..."
             - script.execute: fetch_weather_data
-
-# ============================================================================
-# BOOT SEQUENCE
-# ============================================================================
-esphome:
-  on_boot:
-    - priority: -100
-      then:
-        # Fetch initial weather data after boot
-        - delay: 5s
-        - logger.log: "Initial weather data fetch..."
-        - script.execute: fetch_weather_data
-
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-# You can add these to your weather page YAML files to track when user
-# is viewing the weather page:
-#
-# In your weather page's on_load event:
-#   - lambda: 'id(weather_on_weather_page) = true;'
-#   - script.execute: fetch_weather_data
-#
-# In your weather page's on_unload event (if available):
-#   - lambda: 'id(weather_on_weather_page) = false;'
-#
-# This ensures weather refreshes automatically while viewing, but stops
-# when the user navigates away.
-# ============================================================================
-
-# ============================================================================
-# USAGE NOTES
-# ============================================================================
-# 1. This package provides the data fetching mechanism
-# 2. You'll need to update your weather-page-*.yaml files to use the globals
-#    instead of sensor IDs
-# 3. Example label update:
-#      text: !lambda |-
-#        char buf[16];
-#        snprintf(buf, sizeof(buf), "%.0f°F", id(weather_forecast_temp_high)[0]);
-#        return buf;
-# 4. The display update lambda needs to be customized for your specific
-#    label IDs from your existing weather pages
-# ============================================================================
