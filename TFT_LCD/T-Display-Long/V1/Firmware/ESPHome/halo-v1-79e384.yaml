@@ -142,7 +142,7 @@ packages:
 
   # WiFi Info Display
   wifi_core: !include packages/wifi-core.yaml
-  # wifi_display: !include packages/wifi-display.yaml
+  wifi_display: !include packages/wifi-display.yaml
   # wifi: !include packages/wifi-stubs.yaml
 
   # Weather Display
