@@ -52,6 +52,16 @@ scrollbar_mode: "OFF"
 on_load:
   - script.execute: page_transition_cleanup
   - lambda: 'id(current_page_index) = 2;'  # wifi_page
+  # Trigger immediate WiFi display updates when page loads
+  - lambda: |-
+      id(wifi_signal_needs_render) = true;
+      id(wifi_signal_bar_needs_render) = true;
+      id(wifi_ssid_needs_render) = true;
+      id(wifi_ip_needs_render) = true;
+      id(ha_status_needs_render) = true;
+      id(wg_status_needs_render) = true;
+      id(wg_address_needs_render) = true;
+      id(wg_handshake_needs_render) = true;
 widgets:
   - label:
       text: "WiFi & VPN \nStatistics"

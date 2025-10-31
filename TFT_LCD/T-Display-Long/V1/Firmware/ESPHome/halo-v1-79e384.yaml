@@ -56,32 +56,32 @@ substitutions:
   ble_enabled: "false"          # "true" or "false"
 
   # WiFi Info Display
-  wifi_enabled: "false"         # "true" or "false"
+  wifi_enabled: "true"         # "true" or "false"
 
   # Weather Display
   weather_enabled: "false"      # "true" or "false"
 
   # WireGuard VPN (requires wifi_enabled above)
-  wireguard_enabled: "false"    # "true" or "false"
+  wireguard_enabled: "true"    # "true" or "false"
 
   # ============================================================================
   # LVGL PAGES - Must match your feature configuration above!
   # ============================================================================
   # After changing feature toggles above, update lvgl_pages_combo below:
   #
-  # "clock-only":           No features enabled
-  # "airq-only":            AirQ only
-  # "wifi-only":            WiFi only
+  # "clock-only":           No features enabled1
+  # "airq-only":            AirQ only1
+  # "wifi-only":            WiFi only1
   # "weather-only":         Weather only
-  # "wireguard-only":       WiFi + WireGuard (NO AirQ)
-  # "airq-wifi":            AirQ + WiFi
+  # "wireguard-only":       WiFi + WireGuard (NO AirQ)1
+  # "airq-wifi":            AirQ + WiFi1
   # "airq-weather":         AirQ + Weather
   # "wifi-weather":         WiFi + Weather
   # "airq-wifi-wireguard":  AirQ + WiFi + WireGuard
   # "airq-wifi-weather":    AirQ + WiFi + Weather
   # "airq-wifi-weather-wg": AirQ + WiFi + Weather + WireGuard
   #
-  lvgl_pages_combo: "airq-only"
+  lvgl_pages_combo: "airq-wifi-wireguard"
 
 # ============================================================================
 # PACKAGE IMPORTS - Controlled by SUBSTITUTIONS Above
@@ -107,21 +107,21 @@ packages:
   # CHART:
   # Feature Combo                  | time_update package
   # ============================== | ==========================
-  # Clock only                     | time-update-clock-only.yaml
-  # WiFi + Clock (your current)    | time-update-wifi-only.yaml ← USE THIS NOW
-  # AirQ + Clock                   | time-update-basic.yaml
-  # AirQ + WiFi                    | time-update-basic.yaml
+  # Clock only                     | time-update-clock-only.yaml1
+  # WiFi + Clock (your current)    | time-update-wifi-only.yaml ← USE THIS NOW1
+  # AirQ + Clock                   | time-update-basic.yaml1
+  # AirQ + WiFi                    | time-update-basic.yaml1
   # AirQ + Weather                 | time-update-basic.yaml
   # WiFi + Weather                 | time-update-basic.yaml (or wifi-only if no AirQ)
   # AirQ + WiFi + Weather          | time-update-basic.yaml
-  # WiFi + WireGuard (no AirQ)     | time-update-wireguard-only.yaml
-  # AirQ + WiFi + WireGuard        | time-update-wireguard.yaml
+  # WiFi + WireGuard (no AirQ)     | time-update-wireguard-only.yaml1
+  # AirQ + WiFi + WireGuard        | time-update-wireguard.yaml1
   #
   # time_update_script: !include packages/time-update-clock-only.yaml
   # time_update_script: !include packages/time-update-wifi-only.yaml
-  time_update_script: !include packages/time-update-basic.yaml
+  # time_update_script: !include packages/time-update-basic.yaml
   # time_update_script: !include packages/time-update-wireguard-only.yaml
-  # time_update_script: !include packages/time-update-wireguard.yaml
+  time_update_script: !include packages/time-update-wireguard.yaml
 
   # === FEATURE PACKAGES ===
   # Instructions:
@@ -141,17 +141,18 @@ packages:
   ble: !include packages/ble-stubs.yaml
 
   # WiFi Info Display
-  # wifi_core: !include packages/wifi-core.yaml
+  wifi_core: !include packages/wifi-core.yaml
   # wifi_display: !include packages/wifi-display.yaml
-  wifi: !include packages/wifi-stubs.yaml
+  # wifi: !include packages/wifi-stubs.yaml
 
   # Weather Display
   # weather: !include packages/weather-ha-actions.yaml
   weather: !include packages/weather-stubs.yaml
 
   # WireGuard VPN (requires wifi_enabled = true)
-  # wireguard: !include packages/wireguard.yaml
-  wireguard: !include packages/wireguard-stubs.yaml
+  wireguard: !include packages/wireguard.yaml
+  wireguard_display: !include packages/wireguard-display.yaml
+  # wireguard: !include packages/wireguard-stubs.yaml
 
   # Memory Statistics (Optional - for debugging)
   memory_stats: !include packages/memory-stats.yaml
@@ -163,7 +164,7 @@ packages:
   #   3. Comment out all other lvgl_pages lines
   #
   # IMPORTANT: Must match your feature configuration above!
-  lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
+  # lvgl_pages: !include packages/lvgl-pages-airq-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-clock-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wifi-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-weather-only.yaml
@@ -172,7 +173,7 @@ packages:
   # lvgl_pages: !include packages/lvgl-pages-airq-weather-forecast-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-wifi-weather-forecast-only.yaml
   # lvgl_pages: !include packages/lvgl-pages-airq-wifi-weather-forecast.yaml
-  # lvgl_pages: !include packages/lvgl-pages-airq-wifi-wireguard.yaml
+  lvgl_pages: !include packages/lvgl-pages-airq-wifi-wireguard.yaml
   # lvgl_pages: !include packages/lvgl-pages-full-wireguard.yaml
 
 # ============================================================================
@@ -202,7 +203,7 @@ select:
       - "Vertical Clock"
       # Uncomment based on enabled features:
       - "AirQ"          # if airq_enabled
-      # - "WiFi"          # if wifi_enabled
+      - "WiFi"          # if wifi_enabled
       # - "Weather"       # if weather_enabled
     initial_option: "Vertical Clock"
     restore_value: true

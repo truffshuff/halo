@@ -150,6 +150,12 @@ switch:
     on_turn_on:
       - lambda: 'id(page_rotation_weather_enabled) = true;'
       - logger.log: "Weather page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 3;'  # Only if on weather page
+          then:
+            - script.execute: update_weather_icon_color
     on_turn_off:
       - lambda: 'id(page_rotation_weather_enabled) = false;'
       - logger.log: "Weather page disabled in rotation"
@@ -164,6 +170,12 @@ switch:
     on_turn_on:
       - lambda: 'id(page_rotation_daily_forecast_enabled) = true;'
       - logger.log: "Daily forecast page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 4;'  # Only if on daily forecast page
+          then:
+            - script.execute: update_weather_icon_color
     on_turn_off:
       - lambda: 'id(page_rotation_daily_forecast_enabled) = false;'
       - logger.log: "Daily forecast page disabled in rotation"
@@ -178,6 +190,12 @@ switch:
     on_turn_on:
       - lambda: 'id(page_rotation_hourly_forecast_enabled) = true;'
       - logger.log: "Hourly forecast page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 5;'  # Only if on hourly forecast page
+          then:
+            - script.execute: update_weather_icon_color
     on_turn_off:
       - lambda: 'id(page_rotation_hourly_forecast_enabled) = false;'
       - logger.log: "Hourly forecast page disabled in rotation"
@@ -201,6 +219,12 @@ number:
       - logger.log:
           format: "Weather page order set to %d"
           args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 3;'  # Only if on weather page
+          then:
+            - script.execute: update_weather_icon_color
 
   - platform: template
     name: "Page Order: Daily Forecast Page"
@@ -219,6 +243,12 @@ number:
       - logger.log:
           format: "Daily forecast page order set to %d"
           args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 4;'  # Only if on daily forecast page
+          then:
+            - script.execute: update_weather_icon_color
 
   - platform: template
     name: "Page Order: Hourly Forecast Page"
@@ -237,6 +267,12 @@ number:
       - logger.log:
           format: "Hourly forecast page order set to %d"
           args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 5;'  # Only if on hourly forecast page
+          then:
+            - script.execute: update_weather_icon_color
 
 # Weather gauge control (for weather page needle)
   - platform: template
