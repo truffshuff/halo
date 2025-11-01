@@ -1312,10 +1312,9 @@ script:
       - logger.log: "Fetching weather data from Home Assistant..."
 
       # Fetch daily forecast
-      - homeassistant.action:
-          action: weather.get_forecasts
-          capture_response: true
-          return_response: true
+    - homeassistant.action:
+      action: weather.get_forecasts
+      capture_response: true
           data:
             entity_id: ${weather_entity_id}
             type: daily
@@ -1328,9 +1327,15 @@ script:
 
                 ESP_LOGI("weather", "✓ Daily forecast response received");
                 
-                // Access the forecast data - response is already the root object
-                if (response.containsKey("${weather_entity_id}")) {
-                  auto entity_data = response["${weather_entity_id}"];
+                // Handle both direct and nested HA response formats
+                JsonObjectConst root = response;
+                if (response.containsKey("response")) {
+                  root = response["response"].as<JsonObjectConst>();
+                }
+                const char *entity_key = "${weather_entity_id}";
+
+                if (root.containsKey(entity_key)) {
+                  auto entity_data = root[entity_key];
                   
                   if (entity_data.containsKey("forecast")) {
                     auto forecast_array = entity_data["forecast"];
@@ -1368,10 +1373,9 @@ script:
                 ESP_LOGE("weather", "✗ Daily forecast fetch FAILED");
 
       # Fetch hourly forecast
-      - homeassistant.action:
-          action: weather.get_forecasts
-          capture_response: true
-          return_response: true
+    - homeassistant.action:
+      action: weather.get_forecasts
+      capture_response: true
           data:
             entity_id: ${weather_entity_id}
             type: hourly
@@ -1383,8 +1387,14 @@ script:
     
                 ESP_LOGI("weather", "✓ Hourly forecast response received");
                 
-                if (response.containsKey("${weather_entity_id}")) {
-                  auto entity_data = response["${weather_entity_id}"];
+                JsonObjectConst root = response;
+                if (response.containsKey("response")) {
+                  root = response["response"].as<JsonObjectConst>();
+                }
+                const char *entity_key = "${weather_entity_id}";
+
+                if (root.containsKey(entity_key)) {
+                  auto entity_data = root[entity_key];
                   
                   if (entity_data.containsKey("forecast")) {
                     auto forecast_array = entity_data["forecast"];
@@ -1422,17 +1432,21 @@ script:
                 ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
 
       # Fetch current temperature and apparent temp using template
-      - homeassistant.action:
-          action: template.render
-          capture_response: true
-          return_response: true
+    - homeassistant.action:
+      action: template.render
+      capture_response: true
           data:
             template: "{{ states('${current_temp_sensor}') }}"
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Current temp response received");
-                if (response.containsKey("result")) {
-                  std::string temp_str = response["result"].as<std::string>();
+                JsonObjectConst root = response;
+                if (response.containsKey("response")) {
+                  root = response["response"].as<JsonObjectConst>();
+                }
+
+                if (root.containsKey("result")) {
+                  std::string temp_str = root["result"].as<std::string>();
                   float temp = atof(temp_str.c_str());
                   if (!isnan(temp)) {
                     id(weather_current_temp) = temp;
@@ -1443,17 +1457,21 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Current temp fetch FAILED");
 
-      - homeassistant.action:
-          action: template.render
-          capture_response: true
-          return_response: true
+    - homeassistant.action:
+      action: template.render
+      capture_response: true
           data:
             template: "{{ states('${apparent_temp_sensor}') }}"
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Apparent temp response received");
-                if (response.containsKey("result")) {
-                  std::string temp_str = response["result"].as<std::string>();
+                JsonObjectConst root = response;
+                if (response.containsKey("response")) {
+                  root = response["response"].as<JsonObjectConst>();
+                }
+
+                if (root.containsKey("result")) {
+                  std::string temp_str = root["result"].as<std::string>();
                   float temp = atof(temp_str.c_str());
                   if (!isnan(temp)) {
                     id(weather_current_apparent_temp) = temp;
@@ -1464,17 +1482,21 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Apparent temp fetch FAILED");
 
-      - homeassistant.action:
-          action: template.render
-          capture_response: true
-          return_response: true
+    - homeassistant.action:
+      action: template.render
+      capture_response: true
           data:
             template: "{{ states('${weather_entity_id}') }}"
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Current condition response received");
-                if (response.containsKey("result")) {
-                  id(weather_current_condition) = response["result"].as<std::string>();
+                JsonObjectConst root = response;
+                if (response.containsKey("response")) {
+                  root = response["response"].as<JsonObjectConst>();
+                }
+
+                if (root.containsKey("result")) {
+                  id(weather_current_condition) = root["result"].as<std::string>();
                   ESP_LOGD("weather", "Condition: %s", id(weather_current_condition).c_str());
                 }
 
