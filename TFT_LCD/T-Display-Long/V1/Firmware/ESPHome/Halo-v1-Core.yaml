@@ -2166,15 +2166,6 @@ script:
             return std::string(buf);
 
       - logger.log: "✓ Weather display labels updated"
-          const uint32_t elapsed = millis() - id(time_update_last_started);
-          id(time_update_last_duration) = elapsed;
-          const bool rendered = id(time_update_needs_render);
-          if (elapsed > 40) {
-            ESP_LOGW("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
-          } else {
-            ESP_LOGD("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
-          }
-          id(time_update_needs_render) = false;
 
   - id: time_update
     mode: restart
