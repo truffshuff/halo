@@ -2549,14 +2549,6 @@ sensor:
     icon: "mdi:timer-outline"
     entity_category: "diagnostic"
     update_interval: never
-  
-  - platform: template
-    name: "Computed AQI (Stub)"
-    id: computed_halo_aqi
-    internal: true
-    update_interval: never
-    accuracy_decimals: 0
-    lambda: 'return NAN;'  # Always return NaN (not a number)
 
   # Weather Icon Update Duration sensor moved to packages/weather-core.yaml
   # AirQ sensors (computed_aqi, scd4x, mics_4514, bme280, sen5x) moved to packages/airq-core.yaml
@@ -4403,7 +4395,7 @@ lvgl:
             align: BOTTOM_MID
             x: 0
             y: -20
-            text_font: ha_icon_80
+            text_font: icons_80
             text_color: my_gray  # Will be updated based on connection status
 
         - obj:
