@@ -2485,7 +2485,6 @@ select:
     restore_value: true
 
 esphome:
-  name: ${name}
   on_boot:
     - priority: 800  # Very early - before components load
       then:
