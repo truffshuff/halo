@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: halo
-  version: "25.11.01.0647"
+  version: "25.11.01.0746"
   device_description: ${name} - v${version}.
 
 # ============================================================================
@@ -19,17 +19,384 @@ substitutions:
 # See halo-v1-79e384.yaml for a template
 # ============================================================================
 
-packages:
+# packages:
   # ============================================================================
   # ESSENTIAL PACKAGES - Always Required
   # ============================================================================
   # These are the bare minimum needed for any Halo device to function
 
   # Page registry - manages page rotation system
-  page_registry: !include packages/page-registry.yaml
+  # page_registry: !include packages/page-registry.yaml
+
+globals:
+  # Current page tracking using string name
+  - id: current_page_name
+    type: std::string
+    restore_value: no
+    initial_value: '"vertical_clock"'
 
   # Vertical clock - core display feature
-  vertical_clock: !include packages/vertical-clock-core.yaml
+  # vertical_clock: !include packages/vertical-clock-core.yaml
+
+  # Page rotation settings - which pages are included
+  - id: page_rotation_vertical_clock_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Page rotation order (1-6, 0 means disabled)
+  - id: page_rotation_vertical_clock_order
+    type: int
+    restore_value: yes
+    initial_value: '6'
+
+  # Colon blink state for clock display
+  - id: colon_blink_state
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  - id: cycleCounter
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: temp_unit_changed
+    type: bool
+    initial_value: "true"
+  - id: last_touch_time
+    type: int
+    initial_value: '0'
+  - id: auto_page_rotation_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: auto_page_rotation_interval
+    type: int
+    restore_value: yes
+    initial_value: '30'  # Default 30 seconds
+  - id: last_auto_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+  # Page rotation settings - which pages are included
+  # Note: page_rotation_AirQ_enabled is defined in airq-core.yaml or airq-stubs.yaml
+  # Note: page_rotation_wifi_enabled is defined in wifi-core.yaml or wifi-stubs.yaml
+  # Note: page_rotation_vertical_clock_enabled is defined in vertical-clock-core.yaml
+  # Page rotation order (1-5, 0 means disabled)
+  # Note: page_rotation_AirQ_order is defined in airq-core.yaml or airq-stubs.yaml
+  # Note: page_rotation_wifi_order is defined in wifi-core.yaml or wifi-stubs.yaml
+  # Note: page_rotation_vertical_clock_order is defined in vertical-clock-core.yaml
+  - id: default_page_index
+    type: int
+    restore_value: yes
+    initial_value: '0'
+  - id: current_page_index
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: boot_complete
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ota_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'false'  # Set to true during OTA or other critical operations
+  - id: time_update_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: time_update_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: time_update_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: time_update_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  # Note: colon_blink_state is defined in vertical-clock-core.yaml
+  - id: display_backlight_is_on
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+  # Sensor UI update batching
+  - id: sensor_ui_dirty
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: last_sensor_ui_update
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: page_rotation_AirQ_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: page_rotation_AirQ_order
+    type: int
+    restore_value: no
+    initial_value: '99'
+  
+  - id: page_rotation_wifi_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: page_rotation_wifi_order
+    type: int
+    restore_value: no
+    initial_value: '99'
+  
+  - id: page_rotation_weather_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_daily_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_hourly_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Page rotation order for weather pages
+  - id: page_rotation_weather_order
+    type: int
+    restore_value: yes
+    initial_value: '3'
+  - id: page_rotation_daily_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '4'
+  - id: page_rotation_hourly_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '5'
+
+  # Weather display state tracking
+  - id: weather_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_condition
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: weather_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # Current weather
+  - id: weather_current_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+
+  - id: weather_current_apparent_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+
+  - id: weather_current_condition
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+
+  - id: weather_current_humidity
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+
+  # Forecast arrays (10 days)
+  - id: weather_forecast_temp_high
+    type: float[10]
+    restore_value: no
+
+  - id: weather_forecast_temp_low
+    type: float[10]
+    restore_value: no
+
+  - id: weather_forecast_condition
+    type: std::string[10]
+    restore_value: no
+
+  - id: weather_forecast_precip_prob
+    type: float[10]
+    restore_value: no
+
+  # Hourly forecast arrays (24 hours)
+  - id: weather_hourly_temp
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_apparent_temp
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_condition
+    type: std::string[24]
+    restore_value: no
+
+  - id: weather_hourly_precip_prob
+    type: float[24]
+    restore_value: no
+
+  # Tracking
+  - id: weather_last_update
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: weather_on_weather_page
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+font:
+  # Large fonts for vertical clock
+  - file: "gfonts://Montserrat"
+    id: montserrat_80
+    size: 80
+    bpp: 4
+    glyphs: " 0123456789:-"
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_50
+    size: 50
+    bpp: 4
+    glyphs: " 0123456789APM-"
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_24
+    size: 24
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,:-"
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_100
+    size: 100
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_80
+    size: 80
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_50
+    size: 50
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_40
+    size: 40
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_20
+    size: 20
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0F2F", # exceptional
+      "\U000F0591", # fog
+      "\U000F0592", # hail
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0596", # pouring
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
+      ]
 
   # Time update script - NOW INCLUDED IN DEVICE FILES
   # Device files should include the appropriate version:
@@ -202,85 +569,7 @@ spi:
 captive_portal:
 
 logger:
-  level: INFO
-
-globals:
-  - id: cycleCounter
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: temp_unit_changed
-    type: bool
-    initial_value: "true"
-  - id: last_touch_time
-    type: int
-    initial_value: '0'
-  - id: auto_page_rotation_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-  - id: auto_page_rotation_interval
-    type: int
-    restore_value: yes
-    initial_value: '30'  # Default 30 seconds
-  - id: last_auto_rotation_time
-    type: unsigned long
-    restore_value: no
-    initial_value: '0'
-  # Page rotation settings - which pages are included
-  # Note: page_rotation_AirQ_enabled is defined in airq-core.yaml or airq-stubs.yaml
-  # Note: page_rotation_wifi_enabled is defined in wifi-core.yaml or wifi-stubs.yaml
-  # Note: page_rotation_vertical_clock_enabled is defined in vertical-clock-core.yaml
-  # Page rotation order (1-5, 0 means disabled)
-  # Note: page_rotation_AirQ_order is defined in airq-core.yaml or airq-stubs.yaml
-  # Note: page_rotation_wifi_order is defined in wifi-core.yaml or wifi-stubs.yaml
-  # Note: page_rotation_vertical_clock_order is defined in vertical-clock-core.yaml
-  - id: default_page_index
-    type: int
-    restore_value: yes
-    initial_value: '0'
-  - id: current_page_index
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: boot_complete
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: ota_in_progress
-    type: bool
-    restore_value: no
-    initial_value: 'false'  # Set to true during OTA or other critical operations
-  - id: time_update_last_started
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: time_update_last_duration
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: time_update_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: time_update_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  # Note: colon_blink_state is defined in vertical-clock-core.yaml
-  - id: display_backlight_is_on
-    type: bool
-    restore_value: no
-    initial_value: 'true'
-  # Sensor UI update batching
-  - id: sensor_ui_dirty
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: last_sensor_ui_update
-    type: uint32_t
-    restore_value: no
-    initial_value: '0'
+  level: DEBUG
 
 switch:
   - platform: template
@@ -310,6 +599,98 @@ switch:
   # Note: "Page Rotation: Vertical Clock Page" switch is defined in vertical-clock-core.yaml
   # Note: "Page Rotation: AirQ Page" switch is defined in airq-core.yaml
   # Note: "Page Rotation: WiFi Page" switch is defined in wifi-core.yaml
+
+  # Page rotation selection switches
+  - platform: template
+    name: "Page Rotation: Vertical Clock Page"
+    id: page_rotation_vertical_clock_switch
+    icon: mdi:clock-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_vertical_clock_enabled) = true;'
+      - logger.log: "Vertical clock page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_vertical_clock_enabled) = false;'
+      - logger.log: "Vertical clock page disabled in rotation"
+
+  # Clock format and display options
+  - platform: template
+    name: "24h Clock Format"
+    id: time_format
+    icon: mdi:clock-digital
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    entity_category: "config"
+
+  - platform: template
+    name: "Clock Colon Blink"
+    id: colon_blink_enabled
+    icon: mdi:timer-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+  
+  - platform: template
+    name: "Page Rotation: Weather Page"
+    id: page_rotation_weather_switch
+    icon: mdi:weather-partly-cloudy
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_weather_enabled) = true;'
+      - logger.log: "Weather page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 3;'  # Only if on weather page
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_weather_enabled) = false;'
+      - logger.log: "Weather page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Daily Forecast Page"
+    id: page_rotation_daily_forecast_switch
+    icon: mdi:calendar-today
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_daily_forecast_enabled) = true;'
+      - logger.log: "Daily forecast page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 4;'  # Only if on daily forecast page
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_daily_forecast_enabled) = false;'
+      - logger.log: "Daily forecast page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Hourly Forecast Page"
+    id: page_rotation_hourly_forecast_switch
+    icon: mdi:clock-time-eight-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_hourly_forecast_enabled) = true;'
+      - logger.log: "Hourly forecast page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 5;'  # Only if on hourly forecast page
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_hourly_forecast_enabled) = false;'
+      - logger.log: "Hourly forecast page disabled in rotation"
 
 select:
   - platform: template
@@ -547,6 +928,82 @@ interval:
                 args: ['id(current_page_index)']
                 level: DEBUG
 
+  # Colon blink interval - runs every second when on vertical clock page
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete) && id(current_page_index) == 0;'  # vertical_clock_page
+          then:
+            - lambda: |-
+                if (id(colon_blink_enabled).state) {
+                  id(colon_blink_state) = !id(colon_blink_state);
+                } else if (!id(colon_blink_state)) {
+                  id(colon_blink_state) = true;
+                }
+            - script.execute: update_colon_widget
+
+  # Auto-refresh weather data periodically while viewing weather page
+  - interval: ${weather_refresh_interval}s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(weather_on_weather_page);'
+          then:
+            - logger.log: "Auto-refreshing weather data..."
+            - script.execute: fetch_weather_data
+
+  - interval: 100ms  # Check frequently for page index changes
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static int last_displayed_index = -1;
+
+              // Don't do anything until boot is complete
+              if (!id(boot_complete)) return false;
+
+              // Check if page index has changed
+              int current = id(current_page_index);
+              if (current == last_displayed_index) return false;
+
+              // Page index changed
+              last_displayed_index = current;
+              ESP_LOGD("page_rotation", "Page index changed to %d", current);
+              return true;
+          then:
+            # Page 0: vertical_clock_page
+            - if:
+                condition:
+                  lambda: 'return id(current_page_index) == 0;'
+                then:
+                  - logger.log: "Page rotation: Showing vertical_clock_page (index 0)"
+                  - lvgl.page.show:
+                      id: vertical_clock_page
+                      animation: OUT_LEFT
+                      time: 300ms
+                else:
+                  # Page 3: weather_forecast_page
+                  - if:
+                      condition:
+                        lambda: 'return id(current_page_index) == 3;'
+                      then:
+                        - logger.log: "Page rotation: Showing weather_forecast_page (index 3)"
+                        - lvgl.page.show:
+                            id: weather_forecast_page
+                            animation: OUT_LEFT
+                            time: 300ms
+                      else:
+                        # Unknown page - fall back to vertical clock
+                        - logger.log:
+                            format: "Page rotation: Page index %d not available, falling back to Vertical Clock"
+                            args: ['id(current_page_index)']
+                            level: WARN
+                        - lvgl.page.show:
+                            id: vertical_clock_page
+                            animation: OUT_LEFT
+                            time: 300ms
+
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
   # Encryption key - define api_encryption_key substitution in device YAML
@@ -751,6 +1208,432 @@ script:
                 // Force immediate display flush to prevent buffer buildup
                 lv_refr_now(NULL);
 
+  - id: update_colon_widget
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return id(colon_blink_state);'
+          then:
+            - lvgl.label.update:
+                id: vclock_colon
+                text: ":"
+          else:
+            - lvgl.label.update:
+                id: vclock_colon
+                text: " "
+
+  - id: update_weather_icon_color
+    mode: restart
+    then:
+      - lambda: |-
+          id(weather_last_started) = millis();
+          id(weather_needs_render) = false;
+      - lambda: |-
+          std::string condition = id(weather_current_condition);
+          ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
+          if (condition.empty()) {
+            return;
+          }
+          std::string normalized = condition;
+          std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+          if (normalized != id(weather_last_condition)) {
+            id(weather_last_condition) = normalized;
+            id(weather_needs_render) = true;
+          }
+      - if:
+          condition:
+            lambda: 'return id(weather_needs_render);'
+          then:
+            - lvgl.label.update:
+                id: lbl_weather_forecast_condition_icon
+                text_color: !lambda |-
+                  const std::string condition = id(weather_last_condition);
+                  ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
+                  if (condition.find("clear-night") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Slate Blue color (night)");
+                    return lv_color_hex(0x6A5ACD);
+                  } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Gold color");
+                    return lv_color_hex(0xFFD700);
+                  } else if (condition.find("snowy-rainy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Cyan color (mixed precipitation)");
+                    return lv_color_hex(0xAFEEEE);
+                  } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Deep Pink color");
+                    return lv_color_hex(0xFF1493);
+                  } else if (condition.find("partlycloudy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Sky Blue color");
+                    return lv_color_hex(0x87CEFA);
+                  } else if (condition.find("cloudy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Dark Gray color");
+                    return lv_color_hex(0xA9A9A9);
+                  } else if (condition.find("rainy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Royal Blue color");
+                    return lv_color_hex(0x4169E1);
+                  } else if (condition.find("snowy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Gainsboro color");
+                    return lv_color_hex(0xDCDCDC);
+                  } else if (condition.find("fog") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Steel Blue color");
+                    return lv_color_hex(0xB0C4DE);
+                  } else if (condition.find("windy") != std::string::npos) {
+                    ESP_LOGD("weather_color", "Setting Light Green color");
+                    return lv_color_hex(0x90EE90);
+                  } else {
+                    ESP_LOGD("weather_color", "Setting White color (default)");
+                    return lv_color_hex(0xFFFFFF);
+                  }
+      - lambda: |-
+          const uint32_t elapsed = millis() - id(weather_last_started);
+          id(weather_last_duration) = elapsed;
+          const bool rendered = id(weather_needs_render);
+          if (elapsed > 80) {
+            ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          } else {
+            ESP_LOGD("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          }
+          id(weather_needs_render) = false;
+
+  # Main script to fetch all weather data via HA actions
+  - id: fetch_weather_data
+    mode: single
+    then:
+      - logger.log: "Fetching weather data from Home Assistant..."
+
+      # Fetch daily forecast
+      - homeassistant.action:
+          action: weather.get_forecasts
+          capture_response: true
+          data:
+            entity_id: ${weather_entity_id}
+            type: daily
+          
+          on_success:
+            - lambda: |-
+                std::string output;
+                serializeJsonPretty(response, output);
+                ESP_LOGI("weather", "Forecast JSON:\n%s", output.c_str());
+
+                ESP_LOGI("weather", "✓ Daily forecast response received");
+                
+                // Access the forecast data - response is already the root object
+                if (response.containsKey("${weather_entity_id}")) {
+                  auto entity_data = response["${weather_entity_id}"];
+                  
+                  if (entity_data.containsKey("forecast")) {
+                    auto forecast_array = entity_data["forecast"];
+                    int day_count = std::min((int)forecast_array.size(), 10);
+                    ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+                    
+                    for (int i = 0; i < day_count; i++) {
+                      auto day = forecast_array[i];
+                      
+                      if (day.containsKey("temperature")) {
+                        id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                      }
+                      
+                      if (day.containsKey("templow")) {
+                        id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                      }
+                      
+                      if (day.containsKey("condition")) {
+                        id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                      }
+                      
+                      if (day.containsKey("precipitation_probability")) {
+                        id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                      }
+                    }
+                    ESP_LOGI("weather", "✓ Daily forecast stored");
+                  } else {
+                    ESP_LOGW("weather", "No 'forecast' key in daily response");
+                  }
+                } else {
+                  ESP_LOGW("weather", "Entity '${weather_entity_id}' not found in daily response");
+                }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Daily forecast fetch FAILED");
+
+      # Fetch hourly forecast
+      - homeassistant.action:
+          action: weather.get_forecasts
+          capture_response: true
+          data:
+            entity_id: ${weather_entity_id}
+            type: hourly
+          on_success:
+            - lambda: |-
+                std::string output;
+                serializeJsonPretty(response, output);
+                ESP_LOGI("weather", "Forecast JSON:\n%s", output.c_str());
+    
+                ESP_LOGI("weather", "✓ Hourly forecast response received");
+                
+                if (response.containsKey("${weather_entity_id}")) {
+                  auto entity_data = response["${weather_entity_id}"];
+                  
+                  if (entity_data.containsKey("forecast")) {
+                    auto forecast_array = entity_data["forecast"];
+                    int hour_count = std::min((int)forecast_array.size(), 24);
+                    ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+                    
+                    for (int i = 0; i < hour_count; i++) {
+                      auto hour = forecast_array[i];
+                      
+                      if (hour.containsKey("temperature")) {
+                        id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                      }
+                      
+                      if (hour.containsKey("apparent_temperature")) {
+                        id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                      }
+                      
+                      if (hour.containsKey("condition")) {
+                        id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                      }
+                      
+                      if (hour.containsKey("precipitation_probability")) {
+                        id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                      }
+                    }
+                    ESP_LOGI("weather", "✓ Hourly forecast stored");
+                  } else {
+                    ESP_LOGW("weather", "No 'forecast' key in hourly response");
+                  }
+                } else {
+                  ESP_LOGW("weather", "Entity '${weather_entity_id}' not found in hourly response");
+                }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
+
+      # Fetch current temperature and apparent temp using template
+      - homeassistant.action:
+          action: template.render
+          data:
+            template: "{{ states('${current_temp_sensor}') }}"
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "✓ Current temp response received");
+                if (response.containsKey("result")) {
+                  std::string temp_str = response["result"].as<std::string>();
+                  float temp = atof(temp_str.c_str());
+                  if (!isnan(temp)) {
+                    id(weather_current_temp) = temp;
+                    ESP_LOGD("weather", "Temp: %.1f°F", temp);
+                  }
+                }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Current temp fetch FAILED");
+
+      - homeassistant.action:
+          action: template.render
+          data:
+            template: "{{ states('${apparent_temp_sensor}') }}"
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "✓ Apparent temp response received");
+                if (response.containsKey("result")) {
+                  std::string temp_str = response["result"].as<std::string>();
+                  float temp = atof(temp_str.c_str());
+                  if (!isnan(temp)) {
+                    id(weather_current_apparent_temp) = temp;
+                    ESP_LOGD("weather", "Feels like: %.1f°F", temp);
+                  }
+                }
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Apparent temp fetch FAILED");
+
+      - homeassistant.action:
+          action: template.render
+          data:
+            template: "{{ states('${weather_entity_id}') }}"
+          capture_response: true
+          on_success:
+            - lambda: |-
+                ESP_LOGI("weather", "✓ Current condition response received");
+                if (response.containsKey("result")) {
+                  id(weather_current_condition) = response["result"].as<std::string>();
+                  ESP_LOGD("weather", "Condition: %s", id(weather_current_condition).c_str());
+                }
+
+                // Update timestamp
+                id(weather_last_update) = millis();
+
+                ESP_LOGI("weather", "✓ Weather data fetch complete!");
+                ESP_LOGI("weather", "Current: %.1f°F (feels like %.1f°F), %s",
+                         id(weather_current_temp),
+                         id(weather_current_apparent_temp),
+                         id(weather_current_condition).c_str());
+          on_error:
+            - lambda: |-
+                ESP_LOGE("weather", "✗ Current condition fetch FAILED");
+
+      # Update the display after fetching data
+      - script.execute: update_weather_display
+
+  # Script to update LVGL display with fetched data
+  - id: update_weather_display
+    mode: single
+    then:
+      - lvgl.label.update:
+          id: lbl_weather_forecast_condition_name
+          text: !lambda |-
+            if (id(weather_current_condition).empty()) {
+              return std::string("Unknown");
+            }
+            return id(weather_current_condition);
+
+      - lvgl.label.update:
+          id: lbl_weather_today_outdoor_temp
+          text: !lambda |-
+            if (isnan(id(weather_current_temp))) {
+              return std::string("--.- °F");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
+            return std::string(buf);
+
+      - lvgl.label.update:
+          id: lbl_weather_today_tempap
+          text: !lambda |-
+            if (isnan(id(weather_current_apparent_temp))) {
+              return std::string("--°");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
+            return std::string(buf);
+
+      - lvgl.label.update:
+          id: lbl_weather_forecast_temphi
+          text: !lambda |-
+            if (isnan(id(weather_forecast_temp_high)[0])) {
+              return std::string("H: --°");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
+            return std::string(buf);
+
+      - lvgl.label.update:
+          id: lbl_weather_forecast_templo
+          text: !lambda |-
+            if (isnan(id(weather_forecast_temp_low)[0])) {
+              return std::string("L: --°");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
+            return std::string(buf);
+
+      - lvgl.label.update:
+          id: lbl_weather_today_dailyprecipprob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[0])) {
+              return std::string("Chance: --%");
+            }
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
+            return std::string(buf);
+
+      - logger.log: "✓ Weather display labels updated"
+
+  - id: time_update
+    mode: restart
+    then:
+      - lambda: |-
+          id(time_update_last_started) = millis();
+          id(time_update_needs_render) = false;
+      - lambda: |-
+          auto now = id(ha_time).now();
+          if (!now.is_valid()) {
+            ESP_LOGW("time_update", "Time source unavailable, skipping label update");
+            return;
+          }
+          bool is_pm = now.hour >= 12;
+          int hour_12 = now.hour % 12;
+          if (hour_12 == 0) {
+            hour_12 = 12;
+          }
+          char time_buf[17];
+          if (id(time_format).state) {
+            snprintf(time_buf, sizeof(time_buf), "%02d:%02d", now.hour, now.minute);
+          } else {
+            snprintf(time_buf, sizeof(time_buf), "%2d:%02d%s", hour_12, now.minute, is_pm ? "PM" : "AM");
+          }
+          std::string new_text(time_buf);
+          if (new_text != id(time_update_last_text)) {
+            id(time_update_last_text) = new_text;
+            id(time_update_needs_render) = true;
+          }
+      # Update vertical clock page (page index 0)
+      - if:
+          condition:
+            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 0;'
+          then:
+            - lvgl.label.update:
+                id: vclock_hours
+                text: !lambda |-
+                  auto now = id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  bool is_pm = now.hour >= 12;
+                  int hour_12 = now.hour % 12;
+                  if (hour_12 == 0) hour_12 = 12;
+                  char buf[3];
+                  if (id(time_format).state) {
+                    snprintf(buf, sizeof(buf), "%02d", now.hour);
+                  } else {
+                    snprintf(buf, sizeof(buf), "%2d", hour_12);
+                  }
+                  return std::string(buf);
+            - lvgl.label.update:
+                id: vclock_minutes
+                text: !lambda |-
+                  auto now = id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  char buf[3];
+                  snprintf(buf, sizeof(buf), "%02d", now.minute);
+                  return std::string(buf);
+            - lvgl.label.update:
+                id: vclock_ampm
+                text: !lambda |-
+                  auto now = id(ha_time).now();
+                  if (!now.is_valid()) return std::string("");
+                  if (id(time_format).state) return std::string("");
+                  bool is_pm = now.hour >= 12;
+                  return std::string(is_pm ? "PM" : "AM");
+            - lvgl.label.update:
+                id: vclock_date
+                text: !lambda |-
+                  auto now = id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+                  char buf[20];
+                  snprintf(buf, sizeof(buf), "%s %d", months[now.month - 1], now.day_of_month);
+                  return std::string(buf);
+            - lvgl.label.update:
+                id: vclock_day_top
+                text: !lambda |-
+                  auto now = id(ha_time).now();
+                  if (!now.is_valid()) return std::string("--");
+                  static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+                  return std::string(days[now.day_of_week - 1]);
+      - script.execute: update_colon_widget
+      - lambda: |-
+          const uint32_t elapsed = millis() - id(time_update_last_started);
+          id(time_update_last_duration) = elapsed;
+          const bool rendered = id(time_update_needs_render);
+          if (elapsed > 40) {
+            ESP_LOGW("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          } else {
+            ESP_LOGD("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          }
+          id(time_update_needs_render) = false;
+
 number:
   - platform: template
     name: "Auto Page Rotation Interval"
@@ -776,6 +1659,114 @@ number:
   # Note: "Page Order: AirQ Page" number is defined in airq-core.yaml
   # Note: "Page Order: WiFi Page" number is defined in wifi-core.yaml
   # Note: SEN55 Temperature/Humidity Offset numbers are defined in airq-core.yaml
+
+  # Page rotation order numbers (1-6, lower numbers show first)
+  - platform: template
+    name: "Page Order: Vertical Clock Page"
+    id: page_order_vertical_clock
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 6
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_vertical_clock_order) = (int)x;'
+      - logger.log:
+          format: "Vertical clock page order set to %d"
+          args: ['(int)x']
+
+  - platform: template
+    name: "Page Order: Weather Page"
+    id: page_order_weather
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 3
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_weather_order) = (int)x;'
+      - logger.log:
+          format: "Weather page order set to %d"
+          args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 3;'  # Only if on weather page
+          then:
+            - script.execute: update_weather_icon_color
+
+  - platform: template
+    name: "Page Order: Daily Forecast Page"
+    id: page_order_daily_forecast
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 4
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_daily_forecast_order) = (int)x;'
+      - logger.log:
+          format: "Daily forecast page order set to %d"
+          args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 4;'  # Only if on daily forecast page
+          then:
+            - script.execute: update_weather_icon_color
+
+  - platform: template
+    name: "Page Order: Hourly Forecast Page"
+    id: page_order_hourly_forecast
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 5
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_hourly_forecast_order) = (int)x;'
+      - logger.log:
+          format: "Hourly forecast page order set to %d"
+          args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 5;'  # Only if on hourly forecast page
+          then:
+            - script.execute: update_weather_icon_color
+
+  # Weather gauge control (for weather page needle)
+  - platform: template
+    name: "Weather Gauge Value"
+    id: weather_gauge_value
+    min_value: 0
+    max_value: 100
+    step: 1
+    mode: box
+    optimistic: true
+    entity_category: config
+    icon: mdi:gauge
+    unit_of_measurement: "%"
+    on_value:
+      - lvgl.indicator.update:
+          id: weather_temp_needle
+          value: !lambda 'return (int)x;'
 
 binary_sensor:
   - platform: status
@@ -813,11 +1804,108 @@ sensor:
     icon: "mdi:timer-outline"
     entity_category: "diagnostic"
     update_interval: never
+  
+  - platform: template
+    name: "Computed AQI (Stub)"
+    id: computed_halo_aqi
+    internal: true
+    update_interval: never
+    accuracy_decimals: 0
+    lambda: 'return NAN;'  # Always return NaN (not a number)
 
   # Weather Icon Update Duration sensor moved to packages/weather-core.yaml
   # AirQ sensors (computed_aqi, scd4x, mics_4514, bme280, sen5x) moved to packages/airq-core.yaml
   # Weather sensors removed - now in packages/weather-sensors.yaml
 
+  - platform: template
+    name: "Weather Icon Update Duration"
+    id: weather_icon_duration_sensor
+    internal: true  # Don't send to Home Assistant - internal diagnostic only
+    unit_of_measurement: "ms"
+    accuracy_decimals: 0
+    icon: "mdi:weather-lightning"
+    entity_category: "diagnostic"
+    update_interval: never
+
+  # Internal heap monitoring
+  - platform: template
+    name: "Free Heap"
+    lambda: return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    unit_of_measurement: "bytes"
+    update_interval: 7s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "Largest Free Block"
+    lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+    unit_of_measurement: "bytes"
+    update_interval: 7s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "Heap Fragmentation"
+    lambda: |-
+      size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+      size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+      if (free_heap > 0) {
+        return ((float)(free_heap - largest_block) / free_heap) * 100.0;
+      }
+      return 0.0;
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    update_interval: 7s
+    entity_category: "diagnostic"
+
+  # DMA-capable memory monitoring
+  - platform: template
+    name: "DMA Capable Heap Free"
+    lambda: return heap_caps_get_free_size(MALLOC_CAP_DMA);
+    unit_of_measurement: "bytes"
+    update_interval: 30s
+    entity_category: "diagnostic"
+
+  - platform: template
+    name: "DMA Capable Largest Block"
+    lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
+    unit_of_measurement: "bytes"
+    update_interval: 7s
+    entity_category: "diagnostic"
+
+  # PSRAM monitoring (if available)
+  - platform: template
+    name: "PSRAM Free"
+    lambda: |-
+      size_t psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+      if (psram_free > 0) {
+        return psram_free;
+      }
+      return 0;  // No PSRAM available
+    unit_of_measurement: "bytes"
+    update_interval: 7s
+    entity_category: "diagnostic"
+
+  # Total free heap across all memory types
+  - platform: template
+    name: "Total Free Heap (All)"
+    lambda: return heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    unit_of_measurement: "bytes"
+    update_interval: 7s
+    entity_category: "diagnostic"
+
+  # Minimum free heap since boot (indicates worst-case memory pressure)
+  - platform: template
+    name: "Min Free Heap Ever"
+    lambda: return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+    unit_of_measurement: "bytes"
+    update_interval: 7s
+    entity_category: "diagnostic"
+
+text_sensor:
+  - platform: template
+    name: "Time Value (Stub)"
+    id: timeVal_stub
+    internal: true
+    update_interval: never
 # Weather icon fonts (icons_20, icons_40, icons_50, icons_80, icons_100)
 # have been moved to packages/weather-pages.yaml
 # Vertical clock fonts (montserrat_80, montserrat_50, montserrat_24)
@@ -938,6 +2026,318 @@ lvgl:
   #     ref: main
   #     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
   #     refresh: always
+  pages:
+    - id: vertical_clock_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: |-
+            id(current_page_index) = 0;
+            id(time_update_last_text).clear();
+            id(colon_blink_state) = true;  // Ensure colon is visible when page loads
+        - script.execute: time_update
+        - script.execute: update_colon_widget
+      widgets:
+        # Large time display vertically centered
+        - label:
+            id: vclock_hours
+            align: CENTER
+            text_font: montserrat_80
+            text_color: my_white
+            x: 0
+            y: -120
+            text: "12"
+
+        - label:
+            id: vclock_colon
+            align: CENTER
+            text_font: montserrat_80
+            text_color: my_white
+            x: 0
+            y: -20
+            text: ":"
+
+        - label:
+            id: vclock_minutes
+            align: CENTER
+            text_font: montserrat_80
+            text_color: my_white
+            x: 0
+            y: 80
+            text: "00"
+
+        - label:
+            id: vclock_ampm
+            align: CENTER
+            text_font: montserrat_50
+            text_color: my_white
+            x: 0
+            y: 180
+            text: "AM"
+
+        # Date below time
+        - label:
+            id: vclock_date
+            align: CENTER
+            text_font: montserrat_24
+            text_color: my_gray
+            x: 0
+            y: 250
+            text: "Mon, Jan 1"
+
+        # Day of week at top
+        - label:
+            id: vclock_day_top
+            align: TOP_MID
+            text_font: montserrat_24
+            text_color: my_gray
+            x: 0
+            y: 20
+            text: "Monday"
+
+        # Navigation button (top right corner)
+        - obj:
+            id: nav_button_vclock
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Vertical Clock page nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+    
+    # Weather Forecast Page (Page 3)
+    # Main weather display with current conditions
+    - id: weather_forecast_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: |-
+            id(current_page_index) = 3;  // weather_forecast_page
+            id(weather_last_condition).clear();
+            id(weather_on_weather_page) = true;
+        - script.execute: fetch_weather_data
+        - script.execute: update_weather_icon_color
+      on_unload:
+        - lambda: 'id(weather_on_weather_page) = false;'
+      widgets:
+        # Large weather condition icon at top
+        - label:
+            text: "\U000F14E4"
+            id: lbl_weather_forecast_condition_icon
+            text_font: icons_100
+            text_align: CENTER
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 10
+
+        # Condition name below icon
+        - label:
+            id: lbl_weather_forecast_condition_name
+            text: !lambda |-
+              if (id(weather_current_condition).empty()) {
+                return std::string("Unknown");
+              }
+              return id(weather_current_condition);
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 120
+
+        # Semicircle meter gauge for apparent temperature
+        - obj:
+            align: CENTER
+            x: 0
+            y: 100
+            width: 180
+            height: 180
+            bg_color: 0x000000
+            border_width: 0
+            pad_all: 10
+            widgets:
+              - meter:
+                  id: weather_temp_gauge
+                  height: 100%
+                  width: 100%
+                  border_width: 0
+                  align: CENTER
+                  bg_opa: TRANSP
+                  scales:
+                    - range_from: 0
+                      range_to: 100
+                      angle_range: 180
+                      rotation: 180
+                      ticks:
+                        count: 51
+                        width: 2
+                        length: 10
+                        color: 0x404040
+                      indicators:
+                        - tick_style:
+                            start_value: 0
+                            end_value: 100
+                            color_start: 0x0099FF
+                            color_end: 0xFF6600
+                    - range_from: 0
+                      range_to: 100
+                      angle_range: 180
+                      rotation: 180
+                      ticks:
+                        count: 0
+                      indicators:
+                        - line:
+                            id: weather_temp_needle
+                            width: 8
+                            r_mod: 2
+                            value: 50
+                            color: 0xFF0000
+              - obj:
+                  height: 100
+                  width: 100
+                  radius: 50
+                  align: CENTER
+                  border_width: 0
+                  bg_color: 0x000000
+
+        # Current apparent temperature in center of gauge
+        - label:
+            id: lbl_weather_today_tempap
+            text: !lambda |-
+              if (isnan(id(weather_current_apparent_temp))) {
+                return std::string("--°");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            align: CENTER
+            x: 0
+            y: 120
+
+        # "Feels Like" label above temp
+        - label:
+            text: "Feels Like"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: CENTER
+            x: 0
+            y: 95
+
+        # Low temp stacked above gauge
+        - label:
+            id: lbl_weather_forecast_templo
+            text: !lambda |-
+              if (isnan(id(weather_forecast_temp_low)[0])) {
+                return std::string("L: --°");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_teal
+            align: CENTER
+            x: 0
+            y: -35
+
+        # High temp stacked above low temp
+        - label:
+            id: lbl_weather_forecast_temphi
+            text: !lambda |-
+              if (isnan(id(weather_forecast_temp_high)[0])) {
+                return std::string("H: --°");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_red
+            align: CENTER
+            x: 0
+            y: -70
+
+        # Precipitation Chance
+        - label:
+            id: lbl_weather_today_dailyprecipprob
+            text: !lambda |-
+              if (isnan(id(weather_forecast_precip_prob)[0])) {
+                return std::string("Chance: --%");
+              }
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_18
+            text_color: my_teal
+            align: BOTTOM_MID
+            x: 0
+            y: -55
+
+        # Current temperature at bottom
+        - label:
+            text: "Now:"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: BOTTOM_MID
+            x: 0
+            y: -30
+
+        - label:
+            id: lbl_weather_today_outdoor_temp
+            text: !lambda |-
+              if (isnan(id(weather_current_temp))) {
+                return std::string("--.- °F");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: BOTTOM_MID
+            x: 0
+            y: -5
+        - obj:
+            id: nav_button_weather
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Weather page nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
 
 button:
   - platform: restart
@@ -948,6 +2348,141 @@ button:
     disabled_by_default: True
     name: "Factory Reset ESP"
     id: factory_reset_all
+
+  - platform: template
+    name: "Refresh Weather"
+    id: btn_refresh_weather
+    on_press:
+      - script.execute: fetch_weather_data
+
+  - platform: template
+    name: "Debug Daily Forecast"
+    id: btn_debug_daily_forecast
+    on_press:
+      - homeassistant.action:
+          action: weather.get_forecasts
+          capture_response: true
+          data:
+            entity_id: ${weather_entity_id}
+            type: daily
+          on_success:
+            - lambda: |-
+                std::string output;
+                serializeJsonPretty(response, output);
+                ESP_LOGI("weather", "Daily forecast:\n%s", output.c_str());
+          on_error:
+            - logger.log: "Daily forecast call failed"
+
+  # - platform: template
+  #   name: "Test Weather Call"
+  #   id: btn_test_weather_call
+  #   on_press:
+  #     - homeassistant.action:
+  #         action: weather.get_forecasts
+  #         data:
+  #           entity_id: weather.hhut
+  #           type: daily
+  #           return_response: true
+  #         capture_response: true
+  #         on_success:
+  #           - lambda: |-
+  #               // response is JsonObjectConst
+  #               if (!response.containsKey("response")) {
+  #                 ESP_LOGE("weather", "Missing 'response' key!");
+  #                 return;
+  #               }
+  #               const auto &resp_obj = response["response"];
+  #               if (!resp_obj.containsKey("weather.hhut")) {
+  #                 ESP_LOGE("weather", "Missing 'weather.hhut'!");
+  #                 return;
+  #               }
+  #               const auto &entity = resp_obj["weather.hhut"];
+  #               if (!entity.containsKey("forecast")) {
+  #                 ESP_LOGE("weather", "Missing 'forecast'!");
+  #                 return;
+  #               }
+  #               const auto &forecast = entity["forecast"];
+  #               for (size_t i = 0; i < forecast.size(); i++) {
+  #                 const auto &day = forecast[i];
+  #                 float temp = day.containsKey("temperature") ? day["temperature"].as<float>() : NAN;
+  #                 const char *cond = day.containsKey("condition") ? day["condition"].as<std::string>().c_str() : "N/A";
+  #                 ESP_LOGI("weather", "Day %d temp: %.1f, condition: %s", i, temp, cond);
+  #               }
+  #         on_error:
+  #           - logger.log: "Failed to call weather.get_forecasts!"
+
+  # - platform: template
+  #   name: "Test example from ESPHome"
+  #   id: btn_test_example
+  #   on_press:
+  #     - homeassistant.action:
+  #         action: weather.get_forecasts
+  #         data:
+  #           entity_id: weather.hhut
+  #           type: hourly
+  #           return_response: true
+  #         capture_response: true
+  #         on_success:
+  #           - lambda: |-
+  #               if (!response.containsKey("response")) return;
+  #               const auto &resp_obj = response["response"];
+  #               if (!resp_obj.containsKey("weather.hhut")) return;
+  #               const auto &entity = resp_obj["weather.hhut"];
+  #               if (!entity.containsKey("forecast")) return;
+  #               const auto &forecast = entity["forecast"];
+  #               if (forecast.size() == 0) return;
+  #               const auto &first_hour = forecast[0];
+  #               float temperature = first_hour.containsKey("temperature") ? first_hour["temperature"].as<float>() : NAN;
+  #               ESP_LOGI("weather", "Temperature next hour: %.1f", temperature);
+
+  # - platform: template
+  #   name: "Test Weather Forecast"
+  #   id: btn_test_forecast
+  #   on_press:
+  #     - homeassistant.action:
+  #         action: template.render
+  #         data:
+  #           template: "{{ state_attr('weather.hhut', 'forecast') | tojson }}"
+  #         capture_response: true
+  #         on_success:
+  #           - lambda: |-
+  #               if (!response.containsKey("result")) {
+  #                 ESP_LOGW("weather", "No 'result' key in template response!");
+  #                 return;
+  #               }
+  #               const auto &result = response["result"];
+  #               std::string forecast_json = result.as<std::string>();
+  #               ESP_LOGI("weather", "Forecast attribute JSON:\n%s", forecast_json.c_str());
+  #         on_error:
+  #           - lambda: |-
+  #               ESP_LOGE("weather", "❌ Forecast fetch FAILED!");
+
+wifi:
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
+  ap:
+    ssid: "Halo-79e384-Fallback"
+    password: "fallback12345"
+
+# OTA
+ota:
+  - platform: esphome
+    password: ${ota_password}
+
+# Default page selector (update options based on enabled features)
+select:
+  - platform: template
+    name: "Default Page at Boot"
+    id: default_page_select_boot
+    optimistic: true
+    options:
+      - "Vertical Clock"
+      # Uncomment based on enabled features:
+      # - "AirQ"          # if airq_enabled
+      # - "WiFi"          # if wifi_enabled
+      - "Weather"       # if weather_enabled
+    initial_option: "Vertical Clock"
+    restore_value: true
 
 esphome:
   name: ${name}
