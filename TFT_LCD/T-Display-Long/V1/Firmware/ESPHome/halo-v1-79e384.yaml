@@ -11,7 +11,6 @@ substitutions:
   wifi_password: !secret wifihome_password
 
   # Security
-  api_encryption_key: !secret api_encryption_key
   ota_password: !secret ota_password
 
 esphome:
