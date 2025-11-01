@@ -132,25 +132,6 @@ globals:
     type: uint32_t
     restore_value: no
     initial_value: '0'
-  - id: page_rotation_AirQ_enabled
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  - id: page_rotation_AirQ_order
-    type: int
-    restore_value: no
-    initial_value: '99'
-  
-  - id: page_rotation_wifi_enabled
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  - id: page_rotation_wifi_order
-    type: int
-    restore_value: no
-    initial_value: '99'
   
   - id: page_rotation_weather_enabled
     type: bool
@@ -259,6 +240,116 @@ globals:
     initial_value: '0'
 
   - id: weather_on_weather_page
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # Page rotation settings - which pages are included
+  - id: page_rotation_AirQ_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: page_rotation_AirQ_order
+    type: int
+    restore_value: yes
+    initial_value: '1'
+
+  # WiFi status indicator state for AirQ page
+  - id: airq_wifi_stat_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: page_rotation_wifi_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Page rotation order (1-6, lower numbers show first)
+  - id: page_rotation_wifi_order
+    type: int
+    restore_value: yes
+    initial_value: '2'
+
+  - id: wifi_logo_visible
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_signal_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_signal_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_signal_bar_last_value
+    type: float
+    restore_value: no
+    initial_value: '-200.0'
+  - id: wifi_signal_bar_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_ssid_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ssid_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_ip_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ip_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_status_last_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: wg_status_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_color_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_address_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_address_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_handshake_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_handshake_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_endpoint_initialized
     type: bool
     restore_value: no
     initial_value: 'false'
@@ -692,6 +783,65 @@ switch:
       - lambda: 'id(page_rotation_hourly_forecast_enabled) = false;'
       - logger.log: "Hourly forecast page disabled in rotation"
 
+  - platform: template
+    name: "Page Rotation: AirQ Page"
+    id: page_rotation_AirQ_switch
+    icon: mdi:view-dashboard
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_AirQ_enabled) = true;'
+      - logger.log: "AirQ page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_AirQ_enabled) = false;'
+      - logger.log: "AirQ page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: WiFi Page"
+    id: page_rotation_wifi_switch
+    icon: mdi:wifi
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_wifi_enabled) = true;'
+      - logger.log: "WiFi page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      # Note: WireGuard-specific flags removed - they're handled by wireguard-display.yaml
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
+          then:
+            - lambda: |-
+                id(wifi_signal_needs_render) = true;
+                id(wifi_signal_bar_needs_render) = true;
+                id(wifi_ssid_needs_render) = true;
+                id(wifi_ip_needs_render) = true;
+                id(ha_status_needs_render) = true;
+    on_turn_off:
+      - lambda: 'id(page_rotation_wifi_enabled) = false;'
+      - logger.log: "WiFi page disabled in rotation"
+
+  - platform: template
+    name: "Enable WireGuard"
+    id: wireguard_enabled
+    icon: mdi:vpn
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - logger.log: "WireGuard switch turned ON - enabling WireGuard"
+      - delay: 500ms
+      - wireguard.enable:
+          id: wg0
+      - logger.log: "✓ WireGuard enabled"
+    on_turn_off:
+      - logger.log: "WireGuard switch turned OFF - disabling WireGuard"
+      - wireguard.disable:
+          id: wg0
+      - logger.log: "✓ WireGuard disabled"
+
 select:
   - platform: template
     name: Display Temperature Unit
@@ -985,37 +1135,454 @@ interval:
               ESP_LOGD("page_rotation", "Page index changed to %d", current);
               return true;
           then:
-            # Page 0: vertical_clock_page
+            # Page 0: Vertical Clock
             - if:
                 condition:
                   lambda: 'return id(current_page_index) == 0;'
                 then:
-                  - logger.log: "Page rotation: Showing vertical_clock_page (index 0)"
+                  - logger.log: "Page rotation: Showing Vertical Clock (index 0)"
                   - lvgl.page.show:
                       id: vertical_clock_page
                       animation: OUT_LEFT
                       time: 300ms
                 else:
-                  # Page 3: weather_forecast_page
+                  # Page 1: AirQ
                   - if:
                       condition:
-                        lambda: 'return id(current_page_index) == 3;'
+                        lambda: 'return id(current_page_index) == 1;'
                       then:
-                        - logger.log: "Page rotation: Showing weather_forecast_page (index 3)"
+                        - logger.log: "Page rotation: Showing AirQ page (index 1)"
                         - lvgl.page.show:
-                            id: weather_forecast_page
+                            id: AirQ_page
                             animation: OUT_LEFT
                             time: 300ms
                       else:
-                        # Unknown page - fall back to vertical clock
-                        - logger.log:
-                            format: "Page rotation: Page index %d not available, falling back to Vertical Clock"
-                            args: ['id(current_page_index)']
-                            level: WARN
-                        - lvgl.page.show:
-                            id: vertical_clock_page
-                            animation: OUT_LEFT
-                            time: 300ms
+                        # Page 2: WiFi
+                        - if:
+                            condition:
+                              lambda: 'return id(current_page_index) == 2;'
+                            then:
+                              - logger.log: "Page rotation: Showing WiFi page (index 2)"
+                              - lvgl.page.show:
+                                  id: wifi_page
+                                  animation: OUT_LEFT
+                                  time: 300ms
+                            else:
+                              # Page 3: Weather
+                              - if:
+                                  condition:
+                                    lambda: 'return id(current_page_index) == 3;'
+                                  then:
+                                    - logger.log: "Page rotation: Showing Weather page (index 3)"
+                                    - lvgl.page.show:
+                                        id: weather_forecast_page
+                                        animation: OUT_LEFT
+                                        time: 300ms
+                                  else:
+                                    # Page 4: Hourly Forecast
+                                    - if:
+                                        condition:
+                                          lambda: 'return id(current_page_index) == 4;'
+                                        then:
+                                          - logger.log: "Page rotation: Showing Hourly Forecast page (index 4)"
+                                          - lvgl.page.show:
+                                              id: hourly_forecast_page
+                                              animation: OUT_LEFT
+                                              time: 300ms
+                                        else:
+                                          # Page 5: Daily Forecast
+                                          - if:
+                                              condition:
+                                                lambda: 'return id(current_page_index) == 5;'
+                                              then:
+                                                - logger.log: "Page rotation: Showing Daily Forecast page (index 5)"
+                                                - lvgl.page.show:
+                                                    id: daily_forecast_page
+                                                    animation: OUT_LEFT
+                                                    time: 300ms
+                                              else:
+                                                # Unknown page - fall back to vertical clock
+                                                - logger.log:
+                                                    format: "Page rotation: Page index %d not available, falling back to Vertical Clock"
+                                                    args: ['id(current_page_index)']
+                                                    level: WARN
+                                                - lvgl.page.show:
+                                                    id: vertical_clock_page
+                                                    animation: OUT_LEFT
+                                                    time: 300ms
+
+
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - if:
+                condition:
+                  wifi.connected:
+                then:
+                  # Show WiFi logo on wifi_page (only if AirQ page exists)
+                  # This is guarded to avoid errors in wifi-only mode
+                  # - if:
+                  #     condition:
+                  #       lambda: 'return !id(wifi_logo_visible) && id(current_page_index) == 2;'  # wifi_page
+                  #     then:
+                  #       - lvgl.widget.show:
+                  #           id: ym_image
+                  # - if:
+                  #     condition:
+                  #       lambda: 'return !id(wifi_logo_visible);'
+                  #     then:
+                  #       - lambda: 'id(wifi_logo_visible) = true;'
+                  # Update WiFi signal strength text
+                  - lambda: |-
+                      char buffer[32];
+                      snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
+                      std::string new_text(buffer);
+                      if (new_text != id(wifi_signal_last_text)) {
+                        id(wifi_signal_last_text) = new_text;
+                        id(wifi_signal_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wifi_signal_label
+                            text: !lambda 'return id(wifi_signal_last_text);'
+                        - lambda: 'id(wifi_signal_needs_render) = false;'
+                  # Update WiFi signal bar
+                  - lambda: |-
+                      float signal = id(wifi_signal_db).state;
+                      if (std::isnan(signal)) {
+                        signal = -200.0f;
+                      }
+                      if (signal != id(wifi_signal_bar_last_value)) {
+                        id(wifi_signal_bar_last_value) = signal;
+                        id(wifi_signal_bar_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.bar.update:
+                            id: wifi_signal_bar
+                            value: !lambda 'return id(wifi_signal_bar_last_value);'
+                        - lambda: 'id(wifi_signal_bar_needs_render) = false;'
+                  # Update WiFi SSID
+                  - lambda: |-
+                      std::string ssid = esphome::wifi::global_wifi_component->wifi_ssid();
+                      std::string new_text = std::string("SSID: ") + ssid;
+                      if (new_text != id(wifi_ssid_last_text)) {
+                        id(wifi_ssid_last_text) = new_text;
+                        id(wifi_ssid_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_ssid_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wifi_ssid_label
+                            text: !lambda 'return id(wifi_ssid_last_text);'
+                        - lambda: 'id(wifi_ssid_needs_render) = false;'
+                  # Update WiFi IP address
+                  - lambda: |-
+                      auto addresses = esphome::wifi::global_wifi_component->get_ip_addresses();
+                      std::string ip_text = "IP: Not assigned";
+                      if (!addresses.empty()) {
+                        ip_text = std::string("IP: ") + addresses[0].str();
+                      }
+                      if (ip_text != id(wifi_ip_last_text)) {
+                        id(wifi_ip_last_text) = ip_text;
+                        id(wifi_ip_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_ip_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wifi_ip_label
+                            text: !lambda 'return id(wifi_ip_last_text);'
+                        - lambda: 'id(wifi_ip_needs_render) = false;'
+                  # Update Home Assistant connection status icon
+                  - lambda: |-
+                      bool ha_connected = id(ink_ha_connected).state;
+                      if (ha_connected != id(ha_status_last_state)) {
+                        id(ha_status_last_state) = ha_connected;
+                        id(ha_status_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(ha_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.widget.update:
+                            id: ha_status_icon
+                            text_color: !lambda 'return id(ink_ha_connected).state ? id(my_green) : id(my_gray);'
+                        - lambda: 'id(ha_status_needs_render) = false;'
+                else:
+                  # WiFi disconnected - hide WiFi logo on AirQ page (only if AirQ page exists)
+                  # This is guarded to avoid errors in wifi-only mode
+                  # - if:
+                  #     condition:
+                  #       lambda: 'return id(wifi_logo_visible) && id(current_page_index) == 1;'  # AirQ_page
+                  #     then:
+                  #       - lvgl.widget.hide:
+                  #           id: ym_image
+                  # - if:
+                  #     condition:
+                  #       lambda: 'return id(wifi_logo_visible);'
+                  #     then:
+                  #       - lambda: 'id(wifi_logo_visible) = false;'
+                  # Update disconnected signal text
+                  - lambda: |-
+                      const std::string new_text = "Signal: --";
+                      if (new_text != id(wifi_signal_last_text)) {
+                        id(wifi_signal_last_text) = new_text;
+                        id(wifi_signal_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wifi_signal_label
+                            text: !lambda 'return id(wifi_signal_last_text);'
+                        - lambda: 'id(wifi_signal_needs_render) = false;'
+                  # Update disconnected signal bar
+                  - lambda: |-
+                      float new_value = -200.0f;
+                      if (new_value != id(wifi_signal_bar_last_value)) {
+                        id(wifi_signal_bar_last_value) = new_value;
+                        id(wifi_signal_bar_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.bar.update:
+                            id: wifi_signal_bar
+                            value: !lambda 'return id(wifi_signal_bar_last_value);'
+                        - lambda: 'id(wifi_signal_bar_needs_render) = false;'
+                  # Update disconnected SSID
+                  - lambda: |-
+                      const std::string ssid_text = "SSID: Not connected";
+                      if (ssid_text != id(wifi_ssid_last_text)) {
+                        id(wifi_ssid_last_text) = ssid_text;
+                        id(wifi_ssid_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_ssid_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wifi_ssid_label
+                            text: !lambda 'return id(wifi_ssid_last_text);'
+                        - lambda: 'id(wifi_ssid_needs_render) = false;'
+                  # Update disconnected IP
+                  - lambda: |-
+                      const std::string ip_text = "IP: Not connected";
+                      if (ip_text != id(wifi_ip_last_text)) {
+                        id(wifi_ip_last_text) = ip_text;
+                        id(wifi_ip_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wifi_ip_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wifi_ip_label
+                            text: !lambda 'return id(wifi_ip_last_text);'
+                        - lambda: 'id(wifi_ip_needs_render) = false;'
+                  # Update Home Assistant status icon (disconnected when WiFi is down)
+                  - lambda: |-
+                      bool ha_connected = false;  // WiFi disconnected, so HA is also disconnected
+                      if (ha_connected != id(ha_status_last_state)) {
+                        id(ha_status_last_state) = ha_connected;
+                        id(ha_status_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(ha_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.widget.update:
+                            id: ha_status_icon
+                            text_color: !lambda 'return id(my_gray);'
+                        - lambda: 'id(ha_status_needs_render) = false;'
+
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete);'
+          then:
+            - if:
+                condition:
+                  wifi.connected:
+                then:
+                  # Update WireGuard status text and state
+                  - lambda: |-
+                      bool wg_connected = id(wireguard_status).state;
+                      std::string new_text = wg_connected ? "Status: \nConnected" : "Status: \nDisconnected";
+                      if (new_text != id(wg_status_last_text)) {
+                        id(wg_status_last_text) = new_text;
+                        id(wg_status_needs_render) = true;
+                      }
+                      if (wg_connected != id(wg_status_connected_state)) {
+                        id(wg_status_connected_state) = wg_connected;
+                        id(wg_status_color_needs_render) = true;
+                      }
+                  # Render WireGuard status text if needed
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wg_status_label
+                            text: !lambda 'return id(wg_status_last_text);'
+                        - lambda: 'id(wg_status_needs_render) = false;'
+                  # Update WireGuard status color if needed
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_status_color_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.widget.update:
+                            id: wg_status_label
+                            text_color: !lambda |-
+                              if (id(wg_status_connected_state)) {
+                                return id(my_green);
+                              } else {
+                                return id(my_gray);
+                              }
+                        - lambda: 'id(wg_status_color_needs_render) = false;'
+                  # Update WireGuard address
+                  - lambda: |-
+                      std::string new_text = "VPN IP: Not configured";
+                      if (id(wireguard_address_text).has_state()) {
+                        new_text = std::string("VPN IP: ") + id(wireguard_address_text).state;
+                      }
+                      if (new_text != id(wg_address_last_text)) {
+                        id(wg_address_last_text) = new_text;
+                        id(wg_address_needs_render) = true;
+                      }
+                  # Render WireGuard address if needed
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_address_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wg_address_label
+                            text: !lambda 'return id(wg_address_last_text);'
+                        - lambda: 'id(wg_address_needs_render) = false;'
+                  # Initialize WireGuard endpoint label once
+                  - if:
+                      condition:
+                        lambda: 'return !id(wg_endpoint_initialized) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wg_endpoint_label
+                            text: "Endpoint: \nConfigured"
+                        - lambda: 'id(wg_endpoint_initialized) = true;'
+                  # Update WireGuard handshake time
+                  - lambda: |-
+                      std::string handshake_text;
+                      if (!std::isnan(id(wireguard_handshake).state)) {
+                        const auto current_time = id(sntp_time).now();
+                        if (current_time.is_valid()) {
+                          int seconds_ago = current_time.timestamp - static_cast<int>(id(wireguard_handshake).state);
+                          auto handshake_time = ESPTime::from_epoch_local(static_cast<int>(id(wireguard_handshake).state));
+                          char time_ago[32];
+                          if (seconds_ago < 0) {
+                            snprintf(time_ago, sizeof(time_ago), "%ds", static_cast<int>(id(wireguard_handshake).state));
+                          } else if (seconds_ago < 60) {
+                            snprintf(time_ago, sizeof(time_ago), "%ds ago", seconds_ago);
+                          } else if (seconds_ago < 3600) {
+                            snprintf(time_ago, sizeof(time_ago), "%dm ago", seconds_ago / 60);
+                          } else if (seconds_ago < 86400) {
+                            snprintf(time_ago, sizeof(time_ago), "%dh ago", seconds_ago / 3600);
+                          } else {
+                            snprintf(time_ago, sizeof(time_ago), "%dd ago", seconds_ago / 86400);
+                          }
+                          char buffer[128];
+                          snprintf(buffer, sizeof(buffer), "Handshake: \n%s @\n\n%02d:%02d:%02d",
+                                   time_ago, handshake_time.hour, handshake_time.minute, handshake_time.second);
+                          handshake_text = buffer;
+                        } else {
+                          handshake_text = "Handshake: \nUnknown";
+                        }
+                      } else {
+                        handshake_text = "Handshake: \nNever";
+                      }
+                      if (handshake_text != id(wg_handshake_last_text)) {
+                        id(wg_handshake_last_text) = handshake_text;
+                        id(wg_handshake_needs_render) = true;
+                      }
+                  # Render WireGuard handshake if needed
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_handshake_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wg_handshake_label
+                            text: !lambda 'return id(wg_handshake_last_text);'
+                        - lambda: 'id(wg_handshake_needs_render) = false;'
+                else:
+                  # WiFi disconnected - show disconnected state for WireGuard
+                  - lambda: |-
+                      const bool wg_connected = false;
+                      const std::string status_text = "Status: \nDisconnected";
+                      if (status_text != id(wg_status_last_text)) {
+                        id(wg_status_last_text) = status_text;
+                        id(wg_status_needs_render) = true;
+                      }
+                      if (wg_connected != id(wg_status_connected_state)) {
+                        id(wg_status_connected_state) = wg_connected;
+                        id(wg_status_color_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wg_status_label
+                            text: !lambda 'return id(wg_status_last_text);'
+                        - lambda: 'id(wg_status_needs_render) = false;'
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_status_color_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.widget.update:
+                            id: wg_status_label
+                            text_color: !lambda 'return id(my_gray);'
+                        - lambda: 'id(wg_status_color_needs_render) = false;'
+                  - lambda: |-
+                      const std::string address_text = "VPN IP: Not configured";
+                      if (address_text != id(wg_address_last_text)) {
+                        id(wg_address_last_text) = address_text;
+                        id(wg_address_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_address_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wg_address_label
+                            text: !lambda 'return id(wg_address_last_text);'
+                        - lambda: 'id(wg_address_needs_render) = false;'
+                  - lambda: |-
+                      const std::string handshake_text = "Handshake: \nUnavailable";
+                      if (handshake_text != id(wg_handshake_last_text)) {
+                        id(wg_handshake_last_text) = handshake_text;
+                        id(wg_handshake_needs_render) = true;
+                      }
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_handshake_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                      then:
+                        - lvgl.label.update:
+                            id: wg_handshake_label
+                            text: !lambda 'return id(wg_handshake_last_text);'
+                        - lambda: 'id(wg_handshake_needs_render) = false;'
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
@@ -1060,6 +1627,21 @@ api:
             call.perform();
           }
       - delay: 500ms
+
+  services:
+    # Co2 Calibration Service
+    - service: calibrate_co2_value
+      variables:
+        co2_ppm: float
+      then:
+        - scd4x.perform_forced_calibration:
+            value: !lambda "return co2_ppm;"
+            id: scd40
+
+    # SEN55 Fan Clean Service
+    - service: sen55_clean
+      then:
+        - sen5x.start_fan_autoclean: sen55
       # Note: BLE tracker start/stop on API connection is defined in ble-core.yaml
 
 # Note: API services section removed - feature-specific services are defined in their respective packages
@@ -1584,6 +2166,15 @@ script:
             return std::string(buf);
 
       - logger.log: "✓ Weather display labels updated"
+          const uint32_t elapsed = millis() - id(time_update_last_started);
+          id(time_update_last_duration) = elapsed;
+          const bool rendered = id(time_update_needs_render);
+          if (elapsed > 40) {
+            ESP_LOGW("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          } else {
+            ESP_LOGD("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          }
+          id(time_update_needs_render) = false;
 
   - id: time_update
     mode: restart
@@ -1592,7 +2183,7 @@ script:
           id(time_update_last_started) = millis();
           id(time_update_needs_render) = false;
       - lambda: |-
-          auto now = id(ha_time).now();
+          auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
           if (!now.is_valid()) {
             ESP_LOGW("time_update", "Time source unavailable, skipping label update");
             return;
@@ -1613,15 +2204,21 @@ script:
             id(time_update_last_text) = new_text;
             id(time_update_needs_render) = true;
           }
-      # Update vertical clock page (page index 0)
       - if:
           condition:
-            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 0;'
+            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 1;'  # AirQ_page
+          then:
+            - lvgl.label.update:
+                id: timeVal
+                text: !lambda 'return id(time_update_last_text);'
+      - if:
+          condition:
+            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 0;'  # vertical_clock_page
           then:
             - lvgl.label.update:
                 id: vclock_hours
                 text: !lambda |-
-                  auto now = id(ha_time).now();
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
                   bool is_pm = now.hour >= 12;
                   int hour_12 = now.hour % 12;
@@ -1636,7 +2233,7 @@ script:
             - lvgl.label.update:
                 id: vclock_minutes
                 text: !lambda |-
-                  auto now = id(ha_time).now();
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
                   char buf[3];
                   snprintf(buf, sizeof(buf), "%02d", now.minute);
@@ -1644,7 +2241,7 @@ script:
             - lvgl.label.update:
                 id: vclock_ampm
                 text: !lambda |-
-                  auto now = id(ha_time).now();
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("");
                   if (id(time_format).state) return std::string("");
                   bool is_pm = now.hour >= 12;
@@ -1652,7 +2249,7 @@ script:
             - lvgl.label.update:
                 id: vclock_date
                 text: !lambda |-
-                  auto now = id(ha_time).now();
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
                   static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
                   char buf[20];
@@ -1661,7 +2258,7 @@ script:
             - lvgl.label.update:
                 id: vclock_day_top
                 text: !lambda |-
-                  auto now = id(ha_time).now();
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
                   static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
                   return std::string(days[now.day_of_week - 1]);
@@ -1669,6 +2266,8 @@ script:
       - lambda: |-
           const uint32_t elapsed = millis() - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
+          // Removed publish_state to prevent TCP buffer overflow - store in global instead
+          // id(time_update_duration_sensor).publish_state(elapsed);
           const bool rendered = id(time_update_needs_render);
           if (elapsed > 40) {
             ESP_LOGW("time_update", "time_update took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
@@ -1811,6 +2410,87 @@ number:
           id: weather_temp_needle
           value: !lambda 'return (int)x;'
 
+  - platform: template
+    name: "Page Order: AirQ Page"
+    id: page_order_AirQ
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 1
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_AirQ_order) = (int)x;'
+      - logger.log:
+          format: "AirQ page order set to %d"
+          args: ['(int)x']
+      # Force immediate display refresh when on AirQ page (simple version - just execute time_update)
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 1;'
+          then:
+            - script.execute: time_update
+
+  - platform: template
+    name: SEN55 Temperature Offset
+    id: sen55_temperature_offset
+    restore_value: true
+    initial_value: 6.0
+    min_value: -70.0
+    max_value: 70.0
+    entity_category: "CONFIG"
+    unit_of_measurement: "°C"
+    optimistic: true
+    update_interval: never
+    step: 0.1
+    mode: box
+  - platform: template
+    name: SEN55 Humidity Offset
+    id: sen55_humidity_offset
+    restore_value: true
+    initial_value: 0
+    min_value: -70.0
+    max_value: 70.0
+    entity_category: "CONFIG"
+    unit_of_measurement: "%"
+    optimistic: true
+    update_interval: never
+    step: 0.1
+    mode: box
+
+  # Page rotation order numbers (1-6, lower numbers show first)
+  - platform: template
+    name: "Page Order: WiFi Page"
+    id: page_order_wifi
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 2
+    min_value: 1
+    max_value: 6
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_wifi_order) = (int)x;'
+      - logger.log:
+          format: "WiFi page order set to %d"
+          args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
+          then:
+            - lambda: |-
+                id(wifi_signal_needs_render) = true;
+                id(wifi_signal_bar_needs_render) = true;
+                id(wifi_ssid_needs_render) = true;
+                id(wifi_ip_needs_render) = true;
+                id(ha_status_needs_render) = true;
+
 binary_sensor:
   - platform: status
     name: Online
@@ -1821,6 +2501,15 @@ binary_sensor:
     id: display_backlight_state
     entity_category: "diagnostic"
     lambda: 'return id(display_backlight_is_on);'
+
+  - platform: wireguard
+    wireguard_id: wg0
+    status:
+      name: "WireGuard Status"
+      id: wireguard_status
+    enabled:
+      name: "WireGuard Enabled"
+      id: wireguard_enabled_sensor
 
 sensor:
   # Display refresh rate monitor
@@ -1965,12 +2654,637 @@ sensor:
     update_interval: 7s
     entity_category: "diagnostic"
 
+  - platform: template
+    name: "Computed AQI"
+    id: computed_halo_aqi
+    unit_of_measurement: ""
+    accuracy_decimals: 0
+    device_class: "aqi"
+    state_class: "measurement"
+    update_interval: never  # We'll update it manually
+    on_value:
+      then:
+        # Update LED effect when AQI changes if "AQI Color" effect is selected
+        - if:
+            condition:
+              lambda: 'return id(led_effect_select).state == "AQI Color";'
+            then:
+              - lambda: |-
+                  float aqi = x;
+                  if (std::isnan(aqi) || aqi <= 50) {
+                    auto call = id(rgb_light).turn_off();
+                    call.perform();
+                  } else {
+                    Color color;
+                    if (aqi <= 100) color = Color(255, 255, 0);       // yellow
+                    else if (aqi <= 150) color = Color(255, 165, 0);  // orange
+                    else if (aqi <= 200) color = Color(255, 0, 0);    // red
+                    else if (aqi <= 300) color = Color(128, 0, 128);  // purple
+                    else color = Color(128, 0, 0);                    // maroon
+                    auto call = id(rgb_light).turn_on();
+                    call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
+                    call.perform();
+                  }
+
+  - platform: scd4x
+    id: scd40
+    co2:
+      name: "CO2"
+      id: "co2"
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: co2_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%d", (int)x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 600;"
+              then:
+                - lvgl.label.update:
+                    id: co2_value
+                    text_color: my_green                     
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 1000;"
+                    then:
+                      - lvgl.label.update:
+                          id: co2_value
+                          text_color: my_yellow                         
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 1500;"
+                          then:
+                            - lvgl.label.update:
+                                id: co2_value
+                                text_color: my_orange                                 
+                          else:
+                            - lvgl.label.update:
+                                id: co2_value
+                                text_color: my_red                                                                              
+    automatic_self_calibration: false
+    update_interval: 30s  # Increased from 10s to reduce I2C blocking frequency
+    measurement_mode: "periodic"
+    i2c_id: lily_i2c
+    ambient_pressure_compensation_source: bme280pressure
+
+  - platform: mics_4514
+    id: mics4514
+    nitrogen_dioxide:
+      name: Nitrogen Dioxide
+      id: "no2"
+      filters:
+      - offset: -0.16
+      - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: no2_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.02f", x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 0.03;"  # Safe level typical indoors (ppm)
+              then:
+                - lvgl.label.update:
+                    id: no2_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 0.06;"  # Slightly elevated level (ppm)
+                    then:
+                      - lvgl.label.update:
+                          id: no2_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 0.1;"  # Moderately high level (ppm)
+                          then:
+                            - lvgl.label.update:
+                                id: no2_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: no2_value
+                                text_color: my_red  # High level, unsafe indoors (ppm)                          
+    carbon_monoxide:
+      name: Carbon Monoxide
+      id: "co"
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: co_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.02f", x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 15;"
+              then:
+                - lvgl.label.update:
+                    id: co_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 30;"
+                    then:
+                      - lvgl.label.update:
+                          id: co_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 36;"
+                          then:
+                            - lvgl.label.update:
+                                id: co_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: co_value
+                                text_color: my_red                      
+    hydrogen:
+      name: Hydrogen
+      id: "h2"
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: h2_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.02f", x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 0.4;"  # Safe level typical indoors
+              then:
+                - lvgl.label.update:
+                    id: h2_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 1.0;"  # Slightly elevated level
+                    then:
+                      - lvgl.label.update:
+                          id: h2_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 2.0;"  # Moderately high level
+                          then:
+                            - lvgl.label.update:
+                                id: h2_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: h2_value
+                                text_color: my_red  # High level, unsafe indoors                       
+    methane:
+      name: Methane
+      id: "ch4"
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: ch4_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.02f", x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 2.0;"  # Typical safe level
+              then:
+                - lvgl.label.update:
+                    id: ch4_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 10.0;"  # Elevated but not critical
+                    then:
+                      - lvgl.label.update:
+                          id: ch4_value
+                          text_color: my_yellow
+                    else:
+                      - lvgl.label.update:
+                          id: ch4_value
+                          text_color: my_red  # Critical level                                        
+    ethanol:
+      name: Ethanol
+      id: "ethanol"
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: ethanol_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.02f", x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 0.5;"  # Safe level
+              then:
+                - lvgl.label.update:
+                    id: ethanol_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 1.5;"  # Slightly elevated
+                    then:
+                      - lvgl.label.update:
+                          id: ethanol_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 3.0;"  # Moderate level
+                          then:
+                            - lvgl.label.update:
+                                id: ethanol_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: ethanol_value
+                                text_color: my_red  # High level                       
+    ammonia:
+      name: Ammonia
+      id: "nh3"
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: nh3_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.02f", x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 0.5;"  # Safe level typical indoors
+              then:
+                - lvgl.label.update:
+                    id: nh3_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 1.0;"  # Slightly elevated level
+                    then:
+                      - lvgl.label.update:
+                          id: nh3_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 2.0;"  # Moderately high level
+                          then:
+                            - lvgl.label.update:
+                                id: nh3_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: nh3_value
+                                text_color: my_red  # High level, unsafe indoors                            
+    update_interval: 40s  # Increased from 12s to reduce I2C blocking frequency
+    i2c_id: lily_i2c
+    address: 0x75
+
+  - platform: bme280_i2c
+    i2c_id: lily_i2c
+    temperature:
+      name: "BME280 Temperature"
+      oversampling: 2x
+      # filters:
+      #   - lambda: |-
+      #       return x;  
+    pressure:
+      name: "BME280 Pressure"
+      id: bme280pressure
+    humidity:
+      name: "BME280 Humidity"    
+
+  - platform: sen5x
+    id: sen55
+    pm_1_0:
+      name: "PM <1µm Weight concentration"
+      id: pm_1_0
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: pm1_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.01f", x);
+                return buffer;          
+    pm_2_5:
+      name: "PM <2.5µm Weight concentration"
+      id: pm_2_5
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: pm25_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.01f", x);
+                return buffer;
+          - lvgl.label.update:
+              id: aqi_value
+              text: !lambda |-
+                float val = x; // PM2.5 value
+                float aqi = 0.0;
+
+                if (val <= 9.0) {
+                  aqi = ((50.0 - 0.0) / (9.0 - 0.0)) * (val - 0.0) + 0.0;
+                } else if (val <= 35.4) {
+                  aqi = ((100.0 - 51.0) / (35.4 - 9.1)) * (val - 9.1) + 51.0;
+                } else if (val <= 55.4) {
+                  aqi = ((150.0 - 101.0) / (55.4 - 35.5)) * (val - 35.5) + 101.0;
+                } else if (val <= 125.4) {
+                  aqi = ((200.0 - 151.0) / (125.4 - 55.5)) * (val - 55.5) + 151.0;
+                } else if (val <= 225.4) {
+                  aqi = ((300.0 - 201.0) / (225.4 - 125.5)) * (val - 125.5) + 201.0;
+                } else if (val <= 500.4) {
+                  aqi = ((500.0 - 301.0) / (500.4 - 250.5)) * (val - 250.5) + 301.0;
+                } else {
+                  return "EVAC";
+                }
+
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), " %d", (int)aqi);
+                return buffer;
+
+          - lvgl.widget.update:
+              id: aqi_widget
+              bg_color: !lambda |-
+                float val = x; // PM2.5 value
+                float aqi = 0.0;
+
+                if (val <= 9.0) {
+                  aqi = ((50.0 - 0.0) / (9.0 - 0.0)) * (val - 0.0) + 0.0;
+                } else if (val <= 35.4) {
+                  aqi = ((100.0 - 51.0) / (35.4 - 9.1)) * (val - 9.1) + 51.0;
+                } else if (val <= 55.4) {
+                  aqi = ((150.0 - 101.0) / (55.4 - 35.5)) * (val - 35.5) + 101.0;
+                } else if (val <= 125.4) {
+                  aqi = ((200.0 - 151.0) / (125.4 - 55.5)) * (val - 55.5) + 151.0;
+                } else if (val <= 225.4) {
+                  aqi = ((300.0 - 201.0) / (225.4 - 125.5)) * (val - 125.5) + 201.0;
+                } else if (val <= 500.4) {
+                  aqi = ((500.0 - 301.0) / (500.4 - 250.5)) * (val - 250.5) + 301.0;
+                } else {
+                  aqi = 500.0;
+                }
+                id(computed_halo_aqi).publish_state((int)aqi);
+
+                // Return color based on AQI
+                if (aqi <= 50) {
+                  return lv_color_hex(0x76fa76); // Green
+                } else if (aqi <= 100) {
+                  return lv_color_hex(0xFFFF00); // Yellow
+                } else if (aqi <= 150) {
+                  return lv_color_hex(0xFFA500); // Orange
+                } else if (aqi <= 200) {
+                  return lv_color_hex(0xFF0000); // Red
+                } else if (aqi <= 300) {
+                  return lv_color_hex(0x800080); // Purple
+                } else {
+                  return lv_color_hex(0x800000); // Maroon
+                }        
+
+    pm_4_0:
+      name: "PM <4µm Weight concentration"
+      id: pm_4_0
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: pm4_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.01f", x);
+                return buffer;       
+    pm_10_0:
+      name: "PM <10µm Weight concentration"
+      id: pm_10_0
+      accuracy_decimals: 1
+      filters:
+        - throttle_average: 2s
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: pm10_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%.01f", x);
+                return buffer;       
+    temperature:
+      name: "SEN55 Temperature"
+      accuracy_decimals: 1
+      filters:
+        - offset: !lambda return -1.0 * id(sen55_temperature_offset).state;
+        - throttle_average: 2s
+      on_value:
+        then:
+          - if:
+              condition:
+                lambda: "return temp_unit_changed;"
+              then:
+                - lvgl.label.update:
+                    id: temperature_units
+                    text: !lambda |-
+                      if(id(display_temperature_unit).state == "Fahrenheit")
+                        return "\u00B0F";
+                      else if(id(display_temperature_unit).state == "Kelvin")
+                        return "K";
+                      return "\u00B0C";
+                - globals.set:
+                    id: temp_unit_changed
+                    value: "false"
+          - lvgl.label.update:
+              id: temperature_value
+              text: !lambda |-
+                static char buffer[10];
+                if(id(display_temperature_unit).state == "Fahrenheit")
+                  snprintf(buffer, sizeof(buffer), "%.01f", (x * 9.0 / 5.0) + 32.0);
+                else if(id(display_temperature_unit).state == "Kelvin")
+                  snprintf(buffer, sizeof(buffer), "%.01f", x + 273.15);
+                else
+                  snprintf(buffer, sizeof(buffer), "%.01f", x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x >= 18 && x <= 24;"  # Comfortable temperature range (°C)
+              then:
+                - lvgl.label.update:
+                    id: temperature_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return (x > 24 && x <= 27) || (x >= 16 && x < 18);"  # Slightly uncomfortable (°C)
+                    then:
+                      - lvgl.label.update:
+                          id: temperature_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return (x > 27 && x <= 30) || (x >= 10 && x < 16);"  # Moderately uncomfortable (°C)
+                          then:
+                            - lvgl.label.update:
+                                id: temperature_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: temperature_value
+                                text_color: my_red  # Extreme discomfort or unsafe (°C)
+    humidity:
+      name: "SEN55 Humidity"
+      filters:
+        - lambda: return x - id(sen55_humidity_offset).state;
+      accuracy_decimals: 0
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: rh_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%d", (int)x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x >= 30 && x <= 50;"  # Optimal indoor comfort range (%)
+              then:
+                - lvgl.label.update:
+                    id: rh_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return (x > 50 && x <= 60) || (x >= 20 && x < 30);"  # Slightly out of comfort range (%)
+                    then:
+                      - lvgl.label.update:
+                          id: rh_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return (x > 60 && x <= 70) || (x >= 10 && x < 20);"  # Moderately uncomfortable (%)
+                          then:
+                            - lvgl.label.update:
+                                id: rh_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: rh_value
+                                text_color: my_red  # Very uncomfortable or potentially hazardous (%)                             
+    voc:
+      name: "SEN55 VOC"
+      id: sen55_voc
+      algorithm_tuning:
+        #https://sensirion.com/media/documents/25AB572C/62B463AA/Sensirion_Engineering_Guidelines_SEN5x.pdf
+        index_offset: 100
+        learning_time_offset_hours: 72
+        learning_time_gain_hours: 72
+        gating_max_duration_minutes: 180
+        std_initial: 50
+        gain_factor: 230
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: voc_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%3d", (int)x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x < 150;"
+              then:
+                - lvgl.label.update:
+                    id: voc_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 250;"
+                    then:
+                      - lvgl.label.update:
+                          id: voc_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 400;"
+                          then:
+                            - lvgl.label.update:
+                                id: voc_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: voc_value
+                                text_color: my_red                      
+    i2c_id: lily_i2c
+    address: 0x69
+    update_interval: 60s  # Increased from 14s - SEN55 blocks for 4+ seconds per read!
+
+  - platform: wifi_signal
+    name: RSSI
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: wireguard
+    wireguard_id: wg0
+    latest_handshake:
+      name: "WireGuard Latest Handshake"
+      id: wireguard_handshake
+
 text_sensor:
   - platform: template
     name: "Time Value (Stub)"
     id: timeVal_stub
     internal: true
     update_interval: never
+
+  - platform: wireguard
+    wireguard_id: wg0
+    address:
+      name: "WireGuard Address"
+      id: wireguard_address_text
+
 # Weather icon fonts (icons_20, icons_40, icons_50, icons_80, icons_100)
 # have been moved to packages/weather-pages.yaml
 # Vertical clock fonts (montserrat_80, montserrat_50, montserrat_24)
@@ -2404,6 +3718,2816 @@ lvgl:
                   animation: OUT_LEFT
                   time: 300ms
 
+    - id: AirQ_page
+      bg_color: my_black
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: |-
+            id(current_page_index) = 1;  // AirQ_page
+            id(time_update_last_text).clear();
+        - script.execute: time_update
+        # Immediately update WiFi indicator when page loads
+        - if:
+            condition:
+              wifi.connected:
+            then:
+              - lvgl.widget.update:
+                  id: wifi_stat
+                  text_color: my_green
+              - lambda: 'id(airq_wifi_stat_connected_state) = true;'
+            else:
+              - lvgl.widget.update:
+                  id: wifi_stat
+                  text_color: my_red
+              - lambda: 'id(airq_wifi_stat_connected_state) = false;'
+      widgets:
+        # Header: Logo, Time, WiFi Status
+        - image:
+            id: ym_image
+            src: ym_logo
+            align: CENTER
+            x: 80
+            y: -309
+        - label:
+            id: timeVal
+            align: LEFT_MID
+            text_font: montserrat_18
+            text_color: my_white
+            x: 2
+            y: -309
+            text: "00:00AM"
+        - label:
+            id: wifi_stat
+            align: CENTER
+            text_font: montserrat_18
+            text_color: my_gray
+            x: 42
+            y: -309
+            text: "\uF1EB"
+
+        # AQI Widget (Color-coded banner)
+        - obj:
+            id: aqi_widget
+            x: 0
+            y: 24
+            width: 180
+            height: 42
+            bg_color: 0x76fa76
+            border_width: 0
+        - label:
+            id: aqi_label
+            align: LEFT_MID
+            text_font: montserrat_28
+            text_color: my_black
+            long_mode: WRAP
+            x: 2
+            y: -275
+            text: "AQI:"
+        - label:
+            id: aqi_value
+            align: LEFT_MID
+            text_font: montserrat_28
+            text_color: my_black
+            long_mode: WRAP
+            x: 90
+            y: -275
+            text: "000"
+
+        # Temperature Section
+        - label:
+            id: temperature_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: -246
+            text: "TEMP:"
+        - label:
+            id: temperature_value
+            align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: 0
+            y: -234
+            text: "000.0"
+        - label:
+            id: temperature_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -8
+            y: -234
+            text: "\u00B0F"
+        - line:
+            points:
+              - 0, 106
+              - 180, 106
+            line_width: 1
+            line_color: 0x00dfff
+
+        # CO2 Section
+        - label:
+            id: co2_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: -205
+            text: "CO2:"
+        - label:
+            id: co2_value
+            align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: 0
+            y: -193
+            text: "0000"
+        - label:
+            id: co2_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: -193
+            text: "PPM"
+        - line:
+            points:
+              - 0, 147
+              - 180, 147
+            line_width: 1
+            line_color: 0x00dfff
+
+        # PM1.0 Section
+        - label:
+            id: pm1_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: -164
+            text: "PM1:"
+        - label:
+            id: pm1_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: -152
+            text: "000.0"
+        - label:
+            id: pm1_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: -152
+            text: "ug/m3"
+        - line:
+            points:
+              - 0, 188
+              - 180, 188
+            line_width: 1
+            line_color: 0x00dfff
+
+        # PM2.5 Section
+        - label:
+            id: pm25_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: -123
+            text: "PM2.5:"
+        - label:
+            id: pm25_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: -111
+            text: "000.0"
+        - label:
+            id: pm25_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: -111
+            text: "ug/m3"
+        - line:
+            points:
+              - 0, 229
+              - 180, 229
+            line_width: 1
+            line_color: 0x00dfff
+
+        # PM4.0 Section
+        - label:
+            id: pm4_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: -82
+            text: "PM4:"
+        - label:
+            id: pm4_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: -70
+            text: "000.0"
+        - label:
+            id: pm4_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: -70
+            text: "ug/m3"
+        - line:
+            points:
+              - 0, 270
+              - 180, 270
+            line_width: 1
+            line_color: 0x00dfff
+
+        # PM10 Section
+        - label:
+            id: pm10_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: -41
+            text: "PM10:"
+        - label:
+            id: pm10_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: -29
+            text: "000.0"
+        - label:
+            id: pm10_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: -29
+            text: "ug/m3"
+        - line:
+            points:
+              - 0, 311
+              - 180, 311
+            line_width: 1
+            line_color: 0x00dfff
+
+        # VOC Section
+        - label:
+            id: voc_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: 0
+            text: "VOC:"
+        - label:
+            id: voc_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 12
+            text: "000.0"
+        - label:
+            id: voc_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 12
+            text: "IDX"
+        - line:
+            points:
+              - 0, 352
+              - 180, 352
+            line_width: 1
+            line_color: 0x00dfff
+
+        # CO Section
+        - label:
+            id: co_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: 41
+            text: "CO:"
+        - label:
+            id: co_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 53
+            text: "000.0"
+        - label:
+            id: co_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 53
+            text: "PPM"
+        - line:
+            points:
+              - 0, 393
+              - 180, 393
+            line_width: 1
+            line_color: 0x00dfff
+
+        # Ethanol Section
+        - label:
+            id: ethanol_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: SCROLL
+            width: 40
+            x: 2
+            y: 82
+            text: "C2H5OH:"
+        - label:
+            id: ethanol_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 94
+            text: "000.0"
+        - label:
+            id: ethanol_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 94
+            text: "PPM"
+        - line:
+            points:
+              - 0, 434
+              - 180, 434
+            line_width: 1
+            line_color: 0x00dfff
+
+        # Hydrogen Section
+        - label:
+            id: h2_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: 124
+            text: "H2:"
+        - label:
+            id: h2_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 135
+            text: "000.0"
+        - label:
+            id: h2_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 135
+            text: "PPM"
+        - line:
+            points:
+              - 0, 475
+              - 180, 475
+            line_width: 1
+            line_color: 0x00dfff
+
+        # NO2 Section
+        - label:
+            id: no2_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: 165
+            text: "NO2:"
+        - label:
+            id: no2_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 176
+            text: "000.0"
+        - label:
+            id: no2_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 176
+            text: "PPM"
+        - line:
+            points:
+              - 0, 516
+              - 180, 516
+            line_width: 1
+            line_color: 0x00dfff
+
+        # NH3 Section
+        - label:
+            id: nh3_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: 206
+            text: "NH3:"
+        - label:
+            id: nh3_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 217
+            text: "000.0"
+        - label:
+            id: nh3_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 217
+            text: "PPM"
+        - line:
+            points:
+              - 0, 557
+              - 180, 557
+            line_width: 1
+            line_color: 0x00dfff
+
+        # CH4 Section
+        - label:
+            id: ch4_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: 247
+            text: "CH4:"
+        - label:
+            id: ch4_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 258
+            text: "000.0"
+        - label:
+            id: ch4_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 258
+            text: "PPM"
+        - line:
+            points:
+              - 0, 598
+              - 180, 598
+            line_width: 1
+            line_color: 0x00dfff
+
+        # RH (Relative Humidity) Section
+        - label:
+            id: rh_label
+            align: LEFT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: 2
+            y: 287
+            text: "RH:"
+        - label:
+            id: rh_value
+            align: RIGHT_MID
+            text_font: montserrat_28
+            text_color: my_white
+            long_mode: WRAP
+            x: -51
+            y: 299
+            text: "000.0"
+        - label:
+            id: rh_units
+            align: RIGHT_MID
+            text_font: montserrat_14
+            text_color: my_white
+            long_mode: WRAP
+            x: -2
+            y: 299
+            text: "%"
+
+        # Navigation Button (top-right corner touch area)
+        - obj:
+            id: nav_button_AirQ
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "AirQ page nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: wifi_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_index) = 2;'  # wifi_page
+        # Trigger immediate WiFi display updates when page loads
+        - lambda: |-
+            id(wifi_signal_needs_render) = true;
+            id(wifi_signal_bar_needs_render) = true;
+            id(wifi_ssid_needs_render) = true;
+            id(wifi_ip_needs_render) = true;
+            id(ha_status_needs_render) = true;
+            id(wg_status_needs_render) = true;
+            id(wg_address_needs_render) = true;
+            id(wg_handshake_needs_render) = true;
+      widgets:
+        - label:
+            text: "WiFi & VPN \nStatistics"
+            align: CENTER
+            x: 0
+            y: -300
+            text_font: montserrat_20
+            text_color: my_white
+            text_align: CENTER
+        - label:
+            id: wifi_ssid_label
+            text: "SSID: ...\n"
+            align: LEFT_MID
+            x: 10
+            y: -250
+            text_font: montserrat_18
+            text_color: my_white
+        - label:
+            id: wifi_signal_label
+            text: "Signal: ..."
+            align: LEFT_MID
+            x: 10
+            y: -230
+            text_font: montserrat_18
+            text_color: my_white
+        - bar:
+            id: wifi_signal_bar
+            align: CENTER
+            x: 0
+            y: -200
+            width: 160
+            height: 10
+            min_value: -100
+            max_value: -30
+            value: -100
+            bg_color: my_gray
+            indicator:
+              bg_grad: wifi_signal_gradient
+
+        - label:
+            id: wifi_ip_label
+            text: "IP: ..."
+            align: LEFT_MID
+            x: 10
+            y: -175
+            text_font: montserrat_18
+            text_color: my_white
+        - label:
+            text: "WireGuard"
+            align: CENTER
+            x: 0
+            y: -100
+            text_font: montserrat_20
+            text_color: my_teal
+        - label:
+            id: wg_status_label
+            text: "Status: Disabled"
+            align: LEFT_MID
+            x: 10
+            y: -50
+            text_font: montserrat_18
+            text_color: my_gray
+        - label:
+            id: wg_address_label
+            text: "VPN IP: ..."
+            align: LEFT_MID
+            x: 10
+            y: 0
+            text_font: montserrat_18
+            text_color: my_white
+        - label:
+            id: wg_endpoint_label
+            text: "Endpoint: ..."
+            align: LEFT_MID
+            x: 10
+            y: 50
+            text_font: montserrat_18
+            text_color: my_white
+        - label:
+            id: wg_handshake_label
+            text: "Last Handshake: ..."
+            align: LEFT_MID
+            x: 10
+            y: 125
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: LEFT
+
+        # Home Assistant connection status icon
+        - label:
+            id: ha_status_icon
+            text: "\U000F07D0"  # Home Assistant icon (MDI)
+            align: BOTTOM_MID
+            x: 0
+            y: -20
+            text_font: ha_icon_80
+            text_color: my_gray  # Will be updated based on connection status
+
+        - obj:
+            id: nav_button_wifi
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "WiFi page nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: hourly_forecast_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_index) = 4;'  # hourly_forecast_page
+      widgets:
+        # Page Header
+        - label:
+            text: "6-Hour Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Hour 1 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 35
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour1_header
+                  text: "Hour +1"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour1_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour1_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour1_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
+        # Hour 2 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 245
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour2_header
+                  text: "Hour +2"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour2_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour2_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour2_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
+        # Hour 3 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 455
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour3_header
+                  text: "Hour +3"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour3_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour3_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour3_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
+        # Center navigation button - click to go to hours 4-6
+        - obj:
+            id: nav_button_hourly_center
+            align: CENTER
+            width: 150
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Hourly page 1 CENTER button PRESSED - going to page 2!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.show:
+                  id: hourly_forecast_page_2
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        # Top-right navigation button - normal page rotation
+        - obj:
+            id: nav_button_hourly
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Hourly Forecast page nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: hourly_forecast_page_2
+      skip: true
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_index) = 4;'  # Same as hourly_forecast_page
+      widgets:
+        # Page Header
+        - label:
+            text: "6-Hour Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Hour 4 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 35
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour4_header
+                  text: "Hour +4"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour4_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour4_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour4_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
+        # Hour 5 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 245
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour5_header
+                  text: "Hour +5"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour5_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour5_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour5_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
+        # Hour 6 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 455
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour6_header
+                  text: "Hour +6"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour6_icon
+                        text: "--"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour6_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Direction:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour6_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
+        # Center navigation button - click to go back to hours 1-3
+        - obj:
+            id: nav_button_hourly_page2_center
+            align: CENTER
+            width: 150
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Hourly page 2 CENTER button PRESSED - going to page 1!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.show:
+                  id: hourly_forecast_page
+                  animation: OUT_RIGHT
+                  time: 300ms
+
+        # Top-right navigation button - normal page rotation
+        - obj:
+            id: nav_button_hourly_page2
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Hourly Forecast page 2 nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: daily_forecast_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_index) = 5;'  # daily_forecast_page
+      widgets:
+        # Page Header
+        - label:
+            text: "9-Day Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Day 2 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 40
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day2_header
+                  text: "Day +2 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day2_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day2_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day2_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day2_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Day 3 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 340
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day3_header
+                  text: "Day +3 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day3_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day3_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day3_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day3_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Navigation button to access extended forecast (Days 4-10)
+        - label:
+            text: "More >"
+            align: BOTTOM_MID
+            y: -5
+            text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
+        - obj:
+            id: nav_button_extended_forecast
+            align: BOTTOM_MID
+            x: 0
+            y: 0
+            width: 100
+            height: 60
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Extended forecast 'More' button PRESSED!"
+              - lvgl.page.show:
+                  id: forecast_days_4_5_page
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        - obj:
+            id: nav_button_forecast
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "3-Day Forecast page nav button PRESSED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: forecast_days_4_5_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
+      widgets:
+        - label:
+            text: "Extended Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Day 4 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 40
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day4_header
+                  text: "Day +4 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day4_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day4_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day4_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day4_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Day 5 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 340
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day5_header
+                  text: "Day +5 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day5_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day5_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day5_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day5_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Top-right button for main page navigation
+        - obj:
+            id: nav_button_top_45
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Days 4-5 top-right button PRESSED!"
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        - label:
+            text: "More >"
+            align: BOTTOM_MID
+            y: -5
+            text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
+        # # Navigation button (center of screen) - must be LAST to render on top
+        # - obj:
+        #     id: nav_button_forecast_45
+        #     align: CENTER
+        #     x: 0
+        #     y: 0
+        #     width: 150
+        #     height: 150
+        #     bg_opa: 0
+        #     border_width: 0
+        #     clickable: true
+        #     on_press:
+        #       - logger.log: "Days 4-5 CENTER button PRESSED - going to 6-7!"
+        #       - lvgl.page.show:
+        #           id: forecast_days_6_7_page
+        #           animation: OUT_LEFT
+        #           time: 300ms
+
+        # Navigation button (bottom of screen) - must be LAST to render on top
+        - obj:
+            id: nav_button_extended_forecast_45
+            align: BOTTOM_MID
+            x: 0
+            y: 0
+            width: 100
+            height: 60
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Extended forecast 'More' button on 4-5 PRESSED! going to 6-7!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.show:
+                  id: forecast_days_6_7_page
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: forecast_days_6_7_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
+      widgets:
+        - label:
+            text: "Extended Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Day 6 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 40
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day6_header
+                  text: "Day +6 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day6_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day6_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day6_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day6_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Day 7 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 340
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day7_header
+                  text: "Day +7 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day7_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day7_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day7_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day7_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Top-right button for main page navigation
+        - obj:
+            id: nav_button_top_67
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Days 6-7 top-right button PRESSED!"
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        - label:
+            text: "More >"
+            align: BOTTOM_MID
+            y: -5
+            text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
+        # # Navigation button (center of screen) - must be LAST to render on top
+        # - obj:
+        #     id: nav_button_forecast_67
+        #     align: CENTER
+        #     x: 0
+        #     y: 0
+        #     width: 150
+        #     height: 150
+        #     bg_opa: 0
+        #     border_width: 0
+        #     clickable: true
+        #     on_press:
+        #       - logger.log: "Days 6-7 CENTER button PRESSED - going to 8-9!"
+        #       - lvgl.page.show:
+        #           id: forecast_days_8_9_page
+        #           animation: OUT_LEFT
+        #           time: 300ms
+
+        # Navigation button (bottom of screen) - must be LAST to render on top
+        - obj:
+            id: nav_button_extended_forecast_67
+            align: BOTTOM_MID
+            x: 0
+            y: 0
+            width: 100
+            height: 60
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Extended forecast 'More' button on 6-7 PRESSED! going to 8-9!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.show:
+                  id: forecast_days_8_9_page
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: forecast_days_8_9_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
+      widgets:
+        - label:
+            text: "Extended Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Day 8 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 40
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day8_header
+                  text: "Day +8 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day8_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day8_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day8_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day8_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Day 9 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 340
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day9_header
+                  text: "Day +9 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day9_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day9_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day9_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day9_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Top-right button for main page navigation
+        - obj:
+            id: nav_button_top_89
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Days 8-9 top-right button PRESSED!"
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        - label:
+            text: "More >"
+            align: BOTTOM_MID
+            y: -5
+            text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
+        # # Navigation button (center of screen) - must be LAST to render on top
+        # - obj:
+        #     id: nav_button_forecast_89
+        #     align: CENTER
+        #     x: 0
+        #     y: 0
+        #     width: 150
+        #     height: 150
+        #     bg_opa: 0
+        #     border_width: 0
+        #     clickable: true
+        #     on_press:
+        #       - logger.log: "Days 8-9 CENTER button PRESSED - going to Day 10!"
+        #       - lvgl.page.show:
+        #           id: forecast_day_10_page
+        #           animation: OUT_LEFT
+        #           time: 300ms
+
+        # Navigation button (bottom of screen) - must be LAST to render on top
+        - obj:
+            id: nav_button_extended_forecast_89
+            align: BOTTOM_MID
+            x: 0
+            y: 0
+            width: 100
+            height: 60
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Extended forecast 'More' button on 8-9 PRESSED! going to 10!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.show:
+                  id: forecast_day_10_page
+                  animation: OUT_LEFT
+                  time: 300ms
+
+    - id: forecast_day_10_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      skip: true
+      on_load:
+        - script.execute: page_transition_cleanup
+      widgets:
+        - label:
+            text: "Extended Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Day 10 Card (centered on page)
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: CENTER
+            y: 0
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 12
+            pad_all: 12
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 6
+            widgets:
+              - label:
+                  id: lbl_forecast_day10_header
+                  text: "Day +10 (--/--)"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day10_icon
+                  text: "--"
+                  text_font: icons_80
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day10_condition
+                  text: "---"
+                  text_font: montserrat_18
+                  text_color: my_white
+                  long_mode: SCROLL_CIRCULAR
+              - label:
+                  id: lbl_forecast_day10_temps
+                  text: "H:--° L:--°"
+                  text_font: montserrat_18
+                  text_color: my_white
+              - label:
+                  id: lbl_forecast_day10_precip_prob
+                  text: "Rain: --%"
+                  text_font: montserrat_16
+                  text_color: my_white
+
+        # Navigation button (center bottom) - goes back to Days 2-3
+        - obj:
+            id: nav_button_forecast_10
+            align: BOTTOM_MID
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Day 10 BOTTOM button PRESSED - going back to 3-day!"
+              - lvgl.page.show:
+                  id: daily_forecast_page
+                  animation: OUT_RIGHT
+                  time: 300ms
+
+        # Top-right button for main page navigation
+        - obj:
+            id: nav_button_top_10
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 100
+            height: 100
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_press:
+              - logger.log: "Day 10 top-right button PRESSED!"
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
 button:
   - platform: restart
     icon: mdi:power-cycle
@@ -2443,6 +6567,19 @@ button:
           on_error:
             - logger.log: "Daily forecast call failed"
 
+  - platform: template
+    name: "Calibrate SCD40 To 420ppm"
+    id: set_SCD40_calibrate
+    on_press:
+      - scd4x.perform_forced_calibration:
+          value: 420
+          id: scd40
+
+  - platform: template
+    name: "Clean SEN55"
+    id: clean_sen55
+    on_press:
+      - sen5x.start_fan_autoclean: sen55
   # - platform: template
   #   name: "Test Weather Call"
   #   id: btn_test_weather_call
@@ -2531,6 +6668,21 @@ wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
 
+wireguard:
+  id: wg0
+  address: !secret wg_address
+  netmask: !secret wg_netmask
+  private_key: !secret wg_prikey
+  peer_port: !secret wg_peerport
+  peer_endpoint: !secret wg_peerendpt
+  peer_public_key: !secret wg_pubkey
+  peer_preshared_key: !secret wg_shrdkey
+  peer_allowed_ips:
+    - 192.168.1.0/24
+    - 10.6.0.1/32
+    - 10.6.0.2/32
+  peer_persistent_keepalive: 25s
+  require_connection_to_proceed: false
 # Default page selector (update options based on enabled features)
 
 esphome:
@@ -2540,6 +6692,22 @@ esphome:
         - delay: 50ms  # Brief delay for LVGL to initialize
         - lvgl.page.show: vertical_clock_page
         - logger.log: "Set initial page to Vertical Clock"
+    - priority: 50  # After setup() completes, before sensors (priority 100)
+      then:
+        - delay: 20s  # Wait 20 seconds for BLE to stabilize
+        - lambda: |-
+            ESP_LOGI("wireguard_delayed", "Checking WireGuard enable state after 20s delay...");
+            ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+            ESP_LOGI("wireguard_delayed", "WireGuard switch state: %s", id(wireguard_enabled).state ? "ON" : "OFF");
+        - if:
+            condition:
+              lambda: 'return id(wireguard_enabled).state;'
+            then:
+              - wireguard.enable:
+                  id: wg0
+              - logger.log: "✓ WireGuard enabled successfully"
+            else:
+              - logger.log: "WireGuard switch is OFF, not enabling at boot"
     - priority: -100
       then:
         - logger.log: "Boot sequence starting (priority -100)"
