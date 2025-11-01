@@ -1336,7 +1336,7 @@ script:
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
           body: !lambda |-
-            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"daily\"}}";
+            return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"daily\"}";
           on_response:
             then:
               - lambda: |-
@@ -1418,7 +1418,7 @@ script:
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
           body: !lambda |-
-            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"hourly\"}}";
+            return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"hourly\"}";
           on_response:
             then:
               - lambda: |-
