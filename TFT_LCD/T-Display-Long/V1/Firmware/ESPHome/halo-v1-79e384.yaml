@@ -1,10 +1,4 @@
 substitutions:
-  # Device Identity
-  name: halo-v1-79e384
-  friendly_name: Halo Air Quality Monitor Dev
-
-  # Core substitutions
-  device_description: ${name} - v${version}.
 
   # Weather configuration (if enabled below)
   weather_entity_id: "weather.hhut"
@@ -19,3 +13,44 @@ substitutions:
   # Security
   api_encryption_key: "mLKXHYyBZgGLfMiXyWoo3Fzc/TpqbKpk0g+uYAwErMs="
   ota_password: "halo79e384"
+
+esphome:
+  name: halo-v1-79e1f8
+  friendly_name: Halo Air Quality Sensor LR
+  name_add_mac_suffix: false
+  platformio_options:
+    upload_speed: 921600
+    board_build.flash_mode: qio
+    board_build.psram_type: opi
+    board_build.f_flash: 80000000L
+    board_build.f_cpu: 240000000L
+
+  min_version: 2025.10.3
+
+  project:
+    name: "yashmulgaonkar.Halo-v1"
+    version: "${version}"
+
+dashboard_import:
+  package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@test
+  import_full_config: true
+
+ota:
+  - platform: esphome
+    id: ota_default
+
+wifi:
+  on_connect:
+    - delay: 5s # Gives time for improv results to be transmitted
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Halo Hotspot"
+
+packages:
+  remote_package:
+    url: https://github.com/truffshuff/halo/
+    ref: Test
+    files:
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+    refresh: Always
