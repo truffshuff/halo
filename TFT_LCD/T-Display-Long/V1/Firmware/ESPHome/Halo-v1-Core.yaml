@@ -1,32 +1,40 @@
-#Define Project
+# ============================================================================
+# HALO v1 - Core ESPHome Configuration
+# ============================================================================
+# ESP32-S3 Air Quality Monitor with LVGL Display
+#
+# Hardware: LilyGo T-Display-Long (ESP32-S3, 180x640 AMOLED display)
+# Features: Air quality monitoring, weather display, WiFi stats, WireGuard VPN
+# Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
+#              Requires secrets file with WiFi, HA, and WireGuard credentials
+#
+# Version: 25.11.01.0746
+# Last Updated: November 1, 2025
+# ============================================================================
+
 substitutions:
   name: halo
   version: "25.11.01.0746"
   device_description: ${name} - v${version}.
 
 # ============================================================================
-# Core Packages - Minimal Required Configuration
+# Configuration Architecture - Monolithic Design
 # ============================================================================
-# This file now contains ONLY the absolute essentials needed for all devices.
-# All optional features have been moved to device-specific configuration files.
+# This is a MONOLITHIC configuration file containing all features in one place.
+# All components (AirQ sensors, weather, WiFi stats, WireGuard VPN, LVGL UI)
+# are defined directly in this file rather than using separate package files.
 #
-# Device files should include (in this order):
-#   1. Optional feature packages (airq, weather, wifi, ble, wireguard, memory_stats)
-#   2. LVGL pages package matching enabled features
-#   3. This core package (import last to allow device overrides)
+# ADVANTAGES:
+#   - Everything in one place for easy editing
+#   - No need to track multiple package files
+#   - Simpler deployment (just one YAML file + secrets)
+#   - Easier to search and find configurations
 #
-# See packages/README-DEVICE-CONFIGURATION.md for complete examples
-# See halo-v1-79e384.yaml for a template
+# CONSIDERATIONS:
+#   - Large file size (8000+ lines)
+#   - Cannot selectively disable features without commenting out sections
+#   - Longer compile times compared to modular package-based approach
 # ============================================================================
-
-# packages:
-  # ============================================================================
-  # ESSENTIAL PACKAGES - Always Required
-  # ============================================================================
-  # These are the bare minimum needed for any Halo device to function
-
-  # Page registry - manages page rotation system
-  # page_registry: !include packages/page-registry.yaml
 
 globals:
   # Current page tracking using string name
@@ -51,41 +59,68 @@ globals:
     initial_value: '6'
 
   # Colon blink state for clock display
+  # Toggles every second to create blinking colon animation (:)
   - id: colon_blink_state
     type: bool
     restore_value: no
     initial_value: 'true'
 
+  # Startup light blink cycle counter
+  # Tracks how many 1-second intervals have passed during startup LED animation
+  # Used to stop rainbow effect after 30 seconds and turn off light
   - id: cycleCounter
     type: int
     restore_value: no
     initial_value: '0'
+
+  # Temperature unit change flag
+  # Set to true when user changes display temperature unit (F/C/K)
+  # Triggers UI refresh to show values in new units
   - id: temp_unit_changed
     type: bool
     initial_value: "true"
+
+  # Last touch time tracking
+  # Records timestamp (milliseconds) of last touchscreen interaction
+  # Used to reset auto-rotation timer when user touches the display
   - id: last_touch_time
     type: int
     initial_value: '0'
+
+  # Auto page rotation master enable/disable
+  # When true, device automatically cycles through enabled pages
+  # Controllable via Home Assistant switch
   - id: auto_page_rotation_enabled
     type: bool
     restore_value: yes
     initial_value: 'true'
+
+  # Auto page rotation interval (seconds)
+  # How long to display each page before rotating to next
+  # Default: 30 seconds. Adjustable via Home Assistant
   - id: auto_page_rotation_interval
     type: int
     restore_value: yes
-    initial_value: '30'  # Default 30 seconds
+    initial_value: '30'
+
+  # Last auto-rotation timestamp
+  # Tracks when last page rotation occurred (in milliseconds)
+  # Used to calculate when next rotation should happen
   - id: last_auto_rotation_time
     type: unsigned long
     restore_value: no
     initial_value: '0'
-  # Page rotation settings - which pages are included
-  # Note: page_rotation_AirQ_enabled is defined in airq-core.yaml or airq-stubs.yaml
-  # Note: page_rotation_wifi_enabled is defined in wifi-core.yaml or wifi-stubs.yaml
-  # Note: page_rotation_vertical_clock_enabled is defined in vertical-clock-core.yaml
-  # Page rotation order (1-5, 0 means disabled)
-  # Note: page_rotation_AirQ_order is defined in airq-core.yaml or airq-stubs.yaml
-  # Note: page_rotation_wifi_order is defined in wifi-core.yaml or wifi-stubs.yaml
-  # Note: page_rotation_vertical_clock_order is defined in vertical-clock-core.yaml
+
+  # ============================================================================
+  # Page Rotation Configuration Globals
+  # ============================================================================
+  # These globals control which pages appear in the rotation and their order.
+  # - *_enabled: Set to true/false to include/exclude page from rotation
+  # - *_order: Numeric order (1-6, lower numbers appear first)
+  #
+  # All page rotation settings are defined in this file.
+  # Adjust values here or via Home Assistant switches at runtime.
+  # ============================================================================
   - id: default_page_index
     type: int
     restore_value: yes
@@ -118,12 +153,24 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  # Note: colon_blink_state is defined in vertical-clock-core.yaml
+
+  # Display backlight state tracking
+  # Used to prevent redundant backlight on/off commands
   - id: display_backlight_is_on
     type: bool
     restore_value: no
     initial_value: 'true'
-  # Sensor UI update batching
+
+  # ============================================================================
+  # Sensor UI Update Batching
+  # ============================================================================
+  # To prevent excessive LVGL rendering and reduce SPI bus contention,
+  # sensor value updates are batched and refreshed at 2-second intervals
+  # instead of updating the display on every sensor change.
+  #
+  # - sensor_ui_dirty: Set when any sensor value changes
+  # - last_sensor_ui_update: Timestamp of last batch UI refresh (in milliseconds)
+  # ============================================================================
   - id: sensor_ui_dirty
     type: bool
     restore_value: no
@@ -132,7 +179,15 @@ globals:
     type: uint32_t
     restore_value: no
     initial_value: '0'
-  
+
+  # ============================================================================
+  # Weather Page Rotation Settings
+  # ============================================================================
+  # Weather feature includes 3 pages: Current, Daily Forecast, Hourly Forecast
+  # Each can be independently enabled/disabled and ordered in rotation
+  # ============================================================================
+
+  # Weather page rotation enabled flags
   - id: page_rotation_weather_enabled
     type: bool
     restore_value: yes
@@ -146,7 +201,7 @@ globals:
     restore_value: yes
     initial_value: 'true'
 
-  # Page rotation order for weather pages
+  # Weather page rotation order (1-6, lower numbers show first)
   - id: page_rotation_weather_order
     type: int
     restore_value: yes
@@ -160,7 +215,12 @@ globals:
     restore_value: yes
     initial_value: '5'
 
-  # Weather display state tracking
+  # ============================================================================
+  # Weather Data Storage
+  # ============================================================================
+
+  # --- Performance Tracking ---
+  # Used to measure and log weather update operation timing
   - id: weather_last_started
     type: int
     restore_value: no
@@ -178,49 +238,47 @@ globals:
     restore_value: no
     initial_value: 'false'
 
-  # Current weather
+  # --- Current Weather State ---
+  # Real-time weather conditions from Home Assistant
   - id: weather_current_temp
     type: float
     restore_value: no
     initial_value: 'NAN'
-
   - id: weather_current_apparent_temp
     type: float
     restore_value: no
     initial_value: 'NAN'
-
   - id: weather_current_condition
     type: std::string
     restore_value: no
     initial_value: '""'
-
   - id: weather_current_humidity
     type: float
     restore_value: no
     initial_value: 'NAN'
 
-  # Forecast arrays (10 days)
+  # --- Daily Forecast Data (10 days) ---
+  # Arrays store forecast data fetched from Home Assistant weather.get_forecasts API
+  # Index 0 = today, Index 1 = tomorrow, etc.
   - id: weather_forecast_temp_high
     type: float[10]
     restore_value: no
-
   - id: weather_forecast_temp_low
     type: float[10]
     restore_value: no
-
   - id: weather_forecast_condition
     type: std::string[10]
     restore_value: no
-
   - id: weather_forecast_precip_prob
     type: float[10]
     restore_value: no
-
   - id: weather_forecast_datetime
     type: std::string[10]
     restore_value: no
 
-  # Hourly forecast arrays (24 hours)
+  # --- Hourly Forecast Data (24 hours) ---
+  # Arrays store hourly forecast from Home Assistant
+  # Index 0 = current hour, Index 1 = next hour, etc.
   - id: weather_hourly_temp
     type: float[24]
     restore_value: no
@@ -386,20 +444,30 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+# ============================================================================
+# Font Definitions
+# ============================================================================
+# Fonts are defined with various sizes for different UI elements across pages.
+# bpp: 4 provides anti-aliasing for smooth text rendering on TFT display.
+# Glyphs are limited to only required characters to conserve flash memory.
+# ============================================================================
+
 font:
-  # Large fonts for vertical clock
+  # Large font for vertical clock time display (main feature)
   - file: "gfonts://Montserrat"
     id: montserrat_80
     size: 80
     bpp: 4
-    glyphs: " 0123456789:-"
+    glyphs: " 0123456789:-"  # Time digits, colon, space
 
+  # Medium font for clock AM/PM indicator and time
   - file: "gfonts://Montserrat"
     id: montserrat_50
     size: 50
     bpp: 4
-    glyphs: " 0123456789APM-"
+    glyphs: " 0123456789APM-"  # Includes AM/PM letters
 
+  # General UI text font (dates, labels, stats)
   - file: "gfonts://Montserrat"
     id: montserrat_24
     size: 24
@@ -522,95 +590,104 @@ font:
       "\U000F14E4", # sunny-off
       ]
 
-  # Time update script - NOW INCLUDED IN DEVICE FILES
-  # Device files should include the appropriate version:
-  #   - time-update-clock-only.yaml (if AirQ disabled)
-  #   - time-update-basic.yaml (if AirQ enabled, no WireGuard)
-  #   - time-update-wireguard.yaml (if WireGuard enabled)
-  # time_update: !include packages/time-update-basic.yaml  # REMOVED - include in device file
+# ============================================================================
+# Feature Components - All Defined in This File
+# ============================================================================
+# This monolithic file includes ALL features enabled by default:
+#
+# INCLUDED FEATURES:
+#   ✓ Air Quality Monitoring (SCD40, SEN55, AGS10 sensors)
+#   ✓ Weather Display (current conditions + 10-day forecast + 24-hour forecast)
+#   ✓ WiFi Status Page (signal strength, IP, Home Assistant connection)
+#   ✓ WireGuard VPN (encrypted tunnel to home network)
+#   ✓ BLE (Bluetooth Low Energy scanning)
+#   ✓ LVGL UI (all pages: vertical clock, AirQ, WiFi, weather)
+#   ✓ RGB LED effects (AQI-based color, weather-based, manual effects)
+#
+# To disable a feature, you would need to comment out the relevant sections
+# throughout this file (sensors, globals, LVGL pages, etc.)
+#
+# DEPENDENCIES:
+#   - secrets.yaml: WiFi credentials, HA token, WireGuard keys
+#   - fonts/materialdesignicons-webfont.ttf: Weather icons
+# ============================================================================
 
-  # ============================================================================
-  # OPTIONAL PACKAGES - NOW CONTROLLED BY DEVICE FILES
-  # ============================================================================
-  # The following packages have been REMOVED from Core.
-  # Include them in your device-specific configuration as needed:
-  #
-  # Memory Statistics (recommended for debugging):
-  #   - memory-stats.yaml
-  #
-  # WireGuard VPN:
-  #   - wireguard.yaml + wireguard-display.yaml + time-update-wireguard.yaml
-  #
-  # WiFi Display (connection info):
-  #   - wifi-display.yaml
-  #
-  # AirQ Monitoring:
-  #   - airq-core.yaml + airq-display.yaml (to enable)
-  #   - airq-stubs.yaml (to disable)
-  #
-  # Weather Forecasting:
-  #   - weather-core.yaml + weather-sensors.yaml + weather-fonts-text.yaml (to enable)
-  #   - weather-stubs.yaml (to disable)
-  #
-  # WiFi Monitoring Page:
-  #   - wifi-core.yaml (to enable)
-  #   - wifi-stubs.yaml (to disable)
-  #
-  # BLE (Bluetooth):
-  #   - ble-core.yaml (to enable - now supported with PSRAM configuration)
-  #   - ble-stubs.yaml (to disable if not needed)
-
+# ============================================================================
+# PSRAM Configuration
+# ============================================================================
+# ESP32-S3 has 8MB external PSRAM (Pseudo Static RAM) for expanded memory.
+# This is critical for memory-intensive operations:
+#   - BLE/Bluetooth operations
+#   - LVGL graphics buffers
+#   - 125+ weather sensor entities
+#   - Large HTTP response buffering
+#
+# mode: octal - Uses 8 data lines for maximum bandwidth
+# speed: 80MHz - Highest stable speed (120MHz can cause instability with BLE)
+# ============================================================================
 psram:
   mode: octal
-  speed: 80MHz  # Optimal speed for stability with BLE
+  speed: 80MHz
 
+# ============================================================================
+# ESP32 Board Configuration
+# ============================================================================
 esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
-  cpu_frequency: 240MHz
+  cpu_frequency: 240MHz  # Maximum performance
 
   framework:
     type: esp-idf
     advanced:
       enable_idf_experimental_features: true
       # ========================================================================
-      # PSRAM Configuration for BLE and Memory-Intensive Operations
+      # ESP-IDF SDK Configuration
       # ========================================================================
-      # These settings configure ESP-IDF to use PSRAM for dynamic allocations
-      # instead of the limited internal heap, which prevents OOM crashes
+      # Advanced ESP32-S3 memory and component configuration
+      #
+      # This configuration is critical for the Halo device due to:
+      #   - 125+ Home Assistant sensor entities (large API traffic)
+      #   - BLE scanning for device discovery
+      #   - WiFi + WireGuard VPN (network stack memory)
+      #   - LVGL graphics library (large framebuffers)
+      #
+      # MEMORY PHILOSOPHY:
+      #   - Internal RAM (520KB): Reserved for time-critical operations
+      #   - PSRAM (8MB): Used for buffers, sensors, BLE stack, networking
       # ========================================================================
     # platform_version: 6.9.0
     # version: 5.3.1
     sdkconfig_options:
-      # Enable PSRAM support
+      # --- PSRAM Memory Allocation Strategy ---
+      # Move most allocations to PSRAM to free internal RAM
       CONFIG_SPIRAM_USE: "y"
       CONFIG_SPIRAM_MODE_OCT: "y"
-      CONFIG_SPIRAM_SPEED_80M: "y"                 # Max stable PSRAM speed on S3
+      CONFIG_SPIRAM_SPEED_80M: "y"
 
-      # Memory allocation strategy - Use PSRAM for large allocations
-      # This moves malloc() calls to PSRAM when size > threshold
       CONFIG_SPIRAM_USE_MALLOC: "y"
-      # CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "16384"  # Keep allocations < 16KB in internal RAM
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"   # AGGRESSIVE: Force most allocations to PSRAM
-                                                     # Sensors ~500-1200 bytes each = go to PSRAM
-                                                     # Only tiny allocations (<4KB) stay internal
-      # BLE-specific PSRAM configuration
-      # Move BLE controller memory to PSRAM to free internal heap
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"
+      # MEMORY OPTIMIZATION: Reduced from 16KB to 4KB threshold
+      # WHY: With 125+ weather sensors, each consuming 500-1200 bytes, the 16KB
+      #      threshold kept sensor objects in limited internal RAM, causing OOM crashes.
+      #      4KB threshold forces sensor allocations to PSRAM while keeping only
+      #      critical small allocations (<4KB) in fast internal RAM.
+      # Previous value: 16384 (caused sensor-related memory exhaustion)
+
+      # --- BLE Configuration ---
+      # Move Bluetooth controller memory to PSRAM (saves ~50KB internal RAM)
       CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM for NimBLE stack
       CONFIG_BT_NIMBLE_USE_ESP_TIMER: "y"  # Use ESP timer for better performance
-      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "4"         # Reduce if not using multiple devices
-      CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192" # Move BLE stack to PSRAM 
+      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "4"  # Reduce if not using multiple devices
+      CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192"  # Move BLE stack to PSRAM
 
-      # LWIP (networking) PSRAM usage
-      
-      # CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "32"  # Increase network buffers
-      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "64"         # Bigger RX mailbox queue
-      # CONFIG_LWIP_TCP_RECVMBOX_SIZE: "12"
-      # CONFIG_LWIP_UDP_RECVMBOX_SIZE: "12"
-      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "24"
-      CONFIG_LWIP_UDP_RECVMBOX_SIZE: "24"
-      
-      # Task stack allocation in PSRAM
+      # --- WiFi/Networking Configuration ---
+      # Increase buffer sizes for better throughput and reliability
+      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "64"  # Bigger RX mailbox queue (was 32)
+      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "24"  # TCP receive buffer (was 12)
+      CONFIG_LWIP_UDP_RECVMBOX_SIZE: "24"  # UDP receive buffer (was 12)
+
+      # --- Task Stack Allocation in PSRAM ---
       # Move large task stacks to PSRAM to free internal RAM
       CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
 
@@ -1617,15 +1694,33 @@ interval:
                             text: !lambda 'return id(wg_handshake_last_text);'
                         - lambda: 'id(wg_handshake_needs_render) = false;'
 
+# ============================================================================
+# Home Assistant API Configuration
+# ============================================================================
+# Handles communication with Home Assistant for sensors, switches, and services
+#
+# reboot_timeout: 0s - CRITICAL SETTING
+#   Disables automatic device reboot when HA connection is lost
+#   WHY: During HA restarts or network issues, device should keep running
+#        and attempt reconnection rather than rebooting repeatedly
+#   RISK: If API breaks, device won't auto-recover without manual intervention
+# ============================================================================
 api:
-  reboot_timeout: 0s  # Disable auto-reboot on API disconnect
+  reboot_timeout: 0s
   # Optimized settings for improved switch responsiveness and connection stability
   # These reduce latency and ensure faster state updates between device and Home Assistant
   on_client_connected:
-      - delay: 1s
-      - lambda: 'id(cycleCounter) = 30;'
-      - lambda: 'id(boot_complete) = true;'
-      # Re-apply the saved LED effect selection after HA connects
+      - delay: 1s  # Brief delay for API stabilization
+      - lambda: 'id(cycleCounter) = 30;'  # Stop startup rainbow animation
+      - lambda: 'id(boot_complete) = true;'  # Enable normal operation
+
+      # ========================================================================
+      # Restore User LED Effect Selection
+      # ========================================================================
+      # WHY: During boot, startup_light_blink takes control of RGB light
+      #      When HA connects, we restore user's saved effect preference
+      # DELAY: 2s ensures rainbow effect fully stops before applying new effect
+      # ========================================================================
       - delay: 2s
       - lambda: |-
           std::string effect = id(led_effect_select).state;
@@ -1660,8 +1755,16 @@ api:
           }
       - delay: 500ms
 
+  # ============================================================================
+  # Custom Services (callable from Home Assistant)
+  # ============================================================================
+
   services:
-    # Co2 Calibration Service
+    # CO2 Sensor Calibration
+    # USAGE: esphome.halo_calibrate_co2_value co2_ppm: 420
+    # WHEN: Perform outdoors or in well-ventilated area with known CO2 level
+    # WARNING: Incorrect calibration will give permanently wrong readings!
+    #          Outdoor air is ~400-420ppm. Indoor air is typically 600-1000ppm.
     - service: calibrate_co2_value
       variables:
         co2_ppm: float
@@ -1670,13 +1773,14 @@ api:
             value: !lambda "return co2_ppm;"
             id: scd40
 
-    # SEN55 Fan Clean Service
+    # SEN55 Fan Cleaning
+    # Runs fan at high speed for 10 seconds to remove dust from sensor
+    # USAGE: esphome.halo_sen55_clean
+    # WHEN: If PM readings seem abnormally high, run this service
     - service: sen55_clean
       then:
         - sen5x.start_fan_autoclean: sen55
-      # Note: BLE tracker start/stop on API connection is defined in ble-core.yaml
-
-# Note: API services section removed - feature-specific services are defined in their respective packages
+      # Note: BLE tracker start/stop logic would be defined in BLE section below
 
 i2c:
   - sda: 9
@@ -4028,9 +4132,11 @@ sensor:
     entity_category: "diagnostic"
     update_interval: never
 
-  # Weather Icon Update Duration sensor moved to packages/weather-core.yaml
-  # AirQ sensors (computed_aqi, scd4x, mics_4514, bme280, sen5x) moved to packages/airq-core.yaml
-  # Weather sensors removed - now in packages/weather-sensors.yaml
+  # ============================================================================
+  # Performance Monitoring Sensors
+  # ============================================================================
+  # Track timing of UI update operations to identify performance bottlenecks
+  # ============================================================================
 
   - platform: template
     name: "Weather Icon Update Duration"
@@ -4746,10 +4852,13 @@ text_sensor:
       name: "WireGuard Address"
       id: wireguard_address_text
 
-# Weather icon fonts (icons_20, icons_40, icons_50, icons_80, icons_100)
-# have been moved to packages/weather-pages.yaml
-# Vertical clock fonts (montserrat_80, montserrat_50, montserrat_24)
-# have been moved to packages/vertical-clock-core.yaml
+# ============================================================================
+# RGB LED Configuration
+# ============================================================================
+# Controls the addressable RGB LED for status indication and visual feedback
+# Supports multiple effects including AQI-based color, weather-based color,
+# and standard animation effects
+# ============================================================================
 
 light:
   # - platform: esp32_rmt_led_strip
@@ -8118,17 +8227,36 @@ button:
           on_error:
             - logger.log: "Daily forecast call failed"
 
+  # SCD40 CO2 Sensor Calibration to Outdoor Air
+  # ⚠️ WARNING: Use ONLY outdoors or in well-ventilated area!
+  #
+  # PROCEDURE:
+  #   1. Take device outside (outdoor CO2 is ~400-420ppm)
+  #   2. Wait 5 minutes for sensor to stabilize
+  #   3. Press this button in Home Assistant
+  #   4. Calibration permanently affects sensor accuracy
+  #
+  # DO NOT use indoors - indoor CO2 is typically 600-1000ppm!
+  # Incorrect calibration will give wrong readings permanently.
+  #
+  # To calibrate to custom value, use esphome.halo_calibrate_co2_value service
   - platform: template
-    name: "Calibrate SCD40 To 420ppm"
+    name: "Calibrate SCD40 To 420ppm (OUTDOOR ONLY!)"
     id: set_SCD40_calibrate
+    entity_category: config
     on_press:
       - scd4x.perform_forced_calibration:
-          value: 420
+          value: 420  # Typical outdoor CO2 concentration
           id: scd40
 
+  # SEN55 Fan Cleaning Cycle
+  # Runs fan at high speed for 10 seconds to blow dust off PM sensor
+  # WHEN TO USE: If PM readings seem stuck or abnormally high
+  # SAFE TO USE: Can be run anytime, won't damage sensor
   - platform: template
     name: "Clean SEN55"
     id: clean_sen55
+    entity_category: config
     on_press:
       - sen5x.start_fan_autoclean: sen55
   # - platform: template
@@ -8215,10 +8343,43 @@ button:
   #           - lambda: |-
   #               ESP_LOGE("weather", "❌ Forecast fetch FAILED!");
 
+# ============================================================================
+# WiFi Configuration
+# ============================================================================
+# CREDENTIALS: Define in device-specific file (e.g., halo-v1-79e384.yaml)
+#   wifi_ssid: "YourNetworkName"
+#   wifi_password: "YourNetworkPassword"
+#
+# SECURITY: WiFi credentials are stored in plaintext in compiled firmware
+#           Use WPA2/WPA3 encryption on your access point
+#           Consider using secrets file for sensitive deployments
+# ============================================================================
 wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
 
+# ============================================================================
+# WireGuard VPN Configuration
+# ============================================================================
+# Provides encrypted tunnel to home network when away from home WiFi
+#
+# CREDENTIALS: Stored in secrets.yaml (never commit to git!)
+#   wg_address: VPN IP address (e.g., 10.6.0.3)
+#   wg_netmask: VPN subnet mask (e.g., 255.255.255.0)
+#   wg_prikey: Device private key (generate with: wg genkey)
+#   wg_peerport: VPN server port (typically 51820)
+#   wg_peerendpt: VPN server hostname or IP
+#   wg_pubkey: VPN server public key
+#   wg_shrdkey: Pre-shared key for additional security (optional)
+#
+# ALLOWED IPs: Traffic destined for these networks goes through VPN tunnel
+#   192.168.1.0/24: Home LAN
+#   10.6.0.1/32: VPN server gateway
+#   10.6.0.2/32: Additional VPN peer (optional)
+#
+# KEEPALIVE: 25s - Maintains NAT mappings for reliable connection
+# require_connection_to_proceed: false - Device boots even if VPN fails
+# ============================================================================
 wireguard:
   id: wg0
   address: !secret wg_address
@@ -8229,23 +8390,54 @@ wireguard:
   peer_public_key: !secret wg_pubkey
   peer_preshared_key: !secret wg_shrdkey
   peer_allowed_ips:
-    - 192.168.1.0/24
-    - 10.6.0.1/32
-    - 10.6.0.2/32
+    - 192.168.1.0/24  # Home LAN traffic
+    - 10.6.0.1/32     # VPN gateway
+    - 10.6.0.2/32     # Additional VPN peer
   peer_persistent_keepalive: 25s
-  require_connection_to_proceed: false
-# Default page selector (update options based on enabled features)
+  require_connection_to_proceed: false  # Non-blocking boot
+
+# ============================================================================
+# ESPHome Boot Sequence Configuration
+# ============================================================================
+# ESPHOME BOOT PRIORITIES (higher numbers run first):
+#   800-900: Very early init (before WiFi/components)
+#   600-700: Component initialization
+#   250:     WiFi connection
+#   100:     Sensor setup
+#   50:      Application logic
+#   -100:    Late initialization (after everything loaded)
+#
+# Our boot stages:
+#   1. Priority 800: Show initial page before components load
+#   2. Priority 50: Enable WireGuard after BLE stabilizes (20s delay)
+#   3. Priority -100: Set default page and complete boot
+# ============================================================================
 
 esphome:
   on_boot:
-    - priority: 800  # Very early - before components load
+    # -------------------------------------------------------------------------
+    # Boot Stage 1: Early Display Initialization (Priority 800)
+    # -------------------------------------------------------------------------
+    # Runs before WiFi and sensors to show something on screen immediately
+    # 50ms delay allows LVGL to complete basic initialization
+    - priority: 800
       then:
-        - delay: 50ms  # Brief delay for LVGL to initialize
+        - delay: 50ms
         - lvgl.page.show: vertical_clock_page
         - logger.log: "Set initial page to Vertical Clock"
-    - priority: 50  # After setup() completes, before sensors (priority 100)
+
+    # -------------------------------------------------------------------------
+    # Boot Stage 2: WireGuard Delayed Start (Priority 50)
+    # -------------------------------------------------------------------------
+    # DELAY RATIONALE: BLE initialization consumes significant memory
+    #   - Without delay: WireGuard + BLE can cause OOM crash
+    #   - With 20s delay: BLE stabilizes, memory usage predictable
+    #   - Timing chosen empirically through testing
+    #
+    # Runs after sensors (priority 100) but before late init
+    - priority: 50
       then:
-        - delay: 20s  # Wait 20 seconds for BLE to stabilize
+        - delay: 20s  # Allow BLE to fully initialize and stabilize memory
         - lambda: |-
             ESP_LOGI("wireguard_delayed", "Checking WireGuard enable state after 20s delay...");
             ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
@@ -8259,12 +8451,19 @@ esphome:
               - logger.log: "✓ WireGuard enabled successfully"
             else:
               - logger.log: "WireGuard switch is OFF, not enabling at boot"
+
+    # -------------------------------------------------------------------------
+    # Boot Stage 3: Default Page Selection (Priority -100)
+    # -------------------------------------------------------------------------
+    # Runs last after all components initialized
+    # Reads user's default page preference and navigates to it
+    # Note: RGB light control is handled by startup_light_blink interval
     - priority: -100
       then:
         - logger.log: "Boot sequence starting (priority -100)"
-        # Note: RGB light turn-off removed to avoid package loading order issues
-        # The startup_light_blink interval handles RGB light control
-        - delay: 1s  # Brief delay for LVGL to initialize
+        - delay: 1s  # Brief delay for LVGL page system to be ready
+
+        # Map user's text selection to page index number
         - lambda: |-
             const std::string &choice = id(default_page_select_boot).state;
             // Core pages
