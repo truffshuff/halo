@@ -1349,11 +1349,15 @@ script:
 
                   ESP_LOGI("weather", "✓ Daily forecast HTTP response received");
                   
-                  // Convert response container to string for JSON parsing
+                  // Read response body in chunks
                   std::string body_str;
                   body_str.reserve(response->content_length);
-                  for (auto it = response->begin(); it != response->end(); ++it) {
-                    body_str.push_back(*it);
+                  uint8_t buffer[512];
+                  while (response->get_bytes_read() < response->content_length) {
+                    int read_len = response->read(buffer, sizeof(buffer));
+                    if (read_len > 0) {
+                      body_str.append((char*)buffer, read_len);
+                    }
                   }
                   
                   // Parse JSON response
@@ -1427,11 +1431,15 @@ script:
 
                   ESP_LOGI("weather", "✓ Hourly forecast HTTP response received");
                   
-                  // Convert response container to string for JSON parsing
+                  // Read response body in chunks
                   std::string body_str;
                   body_str.reserve(response->content_length);
-                  for (auto it = response->begin(); it != response->end(); ++it) {
-                    body_str.push_back(*it);
+                  uint8_t buffer[512];
+                  while (response->get_bytes_read() < response->content_length) {
+                    int read_len = response->read(buffer, sizeof(buffer));
+                    if (read_len > 0) {
+                      body_str.append((char*)buffer, read_len);
+                    }
                   }
                   
                   // Parse JSON response
