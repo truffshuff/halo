@@ -2321,7 +2321,7 @@ script:
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[0]);
             return std::string(buf);
       - lvgl.label.update:
-          id: lbl_hourly_hour1_humidity
+          id: lbl_hourly_hour1_humid
           text: !lambda |-
             if (isnan(id(weather_hourly_humidity)[0])) return std::string("--%");
             char buf[16];
@@ -2444,7 +2444,7 @@ script:
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[1]);
             return std::string(buf);
       - lvgl.label.update:
-          id: lbl_hourly_hour2_humidity
+          id: lbl_hourly_hour2_humid
           text: !lambda |-
             if (isnan(id(weather_hourly_humidity)[1])) return std::string("--%");
             char buf[16];
@@ -2567,7 +2567,7 @@ script:
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[2]);
             return std::string(buf);
       - lvgl.label.update:
-          id: lbl_hourly_hour3_humidity
+          id: lbl_hourly_hour3_humid
           text: !lambda |-
             if (isnan(id(weather_hourly_humidity)[2])) return std::string("--%");
             char buf[16];
@@ -2690,7 +2690,7 @@ script:
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[3]);
             return std::string(buf);
       - lvgl.label.update:
-          id: lbl_hourly_hour4_humidity
+          id: lbl_hourly_hour4_humid
           text: !lambda |-
             if (isnan(id(weather_hourly_humidity)[3])) return std::string("--%");
             char buf[16];
@@ -2813,7 +2813,7 @@ script:
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[4]);
             return std::string(buf);
       - lvgl.label.update:
-          id: lbl_hourly_hour5_humidity
+          id: lbl_hourly_hour5_humid
           text: !lambda |-
             if (isnan(id(weather_hourly_humidity)[4])) return std::string("--%");
             char buf[16];
@@ -2935,6 +2935,56 @@ script:
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[5]);
             return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_humid
+          text: !lambda |-
+            if (isnan(id(weather_hourly_humidity)[5])) return std::string("--%");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_precip_amt
+          text: !lambda |-
+            if (isnan(id(weather_hourly_precipitation)[5])) return std::string("--\"");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_pressure
+          text: !lambda |-
+            if (isnan(id(weather_hourly_pressure)[5])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mb", id(weather_hourly_pressure)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_uv
+          text: !lambda |-
+            if (isnan(id(weather_hourly_uv_index)[5])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_wind
+          text: !lambda |-
+            if (isnan(id(weather_hourly_wind_speed)[5])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_wind_dir
+          text: !lambda |-
+            if (isnan(id(weather_hourly_wind_bearing)[5])) return std::string("--");
+            float bearing = id(weather_hourly_wind_bearing)[5];
+            const char* dir;
+            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
+            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
+            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
+            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
+            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
+            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
+            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
+            else dir = "NW";
+            return std::string(dir);
 
       - logger.log: "✓ Hourly forecast display updated"
 
