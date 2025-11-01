@@ -1336,8 +1336,11 @@ script:
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
           json:
-            entity_id: ${weather_entity_id}
-            type: daily
+            target:
+              entity_id: ${weather_entity_id}
+            data:
+              type: daily
+            return_response: true
           on_response:
             then:
               - lambda: |-
@@ -1418,8 +1421,11 @@ script:
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
           json:
-            entity_id: ${weather_entity_id}
-            type: hourly
+            target:
+              entity_id: ${weather_entity_id}
+            data:
+              type: hourly
+            return_response: true
           on_response:
             then:
               - lambda: |-
