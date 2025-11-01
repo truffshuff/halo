@@ -762,6 +762,19 @@ select:
             call.set_effect(effect);
             call.perform();
           }
+  
+  - platform: template
+    name: "Default Page at Boot"
+    id: default_page_select_boot
+    optimistic: true
+    options:
+      - "Vertical Clock"
+      # Uncomment based on enabled features:
+      # - "AirQ"          # if airq_enabled
+      # - "WiFi"          # if wifi_enabled
+      - "Weather"       # if weather_enabled
+    initial_option: "Vertical Clock"
+    restore_value: true
 
 # ============================================================================
 # DEFAULT PAGE SELECTOR
@@ -2470,19 +2483,6 @@ ota:
     password: ${ota_password}
 
 # Default page selector (update options based on enabled features)
-select:
-  - platform: template
-    name: "Default Page at Boot"
-    id: default_page_select_boot
-    optimistic: true
-    options:
-      - "Vertical Clock"
-      # Uncomment based on enabled features:
-      # - "AirQ"          # if airq_enabled
-      # - "WiFi"          # if wifi_enabled
-      - "Weather"       # if weather_enabled
-    initial_option: "Vertical Clock"
-    restore_value: true
 
 esphome:
   on_boot:
