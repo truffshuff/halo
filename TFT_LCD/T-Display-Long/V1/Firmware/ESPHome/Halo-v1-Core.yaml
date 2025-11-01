@@ -216,6 +216,10 @@ globals:
     type: float[10]
     restore_value: no
 
+  - id: weather_forecast_datetime
+    type: std::string[10]
+    restore_value: no
+
   # Hourly forecast arrays (24 hours)
   - id: weather_hourly_temp
     type: float[24]
@@ -231,6 +235,10 @@ globals:
 
   - id: weather_hourly_precip_prob
     type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_datetime
+    type: std::string[24]
     restore_value: no
 
   # Tracking
@@ -1997,6 +2005,10 @@ script:
                       id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
                     }
 
+                    if (day["datetime"].is<const char*>()) {
+                      id(weather_forecast_datetime)[i] = day["datetime"].as<std::string>();
+                    }
+
                     // Extract "current" weather from today's forecast (day 0)
                     if (i == 0) {
                       if (day["condition"].is<const char*>()) {
@@ -2093,6 +2105,10 @@ script:
                     if (hour["precipitation_probability"].is<float>()) {
                       id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
                     }
+
+                    if (hour["datetime"].is<const char*>()) {
+                      id(weather_hourly_datetime)[i] = hour["datetime"].as<std::string>();
+                    }
                   }
                   ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
 
@@ -2182,6 +2198,47 @@ script:
       - logger.log: "Updating hourly forecast display..."
       # Update Hour 1
       - lvgl.label.update:
+          id: lbl_hourly_hour1_header
+          text: !lambda |-
+            if (id(weather_hourly_datetime)[0].empty()) return std::string("Hour +1");
+            // Parse datetime string (format: "2024-11-01T13:00:00+00:00")
+            std::string dt = id(weather_hourly_datetime)[0];
+            if (dt.length() >= 16) {
+              // Extract hour from "YYYY-MM-DDTHH:MM:SS"
+              std::string hour_str = dt.substr(11, 2);
+              int hour = std::stoi(hour_str);
+              // Convert to 12-hour format
+              std::string period = (hour >= 12) ? "PM" : "AM";
+              if (hour == 0) hour = 12;
+              else if (hour > 12) hour -= 12;
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              return std::string(buf);
+            }
+            return std::string("Hour +1");
+      - lvgl.label.update:
+          id: lbl_hourly_hour1_icon
+          text: !lambda |-
+            std::string condition = id(weather_hourly_condition)[0];
+            if (condition.empty()) return std::string("--");
+            // Map condition to Material Design Icon
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");  // default to sunny
+      - lvgl.label.update:
           id: lbl_hourly_hour1_temp
           text: !lambda |-
             if (isnan(id(weather_hourly_temp)[0])) return std::string("--°");
@@ -2204,6 +2261,43 @@ script:
             return std::string(buf);
 
       # Update Hour 2
+      - lvgl.label.update:
+          id: lbl_hourly_hour2_header
+          text: !lambda |-
+            if (id(weather_hourly_datetime)[1].empty()) return std::string("Hour +2");
+            std::string dt = id(weather_hourly_datetime)[1];
+            if (dt.length() >= 16) {
+              std::string hour_str = dt.substr(11, 2);
+              int hour = std::stoi(hour_str);
+              std::string period = (hour >= 12) ? "PM" : "AM";
+              if (hour == 0) hour = 12;
+              else if (hour > 12) hour -= 12;
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              return std::string(buf);
+            }
+            return std::string("Hour +2");
+      - lvgl.label.update:
+          id: lbl_hourly_hour2_icon
+          text: !lambda |-
+            std::string condition = id(weather_hourly_condition)[1];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
       - lvgl.label.update:
           id: lbl_hourly_hour2_temp
           text: !lambda |-
@@ -2228,6 +2322,43 @@ script:
 
       # Update Hour 3
       - lvgl.label.update:
+          id: lbl_hourly_hour3_header
+          text: !lambda |-
+            if (id(weather_hourly_datetime)[2].empty()) return std::string("Hour +3");
+            std::string dt = id(weather_hourly_datetime)[2];
+            if (dt.length() >= 16) {
+              std::string hour_str = dt.substr(11, 2);
+              int hour = std::stoi(hour_str);
+              std::string period = (hour >= 12) ? "PM" : "AM";
+              if (hour == 0) hour = 12;
+              else if (hour > 12) hour -= 12;
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              return std::string(buf);
+            }
+            return std::string("Hour +3");
+      - lvgl.label.update:
+          id: lbl_hourly_hour3_icon
+          text: !lambda |-
+            std::string condition = id(weather_hourly_condition)[2];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
+      - lvgl.label.update:
           id: lbl_hourly_hour3_temp
           text: !lambda |-
             if (isnan(id(weather_hourly_temp)[2])) return std::string("--°");
@@ -2250,6 +2381,43 @@ script:
             return std::string(buf);
 
       # Update Hour 4
+      - lvgl.label.update:
+          id: lbl_hourly_hour4_header
+          text: !lambda |-
+            if (id(weather_hourly_datetime)[3].empty()) return std::string("Hour +4");
+            std::string dt = id(weather_hourly_datetime)[3];
+            if (dt.length() >= 16) {
+              std::string hour_str = dt.substr(11, 2);
+              int hour = std::stoi(hour_str);
+              std::string period = (hour >= 12) ? "PM" : "AM";
+              if (hour == 0) hour = 12;
+              else if (hour > 12) hour -= 12;
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              return std::string(buf);
+            }
+            return std::string("Hour +4");
+      - lvgl.label.update:
+          id: lbl_hourly_hour4_icon
+          text: !lambda |-
+            std::string condition = id(weather_hourly_condition)[3];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
       - lvgl.label.update:
           id: lbl_hourly_hour4_temp
           text: !lambda |-
@@ -2274,6 +2442,43 @@ script:
 
       # Update Hour 5
       - lvgl.label.update:
+          id: lbl_hourly_hour5_header
+          text: !lambda |-
+            if (id(weather_hourly_datetime)[4].empty()) return std::string("Hour +5");
+            std::string dt = id(weather_hourly_datetime)[4];
+            if (dt.length() >= 16) {
+              std::string hour_str = dt.substr(11, 2);
+              int hour = std::stoi(hour_str);
+              std::string period = (hour >= 12) ? "PM" : "AM";
+              if (hour == 0) hour = 12;
+              else if (hour > 12) hour -= 12;
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              return std::string(buf);
+            }
+            return std::string("Hour +5");
+      - lvgl.label.update:
+          id: lbl_hourly_hour5_icon
+          text: !lambda |-
+            std::string condition = id(weather_hourly_condition)[4];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
+      - lvgl.label.update:
           id: lbl_hourly_hour5_temp
           text: !lambda |-
             if (isnan(id(weather_hourly_temp)[4])) return std::string("--°");
@@ -2296,6 +2501,43 @@ script:
             return std::string(buf);
 
       # Update Hour 6
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_header
+          text: !lambda |-
+            if (id(weather_hourly_datetime)[5].empty()) return std::string("Hour +6");
+            std::string dt = id(weather_hourly_datetime)[5];
+            if (dt.length() >= 16) {
+              std::string hour_str = dt.substr(11, 2);
+              int hour = std::stoi(hour_str);
+              std::string period = (hour >= 12) ? "PM" : "AM";
+              if (hour == 0) hour = 12;
+              else if (hour > 12) hour -= 12;
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              return std::string(buf);
+            }
+            return std::string("Hour +6");
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_icon
+          text: !lambda |-
+            std::string condition = id(weather_hourly_condition)[5];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
       - lvgl.label.update:
           id: lbl_hourly_hour6_temp
           text: !lambda |-
@@ -2327,6 +2569,42 @@ script:
       - logger.log: "Updating daily forecast display..."
       # Update Day 2
       - lvgl.label.update:
+          id: lbl_forecast_day2_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[1].empty()) return std::string("Day +2 (--/--)");
+            // Parse datetime string (format: "2024-11-01T00:00:00+00:00")
+            std::string dt = id(weather_forecast_datetime)[1];
+            if (dt.length() >= 10) {
+              // Extract month and day from "YYYY-MM-DD"
+              std::string month_str = dt.substr(5, 2);
+              std::string day_str = dt.substr(8, 2);
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Day +2 (%s/%s)", month_str.c_str(), day_str.c_str());
+              return std::string(buf);
+            }
+            return std::string("Day +2 (--/--)");
+      - lvgl.label.update:
+          id: lbl_forecast_day2_icon
+          text: !lambda |-
+            std::string condition = id(weather_forecast_condition)[1];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
+      - lvgl.label.update:
           id: lbl_forecast_day2_temps
           text: !lambda |-
             char buf[32];
@@ -2351,6 +2629,40 @@ script:
             return id(weather_forecast_condition)[1];
 
       # Update Day 3
+      - lvgl.label.update:
+          id: lbl_forecast_day3_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[2].empty()) return std::string("Day +3 (--/--)");
+            std::string dt = id(weather_forecast_datetime)[2];
+            if (dt.length() >= 10) {
+              std::string month_str = dt.substr(5, 2);
+              std::string day_str = dt.substr(8, 2);
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Day +3 (%s/%s)", month_str.c_str(), day_str.c_str());
+              return std::string(buf);
+            }
+            return std::string("Day +3 (--/--)");
+      - lvgl.label.update:
+          id: lbl_forecast_day3_icon
+          text: !lambda |-
+            std::string condition = id(weather_forecast_condition)[2];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
       - lvgl.label.update:
           id: lbl_forecast_day3_temps
           text: !lambda |-
@@ -2377,6 +2689,40 @@ script:
 
       # Update Day 4
       - lvgl.label.update:
+          id: lbl_forecast_day4_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[3].empty()) return std::string("Day +4 (--/--)");
+            std::string dt = id(weather_forecast_datetime)[3];
+            if (dt.length() >= 10) {
+              std::string month_str = dt.substr(5, 2);
+              std::string day_str = dt.substr(8, 2);
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Day +4 (%s/%s)", month_str.c_str(), day_str.c_str());
+              return std::string(buf);
+            }
+            return std::string("Day +4 (--/--)");
+      - lvgl.label.update:
+          id: lbl_forecast_day4_icon
+          text: !lambda |-
+            std::string condition = id(weather_forecast_condition)[3];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
+      - lvgl.label.update:
           id: lbl_forecast_day4_temps
           text: !lambda |-
             char buf[32];
@@ -2401,6 +2747,40 @@ script:
             return id(weather_forecast_condition)[3];
 
       # Update Day 5
+      - lvgl.label.update:
+          id: lbl_forecast_day5_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[4].empty()) return std::string("Day +5 (--/--)");
+            std::string dt = id(weather_forecast_datetime)[4];
+            if (dt.length() >= 10) {
+              std::string month_str = dt.substr(5, 2);
+              std::string day_str = dt.substr(8, 2);
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Day +5 (%s/%s)", month_str.c_str(), day_str.c_str());
+              return std::string(buf);
+            }
+            return std::string("Day +5 (--/--)");
+      - lvgl.label.update:
+          id: lbl_forecast_day5_icon
+          text: !lambda |-
+            std::string condition = id(weather_forecast_condition)[4];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
       - lvgl.label.update:
           id: lbl_forecast_day5_temps
           text: !lambda |-
@@ -2427,6 +2807,40 @@ script:
 
       # Update Day 6
       - lvgl.label.update:
+          id: lbl_forecast_day6_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[5].empty()) return std::string("Day +6 (--/--)");
+            std::string dt = id(weather_forecast_datetime)[5];
+            if (dt.length() >= 10) {
+              std::string month_str = dt.substr(5, 2);
+              std::string day_str = dt.substr(8, 2);
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Day +6 (%s/%s)", month_str.c_str(), day_str.c_str());
+              return std::string(buf);
+            }
+            return std::string("Day +6 (--/--)");
+      - lvgl.label.update:
+          id: lbl_forecast_day6_icon
+          text: !lambda |-
+            std::string condition = id(weather_forecast_condition)[5];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
+      - lvgl.label.update:
           id: lbl_forecast_day6_temps
           text: !lambda |-
             char buf[32];
@@ -2451,6 +2865,40 @@ script:
             return id(weather_forecast_condition)[5];
 
       # Update Day 7
+      - lvgl.label.update:
+          id: lbl_forecast_day7_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[6].empty()) return std::string("Day +7 (--/--)");
+            std::string dt = id(weather_forecast_datetime)[6];
+            if (dt.length() >= 10) {
+              std::string month_str = dt.substr(5, 2);
+              std::string day_str = dt.substr(8, 2);
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Day +7 (%s/%s)", month_str.c_str(), day_str.c_str());
+              return std::string(buf);
+            }
+            return std::string("Day +7 (--/--)");
+      - lvgl.label.update:
+          id: lbl_forecast_day7_icon
+          text: !lambda |-
+            std::string condition = id(weather_forecast_condition)[6];
+            if (condition.empty()) return std::string("--");
+            if (condition == "clear-night") return std::string("\U000F0594");
+            if (condition == "cloudy") return std::string("\U000F0590");
+            if (condition == "exceptional") return std::string("\U000F0F2F");
+            if (condition == "fog") return std::string("\U000F0591");
+            if (condition == "hail") return std::string("\U000F0592");
+            if (condition == "lightning") return std::string("\U000F0593");
+            if (condition == "lightning-rainy") return std::string("\U000F067E");
+            if (condition == "partlycloudy") return std::string("\U000F0595");
+            if (condition == "pouring") return std::string("\U000F0596");
+            if (condition == "rainy") return std::string("\U000F0597");
+            if (condition == "snowy") return std::string("\U000F0598");
+            if (condition == "snowy-rainy") return std::string("\U000F067F");
+            if (condition == "sunny") return std::string("\U000F0599");
+            if (condition == "windy") return std::string("\U000F059D");
+            if (condition == "windy-variant") return std::string("\U000F059E");
+            return std::string("\U000F0599");
       - lvgl.label.update:
           id: lbl_forecast_day7_temps
           text: !lambda |-
