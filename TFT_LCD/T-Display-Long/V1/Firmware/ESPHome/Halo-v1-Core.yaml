@@ -1369,15 +1369,22 @@ script:
                     return;
                   }
 
-                  // Response format: {"weather.hhut": {"forecast": [...]}}
+                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
                   const char *entity_key = "${weather_entity_id}";
                   
-                  if (!doc[entity_key].is<JsonObject>()) {
-                    ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
+                  if (!doc["service_response"].is<JsonObject>()) {
+                    ESP_LOGE("weather", "No 'service_response' key in response");
                     return;
                   }
 
-                  JsonObject entity_data = doc[entity_key];
+                  JsonObject service_response = doc["service_response"];
+                  
+                  if (!service_response[entity_key].is<JsonObject>()) {
+                    ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                    return;
+                  }
+
+                  JsonObject entity_data = service_response[entity_key];
                   
                   if (!entity_data["forecast"].is<JsonArray>()) {
                     ESP_LOGW("weather", "No 'forecast' key in daily response");
@@ -1451,15 +1458,22 @@ script:
                     return;
                   }
 
-                  // Response format: {"weather.hhut": {"forecast": [...]}}
+                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
                   const char *entity_key = "${weather_entity_id}";
                   
-                  if (!doc[entity_key].is<JsonObject>()) {
-                    ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
+                  if (!doc["service_response"].is<JsonObject>()) {
+                    ESP_LOGE("weather", "No 'service_response' key in response");
                     return;
                   }
 
-                  JsonObject entity_data = doc[entity_key];
+                  JsonObject service_response = doc["service_response"];
+                  
+                  if (!service_response[entity_key].is<JsonObject>()) {
+                    ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                    return;
+                  }
+
+                  JsonObject entity_data = service_response[entity_key];
                   
                   if (!entity_data["forecast"].is<JsonArray>()) {
                     ESP_LOGW("weather", "No 'forecast' key in hourly response");
