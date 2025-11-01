@@ -1173,6 +1173,11 @@ color:
     green: 0%
     blue: 0%
 
+# HTTP Request component for calling HA REST API
+http_request:
+  useragent: esphome/halo
+  timeout: 10s
+
 time:
   - platform: homeassistant
     id: ha_time
@@ -1305,150 +1310,163 @@ script:
           }
           id(weather_needs_render) = false;
 
-  # Main script to fetch all weather data via HA actions
+  # ============================================================================
+  # WORKAROUND: HTTP-based weather fetch for HA 2025.10.x compatibility
+  # ============================================================================
+  # ESPHome 2025.10.3's homeassistant.action with capture_response doesn't work
+  # with HA 2025.10.x's new weather.get_forecasts action format.
+  # GitHub Issue: https://github.com/esphome/issues/issues/XXXXX (to be filed)
+  # 
+  # This uses direct HTTP calls to HA's REST API instead.
+  # Requires: ha_url and ha_token in substitutions
+  # ============================================================================
+
+  # Main script to fetch all weather data via HA REST API
   - id: fetch_weather_data
     mode: single
     then:
-      - logger.log: "Fetching weather data from Home Assistant..."
+      - logger.log: "Fetching weather data from Home Assistant via HTTP..."
 
       # Fetch daily forecast
-      - homeassistant.action:
-          action: weather.get_forecasts
-          capture_response: true
-          target:
+      - http_request.post:
+          url: !lambda |-
+            return "${ha_url}/api/services/weather/get_forecasts";
+          headers:
+            Content-Type: application/json
+            Authorization: !lambda |-
+              return "Bearer ${ha_token}";
+          json:
             entity_id: ${weather_entity_id}
-          data:
             type: daily
-          on_success:
-            - lambda: |-
-                std::string output;
-                serializeJsonPretty(response, output);
-                ESP_LOGI("weather", "Daily Forecast JSON:\n%s", output.c_str());
-
-                ESP_LOGI("weather", "✓ Daily forecast response received");
-
-                // Per ESPHome docs: response["response"]["weather.entity_id"]["forecast"]
-                if (!response.containsKey("response")) {
-                  ESP_LOGE("weather", "No 'response' key in daily forecast");
-                  return;
-                }
-                
-                JsonObjectConst response_data = response["response"];
-                const char *entity_key = "${weather_entity_id}";
-
-                if (!response_data.containsKey(entity_key)) {
-                  ESP_LOGE("weather", "Entity '%s' not found in daily response", entity_key);
-                  return;
-                }
-
-                auto entity_data = response_data[entity_key];
-
-                if (!entity_data.containsKey("forecast")) {
-                  ESP_LOGW("weather", "No 'forecast' key in daily response");
-                  return;
-                }
-
-                auto forecast_array = entity_data["forecast"];
-                int day_count = std::min((int)forecast_array.size(), 10);
-                ESP_LOGI("weather", "Found %d days of forecast data", day_count);
-
-                for (int i = 0; i < day_count; i++) {
-                  auto day = forecast_array[i];
-
-                  if (day.containsKey("temperature")) {
-                    id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+          on_response:
+            then:
+              - lambda: |-
+                  if (status_code != 200) {
+                    ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", status_code);
+                    return;
                   }
 
-                  if (day.containsKey("templow")) {
-                    id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                  ESP_LOGI("weather", "✓ Daily forecast HTTP response received");
+                  
+                  // Parse JSON response
+                  DynamicJsonDocument doc(16384);
+                  DeserializationError error = deserializeJson(doc, body.c_str());
+                  
+                  if (error) {
+                    ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
+                    return;
                   }
 
-                  if (day.containsKey("condition")) {
-                    id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                  // Response format: {"weather.hhut": {"forecast": [...]}}
+                  const char *entity_key = "${weather_entity_id}";
+                  
+                  if (!doc.containsKey(entity_key)) {
+                    ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
+                    return;
                   }
 
-                  if (day.containsKey("precipitation_probability")) {
-                    id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                  JsonObject entity_data = doc[entity_key];
+                  
+                  if (!entity_data.containsKey("forecast")) {
+                    ESP_LOGW("weather", "No 'forecast' key in response");
+                    return;
                   }
-                }
-                ESP_LOGI("weather", "✓ Daily forecast stored successfully");
-          on_error:
-            - lambda: |-
-                ESP_LOGE("weather", "✗✗✗ DAILY FORECAST FAILED ✗✗✗");
-                ESP_LOGE("weather", "Check Home Assistant logs for details");
-                ESP_LOGE("weather", "Entity: ${weather_entity_id}");
+
+                  JsonArray forecast_array = entity_data["forecast"];
+                  int day_count = std::min((int)forecast_array.size(), 10);
+                  ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+
+                  for (int i = 0; i < day_count; i++) {
+                    JsonObject day = forecast_array[i];
+
+                    if (day.containsKey("temperature")) {
+                      id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                    }
+
+                    if (day.containsKey("templow")) {
+                      id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                    }
+
+                    if (day.containsKey("condition")) {
+                      id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                    }
+
+                    if (day.containsKey("precipitation_probability")) {
+                      id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                    }
+                  }
+                  ESP_LOGI("weather", "✓ Daily forecast stored successfully");
 
       # Fetch hourly forecast
-      - homeassistant.action:
-          action: weather.get_forecasts
-          capture_response: true
-          target:
+      - http_request.post:
+          url: !lambda |-
+            return "${ha_url}/api/services/weather/get_forecasts";
+          headers:
+            Content-Type: application/json
+            Authorization: !lambda |-
+              return "Bearer ${ha_token}";
+          json:
             entity_id: ${weather_entity_id}
-          data:
             type: hourly
-          on_success:
-            - lambda: |-
-                std::string output;
-                serializeJsonPretty(response, output);
-                ESP_LOGI("weather", "Hourly Forecast JSON:\n%s", output.c_str());
-
-                ESP_LOGI("weather", "✓ Hourly forecast response received");
-
-                // Per ESPHome docs: response["response"]["weather.entity_id"]["forecast"]
-                if (!response.containsKey("response")) {
-                  ESP_LOGE("weather", "No 'response' key in hourly forecast");
-                  return;
-                }
-                
-                JsonObjectConst response_data = response["response"];
-                const char *entity_key = "${weather_entity_id}";
-
-                if (!response_data.containsKey(entity_key)) {
-                  ESP_LOGE("weather", "Entity '%s' not found in hourly response", entity_key);
-                  return;
-                }
-
-                auto entity_data = response_data[entity_key];
-
-                if (!entity_data.containsKey("forecast")) {
-                  ESP_LOGW("weather", "No 'forecast' key in hourly response");
-                  return;
-                }
-
-                auto forecast_array = entity_data["forecast"];
-                int hour_count = std::min((int)forecast_array.size(), 24);
-                ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
-
-                for (int i = 0; i < hour_count; i++) {
-                  auto hour = forecast_array[i];
-
-                  if (hour.containsKey("temperature")) {
-                    id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+          on_response:
+            then:
+              - lambda: |-
+                  if (status_code != 200) {
+                    ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", status_code);
+                    return;
                   }
 
-                  if (hour.containsKey("apparent_temperature")) {
-                    id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                  ESP_LOGI("weather", "✓ Hourly forecast HTTP response received");
+                  
+                  // Parse JSON response
+                  DynamicJsonDocument doc(32768);
+                  DeserializationError error = deserializeJson(doc, body.c_str());
+                  
+                  if (error) {
+                    ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
+                    return;
                   }
 
-                  if (hour.containsKey("condition")) {
-                    id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                  // Response format: {"weather.hhut": {"forecast": [...]}}
+                  const char *entity_key = "${weather_entity_id}";
+                  
+                  if (!doc.containsKey(entity_key)) {
+                    ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
+                    return;
                   }
 
-                  if (hour.containsKey("precipitation_probability")) {
-                    id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                  JsonObject entity_data = doc[entity_key];
+                  
+                  if (!entity_data.containsKey("forecast")) {
+                    ESP_LOGW("weather", "No 'forecast' key in response");
+                    return;
                   }
-                }
-                ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
-          on_error:
-            - lambda: |-
-                ESP_LOGE("weather", "✗✗✗ HOURLY FORECAST FAILED ✗✗✗");
-                ESP_LOGE("weather", "Check Home Assistant logs for details");
-                ESP_LOGE("weather", "Entity: ${weather_entity_id}");
 
-      # Note: Current temp, apparent temp, and condition API calls removed
-      # due to HA 2025.10.x API changes (homeassistant.get_state doesn't exist).
-      # Use HA sensor imports if this data is needed in the future.
-      
+                  JsonArray forecast_array = entity_data["forecast"];
+                  int hour_count = std::min((int)forecast_array.size(), 24);
+                  ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+
+                  for (int i = 0; i < hour_count; i++) {
+                    JsonObject hour = forecast_array[i];
+
+                    if (hour.containsKey("temperature")) {
+                      id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                    }
+
+                    if (hour.containsKey("apparent_temperature")) {
+                      id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                    }
+
+                    if (hour.containsKey("condition")) {
+                      id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                    }
+
+                    if (hour.containsKey("precipitation_probability")) {
+                      id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                    }
+                  }
+                  ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
+
       - lambda: |-
           // Update timestamp
           id(weather_last_update) = millis();
@@ -2341,9 +2359,8 @@ button:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          target:
-            entity_id: ${weather_entity_id}
           data:
+            entity_id: ${weather_entity_id}
             type: daily
           on_success:
             - lambda: |-
