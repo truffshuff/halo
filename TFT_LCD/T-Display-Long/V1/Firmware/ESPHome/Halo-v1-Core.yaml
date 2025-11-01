@@ -2470,14 +2470,6 @@ button:
 wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
-  ap:
-    ssid: "Halo-79e384-Fallback"
-    password: "fallback12345"
-
-# OTA
-ota:
-  - platform: esphome
-    password: ${ota_password}
 
 # Default page selector (update options based on enabled features)
 
