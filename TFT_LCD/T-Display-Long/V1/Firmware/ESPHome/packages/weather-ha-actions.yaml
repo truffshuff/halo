@@ -367,6 +367,74 @@ script:
 # ============================================================================
 # BUTTONS - Manual refresh controls
 # ============================================================================
+# button:
+#   - platform: template
+#     name: "Refresh Weather"
+#     id: btn_refresh_weather
+#     on_press:
+#       - script.execute: fetch_weather_data
+
+#   - platform: template
+#     name: "Test Weather Call"
+#     id: test_weather_call
+#     on_press:
+#       - homeassistant.action:
+#           action: weather.get_forecasts
+#           capture_response: true
+#           data:
+#             entity_id: weather.hhut
+#             type: daily
+#           on_success:
+#             - lambda: |-
+#                 ESP_LOGI("test", "Weather response:");
+#                 std::string output;
+#                 serializeJsonPretty(response, output);
+#                 ESP_LOGI("weather", "%s", output.c_str()); 
+#           on_error:
+#             - logger.log: "Failed to call weather.get_forecasts!"
+
+#   - platform: template
+#     name: "Test example from ESPHome"
+#     id: test_example_ESPHome
+#     on_press:
+#       - homeassistant.action:
+#           action: weather.get_forecasts
+#           data:
+#             entity_id: weather.hhut
+#             type: hourly
+#           capture_response: true
+#           response_template: "{{ response['weather.hhut']['forecast'][0]['temperature'] }}"
+#           on_success:
+#             - lambda: |-
+#                 float temperature = response["response"].as<float>();
+#                 ESP_LOGI("weather", "Temperature next hour: %.1f", temperature);
+
+#   - platform: template
+#     name: "Test Weather Forecast"
+#     id: test_weather_forecast
+#     on_press:
+#       - homeassistant.action:
+#           action: template.render
+#           capture_response: true
+#           data:
+#             # Pulls the full forecast attribute from your weather entity
+#             template: >
+#               {{ state_attr('weather.hhut', 'forecast') | tojson }}
+#           on_success:
+#             - lambda: |-
+#                 if (response.containsKey("result")) {
+#                   // Pretty-print the forecast JSON to logs
+#                   std::string forecast_json = response["result"].as<std::string>();
+#                   ESP_LOGI("weather", "Forecast attribute JSON:\n%s", forecast_json.c_str());
+#                 } else {
+#                   ESP_LOGW("weather", "No result key in forecast response!");
+#                 }
+#           on_error:
+#             - lambda: |-
+#                 ESP_LOGE("weather", "❌ Forecast fetch FAILED!");
+# ============================================================================
+# BUTTONS - Manual refresh controls (HA-compatible)
+# ============================================================================
 button:
   - platform: template
     name: "Refresh Weather"
@@ -375,57 +443,103 @@ button:
       - script.execute: fetch_weather_data
 
   - platform: template
-    name: "Test Weather Call"
+    name: "Debug Daily Forecast"
+    id: btn_debug_daily_forecast
     on_press:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
           data:
-            entity_id: weather.hhut
+            entity_id: ${weather_entity_id}
             type: daily
           on_success:
             - lambda: |-
-                ESP_LOGI("test", "Weather response:");
                 std::string output;
                 serializeJsonPretty(response, output);
-                ESP_LOGI("weather", "%s", output.c_str()); 
+                ESP_LOGI("weather", "Daily forecast:\n%s", output.c_str());
+          on_error:
+            - logger.log: "Daily forecast call failed"
+
+  - platform: template
+    name: "Test Weather Call"
+    id: btn_test_weather_call
+    on_press:
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            entity_id: weather.hhut
+            type: daily
+            return_response: true
+          capture_response: true
+          on_success:
+            - lambda: |-
+                // response is JsonObjectConst
+                if (!response.containsKey("response")) {
+                  ESP_LOGE("weather", "Missing 'response' key!");
+                  return;
+                }
+                const auto &resp_obj = response["response"];
+                if (!resp_obj.containsKey("weather.hhut")) {
+                  ESP_LOGE("weather", "Missing 'weather.hhut'!");
+                  return;
+                }
+                const auto &entity = resp_obj["weather.hhut"];
+                if (!entity.containsKey("forecast")) {
+                  ESP_LOGE("weather", "Missing 'forecast'!");
+                  return;
+                }
+                const auto &forecast = entity["forecast"];
+                for (size_t i = 0; i < forecast.size(); i++) {
+                  const auto &day = forecast[i];
+                  float temp = day.containsKey("temperature") ? day["temperature"].as<float>() : NAN;
+                  const char *cond = day.containsKey("condition") ? day["condition"].as<std::string>().c_str() : "N/A";
+                  ESP_LOGI("weather", "Day %d temp: %.1f, condition: %s", i, temp, cond);
+                }
           on_error:
             - logger.log: "Failed to call weather.get_forecasts!"
 
   - platform: template
     name: "Test example from ESPHome"
+    id: btn_test_example
     on_press:
       - homeassistant.action:
           action: weather.get_forecasts
           data:
             entity_id: weather.hhut
             type: hourly
+            return_response: true
           capture_response: true
-          response_template: "{{ response['weather.hhut']['forecast'][0]['temperature'] }}"
           on_success:
             - lambda: |-
-                float temperature = response["response"].as<float>();
+                if (!response.containsKey("response")) return;
+                const auto &resp_obj = response["response"];
+                if (!resp_obj.containsKey("weather.hhut")) return;
+                const auto &entity = resp_obj["weather.hhut"];
+                if (!entity.containsKey("forecast")) return;
+                const auto &forecast = entity["forecast"];
+                if (forecast.size() == 0) return;
+                const auto &first_hour = forecast[0];
+                float temperature = first_hour.containsKey("temperature") ? first_hour["temperature"].as<float>() : NAN;
                 ESP_LOGI("weather", "Temperature next hour: %.1f", temperature);
 
   - platform: template
     name: "Test Weather Forecast"
+    id: btn_test_forecast
     on_press:
       - homeassistant.action:
           action: template.render
-          capture_response: true
           data:
-            # Pulls the full forecast attribute from your weather entity
-            template: >
-              {{ state_attr('weather.hhut', 'forecast') | tojson }}
+            template: "{{ state_attr('weather.hhut', 'forecast') | tojson }}"
+          capture_response: true
           on_success:
             - lambda: |-
-                if (response.containsKey("result")) {
-                  // Pretty-print the forecast JSON to logs
-                  std::string forecast_json = response["result"].as<std::string>();
-                  ESP_LOGI("weather", "Forecast attribute JSON:\n%s", forecast_json.c_str());
-                } else {
-                  ESP_LOGW("weather", "No result key in forecast response!");
+                if (!response.containsKey("result")) {
+                  ESP_LOGW("weather", "No 'result' key in template response!");
+                  return;
                 }
+                const auto &result = response["result"];
+                std::string forecast_json = result.as<std::string>();
+                ESP_LOGI("weather", "Forecast attribute JSON:\n%s", forecast_json.c_str());
           on_error:
             - lambda: |-
                 ESP_LOGE("weather", "❌ Forecast fetch FAILED!");

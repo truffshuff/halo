@@ -212,8 +212,8 @@ select:
     initial_option: "Vertical Clock"
     restore_value: true
 
-logger:
-  level: debug
+# logger:
+#   level: debug
 
 # ============================================================================
 # CONFIGURATION GUIDE
