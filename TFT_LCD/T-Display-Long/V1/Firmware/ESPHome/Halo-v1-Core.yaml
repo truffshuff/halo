@@ -3115,18 +3115,6 @@ script:
             else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
             else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
             else return lv_color_hex(0xFFFFFF);
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
       - lvgl.label.update:
           id: lbl_forecast_day3_temps
           text: !lambda |-
