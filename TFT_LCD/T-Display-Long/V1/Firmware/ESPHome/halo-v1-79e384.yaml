@@ -11,12 +11,12 @@ substitutions:
   wifi_password: !secret wifihome_password
 
   # Security
-  api_encryption_key: "mLKXHYyBZgGLfMiXyWoo3Fzc/TpqbKpk0g+uYAwErMs="
-  ota_password: "halo79e384"
+  api_encryption_key: !secret api_encryption_key
+  ota_password: !secret ota_password
 
 esphome:
-  name: halo-v1-79e1f8
-  friendly_name: Halo Air Quality Sensor LR
+  name: halo-v1-79e384
+  friendly_name: Halo Air Quality Sensor Dev
   name_add_mac_suffix: false
   platformio_options:
     upload_speed: 921600
