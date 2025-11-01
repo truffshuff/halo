@@ -1322,50 +1322,55 @@ script:
             - lambda: |-
                 std::string output;
                 serializeJsonPretty(response, output);
-                ESP_LOGI("weather", "Forecast JSON:\n%s", output.c_str());
+                ESP_LOGI("weather", "Daily Forecast JSON:\n%s", output.c_str());
 
                 ESP_LOGI("weather", "✓ Daily forecast response received");
 
-                JsonObjectConst root = response;
-                if (response.containsKey("response")) {
-                  root = response["response"].as<JsonObjectConst>();
+                // Per ESPHome docs: response["response"]["weather.entity_id"]["forecast"]
+                if (!response.containsKey("response")) {
+                  ESP_LOGE("weather", "No 'response' key in daily forecast");
+                  return;
                 }
+                
+                JsonObjectConst response_data = response["response"];
                 const char *entity_key = "${weather_entity_id}";
 
-                if (root.containsKey(entity_key)) {
-                  auto entity_data = root[entity_key];
-
-                  if (entity_data.containsKey("forecast")) {
-                    auto forecast_array = entity_data["forecast"];
-                    int day_count = std::min((int)forecast_array.size(), 10);
-                    ESP_LOGI("weather", "Found %d days of forecast data", day_count);
-
-                    for (int i = 0; i < day_count; i++) {
-                      auto day = forecast_array[i];
-
-                      if (day.containsKey("temperature")) {
-                        id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
-                      }
-
-                      if (day.containsKey("templow")) {
-                        id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
-                      }
-
-                      if (day.containsKey("condition")) {
-                        id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
-                      }
-
-                      if (day.containsKey("precipitation_probability")) {
-                        id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
-                      }
-                    }
-                    ESP_LOGI("weather", "✓ Daily forecast stored");
-                  } else {
-                    ESP_LOGW("weather", "No 'forecast' key in daily response");
-                  }
-                } else {
-                  ESP_LOGW("weather", "Entity '${weather_entity_id}' not found in daily response");
+                if (!response_data.containsKey(entity_key)) {
+                  ESP_LOGE("weather", "Entity '%s' not found in daily response", entity_key);
+                  return;
                 }
+
+                auto entity_data = response_data[entity_key];
+
+                if (!entity_data.containsKey("forecast")) {
+                  ESP_LOGW("weather", "No 'forecast' key in daily response");
+                  return;
+                }
+
+                auto forecast_array = entity_data["forecast"];
+                int day_count = std::min((int)forecast_array.size(), 10);
+                ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+
+                for (int i = 0; i < day_count; i++) {
+                  auto day = forecast_array[i];
+
+                  if (day.containsKey("temperature")) {
+                    id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                  }
+
+                  if (day.containsKey("templow")) {
+                    id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                  }
+
+                  if (day.containsKey("condition")) {
+                    id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                  }
+
+                  if (day.containsKey("precipitation_probability")) {
+                    id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                  }
+                }
+                ESP_LOGI("weather", "✓ Daily forecast stored successfully");
           on_error:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Daily forecast fetch FAILED");
@@ -1381,50 +1386,55 @@ script:
             - lambda: |-
                 std::string output;
                 serializeJsonPretty(response, output);
-                ESP_LOGI("weather", "Forecast JSON:\n%s", output.c_str());
+                ESP_LOGI("weather", "Hourly Forecast JSON:\n%s", output.c_str());
 
                 ESP_LOGI("weather", "✓ Hourly forecast response received");
 
-                JsonObjectConst root = response;
-                if (response.containsKey("response")) {
-                  root = response["response"].as<JsonObjectConst>();
+                // Per ESPHome docs: response["response"]["weather.entity_id"]["forecast"]
+                if (!response.containsKey("response")) {
+                  ESP_LOGE("weather", "No 'response' key in hourly forecast");
+                  return;
                 }
+                
+                JsonObjectConst response_data = response["response"];
                 const char *entity_key = "${weather_entity_id}";
 
-                if (root.containsKey(entity_key)) {
-                  auto entity_data = root[entity_key];
-
-                  if (entity_data.containsKey("forecast")) {
-                    auto forecast_array = entity_data["forecast"];
-                    int hour_count = std::min((int)forecast_array.size(), 24);
-                    ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
-
-                    for (int i = 0; i < hour_count; i++) {
-                      auto hour = forecast_array[i];
-
-                      if (hour.containsKey("temperature")) {
-                        id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
-                      }
-
-                      if (hour.containsKey("apparent_temperature")) {
-                        id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
-                      }
-
-                      if (hour.containsKey("condition")) {
-                        id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
-                      }
-
-                      if (hour.containsKey("precipitation_probability")) {
-                        id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
-                      }
-                    }
-                    ESP_LOGI("weather", "✓ Hourly forecast stored");
-                  } else {
-                    ESP_LOGW("weather", "No 'forecast' key in hourly response");
-                  }
-                } else {
-                  ESP_LOGW("weather", "Entity '${weather_entity_id}' not found in hourly response");
+                if (!response_data.containsKey(entity_key)) {
+                  ESP_LOGE("weather", "Entity '%s' not found in hourly response", entity_key);
+                  return;
                 }
+
+                auto entity_data = response_data[entity_key];
+
+                if (!entity_data.containsKey("forecast")) {
+                  ESP_LOGW("weather", "No 'forecast' key in hourly response");
+                  return;
+                }
+
+                auto forecast_array = entity_data["forecast"];
+                int hour_count = std::min((int)forecast_array.size(), 24);
+                ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+
+                for (int i = 0; i < hour_count; i++) {
+                  auto hour = forecast_array[i];
+
+                  if (hour.containsKey("temperature")) {
+                    id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                  }
+
+                  if (hour.containsKey("apparent_temperature")) {
+                    id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                  }
+
+                  if (hour.containsKey("condition")) {
+                    id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                  }
+
+                  if (hour.containsKey("precipitation_probability")) {
+                    id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                  }
+                }
+                ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
           on_error:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
