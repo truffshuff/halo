@@ -1330,13 +1330,13 @@ script:
       # Fetch daily forecast
       - http_request.post:
           url: !lambda |-
-            return "${ha_url}/api/services/weather/get_forecasts";
+            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
           request_headers:
             Content-Type: application/json
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
           body: !lambda |-
-            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"daily\"},\"return_response\":true}";
+            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"daily\"}}";
           on_response:
             then:
               - lambda: |-
@@ -1412,13 +1412,13 @@ script:
       # Fetch hourly forecast
       - http_request.post:
           url: !lambda |-
-            return "${ha_url}/api/services/weather/get_forecasts";
+            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
           request_headers:
             Content-Type: application/json
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
           body: !lambda |-
-            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"hourly\"},\"return_response\":true}";
+            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"hourly\"}}";
           on_response:
             then:
               - lambda: |-
