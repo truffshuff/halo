@@ -1,1 +1,0 @@
-Folder for Halo with no screen.
