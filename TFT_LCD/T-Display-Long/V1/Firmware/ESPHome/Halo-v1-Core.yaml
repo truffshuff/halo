@@ -1341,20 +1341,17 @@ script:
           on_response:
             then:
               - lambda: |-
-                  auto response = id(http_request::http_request_component_0)->get_last_response();
-                  int status = response.status_code;
-                  std::string body_str = response.body;
-                  
-                  if (status != 200) {
-                    ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", status);
+                  // response is already provided by ESPHome http_request
+                  if (response->status_code != 200) {
+                    ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", response->status_code);
                     return;
                   }
 
                   ESP_LOGI("weather", "✓ Daily forecast HTTP response received");
                   
                   // Parse JSON response
-                  DynamicJsonDocument doc(16384);
-                  DeserializationError error = deserializeJson(doc, body_str.c_str());
+                  JsonDocument doc;
+                  DeserializationError error = deserializeJson(doc, response->body.c_str());
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
@@ -1415,20 +1412,17 @@ script:
           on_response:
             then:
               - lambda: |-
-                  auto response = id(http_request::http_request_component_0)->get_last_response();
-                  int status = response.status_code;
-                  std::string body_str = response.body;
-                  
-                  if (status != 200) {
-                    ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", status);
+                  // response is already provided by ESPHome http_request
+                  if (response->status_code != 200) {
+                    ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
                     return;
                   }
 
                   ESP_LOGI("weather", "✓ Hourly forecast HTTP response received");
                   
                   // Parse JSON response
-                  DynamicJsonDocument doc(32768);
-                  DeserializationError error = deserializeJson(doc, body_str.c_str());
+                  JsonDocument doc;
+                  DeserializationError error = deserializeJson(doc, response->body.c_str());
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
