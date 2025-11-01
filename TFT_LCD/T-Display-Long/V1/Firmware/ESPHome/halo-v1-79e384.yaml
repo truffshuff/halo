@@ -1,5 +1,10 @@
 substitutions:
 
+  # Home Assistant connection for HTTP API calls
+  # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
+  ha_url: !secret ha_url  # Example: "http://homeassistant.local:8123"
+  ha_token: !secret ha_token  # Your long-lived access token
+
   # Weather configuration (if enabled below)
   weather_entity_id: "weather.hhut"
   weather_refresh_interval: "900"
