@@ -1595,6 +1595,10 @@ interval:
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
+  # Keepalive settings for improved switch responsiveness
+  # These ensure the API connection stays responsive even during heavy sensor operations
+  ping_pong_enable_password: ""  # Empty string to enable keepalive without password
+  keepalive: 15s  # Send keepalive every 15 seconds to maintain connection
   # Increase buffer sizes to handle sensor bursts
   # Default buffer is ~2KB, increase to 8KB
   # This prevents TCP buffer exhaustion during sensor cascades
@@ -1687,18 +1691,18 @@ display:
     rotation: 0
     auto_clear_enabled: false
 
-# Touchscreen re-enabled with protective measures:
-# - 100ms internal rate limiter in axs15231_touchscreen.cpp
-# - Interrupt-only mode (no continuous polling)
-# - 5s debounce to filter phantom touches
+# Touchscreen configuration optimized for responsiveness:
+# - Fast 50ms polling for immediate touch detection
+# - Interrupt pin for hardware-triggered events
 # - Coordinate validation to reject invalid touches
+# - Auto-rotation reset on touch for better UX
 touchscreen:
   - platform: axs15231
     id: lily_touch
     display: lily_display
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
-    update_interval: never  # Interrupt-only mode - rely solely on hardware interrupts, no polling
+    update_interval: 50ms  # Fast polling for responsive touch detection (was: never)
     transform:
       mirror_x: false
       mirror_y: false
