@@ -1327,69 +1327,6 @@ script:
     then:
       - logger.log: "Fetching weather data from Home Assistant via HTTP..."
 
-      # Fetch current weather state
-      - http_request.get:
-          url: !lambda |-
-            return "${ha_url}/api/states/${weather_entity_id}";
-          headers:
-            Authorization: !lambda |-
-              return "Bearer ${ha_token}";
-          on_response:
-            then:
-              - lambda: |-
-                  // Read response body
-                  std::string body_str;
-                  body_str.reserve(response->content_length);
-                  uint8_t buffer[512];
-                  while (response->get_bytes_read() < response->content_length) {
-                    int read_len = response->read(buffer, sizeof(buffer));
-                    if (read_len > 0) {
-                      body_str.append((char*)buffer, read_len);
-                    }
-                  }
-
-                  if (response->status_code != 200) {
-                    ESP_LOGE("weather", "✗ Current weather state HTTP failed: %d", response->status_code);
-                    ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
-                    return;
-                  }
-
-                  ESP_LOGI("weather", "✓ Current weather state received");
-                  
-                  // Parse JSON response
-                  JsonDocument doc;
-                  DeserializationError error = deserializeJson(doc, body_str);
-                  
-                  if (error) {
-                    ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
-                    return;
-                  }
-
-                  // Extract current weather data from state
-                  if (doc["state"].is<const char*>()) {
-                    id(weather_current_condition) = doc["state"].as<std::string>();
-                    ESP_LOGI("weather", "Current condition: %s", id(weather_current_condition).c_str());
-                  }
-
-                  // Extract attributes
-                  if (doc["attributes"].is<JsonObject>()) {
-                    JsonObject attrs = doc["attributes"];
-                    
-                    if (attrs["temperature"].is<float>()) {
-                      id(weather_current_temp) = attrs["temperature"].as<float>();
-                    }
-                    
-                    if (attrs["apparent_temperature"].is<float>()) {
-                      id(weather_current_apparent_temp) = attrs["apparent_temperature"].as<float>();
-                    }
-                    
-                    if (attrs["humidity"].is<float>()) {
-                      id(weather_current_humidity) = attrs["humidity"].as<float>();
-                    }
-                  }
-                  
-                  ESP_LOGI("weather", "✓ Current weather data stored");
-
       # Fetch daily forecast
       - http_request.post:
           url: !lambda |-
@@ -1475,6 +1412,14 @@ script:
 
                     if (day["precipitation_probability"].is<float>()) {
                       id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                    }
+
+                    // Extract "current" weather from today's forecast (day 0)
+                    if (i == 0) {
+                      if (day["condition"].is<const char*>()) {
+                        id(weather_current_condition) = day["condition"].as<std::string>();
+                        ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
+                      }
                     }
                   }
                   ESP_LOGI("weather", "✓ Daily forecast stored successfully");
@@ -1890,6 +1835,28 @@ sensor:
     name: Uptime
     id: sys_uptime
     update_interval: 60s
+
+  # Import current temperature from Home Assistant weather integration
+  - platform: homeassistant
+    id: ha_current_temp
+    entity_id: ${current_temp_sensor}
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(weather_current_temp) = x;
+            ESP_LOGD("weather", "Current temp updated: %.1f°F", x);
+
+  # Import apparent temperature from Home Assistant weather integration
+  - platform: homeassistant
+    id: ha_apparent_temp
+    entity_id: ${apparent_temp_sensor}
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(weather_current_apparent_temp) = x;
+            ESP_LOGD("weather", "Apparent temp updated: %.1f°F", x);
 
   # Note: wifi_signal (RSSI) sensor is defined in wifi-core.yaml
 
