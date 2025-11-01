@@ -1318,6 +1318,8 @@ script:
           data:
             entity_id: ${weather_entity_id}
             type: daily
+          data_template:
+            return_response: true
           on_success:
             - lambda: |-
                 std::string output;
@@ -1377,6 +1379,8 @@ script:
           data:
             entity_id: ${weather_entity_id}
             type: hourly
+          data_template:
+            return_response: true
           on_success:
             - lambda: |-
                 std::string output;
@@ -1429,12 +1433,17 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
 
-      # Fetch current temperature and apparent temp using template
+      # Fetch current temperature from sensor state
+      - homeassistant.service:
+          service: homeassistant.update_entity
+          data:
+            entity_id: ${current_temp_sensor}
+      - delay: 100ms
       - homeassistant.action:
-          action: template.render
+          action: homeassistant.get_state
           capture_response: true
           data:
-            template: "{{ states('${current_temp_sensor}') }}"
+            entity_id: ${current_temp_sensor}
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Current temp response received");
@@ -1443,8 +1452,8 @@ script:
                   root = response["response"].as<JsonObjectConst>();
                 }
 
-                if (root.containsKey("result")) {
-                  std::string temp_str = root["result"].as<std::string>();
+                if (root.containsKey("state")) {
+                  std::string temp_str = root["state"].as<std::string>();
                   float temp = atof(temp_str.c_str());
                   if (!isnan(temp)) {
                     id(weather_current_temp) = temp;
@@ -1455,11 +1464,16 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Current temp fetch FAILED");
 
+      - homeassistant.service:
+          service: homeassistant.update_entity
+          data:
+            entity_id: ${apparent_temp_sensor}
+      - delay: 100ms
       - homeassistant.action:
-          action: template.render
+          action: homeassistant.get_state
           capture_response: true
           data:
-            template: "{{ states('${apparent_temp_sensor}') }}"
+            entity_id: ${apparent_temp_sensor}
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Apparent temp response received");
@@ -1468,8 +1482,8 @@ script:
                   root = response["response"].as<JsonObjectConst>();
                 }
 
-                if (root.containsKey("result")) {
-                  std::string temp_str = root["result"].as<std::string>();
+                if (root.containsKey("state")) {
+                  std::string temp_str = root["state"].as<std::string>();
                   float temp = atof(temp_str.c_str());
                   if (!isnan(temp)) {
                     id(weather_current_apparent_temp) = temp;
@@ -1480,11 +1494,16 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Apparent temp fetch FAILED");
 
+      - homeassistant.service:
+          service: homeassistant.update_entity
+          data:
+            entity_id: ${weather_entity_id}
+      - delay: 100ms
       - homeassistant.action:
-          action: template.render
+          action: homeassistant.get_state
           capture_response: true
           data:
-            template: "{{ states('${weather_entity_id}') }}"
+            entity_id: ${weather_entity_id}
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Current condition response received");
@@ -1493,8 +1512,8 @@ script:
                   root = response["response"].as<JsonObjectConst>();
                 }
 
-                if (root.containsKey("result")) {
-                  id(weather_current_condition) = root["result"].as<std::string>();
+                if (root.containsKey("state")) {
+                  id(weather_current_condition) = root["state"].as<std::string>();
                   ESP_LOGD("weather", "Condition: %s", id(weather_current_condition).c_str());
                 }
 
@@ -2400,6 +2419,8 @@ button:
           data:
             entity_id: ${weather_entity_id}
             type: daily
+          data_template:
+            return_response: true
           on_success:
             - lambda: |-
                 JsonObjectConst root = response;
