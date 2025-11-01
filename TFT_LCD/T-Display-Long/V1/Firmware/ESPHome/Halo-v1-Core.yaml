@@ -1315,8 +1315,9 @@ script:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          data:
+          target:
             entity_id: ${weather_entity_id}
+          data:
             type: daily
           on_success:
             - lambda: |-
@@ -1373,14 +1374,17 @@ script:
                 ESP_LOGI("weather", "✓ Daily forecast stored successfully");
           on_error:
             - lambda: |-
-                ESP_LOGE("weather", "✗ Daily forecast fetch FAILED");
+                ESP_LOGE("weather", "✗✗✗ DAILY FORECAST FAILED ✗✗✗");
+                ESP_LOGE("weather", "Check Home Assistant logs for details");
+                ESP_LOGE("weather", "Entity: ${weather_entity_id}");
 
       # Fetch hourly forecast
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          data:
+          target:
             entity_id: ${weather_entity_id}
+          data:
             type: hourly
           on_success:
             - lambda: |-
@@ -1437,7 +1441,9 @@ script:
                 ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
           on_error:
             - lambda: |-
-                ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
+                ESP_LOGE("weather", "✗✗✗ HOURLY FORECAST FAILED ✗✗✗");
+                ESP_LOGE("weather", "Check Home Assistant logs for details");
+                ESP_LOGE("weather", "Entity: ${weather_entity_id}");
 
       # Note: Current temp, apparent temp, and condition API calls removed
       # due to HA 2025.10.x API changes (homeassistant.get_state doesn't exist).
@@ -2335,8 +2341,9 @@ button:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          data:
+          target:
             entity_id: ${weather_entity_id}
+          data:
             type: daily
           on_success:
             - lambda: |-
