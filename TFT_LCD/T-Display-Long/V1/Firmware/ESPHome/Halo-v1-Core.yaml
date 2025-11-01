@@ -1313,7 +1313,7 @@ script:
 
       # Fetch daily forecast
       - homeassistant.action:
-          action: weather.get_forecast
+          action: weather.get_forecasts
           capture_response: true
           data:
             entity_id: ${weather_entity_id}
@@ -1372,7 +1372,7 @@ script:
 
       # Fetch hourly forecast
       - homeassistant.action:
-          action: weather.get_forecast
+          action: weather.get_forecasts
           capture_response: true
           data:
             entity_id: ${weather_entity_id}
@@ -2395,7 +2395,7 @@ button:
     id: btn_debug_daily_forecast
     on_press:
       - homeassistant.action:
-          action: weather.get_forecast
+          action: weather.get_forecasts
           capture_response: true
           data:
             entity_id: ${weather_entity_id}
