@@ -1340,15 +1340,7 @@ script:
           on_response:
             then:
               - lambda: |-
-                  // response is already provided by ESPHome http_request
-                  if (response->status_code != 200) {
-                    ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", response->status_code);
-                    return;
-                  }
-
-                  ESP_LOGI("weather", "✓ Daily forecast HTTP response received");
-                  
-                  // Read response body in chunks
+                  // Read response body first (for both success and error cases)
                   std::string body_str;
                   body_str.reserve(response->content_length);
                   uint8_t buffer[512];
@@ -1358,6 +1350,15 @@ script:
                       body_str.append((char*)buffer, read_len);
                     }
                   }
+
+                  // response is already provided by ESPHome http_request
+                  if (response->status_code != 200) {
+                    ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", response->status_code);
+                    ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
+                    return;
+                  }
+
+                  ESP_LOGI("weather", "✓ Daily forecast HTTP response received");
                   
                   // Parse JSON response
                   JsonDocument doc;
@@ -1421,15 +1422,7 @@ script:
           on_response:
             then:
               - lambda: |-
-                  // response is already provided by ESPHome http_request
-                  if (response->status_code != 200) {
-                    ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
-                    return;
-                  }
-
-                  ESP_LOGI("weather", "✓ Hourly forecast HTTP response received");
-                  
-                  // Read response body in chunks
+                  // Read response body first (for both success and error cases)
                   std::string body_str;
                   body_str.reserve(response->content_length);
                   uint8_t buffer[512];
@@ -1439,6 +1432,15 @@ script:
                       body_str.append((char*)buffer, read_len);
                     }
                   }
+
+                  // response is already provided by ESPHome http_request
+                  if (response->status_code != 200) {
+                    ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
+                    ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
+                    return;
+                  }
+
+                  ESP_LOGI("weather", "✓ Hourly forecast HTTP response received");
                   
                   // Parse JSON response
                   JsonDocument doc;
