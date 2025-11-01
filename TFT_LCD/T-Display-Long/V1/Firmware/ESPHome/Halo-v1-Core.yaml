@@ -1331,7 +1331,7 @@ script:
       - http_request.post:
           url: !lambda |-
             return "${ha_url}/api/services/weather/get_forecasts";
-          headers:
+          request_headers:
             Content-Type: application/json
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
@@ -1401,7 +1401,7 @@ script:
       - http_request.post:
           url: !lambda |-
             return "${ha_url}/api/services/weather/get_forecasts";
-          headers:
+          request_headers:
             Content-Type: application/json
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
