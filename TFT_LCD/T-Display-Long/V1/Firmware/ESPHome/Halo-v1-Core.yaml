@@ -1429,101 +1429,14 @@ script:
             - lambda: |-
                 ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED");
 
-      # Fetch current temperature from sensor state
-      - homeassistant.service:
-          service: homeassistant.update_entity
-          data:
-            entity_id: ${current_temp_sensor}
-      - delay: 100ms
-      - homeassistant.action:
-          action: homeassistant.get_state
-          capture_response: true
-          data:
-            entity_id: ${current_temp_sensor}
-          on_success:
-            - lambda: |-
-                ESP_LOGI("weather", "✓ Current temp response received");
-                JsonObjectConst root = response;
-                if (response.containsKey("response")) {
-                  root = response["response"].as<JsonObjectConst>();
-                }
-
-                if (root.containsKey("state")) {
-                  std::string temp_str = root["state"].as<std::string>();
-                  float temp = atof(temp_str.c_str());
-                  if (!isnan(temp)) {
-                    id(weather_current_temp) = temp;
-                    ESP_LOGD("weather", "Temp: %.1f°F", temp);
-                  }
-                }
-          on_error:
-            - lambda: |-
-                ESP_LOGE("weather", "✗ Current temp fetch FAILED");
-
-      - homeassistant.service:
-          service: homeassistant.update_entity
-          data:
-            entity_id: ${apparent_temp_sensor}
-      - delay: 100ms
-      - homeassistant.action:
-          action: homeassistant.get_state
-          capture_response: true
-          data:
-            entity_id: ${apparent_temp_sensor}
-          on_success:
-            - lambda: |-
-                ESP_LOGI("weather", "✓ Apparent temp response received");
-                JsonObjectConst root = response;
-                if (response.containsKey("response")) {
-                  root = response["response"].as<JsonObjectConst>();
-                }
-
-                if (root.containsKey("state")) {
-                  std::string temp_str = root["state"].as<std::string>();
-                  float temp = atof(temp_str.c_str());
-                  if (!isnan(temp)) {
-                    id(weather_current_apparent_temp) = temp;
-                    ESP_LOGD("weather", "Feels like: %.1f°F", temp);
-                  }
-                }
-          on_error:
-            - lambda: |-
-                ESP_LOGE("weather", "✗ Apparent temp fetch FAILED");
-
-      - homeassistant.service:
-          service: homeassistant.update_entity
-          data:
-            entity_id: ${weather_entity_id}
-      - delay: 100ms
-      - homeassistant.action:
-          action: homeassistant.get_state
-          capture_response: true
-          data:
-            entity_id: ${weather_entity_id}
-          on_success:
-            - lambda: |-
-                ESP_LOGI("weather", "✓ Current condition response received");
-                JsonObjectConst root = response;
-                if (response.containsKey("response")) {
-                  root = response["response"].as<JsonObjectConst>();
-                }
-
-                if (root.containsKey("state")) {
-                  id(weather_current_condition) = root["state"].as<std::string>();
-                  ESP_LOGD("weather", "Condition: %s", id(weather_current_condition).c_str());
-                }
-
-                // Update timestamp
-                id(weather_last_update) = millis();
-
-                ESP_LOGI("weather", "✓ Weather data fetch complete!");
-                ESP_LOGI("weather", "Current: %.1f°F (feels like %.1f°F), %s",
-                         id(weather_current_temp),
-                         id(weather_current_apparent_temp),
-                         id(weather_current_condition).c_str());
-          on_error:
-            - lambda: |-
-                ESP_LOGE("weather", "✗ Current condition fetch FAILED");
+      # Note: Current temp, apparent temp, and condition API calls removed
+      # due to HA 2025.10.x API changes (homeassistant.get_state doesn't exist).
+      # Use HA sensor imports if this data is needed in the future.
+      
+      - lambda: |-
+          // Update timestamp
+          id(weather_last_update) = millis();
+          ESP_LOGI("weather", "✓ Weather forecast data fetch complete!");
 
       # Update the display after fetching data
       - script.execute: update_weather_display
