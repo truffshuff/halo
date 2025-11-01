@@ -1315,8 +1315,9 @@ script:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          data:
+          target:
             entity_id: ${weather_entity_id}
+          data:
             type: daily
           on_success:
             - lambda: |-
@@ -1374,8 +1375,9 @@ script:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          data:
+          target:
             entity_id: ${weather_entity_id}
+          data:
             type: hourly
           on_success:
             - lambda: |-
@@ -2397,8 +2399,9 @@ button:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          data:
+          target:
             entity_id: ${weather_entity_id}
+          data:
             type: daily
           on_success:
             - lambda: |-
