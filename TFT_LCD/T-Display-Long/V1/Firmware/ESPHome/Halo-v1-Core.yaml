@@ -6925,7 +6925,7 @@ button:
           on_success:
             - lambda: |-
                 JsonObjectConst root = response;
-                if (response.containsKey("response")) {
+                if (response["response"].is<JsonObjectConst>()) {
                   root = response["response"].as<JsonObjectConst>();
                 }
 
