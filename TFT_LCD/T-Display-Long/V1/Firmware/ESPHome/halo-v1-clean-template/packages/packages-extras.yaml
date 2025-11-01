@@ -1,0 +1,32 @@
+# packages/packages-extras.yaml
+
+# This file includes additional packages that are not part of the main configuration but can be referenced as needed.
+
+# Example of additional packages that can be included as needed
+# Uncomment the packages you wish to use
+
+# Example: WireGuard package
+# wireguard:
+#   enabled: true
+#   config: 
+#     # WireGuard configuration options
+
+# Example: BLE package
+# ble:
+#   enabled: true
+#   config:
+#     # BLE configuration options
+
+# Example: Weather sensor package
+# weather:
+#   enabled: true
+#   config:
+#     # Weather sensor configuration options
+
+# Example: WiFi stubs
+# wifi_stubs:
+#   enabled: true
+#   config:
+#     # WiFi stub configuration options
+
+# Note: Ensure to validate the compatibility of these packages with your active configuration.

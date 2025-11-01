@@ -1,0 +1,52 @@
+# lvgl_pages.yaml
+
+lvgl_pages:
+  - id: main_page
+    title: "Main Page"
+    layout:
+      type: grid
+      columns: 2
+      rows: 2
+    elements:
+      - type: label
+        text: "Welcome to Halo V1"
+        position: [0, 0]
+      - type: button
+        text: "Settings"
+        position: [1, 0]
+        action: navigate_to_settings
+      - type: label
+        text: "Status"
+        position: [0, 1]
+      - type: gauge
+        id: status_gauge
+        position: [1, 1]
+        min: 0
+        max: 100
+        value: 50
+
+  - id: settings_page
+    title: "Settings"
+    layout:
+      type: column
+    elements:
+      - type: label
+        text: "Adjust your settings"
+      - type: button
+        text: "Back"
+        action: navigate_to_main
+
+  - id: custom_page
+    title: "Custom Page"
+    layout:
+      type: column
+    elements:
+      - type: label
+        text: "This is a custom page"
+      - type: button
+        text: "Return"
+        action: navigate_to_main
+
+on_load:
+  - action: load_main_page
+  - action: initialize_status_gauge

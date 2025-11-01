@@ -1,0 +1,33 @@
+# halo-v1-template.yaml
+
+esphome:
+  name: halo_v1
+  platform: ESP32
+  board: esp32dev
+
+# Include the on_load functionality
+includes:
+  - includes/on_load.yaml
+
+# Active packages
+packages:
+  - !include packages/active_packages.yaml
+
+# LVGL pages configuration
+lvgl_pages:
+  - !include packages/lvgl_pages.yaml
+
+# Additional packages can be referenced as needed
+packages_extras:
+  - !include packages/packages-extras.yaml
+
+# Optional configuration settings
+wifi:
+  ssid: "Your_SSID"
+  password: "Your_PASSWORD"
+
+logger:
+
+api:
+
+ota:
