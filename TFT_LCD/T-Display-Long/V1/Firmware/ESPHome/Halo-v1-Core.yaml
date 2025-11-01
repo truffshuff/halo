@@ -2397,14 +2397,18 @@ button:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
-          return_response: true
           data:
             entity_id: ${weather_entity_id}
             type: daily
           on_success:
             - lambda: |-
+                JsonObjectConst root = response;
+                if (response.containsKey("response")) {
+                  root = response["response"].as<JsonObjectConst>();
+                }
+
                 std::string output;
-                serializeJsonPretty(response, output);
+                serializeJsonPretty(root, output);
                 ESP_LOGI("weather", "Daily forecast:\n%s", output.c_str());
           on_error:
             - logger.log: "Daily forecast call failed"
