@@ -1335,12 +1335,8 @@ script:
             Content-Type: application/json
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
-          json:
-            target:
-              entity_id: ${weather_entity_id}
-            data:
-              type: daily
-            return_response: true
+          body: !lambda |-
+            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"daily\"},\"return_response\":true}";
           on_response:
             then:
               - lambda: |-
@@ -1420,12 +1416,8 @@ script:
             Content-Type: application/json
             Authorization: !lambda |-
               return "Bearer ${ha_token}";
-          json:
-            target:
-              entity_id: ${weather_entity_id}
-            data:
-              type: hourly
-            return_response: true
+          body: !lambda |-
+            return "{\"target\":{\"entity_id\":\"${weather_entity_id}\"},\"data\":{\"type\":\"hourly\"},\"return_response\":true}";
           on_response:
             then:
               - lambda: |-
