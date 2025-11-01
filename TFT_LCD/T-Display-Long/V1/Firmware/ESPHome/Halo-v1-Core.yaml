@@ -1595,13 +1595,8 @@ interval:
 
 api:
   reboot_timeout: 0s  # Disable auto-reboot on API disconnect
-  # Keepalive settings for improved switch responsiveness
-  # These ensure the API connection stays responsive even during heavy sensor operations
-  ping_pong_enable_password: ""  # Empty string to enable keepalive without password
-  keepalive: 15s  # Send keepalive every 15 seconds to maintain connection
-  # Increase buffer sizes to handle sensor bursts
-  # Default buffer is ~2KB, increase to 8KB
-  # This prevents TCP buffer exhaustion during sensor cascades
+  # Optimized settings for improved switch responsiveness and connection stability
+  # These reduce latency and ensure faster state updates between device and Home Assistant
   on_client_connected:
       - delay: 1s
       - lambda: 'id(cycleCounter) = 30;'
