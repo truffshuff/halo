@@ -2264,13 +2264,12 @@ script:
                   }
                   ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
 
-      - lambda: |-
-          // Update timestamp
-          id(weather_last_update) = millis();
-          ESP_LOGI("weather", "✓ Weather forecast data fetch complete!");
+                  // Update timestamp
+                  id(weather_last_update) = millis();
+                  ESP_LOGI("weather", "✓ Weather forecast data fetch complete!");
 
-      # Update the display after fetching data
-      - script.execute: update_weather_display
+              # Update the display after fetching data
+              - script.execute: update_weather_display
 
   # Script to update LVGL display with fetched data
   - id: update_weather_display
