@@ -1312,8 +1312,8 @@ script:
       - logger.log: "Fetching weather data from Home Assistant..."
 
       # Fetch daily forecast
-      - homeassistant.action:
-          action: weather.get_forecasts
+    - homeassistant.action:
+      action: weather.get_forecast
           capture_response: true
           data:
             entity_id: ${weather_entity_id}
@@ -1371,8 +1371,8 @@ script:
                 ESP_LOGE("weather", "✗ Daily forecast fetch FAILED");
 
       # Fetch hourly forecast
-      - homeassistant.action:
-          action: weather.get_forecasts
+    - homeassistant.action:
+      action: weather.get_forecast
           capture_response: true
           data:
             entity_id: ${weather_entity_id}
@@ -2394,8 +2394,8 @@ button:
     name: "Debug Daily Forecast"
     id: btn_debug_daily_forecast
     on_press:
-      - homeassistant.action:
-          action: weather.get_forecasts
+    - homeassistant.action:
+      action: weather.get_forecast
           capture_response: true
           data:
             entity_id: ${weather_entity_id}
