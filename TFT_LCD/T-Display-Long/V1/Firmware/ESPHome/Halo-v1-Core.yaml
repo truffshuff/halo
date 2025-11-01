@@ -418,6 +418,7 @@ font:
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
+      "\U000F07D0", # home-assistant icon
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -2107,6 +2108,7 @@ script:
   - id: update_weather_display
     mode: single
     then:
+      # Update main weather page labels
       - lvgl.label.update:
           id: lbl_weather_forecast_condition_name
           text: !lambda |-
@@ -2165,7 +2167,390 @@ script:
             snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
             return std::string(buf);
 
+      # Update hourly forecast pages
+      - script.execute: update_hourly_forecast_display
+      
+      # Update daily forecast pages
+      - script.execute: update_daily_forecast_display
+
       - logger.log: "✓ Weather display labels updated"
+
+  # Script to update hourly forecast pages
+  - id: update_hourly_forecast_display
+    mode: single
+    then:
+      - logger.log: "Updating hourly forecast display..."
+      # Update Hour 1
+      - lvgl.label.update:
+          id: lbl_hourly_hour1_temp
+          text: !lambda |-
+            if (isnan(id(weather_hourly_temp)[0])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[0]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour1_feels
+          text: !lambda |-
+            if (isnan(id(weather_hourly_apparent_temp)[0])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[0]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour1_precip
+          text: !lambda |-
+            if (isnan(id(weather_hourly_precip_prob)[0])) return std::string("--%");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[0]);
+            return std::string(buf);
+
+      # Update Hour 2
+      - lvgl.label.update:
+          id: lbl_hourly_hour2_temp
+          text: !lambda |-
+            if (isnan(id(weather_hourly_temp)[1])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[1]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour2_feels
+          text: !lambda |-
+            if (isnan(id(weather_hourly_apparent_temp)[1])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[1]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour2_precip
+          text: !lambda |-
+            if (isnan(id(weather_hourly_precip_prob)[1])) return std::string("--%");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[1]);
+            return std::string(buf);
+
+      # Update Hour 3
+      - lvgl.label.update:
+          id: lbl_hourly_hour3_temp
+          text: !lambda |-
+            if (isnan(id(weather_hourly_temp)[2])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[2]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour3_feels
+          text: !lambda |-
+            if (isnan(id(weather_hourly_apparent_temp)[2])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[2]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour3_precip
+          text: !lambda |-
+            if (isnan(id(weather_hourly_precip_prob)[2])) return std::string("--%");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[2]);
+            return std::string(buf);
+
+      # Update Hour 4
+      - lvgl.label.update:
+          id: lbl_hourly_hour4_temp
+          text: !lambda |-
+            if (isnan(id(weather_hourly_temp)[3])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[3]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour4_feels
+          text: !lambda |-
+            if (isnan(id(weather_hourly_apparent_temp)[3])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[3]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour4_precip
+          text: !lambda |-
+            if (isnan(id(weather_hourly_precip_prob)[3])) return std::string("--%");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[3]);
+            return std::string(buf);
+
+      # Update Hour 5
+      - lvgl.label.update:
+          id: lbl_hourly_hour5_temp
+          text: !lambda |-
+            if (isnan(id(weather_hourly_temp)[4])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[4]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour5_feels
+          text: !lambda |-
+            if (isnan(id(weather_hourly_apparent_temp)[4])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[4]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour5_precip
+          text: !lambda |-
+            if (isnan(id(weather_hourly_precip_prob)[4])) return std::string("--%");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[4]);
+            return std::string(buf);
+
+      # Update Hour 6
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_temp
+          text: !lambda |-
+            if (isnan(id(weather_hourly_temp)[5])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_feels
+          text: !lambda |-
+            if (isnan(id(weather_hourly_apparent_temp)[5])) return std::string("--°");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_hourly_hour6_precip
+          text: !lambda |-
+            if (isnan(id(weather_hourly_precip_prob)[5])) return std::string("--%");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[5]);
+            return std::string(buf);
+
+      - logger.log: "✓ Hourly forecast display updated"
+
+  # Script to update daily forecast pages
+  - id: update_daily_forecast_display
+    mode: single
+    then:
+      - logger.log: "Updating daily forecast display..."
+      # Update Day 2
+      - lvgl.label.update:
+          id: lbl_forecast_day2_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[1];
+            float low = id(weather_forecast_temp_low)[1];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day2_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[1])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[1]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day2_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[1].empty()) return std::string("---");
+            return id(weather_forecast_condition)[1];
+
+      # Update Day 3
+      - lvgl.label.update:
+          id: lbl_forecast_day3_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[2];
+            float low = id(weather_forecast_temp_low)[2];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day3_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[2])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[2]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day3_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[2].empty()) return std::string("---");
+            return id(weather_forecast_condition)[2];
+
+      # Update Day 4
+      - lvgl.label.update:
+          id: lbl_forecast_day4_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[3];
+            float low = id(weather_forecast_temp_low)[3];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day4_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[3])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[3]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day4_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[3].empty()) return std::string("---");
+            return id(weather_forecast_condition)[3];
+
+      # Update Day 5
+      - lvgl.label.update:
+          id: lbl_forecast_day5_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[4];
+            float low = id(weather_forecast_temp_low)[4];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day5_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[4])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[4]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day5_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[4].empty()) return std::string("---");
+            return id(weather_forecast_condition)[4];
+
+      # Update Day 6
+      - lvgl.label.update:
+          id: lbl_forecast_day6_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[5];
+            float low = id(weather_forecast_temp_low)[5];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day6_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[5])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[5]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day6_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[5].empty()) return std::string("---");
+            return id(weather_forecast_condition)[5];
+
+      # Update Day 7
+      - lvgl.label.update:
+          id: lbl_forecast_day7_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[6];
+            float low = id(weather_forecast_temp_low)[6];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day7_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[6])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[6]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day7_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[6].empty()) return std::string("---");
+            return id(weather_forecast_condition)[6];
+
+      # Update Day 8
+      - lvgl.label.update:
+          id: lbl_forecast_day8_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[7];
+            float low = id(weather_forecast_temp_low)[7];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day8_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[7])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[7]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day8_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[7].empty()) return std::string("---");
+            return id(weather_forecast_condition)[7];
+
+      # Update Day 9
+      - lvgl.label.update:
+          id: lbl_forecast_day9_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[8];
+            float low = id(weather_forecast_temp_low)[8];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day9_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[8])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[8]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day9_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[8].empty()) return std::string("---");
+            return id(weather_forecast_condition)[8];
+
+      # Update Day 10
+      - lvgl.label.update:
+          id: lbl_forecast_day10_temps
+          text: !lambda |-
+            char buf[32];
+            float high = id(weather_forecast_temp_high)[9];
+            float low = id(weather_forecast_temp_low)[9];
+            if (isnan(high) || isnan(low)) {
+              return std::string("H:--° L:--°");
+            }
+            snprintf(buf, sizeof(buf), "H:%.0f° L:%.0f°", high, low);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day10_precip_prob
+          text: !lambda |-
+            if (isnan(id(weather_forecast_precip_prob)[9])) return std::string("Rain: --%");
+            char buf[32];
+            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[9]);
+            return std::string(buf);
+      - lvgl.label.update:
+          id: lbl_forecast_day10_condition
+          text: !lambda |-
+            if (id(weather_forecast_condition)[9].empty()) return std::string("---");
+            return id(weather_forecast_condition)[9];
+
+      - logger.log: "✓ Daily forecast display updated"
 
   - id: time_update
     mode: restart
