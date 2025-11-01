@@ -1315,6 +1315,7 @@ script:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
+          return_response: true
           data:
             entity_id: ${weather_entity_id}
             type: daily
@@ -1370,6 +1371,7 @@ script:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
+          return_response: true
           data:
             entity_id: ${weather_entity_id}
             type: hourly
@@ -1422,9 +1424,10 @@ script:
       # Fetch current temperature and apparent temp using template
       - homeassistant.action:
           action: template.render
+          capture_response: true
+          return_response: true
           data:
             template: "{{ states('${current_temp_sensor}') }}"
-          capture_response: true
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Current temp response received");
@@ -1442,9 +1445,10 @@ script:
 
       - homeassistant.action:
           action: template.render
+          capture_response: true
+          return_response: true
           data:
             template: "{{ states('${apparent_temp_sensor}') }}"
-          capture_response: true
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Apparent temp response received");
@@ -1462,9 +1466,10 @@ script:
 
       - homeassistant.action:
           action: template.render
+          capture_response: true
+          return_response: true
           data:
             template: "{{ states('${weather_entity_id}') }}"
-          capture_response: true
           on_success:
             - lambda: |-
                 ESP_LOGI("weather", "✓ Current condition response received");
@@ -2372,6 +2377,7 @@ button:
       - homeassistant.action:
           action: weather.get_forecasts
           capture_response: true
+          return_response: true
           data:
             entity_id: ${weather_entity_id}
             type: daily
