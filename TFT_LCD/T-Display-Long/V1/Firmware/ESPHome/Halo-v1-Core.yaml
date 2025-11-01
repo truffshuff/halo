@@ -2344,7 +2344,7 @@ script:
 
   # Script to update hourly forecast pages
   - id: update_hourly_forecast_display
-    mode: single
+    mode: restart  # Allow restart if called again while running
     then:
       - logger.log: "Updating hourly forecast display..."
       # Update Hour 1
@@ -2474,6 +2474,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
+      # Small delay to prevent system overload
+      - delay: 50ms
+
       # Update Hour 2
       - lvgl.label.update:
           id: lbl_hourly_hour2_header
@@ -2596,6 +2599,9 @@ script:
             else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
             else dir = "NW";
             return std::string(dir);
+
+      # Small delay to prevent system overload
+      - delay: 50ms
 
       # Update Hour 3
       - lvgl.label.update:
@@ -2720,6 +2726,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
+      # Small delay to prevent system overload
+      - delay: 50ms
+
       # Update Hour 4
       - lvgl.label.update:
           id: lbl_hourly_hour4_header
@@ -2843,6 +2852,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
+      # Small delay to prevent system overload
+      - delay: 50ms
+
       # Update Hour 5
       - lvgl.label.update:
           id: lbl_hourly_hour5_header
@@ -2965,6 +2977,9 @@ script:
             else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
             else dir = "NW";
             return std::string(dir);
+
+      # Small delay to prevent system overload
+      - delay: 50ms
 
       # Update Hour 6
       - lvgl.label.update:
@@ -3093,7 +3108,7 @@ script:
 
   # Script to update daily forecast pages
   - id: update_daily_forecast_display
-    mode: single
+    mode: restart  # Allow restart if called again while running
     then:
       - logger.log: "Updating daily forecast display..."
       # Update Day 2
@@ -3170,6 +3185,9 @@ script:
             if (id(weather_forecast_condition)[1].empty()) return std::string("---");
             return id(weather_forecast_condition)[1];
 
+      # Small delay to prevent system overload
+      - delay: 30ms
+
       # Update Day 3
       - lvgl.label.update:
           id: lbl_forecast_day3_header
@@ -3242,6 +3260,7 @@ script:
             if (id(weather_forecast_condition)[2].empty()) return std::string("---");
             return id(weather_forecast_condition)[2];
 
+      - delay: 30ms
       # Update Day 4
       - lvgl.label.update:
           id: lbl_forecast_day4_header
@@ -3314,6 +3333,7 @@ script:
             if (id(weather_forecast_condition)[3].empty()) return std::string("---");
             return id(weather_forecast_condition)[3];
 
+      - delay: 30ms
       # Update Day 5
       - lvgl.label.update:
           id: lbl_forecast_day5_header
@@ -3386,6 +3406,7 @@ script:
             if (id(weather_forecast_condition)[4].empty()) return std::string("---");
             return id(weather_forecast_condition)[4];
 
+      - delay: 30ms
       # Update Day 6
       - lvgl.label.update:
           id: lbl_forecast_day6_header
@@ -3458,6 +3479,7 @@ script:
             if (id(weather_forecast_condition)[5].empty()) return std::string("---");
             return id(weather_forecast_condition)[5];
 
+      - delay: 30ms
       # Update Day 7
       - lvgl.label.update:
           id: lbl_forecast_day7_header
@@ -3530,6 +3552,7 @@ script:
             if (id(weather_forecast_condition)[6].empty()) return std::string("---");
             return id(weather_forecast_condition)[6];
 
+      - delay: 30ms
       # Update Day 8
       - lvgl.label.update:
           id: lbl_forecast_day8_header
@@ -3602,6 +3625,7 @@ script:
             if (id(weather_forecast_condition)[7].empty()) return std::string("---");
             return id(weather_forecast_condition)[7];
 
+      - delay: 30ms
       # Update Day 9
       - lvgl.label.update:
           id: lbl_forecast_day9_header
