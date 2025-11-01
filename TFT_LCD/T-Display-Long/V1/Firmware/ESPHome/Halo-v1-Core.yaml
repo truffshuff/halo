@@ -1318,8 +1318,6 @@ script:
           data:
             entity_id: ${weather_entity_id}
             type: daily
-          data_template:
-            return_response: true
           on_success:
             - lambda: |-
                 std::string output;
@@ -1379,8 +1377,6 @@ script:
           data:
             entity_id: ${weather_entity_id}
             type: hourly
-          data_template:
-            return_response: true
           on_success:
             - lambda: |-
                 std::string output;
@@ -2419,8 +2415,6 @@ button:
           data:
             entity_id: ${weather_entity_id}
             type: daily
-          data_template:
-            return_response: true
           on_success:
             - lambda: |-
                 JsonObjectConst root = response;
