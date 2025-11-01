@@ -1349,9 +1349,16 @@ script:
 
                   ESP_LOGI("weather", "✓ Daily forecast HTTP response received");
                   
-                  // Parse JSON response directly from response body buffer
+                  // Convert response container to string for JSON parsing
+                  std::string body_str;
+                  body_str.reserve(response->content_length);
+                  for (auto it = response->begin(); it != response->end(); ++it) {
+                    body_str.push_back(*it);
+                  }
+                  
+                  // Parse JSON response
                   JsonDocument doc;
-                  DeserializationError error = deserializeJson(doc, response->body_buf, response->body_length);
+                  DeserializationError error = deserializeJson(doc, body_str);
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
@@ -1420,9 +1427,16 @@ script:
 
                   ESP_LOGI("weather", "✓ Hourly forecast HTTP response received");
                   
-                  // Parse JSON response directly from response body buffer
+                  // Convert response container to string for JSON parsing
+                  std::string body_str;
+                  body_str.reserve(response->content_length);
+                  for (auto it = response->begin(); it != response->end(); ++it) {
+                    body_str.push_back(*it);
+                  }
+                  
+                  // Parse JSON response
                   JsonDocument doc;
-                  DeserializationError error = deserializeJson(doc, response->body_buf, response->body_length);
+                  DeserializationError error = deserializeJson(doc, body_str);
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
