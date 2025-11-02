@@ -2593,16 +2593,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) hour += 24;
@@ -2741,16 +2734,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) hour += 24;
@@ -2889,16 +2875,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) hour += 24;
@@ -3037,16 +3016,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) hour += 24;
@@ -3185,16 +3157,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) hour += 24;
@@ -3204,6 +3169,8 @@ script:
               
               char buf[16];
               snprintf(buf, sizeof(buf), "%02d:00", hour);
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
               return std::string(buf);
             }
             return std::string("Hour +6");
@@ -3342,16 +3309,9 @@ script:
                 // Get local timezone offset
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   
                   // Adjust hour for timezone difference
                   hour += (local_offset - offset_hours);
@@ -3476,16 +3436,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) {
@@ -3604,16 +3557,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) {
@@ -3732,16 +3678,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) {
@@ -3860,16 +3799,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) {
@@ -3988,16 +3920,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) {
@@ -4116,16 +4041,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) {
@@ -4244,16 +4162,9 @@ script:
                 
                 auto now = id(sntp_time).now();
                 if (now.is_valid()) {
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
                   hour += (local_offset - offset_hours);
                   
                   if (hour < 0) {
