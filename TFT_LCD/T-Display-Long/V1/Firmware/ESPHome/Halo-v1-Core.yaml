@@ -5156,13 +5156,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Vertical Clock page nav button PRESSED!"
+            on_release:
+              - logger.log: "Vertical Clock page nav button RELEASED!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -5393,13 +5393,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Weather page nav button PRESSED!"
+            on_release:
+              - logger.log: "Weather page nav button RELEASED!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -5975,13 +5975,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "AirQ page nav button PRESSED!"
+            on_release:
+              - logger.log: "AirQ page nav button RELEASED!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -6110,13 +6110,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "WiFi page nav button PRESSED!"
+            on_release:
+              - logger.log: "WiFi page nav button RELEASED!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -6763,8 +6763,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Hourly page 1 CENTER button PRESSED - going to page 2!"
+            on_release:
+              - logger.log: "Hourly page 1 CENTER button RELEASED - going to page 2!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -6780,13 +6780,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Hourly Forecast page nav button PRESSED!"
+            on_release:
+              - logger.log: "Hourly Forecast page nav button RELEASED!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -7434,8 +7434,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Hourly page 2 CENTER button PRESSED - going to page 1!"
+            on_release:
+              - logger.log: "Hourly page 2 CENTER button RELEASED - going to page 1!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -7451,13 +7451,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Hourly Forecast page 2 nav button PRESSED!"
+            on_release:
+              - logger.log: "Hourly Forecast page 2 nav button RELEASED!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -7591,8 +7591,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Extended forecast 'More' button PRESSED!"
+            on_release:
+              - logger.log: "Extended forecast 'More' button RELEASED!"
               - lvgl.page.show:
                   id: forecast_days_4_5_page
                   animation: OUT_LEFT
@@ -7603,13 +7603,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "3-Day Forecast page nav button PRESSED!"
+            on_release:
+              - logger.log: "3-Day Forecast page nav button RELEASED!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -7730,13 +7730,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Days 4-5 top-right button PRESSED!"
+            on_release:
+              - logger.log: "Days 4-5 top-right button RELEASED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -7760,8 +7760,8 @@ lvgl:
         #     bg_opa: 0
         #     border_width: 0
         #     clickable: true
-        #     on_press:
-        #       - logger.log: "Days 4-5 CENTER button PRESSED - going to 6-7!"
+        #     on_release:
+        #       - logger.log: "Days 4-5 CENTER button RELEASED - going to 6-7!"
         #       - lvgl.page.show:
         #           id: forecast_days_6_7_page
         #           animation: OUT_LEFT
@@ -7778,8 +7778,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Extended forecast 'More' button on 4-5 PRESSED! going to 6-7!"
+            on_release:
+              - logger.log: "Extended forecast 'More' button on 4-5 RELEASED! going to 6-7!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -7901,13 +7901,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Days 6-7 top-right button PRESSED!"
+            on_release:
+              - logger.log: "Days 6-7 top-right button RELEASED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -7931,8 +7931,8 @@ lvgl:
         #     bg_opa: 0
         #     border_width: 0
         #     clickable: true
-        #     on_press:
-        #       - logger.log: "Days 6-7 CENTER button PRESSED - going to 8-9!"
+        #     on_release:
+        #       - logger.log: "Days 6-7 CENTER button RELEASED - going to 8-9!"
         #       - lvgl.page.show:
         #           id: forecast_days_8_9_page
         #           animation: OUT_LEFT
@@ -7949,8 +7949,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Extended forecast 'More' button on 6-7 PRESSED! going to 8-9!"
+            on_release:
+              - logger.log: "Extended forecast 'More' button on 6-7 RELEASED! going to 8-9!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -8072,13 +8072,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Days 8-9 top-right button PRESSED!"
+            on_release:
+              - logger.log: "Days 8-9 top-right button RELEASED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
@@ -8102,8 +8102,8 @@ lvgl:
         #     bg_opa: 0
         #     border_width: 0
         #     clickable: true
-        #     on_press:
-        #       - logger.log: "Days 8-9 CENTER button PRESSED - going to Day 10!"
+        #     on_release:
+        #       - logger.log: "Days 8-9 CENTER button RELEASED - going to Day 10!"
         #       - lvgl.page.show:
         #           id: forecast_day_10_page
         #           animation: OUT_LEFT
@@ -8120,8 +8120,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Extended forecast 'More' button on 8-9 PRESSED! going to 10!"
+            on_release:
+              - logger.log: "Extended forecast 'More' button on 8-9 RELEASED! going to 10!"
               - lambda: |-
                   ESP_LOGI("touch", "Navigation button touched");
                   id(last_auto_rotation_time) = millis();
@@ -8203,8 +8203,8 @@ lvgl:
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Day 10 BOTTOM button PRESSED - going back to 3-day!"
+            on_release:
+              - logger.log: "Day 10 BOTTOM button RELEASED - going back to 3-day!"
               - lvgl.page.show:
                   id: daily_forecast_page
                   animation: OUT_RIGHT
@@ -8216,13 +8216,13 @@ lvgl:
             align: TOP_RIGHT
             x: 0
             y: 0
-            width: 100
-            height: 100
+            width: 180
+            height: 150
             bg_opa: 0
             border_width: 0
             clickable: true
-            on_press:
-              - logger.log: "Day 10 top-right button PRESSED!"
+            on_release:
+              - logger.log: "Day 10 top-right button RELEASED!"
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
