@@ -2120,11 +2120,6 @@ script:
   - id: fetch_daily_forecast
     mode: single
     then:
-      # Stop BLE scanning to free memory and CPU during weather fetch
-      - logger.log: "Pausing BLE for daily forecast fetch..."
-      - esp32_ble_tracker.stop_scan:
-      - delay: 50ms  # Brief yield to prevent blocking warning
-      
       - logger.log: "Fetching daily forecast from Home Assistant via HTTP..."
 
       # Fetch daily forecast
@@ -2234,23 +2229,13 @@ script:
                   
               # Update display after fetching
               - script.execute: update_weather_display
+              - script.execute: update_weather_icon_color
               - script.execute: update_daily_forecast_display
-              
-              # Resume BLE scanning
-              - delay: 100ms
-              - logger.log: "Resuming BLE after daily forecast..."
-              - esp32_ble_tracker.start_scan:
-                  continuous: true
 
   # Script to fetch HOURLY forecast data via HA REST API
   - id: fetch_hourly_forecast
     mode: single
     then:
-      # Stop BLE scanning to free memory and CPU during weather fetch
-      - logger.log: "Pausing BLE for hourly forecast fetch..."
-      - esp32_ble_tracker.stop_scan:
-      - delay: 50ms  # Brief yield to prevent blocking warning
-      
       - logger.log: "Fetching hourly forecast from Home Assistant via HTTP..."
 
       # Fetch hourly forecast
@@ -2377,12 +2362,6 @@ script:
 
               # Update display after fetching
               - script.execute: update_hourly_forecast_display
-              
-              # Resume BLE scanning
-              - delay: 100ms
-              - logger.log: "Resuming BLE after hourly forecast..."
-              - esp32_ble_tracker.start_scan:
-                  continuous: true
   
   # Legacy script for backward compatibility - fetches both
   - id: fetch_weather_data
@@ -6005,6 +5984,12 @@ lvgl:
             id(weather_last_condition).clear();
             id(weather_on_weather_page) = true;
         - delay: 10ms  # Yield to prevent blocking warning
+        # Always update display first with existing data (even if stale)
+        - script.execute: update_weather_display
+        - delay: 10ms  # Yield before icon color update
+        - script.execute: update_weather_icon_color
+        - delay: 10ms  # Yield to prevent blocking warning
+        # Then check if we need to fetch fresh data
         - if:
             condition:
               lambda: |-
@@ -6013,7 +5998,7 @@ lvgl:
                 bool is_stale = (id(weather_daily_last_update) == 0 || time_since_update > 3600000);
                 
                 if (is_stale) {
-                  ESP_LOGI("weather", "Daily forecast is stale (age: %u minutes), fetching now...",
+                  ESP_LOGI("weather", "Daily forecast is stale (age: %u minutes), fetching in background...",
                            id(weather_daily_last_update) == 0 ? 0 : time_since_update / 60000);
                   return true;
                 } else {
@@ -6021,13 +6006,8 @@ lvgl:
                   return false;
                 }
             then:
+              # Fetch will update display when complete
               - script.execute: fetch_daily_forecast
-            else:
-              # Data is fresh, just update the display
-              - delay: 100ms
-              - script.execute: update_weather_display
-        - delay: 10ms  # Yield before icon color update
-        - script.execute: update_weather_icon_color
       on_unload:
         - lambda: 'id(weather_on_weather_page) = false;'
       widgets:
@@ -6970,6 +6950,10 @@ lvgl:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 4;'  # hourly_forecast_page
         - delay: 10ms  # Yield to prevent blocking warning
+        # Always update display first with existing data (even if stale)
+        - script.execute: update_hourly_forecast_display
+        - delay: 10ms  # Yield to prevent blocking warning
+        # Then check if we need to fetch fresh data
         - if:
             condition:
               lambda: |-
@@ -6978,7 +6962,7 @@ lvgl:
                 bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                 
                 if (is_stale) {
-                  ESP_LOGI("weather", "Hourly forecast is stale (age: %u minutes), fetching now...",
+                  ESP_LOGI("weather", "Hourly forecast is stale (age: %u minutes), fetching in background...",
                            id(weather_hourly_last_update) == 0 ? 0 : time_since_update / 60000);
                   return true;
                 } else {
@@ -6986,11 +6970,8 @@ lvgl:
                   return false;
                 }
             then:
+              # Fetch will update display when complete
               - script.execute: fetch_hourly_forecast
-            else:
-              # Data is fresh, just update the display
-              - delay: 100ms
-              - script.execute: update_hourly_forecast_display
       widgets:
         # Page Header
         - label:
@@ -8355,6 +8336,10 @@ lvgl:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 5;'  # daily_forecast_page
         - delay: 10ms  # Yield to prevent blocking warning
+        # Always update display first with existing data (even if stale)
+        - script.execute: update_daily_forecast_display
+        - delay: 10ms  # Yield to prevent blocking warning
+        # Then check if we need to fetch fresh data
         - if:
             condition:
               lambda: |-
@@ -8363,7 +8348,7 @@ lvgl:
                 bool is_stale = (id(weather_daily_last_update) == 0 || time_since_update > 3600000);
                 
                 if (is_stale) {
-                  ESP_LOGI("weather", "Daily forecast is stale (age: %u minutes), fetching now...",
+                  ESP_LOGI("weather", "Daily forecast is stale (age: %u minutes), fetching in background...",
                            id(weather_daily_last_update) == 0 ? 0 : time_since_update / 60000);
                   return true;
                 } else {
@@ -8371,11 +8356,8 @@ lvgl:
                   return false;
                 }
             then:
+              # Fetch will update display when complete
               - script.execute: fetch_daily_forecast
-            else:
-              # Data is fresh, just update the display
-              - delay: 100ms
-              - script.execute: update_daily_forecast_display
       widgets:
         # Page Header
         - label:
