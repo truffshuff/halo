@@ -16,6 +16,10 @@ substitutions:
   name: halo
   version: "25.11.01.0746"
   device_description: ${name} - v${version}.
+  
+  # Weather refresh intervals (can be overridden in device-specific file)
+  weather_daily_refresh_interval: "3600"   # 60 minutes for daily forecast
+  weather_hourly_refresh_interval: "900"   # 15 minutes for hourly forecast
 
 # ============================================================================
 # Configuration Architecture - Monolithic Design
