@@ -1931,7 +1931,8 @@ color:
 http_request:
   useragent: esphome/halo
   timeout: 10s
-  buffer_size: 4096  # 4KB buffer for large forecast responses (moved to PSRAM)
+  buffer_size_rx: 4096  # 4KB receive buffer for large forecast responses (moved to PSRAM)
+  buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
 
 time:
   - platform: homeassistant
