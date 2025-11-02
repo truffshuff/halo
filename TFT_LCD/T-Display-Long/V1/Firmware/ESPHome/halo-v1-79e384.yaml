@@ -8,6 +8,8 @@ substitutions:
   # Weather configuration (if enabled below)
   weather_entity_id: "weather.hhut"
   weather_refresh_interval: "900"
+  weather_daily_refresh_interval: "3600"  # 60 minutes for daily forecast
+  weather_hourly_refresh_interval: "900"  # 15 minutes for hourly forecast
   current_temp_sensor: "sensor.hhut_temperature"  # Your actual sensor
   apparent_temp_sensor: "sensor.hhut_feels_like"  # Your actual sensor
 
