@@ -2247,7 +2247,7 @@ script:
       - esp32_ble_tracker.stop_scan:
       - delay: 50ms  # Brief yield to prevent blocking warning
       
-      - logger.log: "Fetching hourly forecast from Home Assistant via HTTP...";
+      - logger.log: "Fetching hourly forecast from Home Assistant via HTTP..."
 
       # Fetch hourly forecast
       - http_request.post:
