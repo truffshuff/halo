@@ -664,6 +664,7 @@ esp32:
       CONFIG_SPIRAM_USE: "y"
       CONFIG_SPIRAM_MODE_OCT: "y"
       CONFIG_SPIRAM_SPEED_80M: "y"
+      CONFIG_SPIRAM_ECC_ENABLE: "y"  # Enable Error Correcting Code for PSRAM reliability
 
       CONFIG_SPIRAM_USE_MALLOC: "y"
       CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"
@@ -686,10 +687,20 @@ esp32:
       CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "64"  # Bigger RX mailbox queue (was 32)
       CONFIG_LWIP_TCP_RECVMBOX_SIZE: "24"  # TCP receive buffer (was 12)
       CONFIG_LWIP_UDP_RECVMBOX_SIZE: "24"  # UDP receive buffer (was 12)
+      
+      # Move HTTP client buffers to PSRAM
+      CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"  # Use PSRAM for SSL/TLS buffers
+      CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN: "16384"  # 16KB input buffer (PSRAM)
+      CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN: "4096"  # 4KB output buffer (PSRAM)
 
       # --- Task Stack Allocation in PSRAM ---
       # Move large task stacks to PSRAM to free internal RAM
       CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
+      
+      # Additional PSRAM optimizations
+      CONFIG_SPIRAM_CACHE_WORKAROUND: "y"  # Enable cache workaround for stability
+      CONFIG_SPIRAM_BANKSWITCH_ENABLE: "n"  # Disable bank switching for better performance
 
       # LVGL configuration for PSRAM
       # Allow LVGL buffers to use PSRAM
@@ -1221,14 +1232,24 @@ interval:
                 }
             - script.execute: update_colon_widget
 
-  # Auto-refresh weather data periodically while viewing weather page
+  # Auto-refresh weather data periodically (independent of which page is displayed)
+  # Checks every interval if data is stale (>15 min) and refreshes if needed
   - interval: ${weather_refresh_interval}s
     then:
       - if:
           condition:
-            lambda: 'return id(weather_on_weather_page);'
+            lambda: |-
+              // Check if weather data needs refresh (stale > 15 minutes)
+              uint32_t time_since_update = millis() - id(weather_last_update);
+              bool is_stale = (id(weather_last_update) == 0 || time_since_update > 900000);
+              
+              if (is_stale) {
+                ESP_LOGI("weather", "Background weather refresh triggered (data age: %u seconds)", 
+                         id(weather_last_update) == 0 ? 0 : time_since_update / 1000);
+                return true;
+              }
+              return false;
           then:
-            - logger.log: "Auto-refreshing weather data..."
             - script.execute: fetch_weather_data
 
   - interval: 100ms  # Check frequently for page index changes
@@ -1905,9 +1926,12 @@ color:
     blue: 0%
 
 # HTTP Request component for calling HA REST API
+# Buffer size increased for large weather JSON responses
+# Uses PSRAM via CONFIG_SPIRAM_USE_MALLOC setting
 http_request:
   useragent: esphome/halo
   timeout: 10s
+  buffer_size: 4096  # 4KB buffer for large forecast responses (moved to PSRAM)
 
 time:
   - platform: homeassistant
@@ -2056,6 +2080,11 @@ script:
   - id: fetch_weather_data
     mode: single
     then:
+      # Stop BLE scanning to free memory and CPU during weather fetch
+      - logger.log: "Pausing BLE scanning for weather data fetch..."
+      - esp32_ble_tracker.stop_scan:
+      - delay: 100ms  # Brief delay to ensure BLE fully stops
+      
       - logger.log: "Fetching weather data from Home Assistant via HTTP..."
 
       # Fetch daily forecast
@@ -4437,6 +4466,12 @@ script:
             return id(weather_forecast_condition)[9];
 
       - logger.log: "✓ Daily forecast display updated"
+      
+      # Resume BLE scanning after weather data has been processed
+      - delay: 100ms  # Brief delay to let memory settle
+      - logger.log: "Resuming BLE scanning after weather update..."
+      - esp32_ble_tracker.start_scan:
+          continuous: true
 
   - id: time_update
     mode: restart
@@ -5859,10 +5894,13 @@ lvgl:
         - if:
             condition:
               lambda: |-
-                // Only fetch weather if it's been more than 15 minutes (900000ms) since last update
+                // Check if weather data needs refresh (stale > 15 minutes)
                 uint32_t time_since_update = millis() - id(weather_last_update);
-                if (id(weather_last_update) == 0 || time_since_update > 900000) {
-                  ESP_LOGI("weather", "Weather data is stale, fetching now...");
+                bool is_stale = (id(weather_last_update) == 0 || time_since_update > 900000);
+                
+                if (is_stale) {
+                  ESP_LOGI("weather", "Weather data is stale (age: %u seconds), fetching now...",
+                           id(weather_last_update) == 0 ? 0 : time_since_update / 1000);
                   return true;
                 } else {
                   ESP_LOGD("weather", "Weather data is fresh (updated %u seconds ago)", time_since_update / 1000);
@@ -5871,6 +5909,7 @@ lvgl:
             then:
               - script.execute: fetch_weather_data
             else:
+              # Data is fresh, just update the display
               - delay: 100ms
               - script.execute: update_weather_display
         - script.execute: update_weather_icon_color
