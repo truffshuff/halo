@@ -1758,12 +1758,20 @@ api:
             call.set_effect(effect);
             call.perform();
           }
-      - delay: 500ms
-
+      # Start BLE scanning when Home Assistant connects
+      # Uses continuous mode for immediate device detection
+      - delay: 500ms  # Brief delay to allow API to stabilize
+      - esp32_ble_tracker.start_scan:
+          continuous: true
   # ============================================================================
   # Custom Services (callable from Home Assistant)
   # ============================================================================
 
+  on_client_disconnected:
+    # Stop BLE scanning when Home Assistant disconnects
+    # Saves power and reduces heap pressure
+    - esp32_ble_tracker.stop_scan:
+  
   services:
     # CO2 Sensor Calibration
     # USAGE: esphome.halo_calibrate_co2_value co2_ppm: 420
@@ -9126,6 +9134,53 @@ wireguard:
 #   2. Priority 50: Enable WireGuard after BLE stabilizes (20s delay)
 #   3. Priority -100: Set default page and complete boot
 # ============================================================================
+
+esp32_ble_tracker:
+  id: ble_tracker
+  scan_parameters:
+    # Scan interval - how often to scan for devices
+    # Default: 320ms, Balanced: 500ms, Always-on: 1100ms
+    interval: 500ms
+
+    # Scan window - how long each scan lasts
+    # Default: 30ms, Balanced: 40ms, Always-on: 1100ms
+    window: 40ms
+
+    # Active scanning - sends scan requests to get more device info
+    # true = more info but higher power consumption
+    # false = passive scanning, lower power
+    active: true
+
+    # Continuous scanning mode
+    # true = constant scanning (high power, immediate detection)
+    # false = on-demand scanning (lower power, delayed detection)
+    continuous: false
+
+# Bluetooth Proxy Configuration
+# Allows Home Assistant to use this device as a Bluetooth proxy
+# REQUIRES esp32_ble_tracker to be configured above
+bluetooth_proxy:
+  # Enable/disable the proxy
+  # true = proxy active, false = proxy disabled
+  active: true
+
+  # Maximum number of simultaneous BLE connections
+  # Default: 3, Range: 1-9
+  # Higher values = more devices but more memory usage
+  connection_slots: 3
+
+# ESP32 Improv Configuration (Optional)
+# Allows WiFi provisioning via BLE using the Improv standard
+# Useful for initial device setup without hardcoded credentials
+esp32_improv:
+  # Authorization mode
+  # none = no authorization required (open provisioning)
+  # Use with caution - anyone can provision the device
+  authorizer: none
+
+# API Integration - Dynamic BLE Scanning
+# Automatically start/stop BLE scanning based on Home Assistant connection
+# This saves power and reduces heap usage when HA is disconnected
 
 esphome:
   on_boot:
