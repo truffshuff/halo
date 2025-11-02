@@ -1016,6 +1016,11 @@ select:
               call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
               call.perform();
             }
+          } else if (effect == "Weather Condition" || effect == "Auto Context") {
+            // Lambda-based effects - activate them
+            auto call = id(rgb_light).turn_on();
+            call.set_effect(effect);
+            call.perform();
           } else {
             // Standard effects
             auto call = id(rgb_light).turn_on();
@@ -5628,7 +5633,7 @@ light:
             Color color = Color::WHITE;
             
             if (!std::isnan(aqi) && aqi > 50) {
-              // Use AQI color logic
+              // Use AQI color logic (show on all pages)
               if (aqi <= 100) {
                 color = Color(255, 255, 0);  // Yellow
               } else if (aqi <= 150) {
@@ -5641,6 +5646,13 @@ light:
                 color = Color(128, 0, 0);  // Maroon
               }
             } else {
+              // Only show weather condition color on the current weather page (index 3)
+              // Turn off LEDs when on other pages if AQI <= 50
+              if (id(current_page_index) != 3) {
+                it.all() = Color::BLACK;
+                return;
+              }
+              
               // Use weather condition color logic
               std::string condition = id(weather_current_condition);
               std::transform(condition.begin(), condition.end(), condition.begin(), ::tolower);
