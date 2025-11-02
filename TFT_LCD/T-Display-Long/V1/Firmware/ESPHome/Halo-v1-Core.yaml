@@ -2277,6 +2277,67 @@ script:
     then:
       # Update main weather page labels
       - lvgl.label.update:
+          id: lbl_weather_today_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[0].empty()) return std::string("Today");
+            std::string dt = id(weather_forecast_datetime)[0];
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Today (%02d/%02d)", month, day);
+              return std::string(buf);
+            }
+            return std::string("Today");
+      - lvgl.label.update:
           id: lbl_weather_forecast_condition_name
           text: !lambda |-
             if (id(weather_current_condition).empty()) {
@@ -2358,12 +2419,30 @@ script:
               // Extract hour from "YYYY-MM-DDTHH:MM:SS"
               std::string hour_str = dt.substr(11, 2);
               int hour = std::stoi(hour_str);
-              // Convert to 12-hour format
-              std::string period = (hour >= 12) ? "PM" : "AM";
-              if (hour == 0) hour = 12;
-              else if (hour > 12) hour -= 12;
+              
+              // Parse timezone offset if present (e.g., "+00:00" or "-05:00")
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                // Get current timezone offset from ESPHome time
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  // Apply timezone offset difference
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  // Handle day wraparound
+                  if (hour < 0) hour += 24;
+                  if (hour >= 24) hour -= 24;
+                }
+              }
+              
+              // Display in 24-hour format
               char buf[16];
-              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              snprintf(buf, sizeof(buf), "%02d:00", hour);
               return std::string(buf);
             }
             return std::string("Hour +1");
@@ -2486,11 +2565,26 @@ script:
             if (dt.length() >= 16) {
               std::string hour_str = dt.substr(11, 2);
               int hour = std::stoi(hour_str);
-              std::string period = (hour >= 12) ? "PM" : "AM";
-              if (hour == 0) hour = 12;
-              else if (hour > 12) hour -= 12;
+              
+              // Parse timezone offset if present
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) hour += 24;
+                  if (hour >= 24) hour -= 24;
+                }
+              }
+              
               char buf[16];
-              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              snprintf(buf, sizeof(buf), "%02d:00", hour);
               return std::string(buf);
             }
             return std::string("Hour +2");
@@ -2612,11 +2706,26 @@ script:
             if (dt.length() >= 16) {
               std::string hour_str = dt.substr(11, 2);
               int hour = std::stoi(hour_str);
-              std::string period = (hour >= 12) ? "PM" : "AM";
-              if (hour == 0) hour = 12;
-              else if (hour > 12) hour -= 12;
+              
+              // Parse timezone offset if present
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) hour += 24;
+                  if (hour >= 24) hour -= 24;
+                }
+              }
+              
               char buf[16];
-              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              snprintf(buf, sizeof(buf), "%02d:00", hour);
               return std::string(buf);
             }
             return std::string("Hour +3");
@@ -2738,11 +2847,26 @@ script:
             if (dt.length() >= 16) {
               std::string hour_str = dt.substr(11, 2);
               int hour = std::stoi(hour_str);
-              std::string period = (hour >= 12) ? "PM" : "AM";
-              if (hour == 0) hour = 12;
-              else if (hour > 12) hour -= 12;
+              
+              // Parse timezone offset if present
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) hour += 24;
+                  if (hour >= 24) hour -= 24;
+                }
+              }
+              
               char buf[16];
-              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              snprintf(buf, sizeof(buf), "%02d:00", hour);
               return std::string(buf);
             }
             return std::string("Hour +4");
@@ -2864,11 +2988,26 @@ script:
             if (dt.length() >= 16) {
               std::string hour_str = dt.substr(11, 2);
               int hour = std::stoi(hour_str);
-              std::string period = (hour >= 12) ? "PM" : "AM";
-              if (hour == 0) hour = 12;
-              else if (hour > 12) hour -= 12;
+              
+              // Parse timezone offset if present
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) hour += 24;
+                  if (hour >= 24) hour -= 24;
+                }
+              }
+              
               char buf[16];
-              snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
+              snprintf(buf, sizeof(buf), "%02d:00", hour);
               return std::string(buf);
             }
             return std::string("Hour +5");
@@ -2990,9 +3129,26 @@ script:
             if (dt.length() >= 16) {
               std::string hour_str = dt.substr(11, 2);
               int hour = std::stoi(hour_str);
-              std::string period = (hour >= 12) ? "PM" : "AM";
-              if (hour == 0) hour = 12;
-              else if (hour > 12) hour -= 12;
+              
+              // Parse timezone offset if present
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) hour += 24;
+                  if (hour >= 24) hour -= 24;
+                }
+              }
+              
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%02d:00", hour);
               char buf[16];
               snprintf(buf, sizeof(buf), "%d:00 %s", hour, period.c_str());
               return std::string(buf);
@@ -3118,12 +3274,66 @@ script:
             if (id(weather_forecast_datetime)[1].empty()) return std::string("Day +2 (--/--)");
             // Parse datetime string (format: "2024-11-01T00:00:00+00:00")
             std::string dt = id(weather_forecast_datetime)[1];
-            if (dt.length() >= 10) {
-              // Extract month and day from "YYYY-MM-DD"
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              // Parse the datetime components
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              // Parse timezone offset if present
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                // Get local timezone offset
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  
+                  // Adjust hour for timezone difference
+                  hour += (local_offset - offset_hours);
+                  
+                  // Handle day boundary crossing
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      // Get days in previous month (simplified)
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +2 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +2 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +2 (--/--)");
@@ -3194,11 +3404,59 @@ script:
           text: !lambda |-
             if (id(weather_forecast_datetime)[2].empty()) return std::string("Day +3 (--/--)");
             std::string dt = id(weather_forecast_datetime)[2];
-            if (dt.length() >= 10) {
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +3 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +3 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +3 (--/--)");
@@ -3267,11 +3525,59 @@ script:
           text: !lambda |-
             if (id(weather_forecast_datetime)[3].empty()) return std::string("Day +4 (--/--)");
             std::string dt = id(weather_forecast_datetime)[3];
-            if (dt.length() >= 10) {
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +4 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +4 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +4 (--/--)");
@@ -3340,11 +3646,59 @@ script:
           text: !lambda |-
             if (id(weather_forecast_datetime)[4].empty()) return std::string("Day +5 (--/--)");
             std::string dt = id(weather_forecast_datetime)[4];
-            if (dt.length() >= 10) {
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +5 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +5 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +5 (--/--)");
@@ -3413,11 +3767,59 @@ script:
           text: !lambda |-
             if (id(weather_forecast_datetime)[5].empty()) return std::string("Day +6 (--/--)");
             std::string dt = id(weather_forecast_datetime)[5];
-            if (dt.length() >= 10) {
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +6 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +6 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +6 (--/--)");
@@ -3486,11 +3888,59 @@ script:
           text: !lambda |-
             if (id(weather_forecast_datetime)[6].empty()) return std::string("Day +7 (--/--)");
             std::string dt = id(weather_forecast_datetime)[6];
-            if (dt.length() >= 10) {
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +7 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +7 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +7 (--/--)");
@@ -3559,11 +4009,59 @@ script:
           text: !lambda |-
             if (id(weather_forecast_datetime)[7].empty()) return std::string("Day +8 (--/--)");
             std::string dt = id(weather_forecast_datetime)[7];
-            if (dt.length() >= 10) {
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +8 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +8 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +8 (--/--)");
@@ -3632,11 +4130,59 @@ script:
           text: !lambda |-
             if (id(weather_forecast_datetime)[8].empty()) return std::string("Day +9 (--/--)");
             std::string dt = id(weather_forecast_datetime)[8];
-            if (dt.length() >= 10) {
-              std::string month_str = dt.substr(5, 2);
-              std::string day_str = dt.substr(8, 2);
+            if (dt.length() >= 19) {
+              int year = std::stoi(dt.substr(0, 4));
+              int month = std::stoi(dt.substr(5, 2));
+              int day = std::stoi(dt.substr(8, 2));
+              int hour = std::stoi(dt.substr(11, 2));
+              
+              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                int offset_hours = std::stoi(dt.substr(20, 2));
+                if (dt[19] == '-') offset_hours = -offset_hours;
+                
+                auto now = id(sntp_time).now();
+                if (now.is_valid()) {
+                  time_t timestamp = now.timestamp;
+                  struct tm *local_time = localtime(&timestamp);
+                  int local_offset = local_time->tm_gmtoff / 3600;
+                  hour += (local_offset - offset_hours);
+                  
+                  if (hour < 0) {
+                    day--;
+                    if (day < 1) {
+                      month--;
+                      if (month < 1) {
+                        month = 12;
+                        year--;
+                      }
+                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                        day = 29;
+                      } else {
+                        day = days_in_month[month-1];
+                      }
+                    }
+                  } else if (hour >= 24) {
+                    day++;
+                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                    int max_days = days_in_month[month-1];
+                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                      max_days = 29;
+                    }
+                    if (day > max_days) {
+                      day = 1;
+                      month++;
+                      if (month > 12) {
+                        month = 1;
+                        year++;
+                      }
+                    }
+                  }
+                }
+              }
+              
               char buf[32];
-              snprintf(buf, sizeof(buf), "Day +9 (%s/%s)", month_str.c_str(), day_str.c_str());
+              snprintf(buf, sizeof(buf), "Day +9 (%02d/%02d)", month, day);
               return std::string(buf);
             }
             return std::string("Day +9 (--/--)");
@@ -5206,6 +5752,7 @@ lvgl:
       widgets:
         # Page Header
         - label:
+            id: lbl_weather_today_header
             text: "Today"
             align: TOP_MID
             y: 5
@@ -5222,7 +5769,7 @@ lvgl:
             text_color: my_white
             align: TOP_MID
             x: 0
-            y: 10
+            y: 20
 
         # Condition name below icon
         - label:
@@ -5237,7 +5784,7 @@ lvgl:
             text_color: my_white
             align: TOP_MID
             x: 0
-            y: 120
+            y: 110
 
         # Semicircle meter gauge for apparent temperature
         - obj:
