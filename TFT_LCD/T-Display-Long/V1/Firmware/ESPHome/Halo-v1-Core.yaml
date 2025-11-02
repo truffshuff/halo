@@ -770,7 +770,7 @@ spi:
 captive_portal:
 
 logger:
-  level: DEBUG
+  level: INFO
 
 switch:
   - platform: template
@@ -5204,6 +5204,15 @@ lvgl:
       on_unload:
         - lambda: 'id(weather_on_weather_page) = false;'
       widgets:
+        # Page Header
+        - label:
+            text: "Today"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+        
         # Large weather condition icon at top
         - label:
             text: "\U000F14E4"
