@@ -21,7 +21,7 @@ void NimBLEProxy::setup() {
   ESP_LOGI(TAG, "Setting up NimBLE Proxy...");
   
   // Initialize NimBLE host
-  ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
+  ESP_ERROR_CHECK(esp_nimble_hci_init());
   nimble_port_init();
   
   // Configure host callbacks
