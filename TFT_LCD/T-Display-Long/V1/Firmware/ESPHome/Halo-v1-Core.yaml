@@ -9352,22 +9352,21 @@ wireguard:
 # - Faster connection handling
 # ============================================================================
 
-nimble_proxy:
-  active: true
-  max_connections: 3
-
-# Old Bluedroid-based components (disabled)
-# esp32_ble_tracker:
-#   id: ble_tracker
-#   scan_parameters:
-#     interval: 500ms
-#     window: 40ms
-#     active: true
-#     continuous: false
-
-# bluetooth_proxy:
+# Custom nimble_proxy - basic BLE advertising only
+# nimble_proxy:
 #   active: true
-#   connection_slots: 3
+#   max_connections: 3
+
+# ESPHome native components with NimBLE support
+esp32_ble_tracker:
+  id: ble_tracker
+  scan_parameters:
+    interval: 320ms
+    window: 30ms
+    active: true
+
+bluetooth_proxy:
+  active: true
 
 # ESP32 Improv Configuration (Optional)
 # Allows WiFi provisioning via BLE using the Improv standard
