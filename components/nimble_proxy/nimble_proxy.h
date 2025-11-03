@@ -37,6 +37,7 @@ class NimBLEProxy : public Component {
   static int gap_event_handler_(struct ble_gap_event *event, void *arg);
   static void on_sync_();
   static void on_reset_(int reason);
+};
 
 }  // namespace nimble_proxy
 }  // namespace esphome
