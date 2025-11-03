@@ -2386,134 +2386,134 @@ script:
           then:
             # Update main weather page labels
             - lvgl.label.update:
-          id: lbl_weather_today_header
-          text: !lambda |-
-            if (id(weather_forecast_datetime)[0].empty()) return std::string("Today");
-            std::string dt = id(weather_forecast_datetime)[0];
-            if (dt.length() >= 19) {
-              int year = std::stoi(dt.substr(0, 4));
-              int month = std::stoi(dt.substr(5, 2));
-              int day = std::stoi(dt.substr(8, 2));
-              int hour = std::stoi(dt.substr(11, 2));
-              
-              if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
-                int offset_hours = std::stoi(dt.substr(20, 2));
-                if (dt[19] == '-') offset_hours = -offset_hours;
-                
-                // Get local time to calculate timezone offset
-                auto now = id(sntp_time).now();
-                if (now.is_valid()) {
-                  // Calculate local offset by comparing UTC hour with local hour
-                  time_t utc_time = now.timestamp;
-                  struct tm *utc_tm = gmtime(&utc_time);
-                  struct tm *local_tm = localtime(&utc_time);
-                  
-                  int utc_hour = utc_tm->tm_hour;
-                  int local_hour = local_tm->tm_hour;
-                  int local_offset = local_hour - utc_hour;
-                  
-                  // Handle day boundary crossing in offset calculation
-                  if (local_offset > 12) local_offset -= 24;
-                  if (local_offset < -12) local_offset += 24;
-                  
-                  hour += (local_offset - offset_hours);
-                  
-                  if (hour < 0) {
-                    day--;
-                    if (day < 1) {
-                      month--;
-                      if (month < 1) {
-                        month = 12;
-                        year--;
-                      }
-                      int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
-                      if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
-                        day = 29;
-                      } else {
-                        day = days_in_month[month-1];
+                id: lbl_weather_today_header
+                text: !lambda |-
+                  if (id(weather_forecast_datetime)[0].empty()) return std::string("Today");
+                  std::string dt = id(weather_forecast_datetime)[0];
+                  if (dt.length() >= 19) {
+                    int year = std::stoi(dt.substr(0, 4));
+                    int month = std::stoi(dt.substr(5, 2));
+                    int day = std::stoi(dt.substr(8, 2));
+                    int hour = std::stoi(dt.substr(11, 2));
+                    
+                    if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                      int offset_hours = std::stoi(dt.substr(20, 2));
+                      if (dt[19] == '-') offset_hours = -offset_hours;
+                      
+                      // Get local time to calculate timezone offset
+                      auto now = id(sntp_time).now();
+                      if (now.is_valid()) {
+                        // Calculate local offset by comparing UTC hour with local hour
+                        time_t utc_time = now.timestamp;
+                        struct tm *utc_tm = gmtime(&utc_time);
+                        struct tm *local_tm = localtime(&utc_time);
+                        
+                        int utc_hour = utc_tm->tm_hour;
+                        int local_hour = local_tm->tm_hour;
+                        int local_offset = local_hour - utc_hour;
+                        
+                        // Handle day boundary crossing in offset calculation
+                        if (local_offset > 12) local_offset -= 24;
+                        if (local_offset < -12) local_offset += 24;
+                        
+                        hour += (local_offset - offset_hours);
+                        
+                        if (hour < 0) {
+                          day--;
+                          if (day < 1) {
+                            month--;
+                            if (month < 1) {
+                              month = 12;
+                              year--;
+                            }
+                            int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                            if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                              day = 29;
+                            } else {
+                              day = days_in_month[month-1];
+                            }
+                          }
+                        } else if (hour >= 24) {
+                          day++;
+                          int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                          int max_days = days_in_month[month-1];
+                          if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                            max_days = 29;
+                          }
+                          if (day > max_days) {
+                            day = 1;
+                            month++;
+                            if (month > 12) {
+                              month = 1;
+                              year++;
+                            }
+                          }
+                        }
                       }
                     }
-                  } else if (hour >= 24) {
-                    day++;
-                    int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
-                    int max_days = days_in_month[month-1];
-                    if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
-                      max_days = 29;
-                    }
-                    if (day > max_days) {
-                      day = 1;
-                      month++;
-                      if (month > 12) {
-                        month = 1;
-                        year++;
-                      }
-                    }
+                    
+                    char buf[32];
+                    snprintf(buf, sizeof(buf), "Today (%02d/%02d)", month, day);
+                    return std::string(buf);
                   }
-                }
-              }
-              
-              char buf[32];
-              snprintf(buf, sizeof(buf), "Today (%02d/%02d)", month, day);
-              return std::string(buf);
-            }
-            return std::string("Today");
-      - lvgl.label.update:
-          id: lbl_weather_forecast_condition_name
-          text: !lambda |-
-            if (id(weather_current_condition).empty()) {
-              return std::string("Unknown");
-            }
-            return id(weather_current_condition);
+                  return std::string("Today");
+            - lvgl.label.update:
+                id: lbl_weather_forecast_condition_name
+                text: !lambda |-
+                  if (id(weather_current_condition).empty()) {
+                    return std::string("Unknown");
+                  }
+                  return id(weather_current_condition);
 
-      - lvgl.label.update:
-          id: lbl_weather_today_outdoor_temp
-          text: !lambda |-
-            if (isnan(id(weather_current_temp))) {
-              return std::string("--.- °F");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
-            return std::string(buf);
+            - lvgl.label.update:
+                id: lbl_weather_today_outdoor_temp
+                text: !lambda |-
+                  if (isnan(id(weather_current_temp))) {
+                    return std::string("--.- °F");
+                  }
+                  char buf[16];
+                  snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
+                  return std::string(buf);
 
-      - lvgl.label.update:
-          id: lbl_weather_today_tempap
-          text: !lambda |-
-            if (isnan(id(weather_current_apparent_temp))) {
-              return std::string("--°");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
-            return std::string(buf);
+            - lvgl.label.update:
+                id: lbl_weather_today_tempap
+                text: !lambda |-
+                  if (isnan(id(weather_current_apparent_temp))) {
+                    return std::string("--°");
+                  }
+                  char buf[16];
+                  snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
+                  return std::string(buf);
 
-      - lvgl.label.update:
-          id: lbl_weather_forecast_temphi
-          text: !lambda |-
-            if (isnan(id(weather_forecast_temp_high)[0])) {
-              return std::string("H: --°");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
-            return std::string(buf);
+            - lvgl.label.update:
+                id: lbl_weather_forecast_temphi
+                text: !lambda |-
+                  if (isnan(id(weather_forecast_temp_high)[0])) {
+                    return std::string("H: --°");
+                  }
+                  char buf[16];
+                  snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
+                  return std::string(buf);
 
-      - lvgl.label.update:
-          id: lbl_weather_forecast_templo
-          text: !lambda |-
-            if (isnan(id(weather_forecast_temp_low)[0])) {
-              return std::string("L: --°");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
-            return std::string(buf);
+            - lvgl.label.update:
+                id: lbl_weather_forecast_templo
+                text: !lambda |-
+                  if (isnan(id(weather_forecast_temp_low)[0])) {
+                    return std::string("L: --°");
+                  }
+                  char buf[16];
+                  snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
+                  return std::string(buf);
 
-      - lvgl.label.update:
-          id: lbl_weather_today_dailyprecipprob
-          text: !lambda |-
-            if (isnan(id(weather_forecast_precip_prob)[0])) {
-              return std::string("Chance: --%");
-            }
-            char buf[32];
-            snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
-            return std::string(buf);
+            - lvgl.label.update:
+                id: lbl_weather_today_dailyprecipprob
+                text: !lambda |-
+                  if (isnan(id(weather_forecast_precip_prob)[0])) {
+                    return std::string("Chance: --%");
+                  }
+                  char buf[32];
+                  snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
+                  return std::string(buf);
 
             - logger.log: "✓ Weather display labels updated (page 3)"
 
