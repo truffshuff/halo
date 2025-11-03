@@ -653,140 +653,21 @@ esp32:
   cpu_frequency: 240MHz  # Maximum performance
 
   framework:
-    type: esp-idf
-    advanced:
-      enable_idf_experimental_features: true
+    type: arduino
+    version: 3.1.0
+    platform_version: 6.9.0
       # ========================================================================
-      # ESP-IDF SDK Configuration
+      # Arduino Framework with NimBLE-Arduino Library Support
       # ========================================================================
-      # Advanced ESP32-S3 memory and component configuration
+      # Switched from esp-idf to arduino framework to enable NimBLE-Arduino
+      # library support. Arduino framework provides similar PSRAM and memory
+      # features through menuconfig defaults and build flags.
       #
-      # This configuration is critical for the Halo device due to:
-      #   - 125+ Home Assistant sensor entities (large API traffic)
-      #   - BLE scanning for device discovery
-      #   - WiFi + WireGuard VPN (network stack memory)
-      #   - LVGL graphics library (large framebuffers)
-      #
-      # MEMORY PHILOSOPHY:
-      #   - Internal RAM (520KB): Reserved for time-critical operations
-      #   - PSRAM (8MB): Used for buffers, sensors, BLE stack, networking
+      # Memory Configuration:
+      #   - PSRAM: Enabled via board config (octal, 80MHz)
+      #   - NimBLE: ~55KB RAM savings vs Bluedroid
+      #   - Build flags handle critical optimizations
       # ========================================================================
-    # platform_version: 6.9.0
-    # version: 5.3.1
-    sdkconfig_options:
-      # --- PSRAM Memory Allocation Strategy ---
-      # Move most allocations to PSRAM to free internal RAM
-      CONFIG_SPIRAM_USE: "y"
-      CONFIG_SPIRAM_MODE_OCT: "y"
-      CONFIG_SPIRAM_SPEED_80M: "y"
-      CONFIG_SPIRAM_ECC_ENABLE: "y"  # Enable Error Correcting Code for PSRAM reliability
-
-      CONFIG_SPIRAM_USE_MALLOC: "y"
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"
-      # MEMORY OPTIMIZATION: Reduced from 16KB to 4KB threshold
-      # WHY: With 125+ weather sensors, each consuming 500-1200 bytes, the 16KB
-      #      threshold kept sensor objects in limited internal RAM, causing OOM crashes.
-      #      4KB threshold forces sensor allocations to PSRAM while keeping only
-      #      critical small allocations (<4KB) in fast internal RAM.
-      # Previous value: 16384 (caused sensor-related memory exhaustion)
-
-      # --- BLE Configuration (NimBLE via compatibility shim) ---
-      # Using NimBLE with custom compatibility layer for ESPHome
-      # Saves ~55KB RAM compared to Bluedroid
-      CONFIG_BT_ENABLED: "y"
-      CONFIG_BT_BLUEDROID_ENABLED: "n"  # Disable Bluedroid
-      CONFIG_BT_NIMBLE_ENABLED: "y"  # Enable NimBLE
-      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM
-      CONFIG_BT_NIMBLE_USE_ESP_TIMER: "y"  # Use ESP timer
-      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "3"  # Match bluetooth_proxy slots
-      CONFIG_BT_NIMBLE_ROLE_CENTRAL: "y"  # Enable scanner role
-      CONFIG_BT_NIMBLE_ROLE_PERIPHERAL: "y"  # Enable proxy role
-      CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192"  # Stack in PSRAM
-      CONFIG_BT_NIMBLE_PINNED_TO_CORE: "0"
-      CONFIG_BT_NIMBLE_TASK_STACK_SIZE: "8192"
-
-      # --- WiFi/Networking Configuration ---
-      # Increase buffer sizes for better throughput and reliability
-      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "64"  # Bigger RX mailbox queue (was 32)
-      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "24"  # TCP receive buffer (was 12)
-      CONFIG_LWIP_UDP_RECVMBOX_SIZE: "24"  # UDP receive buffer (was 12)
-      
-      # Move HTTP client buffers to PSRAM
-      CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS: "y"
-      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"  # Use PSRAM for SSL/TLS buffers
-      CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN: "16384"  # 16KB input buffer (PSRAM)
-      CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN: "4096"  # 4KB output buffer (PSRAM)
-
-      # --- Task Stack Allocation in PSRAM ---
-      # Move large task stacks to PSRAM to free internal RAM
-      CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
-      
-      # Additional PSRAM optimizations
-      CONFIG_SPIRAM_CACHE_WORKAROUND: "y"  # Enable cache workaround for stability
-      CONFIG_SPIRAM_BANKSWITCH_ENABLE: "n"  # Disable bank switching for better performance
-
-      # DMA-capable PSRAM (ESP32-S3 feature)
-      # Allows DMA transfers directly to/from PSRAM for display and peripherals
-      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"        # Allow instruction fetch from PSRAM
-      CONFIG_SPIRAM_RODATA: "y"                    # Place read-only data in PSRAM
-      
-      # LVGL configuration for PSRAM with DMA
-      # Allow LVGL buffers to use DMAable PSRAM
-      CONFIG_LV_MEM_CUSTOM: "y"
-      CONFIG_LV_MEM_CUSTOM_ALLOC_EXTERNAL: "y"      # Force LVGL to use PSRAM
-      CONFIG_LV_MEM_SIZE: "262144"                  # 256KB LVGL heap for large buffers
-
-
-      # WiFi/BT coexistence optimization
-      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"    # Allow WiFi/LWIP allocations in PSRAM
-      
-      # CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM: "8"  # Reduce WiFi RX buffers
-      # CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: "16"
-      # CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: "16"
-      CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM: "16"     # Fewer always-on buffers
-      CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM: "32"   # More on-demand buffers
-      CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM: "32"
-      CONFIG_ESP_WIFI_RX_BA_WIN: "32"
-      CONFIG_ESP_WIFI_TX_BA_WIN: "32"
-      CONFIG_ESP_WIFI_RX_MGMT_BUF_NUM: "32"
-
-
-      # Increase task watchdog timeout for HTTP operations
-      # CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
-      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "20"           # Extend watchdog for HTTP weather fetch
-
-      # ========================================================================
-      # HOME ASSISTANT API & SENSOR OPTIMIZATION
-      # ========================================================================
-      # With 125+ weather sensors, API buffers and sensor objects need PSRAM
-      # ========================================================================
-
-      # Increase API service call stack (many sensors = heavy API traffic)
-      # CONFIG_FREERTOS_IDLE_TASK_STACKSIZE: "3072"  # Default 1536, increase for sensor load
-      CONFIG_FREERTOS_IDLE_TASK_STACKSIZE: "4096"   # Was 3072
-      # Move protocol buffers (API communication) to PSRAM
-      # This helps with the large volume of HA sensor updates
-      # CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"  # Reserve 32KB internal for critical ops
-      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "16384"  # Reduce reserved internal heap (was 32KB)
-      # Increase default task stack size for sensor processing
-      # CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"  # Default 3584, increase for many sensors
-      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "12288"      # Was 8192, increase for sensor-heavy loads
-      CONFIG_FREERTOS_THREAD_LOCAL_STORAGE_POINTERS: "2"
-      CONFIG_FREERTOS_USE_STATIC_TASK_CLEAN_UP: "y"
-      # LWIP (networking) optimization for API traffic
-      # CONFIG_LWIP_MAX_SOCKETS: "16"  # Support more simultaneous connections
-      CONFIG_LWIP_MAX_SOCKETS: "24"                 # Support more open sockets
-      CONFIG_LWIP_SO_RCVBUF: "y"  # Enable socket receive buffer
-      CONFIG_LWIP_SO_RCVBUF_DEFAULT: "8192"         # Per-socket receive buffer
-      CONFIG_TCP_MAXRTX: "16"
-      CONFIG_TCP_SYNMAXRTX: "8"
-
-      # Memory debugging (optional - enable if still having issues)
-      CONFIG_HEAP_TRACING_STANDALONE: "y"
-      CONFIG_HEAP_TRACING: "y"
-      CONFIG_HEAP_TASK_TRACKING: "y"                # Track which task allocates what
-      CONFIG_HEAP_POISONING_LIGHT: "y"              # Detect memory corruption (minimal overhead)
-      CONFIG_ESP_SYSTEM_MEMPROT_FEATURE: "n"        # Disable memory protection if it causes issues
 
 external_components:
   - source: github://truffshuff/esphome-components
