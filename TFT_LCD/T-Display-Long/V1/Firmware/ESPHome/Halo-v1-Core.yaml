@@ -654,8 +654,8 @@ esp32:
 
   framework:
     type: esp-idf
-    version: recommended
-    platform_version: recommended
+    version: 5.3.1
+    platform_version: 6.8.1
     sdkconfig_options:
       # Enable NimBLE stack (disable Bluedroid)
       CONFIG_BT_ENABLED: "y"
