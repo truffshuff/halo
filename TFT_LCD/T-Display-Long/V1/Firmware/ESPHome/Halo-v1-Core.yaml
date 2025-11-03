@@ -793,7 +793,10 @@ external_components:
     components: [axs15231, sy6970]
   
   # NimBLE compatibility layer for ESPHome BLE components
-  - source: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/components@Test
+  - source:
+      type: git
+      url: https://github.com/truffshuff/halo
+      ref: Test
     components: [nimble_compat]
     refresh: always
 
