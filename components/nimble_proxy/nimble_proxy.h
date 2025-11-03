@@ -11,6 +11,7 @@
 #include "nimble/nimble_port_freertos.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
+#include "esp_nimble_hci.h"
 
 namespace esphome {
 namespace nimble_proxy {
@@ -37,6 +38,7 @@ class NimBLEProxy : public Component {
   static int gap_event_handler_(struct ble_gap_event *event, void *arg);
   static void on_sync_();
   static void on_reset_(int reason);
+  static void host_task_(void *param);
 };
 
 }  // namespace nimble_proxy
