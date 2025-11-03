@@ -84,20 +84,6 @@ void NimBLEProxy::setup() {
   ble_hs_cfg.sync_cb = NimBLEProxy::on_sync_;
   ble_hs_cfg.reset_cb = NimBLEProxy::on_reset_;
   
-  // Initialize services and storage before starting host task
-  ESP_LOGD(TAG, "Initializing GAP/GATT services...");
-  ble_svc_gap_init();
-  ble_svc_gatt_init();
-
-  ESP_LOGD(TAG, "Initializing BLE store config...");
-  ble_store_config_init();
-
-  // Set device name (can be set before advertising starts)
-  int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
-  if (rc != 0) {
-    ESP_LOGE(TAG, "Error setting device name: %d", rc);
-  }
-
   // Start NimBLE host task (only once)
   if (!this->host_task_started_) {
     ESP_LOGD(TAG, "Starting NimBLE host task...");
@@ -113,6 +99,20 @@ void NimBLEProxy::on_sync_() {
   
   if (global_nimble_proxy != nullptr) {
     global_nimble_proxy->initialized_ = true;
+    // Initialize services and storage now that host is ready
+    ESP_LOGD(TAG, "Initializing GAP/GATT services...");
+    ble_svc_gap_init();
+    ble_svc_gatt_init();
+
+    ESP_LOGD(TAG, "Initializing BLE store config...");
+    ble_store_config_init();
+
+    // Set device name
+    int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
+    if (rc != 0) {
+      ESP_LOGE(TAG, "Error setting device name: %d", rc);
+    }
+
     global_nimble_proxy->start_advertising_();
   }
 }
