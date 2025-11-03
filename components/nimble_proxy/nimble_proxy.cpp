@@ -46,7 +46,7 @@ void NimBLEProxy::setup() {
 
   if (st == ESP_BT_CONTROLLER_STATUS_IDLE) {
     ESP_LOGD(TAG, "esp_bt_controller_init(default cfg)...");
-    esp_bt_controller_config_t bt_cfg = ESP_BT_CONTROLLER_CONFIG_DEFAULT();
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     esp_err_t ret = esp_bt_controller_init(&bt_cfg);
     if (ret != ESP_OK) {
       ESP_LOGE(TAG, "esp_bt_controller_init failed: %s", esp_err_to_name(ret));
