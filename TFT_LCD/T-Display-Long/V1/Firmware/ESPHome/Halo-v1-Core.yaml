@@ -2087,10 +2087,10 @@ script:
                   // Feed watchdog before JSON parsing
                   App.feed_wdt();
                   
-          // Parse JSON response (limit nesting, pre-size doc)
-          DynamicJsonDocument doc(16384);
-          DeserializationError error = deserializeJson(
-            doc, body_str, DeserializationOption::NestingLimit(12));
+                  // Parse JSON response (limit nesting, pre-size doc)
+                  DynamicJsonDocument doc(16384);
+                  DeserializationError error = deserializeJson(
+                      doc, body_str, DeserializationOption::NestingLimit(12));
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
@@ -2222,10 +2222,10 @@ script:
                   // Feed watchdog before JSON parsing
                   App.feed_wdt();
                   
-          // Parse JSON response (limit nesting, pre-size doc)
-          DynamicJsonDocument doc(32768);
-          DeserializationError error = deserializeJson(
-            doc, body_str, DeserializationOption::NestingLimit(12));
+                  // Parse JSON response (limit nesting, pre-size doc)
+                  DynamicJsonDocument doc(32768);
+                  DeserializationError error = deserializeJson(
+                      doc, body_str, DeserializationOption::NestingLimit(12));
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
