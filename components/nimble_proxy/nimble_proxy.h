@@ -4,6 +4,7 @@
 #include "esphome/core/log.h"
 
 // ESP-IDF native NimBLE headers
+#include "esp_bt.h"
 #include "host/ble_hs.h"
 #include "host/ble_gap.h"
 #include "host/ble_gatt.h"
