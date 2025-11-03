@@ -1,6 +1,7 @@
 #include "nimble_proxy.h"
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
+#include "esp_err.h"
 
 namespace esphome {
 namespace nimble_proxy {
@@ -20,29 +21,42 @@ void NimBLEProxy::setup() {
 
   ESP_LOGI(TAG, "Setting up NimBLE Proxy...");
   
-  // Release Bluetooth controller memory if not using classic BT
-  ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
-  
-  // Initialize Bluetooth controller with BLE mode
-  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-  esp_err_t ret = esp_bt_controller_init(&bt_cfg);
-  if (ret != ESP_OK) {
-    ESP_LOGE(TAG, "Bluetooth controller init failed: %d", ret);
-    return;
+  // Release Bluetooth controller memory if not using classic BT (ignore error if already released)
+  (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+
+  // Determine controller status to avoid double-init
+  esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
+  ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
+
+  // Initialize Bluetooth controller with BLE mode if not already initialized
+  if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    esp_err_t ret = esp_bt_controller_init(&bt_cfg);
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
+      return;
+    }
+    ctrl_status = esp_bt_controller_get_status();
   }
-  
-  // Enable BLE mode
-  ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-  if (ret != ESP_OK) {
-    ESP_LOGE(TAG, "Bluetooth controller enable failed: %d", ret);
-    return;
+
+  // Enable BLE mode if not already enabled
+  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
+      return;
+    }
   }
-  
-  // Initialize NimBLE HCI
-  ret = esp_nimble_hci_init();
-  if (ret != ESP_OK) {
-    ESP_LOGE(TAG, "NimBLE HCI init failed: %d", ret);
-    return;
+
+  // Initialize NimBLE HCI (idempotent guard)
+  static bool hci_initialized = false;
+  if (!hci_initialized) {
+    esp_err_t ret = esp_nimble_hci_init();
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "NimBLE HCI init failed: %s", esp_err_to_name(ret));
+      return;
+    }
+    hci_initialized = true;
   }
   
   // Initialize NimBLE host
@@ -62,8 +76,11 @@ void NimBLEProxy::setup() {
     ESP_LOGE(TAG, "Error setting device name: %d", rc);
   }
   
-  // Start NimBLE host task
-  nimble_port_freertos_init(NimBLEProxy::host_task_);
+  // Start NimBLE host task (only once)
+  if (!this->host_task_started_) {
+    nimble_port_freertos_init(NimBLEProxy::host_task_);
+    this->host_task_started_ = true;
+  }
   
   ESP_LOGI(TAG, "NimBLE Proxy setup complete");
 }
@@ -182,6 +199,8 @@ void NimBLEProxy::dump_config() {
   ESP_LOGCONFIG(TAG, "  Active: %s", YESNO(this->active_));
   ESP_LOGCONFIG(TAG, "  Max Connections: %d", this->max_connections_);
   ESP_LOGCONFIG(TAG, "  Initialized: %s", YESNO(this->initialized_));
+  ESP_LOGCONFIG(TAG, "  Host task started: %s", YESNO(this->host_task_started_));
+  ESP_LOGCONFIG(TAG, "  BT controller status: %d", (int) esp_bt_controller_get_status());
 }
 
 }  // namespace nimble_proxy
