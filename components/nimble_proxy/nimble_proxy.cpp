@@ -17,34 +17,31 @@ static NimBLEProxy *global_nimble_proxy = nullptr;
 
 void NimBLEProxy::setup() {
   global_nimble_proxy = this;
-  
+
   if (!this->active_) {
     ESP_LOGI(TAG, "NimBLE Proxy is disabled");
     return;
   }
 
-  // HCI-first: let NimBLE glue handle controller bring-up internally
+  ESP_LOGI(TAG, "Setting up NimBLE Proxy...");
+
+  // Ensure NVS is initialized (required by Bluetooth stack)
+  esp_err_t nvs_ret = nvs_flash_init();
+  if (nvs_ret == ESP_ERR_NVS_NO_FREE_PAGES || nvs_ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    ESP_LOGW(TAG, "NVS init returned %s, erasing NVS...", esp_err_to_name(nvs_ret));
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    nvs_ret = nvs_flash_init();
+  }
+  if (nvs_ret != ESP_OK) {
+    ESP_LOGE(TAG, "NVS init failed: %s", esp_err_to_name(nvs_ret));
+    return;
+  }
+
+  // Release Classic BT memory (ignore error if already released)
+  (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+
+  // HCI-first: initialize NimBLE HCI glue and let it manage controller bring-up
   ESP_LOGD(TAG, "Initializing NimBLE HCI glue (HCI-first)...");
-      return;
-    }
-    ctrl_status = esp_bt_controller_get_status();
-    ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
-  }
-
-  ctrl_status = esp_bt_controller_get_status();
-  ESP_LOGD(TAG, "NimBLE HCI init OK");
-  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
-    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
-    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
-      return;
-    }
-    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
-  }
-
-  // Initialize NimBLE HCI glue (reset any prior state first)
-  ESP_LOGD(TAG, "Initializing NimBLE HCI glue...");
   (void) esp_nimble_hci_deinit();
   esp_err_t hci_ret = esp_nimble_hci_init();
   if (hci_ret != ESP_OK) {
@@ -52,16 +49,16 @@ void NimBLEProxy::setup() {
     ESP_LOGE(TAG, "Aborting NimBLE setup to avoid crash");
     return;
   }
+  ESP_LOGD(TAG, "NimBLE HCI init OK");
 
   // Initialize NimBLE host
   ESP_LOGD(TAG, "Calling nimble_port_init()...");
   nimble_port_init();
-  
+
   // Configure host callbacks
   ble_hs_cfg.sync_cb = NimBLEProxy::on_sync_;
   ble_hs_cfg.reset_cb = NimBLEProxy::on_reset_;
-  
-  // Start NimBLE host task (only once)
+
   // Initialize BLE store config before starting host task
   ESP_LOGD(TAG, "Initializing BLE store config...");
   ble_store_config_init();
@@ -72,7 +69,7 @@ void NimBLEProxy::setup() {
     nimble_port_freertos_init(NimBLEProxy::host_task_);
     this->host_task_started_ = true;
   }
-  
+
   ESP_LOGI(TAG, "NimBLE Proxy setup complete");
 }
 
