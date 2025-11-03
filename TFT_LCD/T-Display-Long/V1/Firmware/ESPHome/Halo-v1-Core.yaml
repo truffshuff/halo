@@ -690,20 +690,20 @@ esp32:
       #      critical small allocations (<4KB) in fast internal RAM.
       # Previous value: 16384 (caused sensor-related memory exhaustion)
 
-      # --- BLE Configuration (NimBLE) ---
-      # Using NimBLE instead of Bluedroid for ~55KB RAM savings
-      # Enabled via build_flags in device YAML
+      # --- BLE Configuration (NimBLE via compatibility shim) ---
+      # Using NimBLE with custom compatibility layer for ESPHome
+      # Saves ~55KB RAM compared to Bluedroid
       CONFIG_BT_ENABLED: "y"
-      CONFIG_BT_BLUEDROID_ENABLED: "n"  # Disable Bluedroid stack
-      CONFIG_BT_NIMBLE_ENABLED: "y"  # Enable NimBLE stack
-      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM for NimBLE
+      CONFIG_BT_BLUEDROID_ENABLED: "n"  # Disable Bluedroid
+      CONFIG_BT_NIMBLE_ENABLED: "y"  # Enable NimBLE
+      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM
       CONFIG_BT_NIMBLE_USE_ESP_TIMER: "y"  # Use ESP timer
       CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "3"  # Match bluetooth_proxy slots
       CONFIG_BT_NIMBLE_ROLE_CENTRAL: "y"  # Enable scanner role
       CONFIG_BT_NIMBLE_ROLE_PERIPHERAL: "y"  # Enable proxy role
       CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192"  # Stack in PSRAM
-      CONFIG_BT_NIMBLE_PINNED_TO_CORE_0: "y"  # Pin to core 0
-      CONFIG_BT_NIMBLE_TASK_STACK_SIZE: "8192"  # Task stack size
+      CONFIG_BT_NIMBLE_PINNED_TO_CORE: "0"
+      CONFIG_BT_NIMBLE_TASK_STACK_SIZE: "8192"
 
       # --- WiFi/Networking Configuration ---
       # Increase buffer sizes for better throughput and reliability
