@@ -3,6 +3,7 @@
 #include "esphome/core/application.h"
 #include "esp_err.h"
 #include "nvs_flash.h"
+#include <cstring>
 
 extern "C" void ble_store_config_init(void);
 
@@ -39,18 +40,43 @@ void NimBLEProxy::setup() {
   // Release Classic BT memory (ignore error if already released)
   (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
-  // Try HCI-first path (preferred): let esp_nimble_hci_init manage controller
-    // Initialize controller + HCI glue in one step (safer across IDF variants)
-    ESP_LOGD(TAG, "Calling esp_nimble_hci_and_controller_init()...");
-    esp_err_t hciret = esp_nimble_hci_and_controller_init();
-    if (hciret != ESP_OK) {
-      ESP_LOGE(TAG, "esp_nimble_hci_and_controller_init failed: %s", esp_err_to_name(hciret));
+  // Initialize BLE controller (BLE-only) and HCI glue explicitly
+  esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
+  ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
+
+  if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
+    ESP_LOGD(TAG, "Calling esp_bt_controller_init()...");
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    esp_err_t ret = esp_bt_controller_init(&bt_cfg);
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
       return;
     }
+    ctrl_status = esp_bt_controller_get_status();
+    ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
+  }
 
-    // Initialize NimBLE host
-    ESP_LOGD(TAG, "Calling nimble_port_init()...");
-    nimble_port_init();
+  ctrl_status = esp_bt_controller_get_status();
+  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
+    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
+      return;
+    }
+    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
+  }
+
+  ESP_LOGD(TAG, "Initializing NimBLE HCI glue...");
+  esp_err_t hci_ret = esp_nimble_hci_init();
+  if (hci_ret != ESP_OK) {
+    ESP_LOGE(TAG, "esp_nimble_hci_init failed: %s", esp_err_to_name(hci_ret));
+    return;
+  }
+
+  // Initialize NimBLE host
+  ESP_LOGD(TAG, "Calling nimble_port_init()...");
+  nimble_port_init();
   
   // Configure host callbacks
   ble_hs_cfg.sync_cb = NimBLEProxy::on_sync_;
@@ -72,8 +98,7 @@ void NimBLEProxy::setup() {
 }
 
 void NimBLEProxy::on_sync_() {
-  ESP_LOGI(TAG, "NimBLE host synced");
-  
+  ESP_LOGI(TAG, "NimBLE host synchronized");
   
   // Initialize services now that host is ready
   ESP_LOGD(TAG, "Initializing GAP/GATT services...");
@@ -87,10 +112,16 @@ void NimBLEProxy::on_sync_() {
   }
 
   global_nimble_proxy->start_advertising_();
-  // This function will run the nimble host
+}
+
+void NimBLEProxy::on_reset_(int reason) {
+  ESP_LOGW(TAG, "NimBLE host reset; reason=%d", reason);
+}
+
+// FreeRTOS task trampoline for NimBLE host
+void NimBLEProxy::host_task_(void *param) {
+  (void) param;
   nimble_port_run();
-  
-  // nimble_port_run() should never return, but just in case:
   nimble_port_freertos_deinit();
 }
 
