@@ -28,5 +28,5 @@ async def to_code(config):
     cg.add(var.set_active(config[CONF_ACTIVE]))
     cg.add(var.set_max_connections(config[CONF_MAX_CONNECTIONS]))
     
-    # NimBLE library should be added in device YAML lib_deps
-    # cg.add_library("h2zero/NimBLE-Arduino", "^2.3.6")
+    # Add NimBLE library dependency
+    cg.add_library("NimBLE-Arduino", "2.3.6", "https://github.com/h2zero/NimBLE-Arduino.git")
