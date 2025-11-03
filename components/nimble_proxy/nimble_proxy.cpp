@@ -3,6 +3,7 @@
 #include "esphome/core/application.h"
 #include "esp_err.h"
 #include "nvs_flash.h"
+#include "store/ble_store_config.h"
 
 namespace esphome {
 namespace nimble_proxy {
@@ -54,17 +55,6 @@ void NimBLEProxy::setup() {
     ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
   }
 
-  // Enable BLE mode if not already enabled
-  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
-    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
-    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
-      return;
-    }
-    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
-  }
-
   // Initialize NimBLE HCI (idempotent guard)
   static bool hci_initialized = false;
   if (!hci_initialized) {
@@ -77,8 +67,21 @@ void NimBLEProxy::setup() {
     hci_initialized = true;
     ESP_LOGD(TAG, "NimBLE HCI initialized");
   }
+
+  // Enable BLE mode if not already enabled (do this after HCI is set up)
+  ctrl_status = esp_bt_controller_get_status();
+  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
+    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
+      return;
+    }
+    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
+  }
   
   // Initialize NimBLE host
+  ESP_LOGD(TAG, "Calling nimble_port_init()...");
   nimble_port_init();
   
   // Configure host callbacks
@@ -86,8 +89,13 @@ void NimBLEProxy::setup() {
   ble_hs_cfg.reset_cb = NimBLEProxy::on_reset_;
   
   // Initialize services
+  ESP_LOGD(TAG, "Initializing GAP/GATT services...");
   ble_svc_gap_init();
   ble_svc_gatt_init();
+
+  // Initialize default storage (bonds/keys) for NimBLE
+  ESP_LOGD(TAG, "Initializing BLE store config...");
+  ble_store_config_init();
   
   // Set device name
   int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
@@ -97,6 +105,7 @@ void NimBLEProxy::setup() {
   
   // Start NimBLE host task (only once)
   if (!this->host_task_started_) {
+    ESP_LOGD(TAG, "Starting NimBLE host task...");
     nimble_port_freertos_init(NimBLEProxy::host_task_);
     this->host_task_started_ = true;
   }
