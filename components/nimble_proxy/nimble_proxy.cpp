@@ -56,20 +56,7 @@ void NimBLEProxy::setup() {
     ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
   }
 
-  // Initialize NimBLE HCI (idempotent guard)
-  static bool hci_initialized = false;
-  if (!hci_initialized) {
-    ESP_LOGD(TAG, "Initializing NimBLE HCI...");
-    esp_err_t ret = esp_nimble_hci_init();
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "NimBLE HCI init failed: %s", esp_err_to_name(ret));
-      return;
-    }
-    hci_initialized = true;
-    ESP_LOGD(TAG, "NimBLE HCI initialized");
-  }
-
-  // Enable BLE mode if not already enabled (do this after HCI is set up)
+  // Enable BLE mode if not already enabled
   ctrl_status = esp_bt_controller_get_status();
   if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
     ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
@@ -81,7 +68,7 @@ void NimBLEProxy::setup() {
     ESP_LOGD(TAG, "BT controller enabled in BLE mode");
   }
   
-  // Initialize NimBLE host
+  // Initialize NimBLE host (HCI glue is handled by NimBLE port when controller is enabled)
   ESP_LOGD(TAG, "Calling nimble_port_init()...");
   nimble_port_init();
   
