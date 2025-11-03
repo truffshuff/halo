@@ -2,6 +2,7 @@
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
 #include "esp_err.h"
+#include "nvs_flash.h"
 
 namespace esphome {
 namespace nimble_proxy {
@@ -21,6 +22,18 @@ void NimBLEProxy::setup() {
 
   ESP_LOGI(TAG, "Setting up NimBLE Proxy...");
   
+  // Ensure NVS is initialized (required by Bluetooth stack)
+  esp_err_t nvs_ret = nvs_flash_init();
+  if (nvs_ret == ESP_ERR_NVS_NO_FREE_PAGES || nvs_ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    ESP_LOGW(TAG, "NVS init returned %s, erasing NVS...", esp_err_to_name(nvs_ret));
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    nvs_ret = nvs_flash_init();
+  }
+  if (nvs_ret != ESP_OK) {
+    ESP_LOGE(TAG, "NVS init failed: %s", esp_err_to_name(nvs_ret));
+    return;
+  }
+  
   // Release Bluetooth controller memory if not using classic BT (ignore error if already released)
   (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
@@ -30,6 +43,7 @@ void NimBLEProxy::setup() {
 
   // Initialize Bluetooth controller with BLE mode if not already initialized
   if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
+    ESP_LOGD(TAG, "Calling esp_bt_controller_init()...");
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     esp_err_t ret = esp_bt_controller_init(&bt_cfg);
     if (ret != ESP_OK) {
@@ -37,26 +51,31 @@ void NimBLEProxy::setup() {
       return;
     }
     ctrl_status = esp_bt_controller_get_status();
+    ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
   }
 
   // Enable BLE mode if not already enabled
   if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
     esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret != ESP_OK) {
       ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
       return;
     }
+    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
   }
 
   // Initialize NimBLE HCI (idempotent guard)
   static bool hci_initialized = false;
   if (!hci_initialized) {
+    ESP_LOGD(TAG, "Initializing NimBLE HCI...");
     esp_err_t ret = esp_nimble_hci_init();
     if (ret != ESP_OK) {
       ESP_LOGE(TAG, "NimBLE HCI init failed: %s", esp_err_to_name(ret));
       return;
     }
     hci_initialized = true;
+    ESP_LOGD(TAG, "NimBLE HCI initialized");
   }
   
   // Initialize NimBLE host
