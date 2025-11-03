@@ -25,23 +25,23 @@ void NimBLEProxy::setup() {
   
   // Initialize Bluetooth controller with BLE mode
   esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-  int rc = esp_bt_controller_init(&bt_cfg);
-  if (rc != ESP_OK) {
-    ESP_LOGE(TAG, "Bluetooth controller init failed: %d", rc);
+  esp_err_t ret = esp_bt_controller_init(&bt_cfg);
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "Bluetooth controller init failed: %d", ret);
     return;
   }
   
   // Enable BLE mode
-  rc = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-  if (rc != ESP_OK) {
-    ESP_LOGE(TAG, "Bluetooth controller enable failed: %d", rc);
+  ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "Bluetooth controller enable failed: %d", ret);
     return;
   }
   
   // Initialize NimBLE HCI
-  rc = esp_nimble_hci_init();
-  if (rc != ESP_OK) {
-    ESP_LOGE(TAG, "NimBLE HCI init failed: %d", rc);
+  ret = esp_nimble_hci_init();
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "NimBLE HCI init failed: %d", ret);
     return;
   }
   
