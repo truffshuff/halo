@@ -2,9 +2,15 @@
 
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
-#include <NimBLEDevice.h>
-#include <NimBLEServer.h>
-#include <NimBLEAdvertising.h>
+
+// ESP-IDF native NimBLE headers
+#include "host/ble_hs.h"
+#include "host/ble_gap.h"
+#include "host/ble_gatt.h"
+#include "nimble/nimble_port.h"
+#include "nimble/nimble_port_freertos.h"
+#include "services/gap/ble_svc_gap.h"
+#include "services/gatt/ble_svc_gatt.h"
 
 namespace esphome {
 namespace nimble_proxy {
@@ -22,11 +28,15 @@ class NimBLEProxy : public Component {
  protected:
   bool active_{true};
   uint8_t max_connections_{3};
-  NimBLEServer *ble_server_{nullptr};
+  bool initialized_{false};
   
   void start_advertising_();
   void setup_services_();
-};
+  
+  // NimBLE callbacks
+  static int gap_event_handler_(struct ble_gap_event *event, void *arg);
+  static void on_sync_();
+  static void on_reset_(int reason);
 
 }  // namespace nimble_proxy
 }  // namespace esphome

@@ -28,5 +28,4 @@ async def to_code(config):
     cg.add(var.set_active(config[CONF_ACTIVE]))
     cg.add(var.set_max_connections(config[CONF_MAX_CONNECTIONS]))
     
-    # Add NimBLE library dependency - Arduino framework will handle includes
-    cg.add_library("NimBLE-Arduino", "2.3.6")
+    # No library dependency needed - using ESP-IDF native NimBLE
