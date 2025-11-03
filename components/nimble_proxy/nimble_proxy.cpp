@@ -3,7 +3,8 @@
 #include "esphome/core/application.h"
 #include "esp_err.h"
 #include "nvs_flash.h"
-#include "store/ble_store_config.h"
+
+extern "C" void ble_store_config_init(void);
 
 namespace esphome {
 namespace nimble_proxy {
