@@ -36,49 +36,74 @@ void NimBLEProxy::setup() {
     return;
   }
   
-  // Release Bluetooth controller memory if not using classic BT (ignore error if already released)
+  // Release Classic BT memory (ignore error if already released)
   (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
-  // Determine controller status to avoid double-init
-  esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
-  ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
-
-  // Initialize Bluetooth controller with BLE mode if not already initialized
-  if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
-    ESP_LOGD(TAG, "Calling esp_bt_controller_init()...");
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    esp_err_t ret = esp_bt_controller_init(&bt_cfg);
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
-      return;
-    }
-    ctrl_status = esp_bt_controller_get_status();
-    ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
-  }
-
-  // Enable BLE mode if not already enabled
-  ctrl_status = esp_bt_controller_get_status();
-  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
-    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
-    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
-      return;
-    }
-    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
-  }
-  
-  // Initialize NimBLE HCI glue now that controller is enabled
-  ESP_LOGD(TAG, "Initializing NimBLE HCI glue...");
+  // Try HCI-first path (preferred): let esp_nimble_hci_init manage controller
+  bool init_ok = false;
+  ESP_LOGD(TAG, "Attempting HCI-first init...");
+  (void) esp_nimble_hci_deinit();
   esp_err_t hci_ret = esp_nimble_hci_init();
-  if (hci_ret != ESP_OK) {
-    ESP_LOGE(TAG, "esp_nimble_hci_init failed: %s", esp_err_to_name(hci_ret));
-    return;  // Abort setup to avoid host task crash
+  if (hci_ret == ESP_OK) {
+    ESP_LOGD(TAG, "HCI init OK; calling nimble_port_init()...");
+    nimble_port_init();
+    init_ok = true;
+  } else {
+    ESP_LOGW(TAG, "HCI-first init failed: %s; falling back to manual controller path", esp_err_to_name(hci_ret));
+
+    // Manual controller path
+    esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
+    ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
+
+    if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
+      ESP_LOGD(TAG, "Calling esp_bt_controller_init()...");
+      esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+      esp_err_t ret = esp_bt_controller_init(&bt_cfg);
+      if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
+        init_ok = false;
+      } else {
+        ctrl_status = esp_bt_controller_get_status();
+        ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
+      }
+    }
+
+    if (!init_ok) {
+      // Enable if not enabled yet
+      ctrl_status = esp_bt_controller_get_status();
+      if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+        ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
+        esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+        if (ret != ESP_OK) {
+          ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
+          init_ok = false;
+        } else {
+          ESP_LOGD(TAG, "BT controller enabled in BLE mode");
+          init_ok = true;
+        }
+      } else {
+        init_ok = true;  // Already enabled
+      }
+    }
+
+    if (init_ok) {
+      ESP_LOGD(TAG, "Initializing NimBLE HCI glue (manual path)...");
+      (void) esp_nimble_hci_deinit();
+      hci_ret = esp_nimble_hci_init();
+      if (hci_ret != ESP_OK) {
+        ESP_LOGE(TAG, "esp_nimble_hci_init failed (manual path): %s", esp_err_to_name(hci_ret));
+        init_ok = false;
+      } else {
+        ESP_LOGD(TAG, "HCI init OK (manual path); calling nimble_port_init()...");
+        nimble_port_init();
+      }
+    }
   }
-  
-  // Initialize NimBLE host (HCI glue is handled by NimBLE port when controller is enabled)
-  ESP_LOGD(TAG, "Calling nimble_port_init()...");
-  nimble_port_init();
+
+  if (!init_ok) {
+    ESP_LOGE(TAG, "NimBLE initialization failed; aborting setup to avoid crash");
+    return;
+  }
   
   // Configure host callbacks
   ble_hs_cfg.sync_cb = NimBLEProxy::on_sync_;
