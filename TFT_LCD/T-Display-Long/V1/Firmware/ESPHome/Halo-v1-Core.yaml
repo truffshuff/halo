@@ -1864,12 +1864,11 @@ color:
     blue: 0%
 
 # HTTP Request component for calling HA REST API
-# Buffer size increased for large weather JSON responses
-# Uses PSRAM via CONFIG_SPIRAM_USE_MALLOC setting
+# Streaming response handling; moderate buffers
 http_request:
   useragent: esphome/halo
   timeout: 20s  # Increased timeout for large weather responses
-  buffer_size_rx: 4096  # 4KB receive buffer for large forecast responses (moved to PSRAM)
+  buffer_size_rx: 2048  # 2KB RX buffer; we stream in chunks
   buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
 
 time:
@@ -2045,13 +2044,33 @@ script:
                   // Feed watchdog at start of processing
                   App.feed_wdt();
                   
+                  // Guard against unexpectedly large payloads (>64KB)
+                  if (response->content_length > 65536) {
+                    ESP_LOGE("weather", "Hourly forecast too large: %d bytes", (int)response->content_length);
+                    // Drain the body without storing to keep connection sane
+                    uint8_t drain_buf[512];
+                    while (response->get_bytes_read() < response->content_length) {
+                      int r = response->read(drain_buf, sizeof(drain_buf));
+                      if (r <= 0) break;
+                    }
+                    return;
+                  }
+                  
                   // Read response body first (for both success and error cases)
                   std::string body_str;
-                  body_str.reserve(response->content_length);
+                  // Reserve a bounded amount to reduce fragmentation/peaks
+                  size_t reserve_sz = response->content_length;
+                  if (reserve_sz > 16384) reserve_sz = 16384; // cap to 16KB for daily
+                  body_str.reserve(reserve_sz);
                   uint8_t buffer[512];
                   while (response->get_bytes_read() < response->content_length) {
                     int read_len = response->read(buffer, sizeof(buffer));
                     if (read_len > 0) {
+                      // Cap body accumulation to 48KB for safety
+                      if (body_str.size() + (size_t)read_len > 49152) {
+                        ESP_LOGW("weather", "Hourly body truncated at %u bytes", (unsigned)body_str.size());
+                        break;
+                      }
                       body_str.append((char*)buffer, read_len);
                     }
                   }
@@ -2068,9 +2087,10 @@ script:
                   // Feed watchdog before JSON parsing
                   App.feed_wdt();
                   
-                  // Parse JSON response
-                  JsonDocument doc;
-                  DeserializationError error = deserializeJson(doc, body_str);
+          // Parse JSON response (limit nesting, pre-size doc)
+          DynamicJsonDocument doc(16384);
+          DeserializationError error = deserializeJson(
+            doc, body_str, DeserializationOption::NestingLimit(12));
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
@@ -2178,7 +2198,10 @@ script:
                   
                   // Read response body first (for both success and error cases)
                   std::string body_str;
-                  body_str.reserve(response->content_length);
+                  // Reserve a bounded amount to reduce fragmentation/peaks
+                  size_t reserve_sz2 = response->content_length;
+                  if (reserve_sz2 > 32768) reserve_sz2 = 32768; // cap to 32KB for hourly
+                  body_str.reserve(reserve_sz2);
                   uint8_t buffer[512];
                   while (response->get_bytes_read() < response->content_length) {
                     int read_len = response->read(buffer, sizeof(buffer));
@@ -2199,9 +2222,10 @@ script:
                   // Feed watchdog before JSON parsing
                   App.feed_wdt();
                   
-                  // Parse JSON response
-                  JsonDocument doc;
-                  DeserializationError error = deserializeJson(doc, body_str);
+          // Parse JSON response (limit nesting, pre-size doc)
+          DynamicJsonDocument doc(32768);
+          DeserializationError error = deserializeJson(
+            doc, body_str, DeserializationOption::NestingLimit(12));
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
