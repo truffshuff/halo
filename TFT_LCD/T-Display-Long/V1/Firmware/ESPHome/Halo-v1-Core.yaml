@@ -743,9 +743,9 @@ esp32:
       CONFIG_ESP_WIFI_RX_MGMT_BUF_NUM: "32"
 
 
-      # Increase task watchdog timeout for BLE operations
+      # Increase task watchdog timeout for HTTP operations
       # CONFIG_ESP_TASK_WDT_TIMEOUT_S: "10"
-      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "12"           # Extend watchdog for long BLE ops
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "20"           # Extend watchdog for HTTP weather fetch
 
       # ========================================================================
       # HOME ASSISTANT API & SENSOR OPTIMIZATION
@@ -2126,6 +2126,10 @@ script:
     mode: single
     then:
       - logger.log: "Fetching daily forecast from Home Assistant via HTTP..."
+      
+      # Feed watchdog before long operation
+      - lambda: |-
+          App.feed_wdt();
 
       # Fetch daily forecast
       - http_request.post:
@@ -2140,6 +2144,9 @@ script:
           on_response:
             then:
               - lambda: |-
+                  // Feed watchdog at start of processing
+                  App.feed_wdt();
+                  
                   // Read response body first (for both success and error cases)
                   std::string body_str;
                   body_str.reserve(response->content_length);
@@ -2159,6 +2166,9 @@ script:
                   }
 
                   ESP_LOGI("weather", "✓ Daily forecast HTTP response received");
+                  
+                  // Feed watchdog before JSON parsing
+                  App.feed_wdt();
                   
                   // Parse JSON response
                   JsonDocument doc;
@@ -2194,6 +2204,9 @@ script:
                   JsonArray forecast_array = entity_data["forecast"];
                   int day_count = std::min((int)forecast_array.size(), 10);
                   ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+                  
+                  // Feed watchdog before processing loop
+                  App.feed_wdt();
 
                   for (int i = 0; i < day_count; i++) {
                     JsonObject day = forecast_array[i];
@@ -2244,6 +2257,10 @@ script:
     mode: single
     then:
       - logger.log: "Fetching hourly forecast from Home Assistant via HTTP..."
+      
+      # Feed watchdog before long operation
+      - lambda: |-
+          App.feed_wdt();
 
       # Fetch hourly forecast
       - http_request.post:
@@ -2258,6 +2275,9 @@ script:
           on_response:
             then:
               - lambda: |-
+                  // Feed watchdog at start of processing
+                  App.feed_wdt();
+                  
                   // Read response body first (for both success and error cases)
                   std::string body_str;
                   body_str.reserve(response->content_length);
@@ -2277,6 +2297,9 @@ script:
                   }
 
                   ESP_LOGI("weather", "✓ Hourly forecast HTTP response received");
+                  
+                  // Feed watchdog before JSON parsing
+                  App.feed_wdt();
                   
                   // Parse JSON response
                   JsonDocument doc;
@@ -2312,6 +2335,9 @@ script:
                   JsonArray forecast_array = entity_data["forecast"];
                   int hour_count = std::min((int)forecast_array.size(), 24);
                   ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+                  
+                  // Feed watchdog before processing loop
+                  App.feed_wdt();
 
                   for (int i = 0; i < hour_count; i++) {
                     JsonObject hour = forecast_array[i];
