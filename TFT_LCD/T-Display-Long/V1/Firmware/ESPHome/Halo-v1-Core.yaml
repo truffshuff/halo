@@ -5726,6 +5726,8 @@ light:
     rgb_order: GRB
     pin: GPIO47
     num_leds: 12
+    rmt_channel: 0
+    use_dma: true  # Use DMA for better performance
     chipset: WS2812
     restore_mode: ALWAYS_OFF
     effects:
