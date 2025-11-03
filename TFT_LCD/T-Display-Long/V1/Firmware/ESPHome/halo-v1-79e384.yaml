@@ -30,11 +30,6 @@ esphome:
     board_build.psram_type: opi
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
-    build_flags:
-      - "-DCONFIG_BT_NIMBLE_ENABLED=1"
-      - "-DCONFIG_NIMBLE_CPP_LOG_LEVEL=2"
-    build_unflags:
-      - "-DCONFIG_BT_BLUEDROID_ENABLED"
     lib_deps:
       - "h2zero/NimBLE-Arduino@2.3.6"
     lib_ldf_mode: deep+
