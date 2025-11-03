@@ -792,12 +792,12 @@ external_components:
   - source: github://truffshuff/esphome-components
     components: [axs15231, sy6970]
   
-  # NimBLE compatibility layer for ESPHome BLE components
+  # NimBLE compatibility and proxy components
   - source:
       type: git
       url: https://github.com/truffshuff/halo
       ref: Test
-    components: [nimble_compat]
+    components: [nimble_compat, nimble_proxy]
     refresh: always
 
   # - source: github://pr#7770 # RMT driver, remove rmt_channel when using esp-idf
@@ -1838,19 +1838,19 @@ api:
             call.set_effect(effect);
             call.perform();
           }
-      # Start BLE scanning when Home Assistant connects
-      # Uses continuous mode for immediate device detection
-      - delay: 500ms  # Brief delay to allow API to stabilize
-      - esp32_ble_tracker.start_scan:
-          continuous: true
+      # BLE scanning disabled (using NimBLE instead of Bluedroid)
+      # - delay: 500ms
+      # - esp32_ble_tracker.start_scan:
+      #     continuous: true
   # ============================================================================
   # Custom Services (callable from Home Assistant)
   # ============================================================================
 
   on_client_disconnected:
-    # Stop BLE scanning when Home Assistant disconnects
-    # Saves power and reduces heap pressure
-    - esp32_ble_tracker.stop_scan:
+    # BLE scanning disabled (using NimBLE instead of Bluedroid)
+    # - esp32_ble_tracker.stop_scan:
+    then:
+      - logger.log: "Home Assistant disconnected"
   
   services:
     # CO2 Sensor Calibration
@@ -9415,48 +9415,42 @@ wireguard:
 #   3. Priority -100: Set default page and complete boot
 # ============================================================================
 
-esp32_ble_tracker:
-  id: ble_tracker
-  scan_parameters:
-    # Scan interval - how often to scan for devices
-    # Default: 320ms, Balanced: 500ms, Always-on: 1100ms
-    interval: 500ms
+# ============================================================================
+# NIMBLE BLUETOOTH PROXY
+# ============================================================================
+# Custom NimBLE-based Bluetooth proxy for Home Assistant
+# Uses NimBLE stack instead of Bluedroid for better performance and lower RAM
+# 
+# Benefits:
+# - ~55KB RAM savings vs Bluedroid
+# - Better WiFi coexistence
+# - Lower power consumption
+# - Faster connection handling
+# ============================================================================
 
-    # Scan window - how long each scan lasts
-    # Default: 30ms, Balanced: 40ms, Always-on: 1100ms
-    window: 40ms
-
-    # Active scanning - sends scan requests to get more device info
-    # true = more info but higher power consumption
-    # false = passive scanning, lower power
-    active: true
-
-    # Continuous scanning mode
-    # true = constant scanning (high power, immediate detection)
-    # false = on-demand scanning (lower power, delayed detection)
-    continuous: false
-
-# Bluetooth Proxy Configuration
-# Allows Home Assistant to use this device as a Bluetooth proxy
-# REQUIRES esp32_ble_tracker to be configured above
-bluetooth_proxy:
-  # Enable/disable the proxy
-  # true = proxy active, false = proxy disabled
+nimble_proxy:
   active: true
+  max_connections: 3
 
-  # Maximum number of simultaneous BLE connections
-  # Default: 3, Range: 1-9
-  # Higher values = more devices but more memory usage
-  connection_slots: 3
+# Old Bluedroid-based components (disabled)
+# esp32_ble_tracker:
+#   id: ble_tracker
+#   scan_parameters:
+#     interval: 500ms
+#     window: 40ms
+#     active: true
+#     continuous: false
+
+# bluetooth_proxy:
+#   active: true
+#   connection_slots: 3
 
 # ESP32 Improv Configuration (Optional)
 # Allows WiFi provisioning via BLE using the Improv standard
 # Useful for initial device setup without hardcoded credentials
-esp32_improv:
-  # Authorization mode
-  # none = no authorization required (open provisioning)
-  # Use with caution - anyone can provision the device
-  authorizer: none
+# DISABLED: Requires BLE tracker
+# esp32_improv:
+#   authorizer: none
 
 # API Integration - Dynamic BLE Scanning
 # Automatically start/stop BLE scanning based on Home Assistant connection
