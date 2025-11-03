@@ -670,9 +670,9 @@ esp32:
 
   framework:
     type: esp-idf
-    # Use ESPHome-supported framework channels. Options include: recommended (default), latest, dev
-    # 'latest' should include ESP-IDF 5.4.3+ with NimBLE fixes once rolled out in ESPHome's toolchain images.
-    version: latest
+    # Use ESPHome-supported framework channels. Options: recommended (default), latest, dev
+    # Switch to 'dev' to pick up the very latest ESP-IDF/NimBLE fixes sooner.
+    version: dev
     sdkconfig_options:
       # Enable NimBLE stack (disable Bluedroid)
       CONFIG_BT_ENABLED: "y"
