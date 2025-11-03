@@ -40,18 +40,7 @@ void NimBLEProxy::setup() {
   (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
   // Try HCI-first path (preferred): let esp_nimble_hci_init manage controller
-  bool init_ok = false;
-  ESP_LOGD(TAG, "Attempting HCI-first init...");
-  (void) esp_nimble_hci_deinit();
-  esp_err_t hci_ret = esp_nimble_hci_init();
-  if (hci_ret == ESP_OK) {
-    ESP_LOGD(TAG, "HCI init OK; calling nimble_port_init()...");
-    nimble_port_init();
-    init_ok = true;
-  } else {
-    ESP_LOGW(TAG, "HCI-first init failed: %s; falling back to manual controller path", esp_err_to_name(hci_ret));
-
-    // Manual controller path
+    // Manual controller path only
     esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
     ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
 
@@ -61,54 +50,47 @@ void NimBLEProxy::setup() {
       esp_err_t ret = esp_bt_controller_init(&bt_cfg);
       if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
-        init_ok = false;
-      } else {
-        ctrl_status = esp_bt_controller_get_status();
-        ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
+        return;
       }
-    }
-
-    if (!init_ok) {
-      // Enable if not enabled yet
       ctrl_status = esp_bt_controller_get_status();
-      if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
-        ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
-        esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-        if (ret != ESP_OK) {
-          ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
-          init_ok = false;
-        } else {
-          ESP_LOGD(TAG, "BT controller enabled in BLE mode");
-          init_ok = true;
-        }
-      } else {
-        init_ok = true;  // Already enabled
-      }
+      ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
     }
 
-    if (init_ok) {
-      ESP_LOGD(TAG, "Initializing NimBLE HCI glue (manual path)...");
-      (void) esp_nimble_hci_deinit();
-      hci_ret = esp_nimble_hci_init();
-      if (hci_ret != ESP_OK) {
-        ESP_LOGE(TAG, "esp_nimble_hci_init failed (manual path): %s", esp_err_to_name(hci_ret));
-        init_ok = false;
-      } else {
-        ESP_LOGD(TAG, "HCI init OK (manual path); calling nimble_port_init()...");
-        nimble_port_init();
+    ctrl_status = esp_bt_controller_get_status();
+    if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+      ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
+      esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+      if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
+        return;
       }
+      ESP_LOGD(TAG, "BT controller enabled in BLE mode");
     }
-  }
 
-  if (!init_ok) {
-    ESP_LOGE(TAG, "NimBLE initialization failed; aborting setup to avoid crash");
-    return;
-  }
+    // Initialize NimBLE host
+    ESP_LOGD(TAG, "Calling nimble_port_init()...");
+    nimble_port_init();
   
   // Configure host callbacks
   ble_hs_cfg.sync_cb = NimBLEProxy::on_sync_;
   ble_hs_cfg.reset_cb = NimBLEProxy::on_reset_;
   
+  // Start NimBLE host task (only once)
+  // Initialize BLE store config before starting host task
+  ESP_LOGD(TAG, "Initializing BLE store config...");
+  ble_store_config_init();
+  
+  // Initialize GAP/GATT services before starting host task
+  ESP_LOGD(TAG, "Initializing GAP/GATT services...");
+  ble_svc_gap_init();
+  ble_svc_gatt_init();
+  
+  // Set device name
+  int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
+  if (rc != 0) {
+    ESP_LOGE(TAG, "Error setting device name: %d", rc);
+  }
+
   // Start NimBLE host task (only once)
   if (!this->host_task_started_) {
     ESP_LOGD(TAG, "Starting NimBLE host task...");
@@ -124,20 +106,6 @@ void NimBLEProxy::on_sync_() {
   
   if (global_nimble_proxy != nullptr) {
     global_nimble_proxy->initialized_ = true;
-    // Initialize services and storage now that host is ready
-    ESP_LOGD(TAG, "Initializing GAP/GATT services...");
-    ble_svc_gap_init();
-    ble_svc_gatt_init();
-
-    ESP_LOGD(TAG, "Initializing BLE store config...");
-    ble_store_config_init();
-
-    // Set device name
-    int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
-    if (rc != 0) {
-      ESP_LOGE(TAG, "Error setting device name: %d", rc);
-    }
-
     global_nimble_proxy->start_advertising_();
   }
 }
