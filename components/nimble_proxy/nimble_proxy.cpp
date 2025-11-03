@@ -21,6 +21,7 @@ void NimBLEProxy::setup() {
   ESP_LOGI(TAG, "Setting up NimBLE Proxy...");
   
   // Initialize NimBLE host
+  ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init());
   nimble_port_init();
   
   // Configure host callbacks
@@ -38,7 +39,7 @@ void NimBLEProxy::setup() {
   }
   
   // Start NimBLE host task
-  nimble_port_freertos_init(nullptr);
+  nimble_port_freertos_init(NimBLEProxy::host_task_);
   
   ESP_LOGI(TAG, "NimBLE Proxy setup complete");
 }
@@ -57,6 +58,16 @@ void NimBLEProxy::on_reset_(int reason) {
   if (global_nimble_proxy != nullptr) {
     global_nimble_proxy->initialized_ = false;
   }
+}
+
+void NimBLEProxy::host_task_(void *param) {
+  ESP_LOGI(TAG, "NimBLE host task started");
+  
+  // This function will run the nimble host
+  nimble_port_run();
+  
+  // nimble_port_run() should never return, but just in case:
+  nimble_port_freertos_deinit();
 }
 
 void NimBLEProxy::start_advertising_() {
