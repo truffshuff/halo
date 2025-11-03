@@ -40,47 +40,35 @@ void NimBLEProxy::setup() {
   // Release Classic BT memory (ignore error if already released)
   (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
-  // Ensure controller is IDLE, then init (do NOT enable here)
-  esp_bt_controller_status_t st = esp_bt_controller_get_status();
-  ESP_LOGD(TAG, "BT controller status before init: %d", (int) st);
+  // Initialize and enable BT controller
+  esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
+  ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
 
-  if (st == ESP_BT_CONTROLLER_STATUS_ENABLED) {
-    ESP_LOGD(TAG, "esp_bt_controller_disable() to reach IDLE...");
-    (void) esp_bt_controller_disable();
-    st = esp_bt_controller_get_status();
-    ESP_LOGD(TAG, "Status after disable: %d", (int) st);
-  }
-  if (st == ESP_BT_CONTROLLER_STATUS_INITED) {
-    ESP_LOGD(TAG, "esp_bt_controller_deinit() to reach IDLE...");
-    (void) esp_bt_controller_deinit();
-    st = esp_bt_controller_get_status();
-    ESP_LOGD(TAG, "Status after deinit: %d", (int) st);
-  }
-
-  if (st == ESP_BT_CONTROLLER_STATUS_IDLE) {
-    ESP_LOGD(TAG, "esp_bt_controller_init(default cfg)...");
+  if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
+    ESP_LOGD(TAG, "Calling esp_bt_controller_init()...");
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     esp_err_t ret = esp_bt_controller_init(&bt_cfg);
     if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "esp_bt_controller_init failed: %s", esp_err_to_name(ret));
+      ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
       return;
     }
-    st = esp_bt_controller_get_status();
-    ESP_LOGD(TAG, "BT controller status after init: %d", (int) st);
+    ctrl_status = esp_bt_controller_get_status();
+    ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
   }
 
-  // Bind NimBLE host to controller via HCI glue (expected to enable as needed)
-  ESP_LOGD(TAG, "esp_nimble_hci_init()...");
-  (void) esp_nimble_hci_deinit();
-  esp_err_t hci_ret = esp_nimble_hci_init();
-  if (hci_ret != ESP_OK) {
-    ESP_LOGE(TAG, "esp_nimble_hci_init failed: %s", esp_err_to_name(hci_ret));
-    return;
+  ctrl_status = esp_bt_controller_get_status();
+  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
+    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
+    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
+      return;
+    }
+    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
   }
-  ESP_LOGD(TAG, "HCI glue initialized");
 
-  // Initialize NimBLE host
-  ESP_LOGD(TAG, "nimble_port_init()...");
+  // Initialize NimBLE host (handles HCI internally)
+  ESP_LOGD(TAG, "Calling nimble_port_init()...");
   nimble_port_init();
 
   // Configure host callbacks
@@ -90,6 +78,17 @@ void NimBLEProxy::setup() {
   // Initialize BLE store config before starting host task
   ESP_LOGD(TAG, "Initializing BLE store config...");
   ble_store_config_init();
+
+  // Initialize GAP/GATT services before starting host task
+  ESP_LOGD(TAG, "Initializing GAP/GATT services...");
+  ble_svc_gap_init();
+  ble_svc_gatt_init();
+
+  // Set device name
+  int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
+  if (rc != 0) {
+    ESP_LOGE(TAG, "Error setting device name: %d", rc);
+  }
 
   // Start NimBLE host task (only once)
   if (!this->host_task_started_) {
@@ -102,20 +101,12 @@ void NimBLEProxy::setup() {
 }
 
 void NimBLEProxy::on_sync_() {
-  ESP_LOGI(TAG, "NimBLE host synchronized");
-  
-  // Initialize services now that host is ready
-  ESP_LOGD(TAG, "Initializing GAP/GATT services...");
-  ble_svc_gap_init();
-  ble_svc_gatt_init();
+  ESP_LOGI(TAG, "NimBLE host synced");
 
-  // Set device name
-  int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
-  if (rc != 0) {
-    ESP_LOGE(TAG, "Error setting device name: %d", rc);
+  if (global_nimble_proxy != nullptr) {
+    global_nimble_proxy->initialized_ = true;
+    global_nimble_proxy->start_advertising_();
   }
-
-  global_nimble_proxy->start_advertising_();
 }
 
 void NimBLEProxy::on_reset_(int reason) {

@@ -12,7 +12,6 @@
 #include "nimble/nimble_port_freertos.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
-#include "esp_nimble_hci.h"
 
 namespace esphome {
 namespace nimble_proxy {
