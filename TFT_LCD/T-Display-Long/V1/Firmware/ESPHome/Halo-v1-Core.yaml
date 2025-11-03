@@ -670,6 +670,9 @@ esp32:
 
   framework:
     type: esp-idf
+    # Use ESPHome-supported framework channels. Options include: recommended (default), latest, dev
+    # 'latest' should include ESP-IDF 5.4.3+ with NimBLE fixes once rolled out in ESPHome's toolchain images.
+    version: latest
     sdkconfig_options:
       # Enable NimBLE stack (disable Bluedroid)
       CONFIG_BT_ENABLED: "y"
@@ -9377,13 +9380,6 @@ nimble_proxy:
 
 esphome:
   name: ${name}
-  # Pin PlatformIO packages to a specific ESP-IDF to pick up NimBLE fixes
-  # IDF 5.4.2 showed a panic inside esp_nimble_hci_init on this board; 5.4.3 contains BLE/NimBLE updates
-  platformio_options:
-    # Use official espressif32 platform and explicitly select PlatformIO-owned framework package
-    platform: espressif32
-    platform_packages:
-      - platformio/framework-espidf @ 3.50403.0  # ESP-IDF v5.4.3
   on_boot:
     # -------------------------------------------------------------------------
     # Boot Stage 1: Early Display Initialization (Priority 800)
