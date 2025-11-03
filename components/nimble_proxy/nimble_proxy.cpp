@@ -40,36 +40,13 @@ void NimBLEProxy::setup() {
   // Release Classic BT memory (ignore error if already released)
   (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
-  // Initialize and enable BT controller
-  esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
-  ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
-
-  if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
-    ESP_LOGD(TAG, "Calling esp_bt_controller_init()...");
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    esp_err_t ret = esp_bt_controller_init(&bt_cfg);
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
-      return;
-    }
-    ctrl_status = esp_bt_controller_get_status();
-    ESP_LOGD(TAG, "BT controller status after init: %d", static_cast<int>(ctrl_status));
-  }
-
-  ctrl_status = esp_bt_controller_get_status();
-  if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
-    ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
-    esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Bluetooth controller enable failed: %s", esp_err_to_name(ret));
-      return;
-    }
-    ESP_LOGD(TAG, "BT controller enabled in BLE mode");
-  }
-
-  // Initialize NimBLE host (handles HCI internally)
+  // Initialize NimBLE port (handles controller init internally)
   ESP_LOGD(TAG, "Calling nimble_port_init()...");
-  nimble_port_init();
+  esp_err_t ret = nimble_port_init();
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "nimble_port_init failed: %s", esp_err_to_name(ret));
+    return;
+  }
 
   // Configure host callbacks
   ble_hs_cfg.sync_cb = NimBLEProxy::on_sync_;
