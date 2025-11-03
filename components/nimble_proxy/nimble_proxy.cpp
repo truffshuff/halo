@@ -82,7 +82,8 @@ void NimBLEProxy::on_sync_() {
 
   if (global_nimble_proxy != nullptr) {
     global_nimble_proxy->initialized_ = true;
-    global_nimble_proxy->start_advertising_();
+    // Start scanning instead of advertising for BLE proxy functionality
+    global_nimble_proxy->start_scan_();
   }
 }
 
@@ -95,6 +96,69 @@ void NimBLEProxy::host_task_(void *param) {
   (void) param;
   nimble_port_run();
   nimble_port_freertos_deinit();
+}
+
+void NimBLEProxy::start_scan_() {
+  if (this->scanning_) {
+    ESP_LOGD(TAG, "Already scanning");
+    return;
+  }
+
+  struct ble_gap_disc_params scan_params;
+  memset(&scan_params, 0, sizeof(scan_params));
+
+  // Configure scan parameters
+  scan_params.itvl = 512;  // 320ms (N * 0.625ms)
+  scan_params.window = 48;  // 30ms
+  scan_params.filter_policy = BLE_HCI_SCAN_FILT_NO_WL;
+  scan_params.limited = 0;  // General discovery
+  scan_params.passive = 0;  // Active scanning
+  scan_params.filter_duplicates = 0;  // Report all advertisements
+
+  ESP_LOGI(TAG, "Starting BLE scan...");
+  int rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &scan_params,
+                        NimBLEProxy::scan_callback_, NULL);
+  if (rc != 0) {
+    ESP_LOGE(TAG, "Error starting scan: %d", rc);
+    return;
+  }
+
+  this->scanning_ = true;
+  ESP_LOGI(TAG, "BLE scan started");
+}
+
+void NimBLEProxy::stop_scan_() {
+  if (!this->scanning_) {
+    return;
+  }
+
+  int rc = ble_gap_disc_cancel();
+  if (rc != 0) {
+    ESP_LOGE(TAG, "Error stopping scan: %d", rc);
+    return;
+  }
+
+  this->scanning_ = false;
+  ESP_LOGI(TAG, "BLE scan stopped");
+}
+
+int NimBLEProxy::scan_callback_(struct ble_gap_event *event, void *arg) {
+  if (event->type != BLE_GAP_EVENT_DISC) {
+    return 0;
+  }
+
+  struct ble_gap_disc_desc *disc = &event->disc;
+
+  // Log discovered device
+  ESP_LOGD(TAG, "Device found: %02x:%02x:%02x:%02x:%02x:%02x RSSI=%d",
+           disc->addr.val[5], disc->addr.val[4], disc->addr.val[3],
+           disc->addr.val[2], disc->addr.val[1], disc->addr.val[0],
+           disc->rssi);
+
+  // TODO: Send scan results to Home Assistant via ESPHome API
+  // This requires implementing the bluetooth proxy API protocol
+
+  return 0;
 }
 
 void NimBLEProxy::start_advertising_() {
