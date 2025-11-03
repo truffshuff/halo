@@ -717,8 +717,13 @@ esp32:
       CONFIG_SPIRAM_CACHE_WORKAROUND: "y"  # Enable cache workaround for stability
       CONFIG_SPIRAM_BANKSWITCH_ENABLE: "n"  # Disable bank switching for better performance
 
-      # LVGL configuration for PSRAM
-      # Allow LVGL buffers to use PSRAM
+      # DMA-capable PSRAM (ESP32-S3 feature)
+      # Allows DMA transfers directly to/from PSRAM for display and peripherals
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"        # Allow instruction fetch from PSRAM
+      CONFIG_SPIRAM_RODATA: "y"                    # Place read-only data in PSRAM
+      
+      # LVGL configuration for PSRAM with DMA
+      # Allow LVGL buffers to use DMAable PSRAM
       CONFIG_LV_MEM_CUSTOM: "y"
       CONFIG_LV_MEM_CUSTOM_ALLOC_EXTERNAL: "y"      # Force LVGL to use PSRAM
       CONFIG_LV_MEM_SIZE: "262144"                  # 256KB LVGL heap for large buffers
@@ -5864,9 +5869,13 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 30%  # Can now use larger buffers since LVGL uses PSRAM via CONFIG_LV_MEM_CUSTOM
-                    # With PSRAM enabled, display buffers are allocated in external RAM
-                    # This improves rendering performance without consuming internal heap
+  buffer_size: 30%  # Larger buffers in PSRAM for better performance
+                    # ESP32-S3 PSRAM is DMAable, so buffers can use DMA transfers
+  # Use DMAable PSRAM for frame buffers (ESP32-S3 feature)
+  # This combines DMA capability with external PSRAM for optimal performance
+  byte_order: big_endian
+  color_depth: 16
+  
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
   disp_bg_image: none
