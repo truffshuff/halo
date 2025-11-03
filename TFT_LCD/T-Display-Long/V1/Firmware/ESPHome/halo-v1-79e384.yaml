@@ -30,6 +30,9 @@ esphome:
     board_build.psram_type: opi
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
+    build_flags:
+      - "-DCONFIG_BT_NIMBLE_ENABLED=1"
+      - "-DCONFIG_NIMBLE_CPP_LOG_LEVEL=2"
 
   min_version: 2025.10.3
 
