@@ -21,6 +21,22 @@ substitutions:
   weather_daily_refresh_interval: "3600"   # 60 minutes for daily forecast
   weather_hourly_refresh_interval: "900"   # 15 minutes for hourly forecast
 
+  # --------------------------------------------------------------------------
+  # Required substitutions referenced throughout this config
+  # Values can come from secrets.yaml where appropriate
+  # --------------------------------------------------------------------------
+  # Home Assistant API base URL and token (JWT without "Bearer ")
+  ha_url: !secret ha_url
+  ha_token: !secret ha_token
+  # Weather entity ID in Home Assistant (override if different)
+  weather_entity_id: weather.hhut
+  # Sensors used for current temperature display (override as needed)
+  current_temp_sensor: sensor.outdoor_temperature
+  apparent_temp_sensor: sensor.outdoor_apparent_temperature
+  # WiFi credentials (pulled from secrets)
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
+
 # ============================================================================
 # Configuration Architecture - Monolithic Design
 # ============================================================================
@@ -9360,6 +9376,7 @@ nimble_proxy:
 # This saves power and reduces heap usage when HA is disconnected
 
 esphome:
+  name: ${name}
   on_boot:
     # -------------------------------------------------------------------------
     # Boot Stage 1: Early Display Initialization (Priority 800)
