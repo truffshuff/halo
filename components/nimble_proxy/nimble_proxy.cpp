@@ -23,33 +23,8 @@ void NimBLEProxy::setup() {
     return;
   }
 
-  ESP_LOGI(TAG, "Setting up NimBLE Proxy...");
-  
-  // Ensure NVS is initialized (required by Bluetooth stack)
-  esp_err_t nvs_ret = nvs_flash_init();
-  if (nvs_ret == ESP_ERR_NVS_NO_FREE_PAGES || nvs_ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    ESP_LOGW(TAG, "NVS init returned %s, erasing NVS...", esp_err_to_name(nvs_ret));
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    nvs_ret = nvs_flash_init();
-  }
-  if (nvs_ret != ESP_OK) {
-    ESP_LOGE(TAG, "NVS init failed: %s", esp_err_to_name(nvs_ret));
-    return;
-  }
-  
-  // Release Classic BT memory (ignore error if already released)
-  (void) esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
-
-  // Initialize BLE controller (BLE-only) and HCI glue explicitly
-  esp_bt_controller_status_t ctrl_status = esp_bt_controller_get_status();
-  ESP_LOGD(TAG, "BT controller status before init: %d", static_cast<int>(ctrl_status));
-
-  if (ctrl_status == ESP_BT_CONTROLLER_STATUS_IDLE) {
-    ESP_LOGD(TAG, "Calling esp_bt_controller_init()...");
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    esp_err_t ret = esp_bt_controller_init(&bt_cfg);
-    if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Bluetooth controller init failed: %s", esp_err_to_name(ret));
+  // HCI-first: let NimBLE glue handle controller bring-up internally
+  ESP_LOGD(TAG, "Initializing NimBLE HCI glue (HCI-first)...");
       return;
     }
     ctrl_status = esp_bt_controller_get_status();
@@ -57,6 +32,7 @@ void NimBLEProxy::setup() {
   }
 
   ctrl_status = esp_bt_controller_get_status();
+  ESP_LOGD(TAG, "NimBLE HCI init OK");
   if (ctrl_status != ESP_BT_CONTROLLER_STATUS_ENABLED) {
     ESP_LOGD(TAG, "Enabling BT controller in BLE mode...");
     esp_err_t ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
@@ -67,10 +43,13 @@ void NimBLEProxy::setup() {
     ESP_LOGD(TAG, "BT controller enabled in BLE mode");
   }
 
+  // Initialize NimBLE HCI glue (reset any prior state first)
   ESP_LOGD(TAG, "Initializing NimBLE HCI glue...");
+  (void) esp_nimble_hci_deinit();
   esp_err_t hci_ret = esp_nimble_hci_init();
   if (hci_ret != ESP_OK) {
     ESP_LOGE(TAG, "esp_nimble_hci_init failed: %s", esp_err_to_name(hci_ret));
+    ESP_LOGE(TAG, "Aborting NimBLE setup to avoid crash");
     return;
   }
 
