@@ -2227,9 +2227,11 @@ script:
                   id(weather_daily_last_update) = millis();
                   id(weather_last_update) = millis();  // Keep for backward compatibility
                   
-              # Update display after fetching
+              # Update display after fetching (with delays to prevent SPI contention)
               - script.execute: update_weather_display
+              - delay: 50ms
               - script.execute: update_weather_icon_color
+              - delay: 50ms
               - script.execute: update_daily_forecast_display
 
   # Script to fetch HOURLY forecast data via HA REST API
@@ -2518,7 +2520,7 @@ script:
 
   # Script to update hourly forecast pages
   - id: update_hourly_forecast_display
-    mode: restart  # Allow restart if called again while running
+    mode: single  # Queue if already running to prevent restart overhead
     then:
       - logger.log: "Updating hourly forecast display..."
       # Update Hour 1
@@ -3417,7 +3419,7 @@ script:
 
   # Script to update daily forecast pages
   - id: update_daily_forecast_display
-    mode: restart  # Allow restart if called again while running
+    mode: single  # Queue if already running to prevent restart overhead
     then:
       - logger.log: "Updating daily forecast display..."
       # Update Day 2
