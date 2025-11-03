@@ -31,12 +31,16 @@ class NimBLEProxy : public Component {
   uint8_t max_connections_{3};
   bool initialized_{false};
   bool host_task_started_{false};
-  
+  bool scanning_{false};
+
+  void start_scan_();
+  void stop_scan_();
   void start_advertising_();
   void setup_services_();
-  
+
   // NimBLE callbacks
   static int gap_event_handler_(struct ble_gap_event *event, void *arg);
+  static int scan_callback_(struct ble_gap_event *event, void *arg);
   static void on_sync_();
   static void on_reset_(int reason);
   static void host_task_(void *param);
