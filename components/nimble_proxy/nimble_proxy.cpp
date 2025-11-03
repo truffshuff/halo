@@ -68,6 +68,14 @@ void NimBLEProxy::setup() {
     ESP_LOGD(TAG, "BT controller enabled in BLE mode");
   }
   
+  // Initialize NimBLE HCI glue now that controller is enabled
+  ESP_LOGD(TAG, "Initializing NimBLE HCI glue...");
+  esp_err_t hci_ret = esp_nimble_hci_init();
+  if (hci_ret != ESP_OK) {
+    ESP_LOGE(TAG, "esp_nimble_hci_init failed: %s", esp_err_to_name(hci_ret));
+    return;  // Abort setup to avoid host task crash
+  }
+  
   // Initialize NimBLE host (HCI glue is handled by NimBLE port when controller is enabled)
   ESP_LOGD(TAG, "Calling nimble_port_init()...");
   nimble_port_init();
@@ -76,6 +84,20 @@ void NimBLEProxy::setup() {
   ble_hs_cfg.sync_cb = NimBLEProxy::on_sync_;
   ble_hs_cfg.reset_cb = NimBLEProxy::on_reset_;
   
+  // Initialize services and storage before starting host task
+  ESP_LOGD(TAG, "Initializing GAP/GATT services...");
+  ble_svc_gap_init();
+  ble_svc_gatt_init();
+
+  ESP_LOGD(TAG, "Initializing BLE store config...");
+  ble_store_config_init();
+
+  // Set device name (can be set before advertising starts)
+  int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
+  if (rc != 0) {
+    ESP_LOGE(TAG, "Error setting device name: %d", rc);
+  }
+
   // Start NimBLE host task (only once)
   if (!this->host_task_started_) {
     ESP_LOGD(TAG, "Starting NimBLE host task...");
@@ -91,21 +113,6 @@ void NimBLEProxy::on_sync_() {
   
   if (global_nimble_proxy != nullptr) {
     global_nimble_proxy->initialized_ = true;
-    // Initialize services after host is ready
-    ESP_LOGD(TAG, "Initializing GAP/GATT services...");
-    ble_svc_gap_init();
-    ble_svc_gatt_init();
-
-    // Initialize default storage (bonds/keys) for NimBLE
-    ESP_LOGD(TAG, "Initializing BLE store config...");
-    ble_store_config_init();
-
-    // Set device name
-    int rc = ble_svc_gap_device_name_set("ESPHome NimBLE Proxy");
-    if (rc != 0) {
-      ESP_LOGE(TAG, "Error setting device name: %d", rc);
-    }
-
     global_nimble_proxy->start_advertising_();
   }
 }
