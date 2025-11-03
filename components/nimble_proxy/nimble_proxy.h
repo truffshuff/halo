@@ -31,6 +31,7 @@ class NimBLEProxy : public Component {
   bool active_{true};
   uint8_t max_connections_{3};
   bool initialized_{false};
+  bool host_task_started_{false};
   
   void start_advertising_();
   void setup_services_();
