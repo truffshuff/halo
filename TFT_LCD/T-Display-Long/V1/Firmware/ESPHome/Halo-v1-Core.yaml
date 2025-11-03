@@ -9377,6 +9377,13 @@ nimble_proxy:
 
 esphome:
   name: ${name}
+  # Pin PlatformIO packages to a specific ESP-IDF to pick up NimBLE fixes
+  # IDF 5.4.2 showed a panic inside esp_nimble_hci_init on this board; 5.4.3 contains BLE/NimBLE updates
+  platformio_options:
+    platform_packages:
+      - framework-espidf @ 3.50403.0  # ESP-IDF v5.4.3
+    # If you still experience issues, try an older stable platform mapping:
+    # platform: espressif32@6.5.0  # (typically maps to IDF 5.2.x)
   on_boot:
     # -------------------------------------------------------------------------
     # Boot Stage 1: Early Display Initialization (Priority 800)
