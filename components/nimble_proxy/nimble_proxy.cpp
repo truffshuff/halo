@@ -297,7 +297,12 @@ void NimBLEProxy::setup_services_() {
 void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
 #ifdef USE_API
   if (!this->adv_buffer_allocated_ || this->adv_buffer_ == nullptr) {
+    ESP_LOGW(TAG, "Advertisement buffer not allocated, skipping advertisement");
     return;
+  }
+
+  if (this->api_connection_ == nullptr) {
+    ESP_LOGV(TAG, "No API connection, buffering advertisement (buffer has %d)", this->adv_buffer_count_);
   }
 
   // Cast the opaque buffer to the correct type
@@ -341,6 +346,9 @@ void NimBLEProxy::send_advertisements_() {
     return;
   }
 
+  ESP_LOGD(TAG, "Attempting to send %d advertisements (api_connection=%p)",
+           this->adv_buffer_count_, this->api_connection_);
+
   // Cast the opaque buffer to the correct type
   auto *buffer = static_cast<esphome::api::BluetoothLERawAdvertisement *>(this->adv_buffer_);
 
@@ -354,6 +362,8 @@ void NimBLEProxy::send_advertisements_() {
 
   // Send to the connected Home Assistant API client
   send_bluetooth_advertisements_to_client(this->api_connection_, resp);
+
+  ESP_LOGD(TAG, "Sent %d advertisements to Home Assistant", this->adv_buffer_count_);
 
   // Reset buffer
   this->adv_buffer_count_ = 0;
