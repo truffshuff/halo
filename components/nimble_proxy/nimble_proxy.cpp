@@ -41,6 +41,16 @@ static const char *const TAG = "nimble_proxy";
 // Static pointer for callbacks
 static NimBLEProxy *global_nimble_proxy = nullptr;
 
+}  // namespace nimble_proxy
+
+// Create the global_bluetooth_proxy alias in the bluetooth_proxy namespace
+// This allows the API component to access nimble_proxy via bluetooth_proxy::global_bluetooth_proxy
+namespace bluetooth_proxy {
+  NimBLEProxy *&global_bluetooth_proxy = nimble_proxy::global_nimble_proxy;
+}
+
+namespace nimble_proxy {
+
 void NimBLEProxy::setup() {
   global_nimble_proxy = this;
 
