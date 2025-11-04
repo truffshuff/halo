@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.01.0746"
+  version: "25.11.04.1546"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -54,6 +54,28 @@ substitutions:
 #   - Large file size (8000+ lines)
 #   - Cannot selectively disable features without commenting out sections
 #   - Longer compile times compared to modular package-based approach
+# ============================================================================
+
+# ============================================================================
+# Feature Components - All Defined in This File
+# ============================================================================
+# This monolithic file includes ALL features enabled by default:
+#
+# INCLUDED FEATURES:
+#   ✓ Air Quality Monitoring (SCD40, SEN55, AGS10 sensors)
+#   ✓ Weather Display (current conditions + 10-day forecast + 24-hour forecast)
+#   ✓ WiFi Status Page (signal strength, IP, Home Assistant connection)
+#   ✓ WireGuard VPN (encrypted tunnel to home network)
+#   ✓ BLE (Bluetooth Low Energy scanning)
+#   ✓ LVGL UI (all pages: vertical clock, AirQ, WiFi, weather)
+#   ✓ RGB LED effects (AQI-based color, weather-based, manual effects)
+#
+# To disable a feature, you would need to comment out the relevant sections
+# throughout this file (sensors, globals, LVGL pages, etc.)
+#
+# DEPENDENCIES:
+#   - secrets.yaml: WiFi credentials, HA token, WireGuard keys
+#   - fonts/materialdesignicons-webfont.ttf: Weather icons
 # ============================================================================
 
 globals:
@@ -658,28 +680,6 @@ font:
       ]
 
 # ============================================================================
-# Feature Components - All Defined in This File
-# ============================================================================
-# This monolithic file includes ALL features enabled by default:
-#
-# INCLUDED FEATURES:
-#   ✓ Air Quality Monitoring (SCD40, SEN55, AGS10 sensors)
-#   ✓ Weather Display (current conditions + 10-day forecast + 24-hour forecast)
-#   ✓ WiFi Status Page (signal strength, IP, Home Assistant connection)
-#   ✓ WireGuard VPN (encrypted tunnel to home network)
-#   ✓ BLE (Bluetooth Low Energy scanning)
-#   ✓ LVGL UI (all pages: vertical clock, AirQ, WiFi, weather)
-#   ✓ RGB LED effects (AQI-based color, weather-based, manual effects)
-#
-# To disable a feature, you would need to comment out the relevant sections
-# throughout this file (sensors, globals, LVGL pages, etc.)
-#
-# DEPENDENCIES:
-#   - secrets.yaml: WiFi credentials, HA token, WireGuard keys
-#   - fonts/materialdesignicons-webfont.ttf: Weather icons
-# ============================================================================
-
-# ============================================================================
 # PSRAM Configuration
 # ============================================================================
 # ESP32-S3 has 8MB external PSRAM (Pseudo Static RAM) for expanded memory.
@@ -730,22 +730,22 @@ esp32:
 
 external_components:
   - source: github://truffshuff/esphome-components
-    components: [axs15231, sy6970]
+    components: [axs15231, sy6970, nimble_proxy, bluetooth_proxy]
   
-  # NimBLE compatibility and proxy components
-  - source:
-      type: git
-      url: https://github.com/truffshuff/halo
-      ref: Test
-    components: [nimble_proxy, bluetooth_proxy]
-    refresh: always
+  # # NimBLE compatibility and proxy components
+  # - source:
+  #     type: git
+  #     url: https://github.com/truffshuff/halo
+  #     ref: Test
+  #   components: [nimble_proxy, bluetooth_proxy]
+  #   refresh: always
 
   # - source: github://pr#7770 # RMT driver, remove rmt_channel when using esp-idf
   #   components: [ remote_base, remote_receiver, remote_transmitter, esp32_rmt, esp32_rmt_led_strip ]
   #   refresh: 0s
 
-# NimBLE compatibility component removed - using native ESP-IDF NimBLE
-# nimble_compat:
+  # NimBLE compatibility component removed - using native ESP-IDF NimBLE
+  # nimble_compat:
 
 spi:
   id: lily_spi
@@ -9425,29 +9425,6 @@ button:
     on_press:
       - script.execute: fetch_weather_data
 
-  - platform: template
-    name: "Debug Daily Forecast"
-    id: btn_debug_daily_forecast
-    on_press:
-      - homeassistant.action:
-          action: weather.get_forecasts
-          capture_response: true
-          data:
-            entity_id: ${weather_entity_id}
-            type: daily
-          on_success:
-            - lambda: |-
-                JsonObjectConst root = response;
-                if (response["response"].is<JsonObjectConst>()) {
-                  root = response["response"].as<JsonObjectConst>();
-                }
-
-                std::string output;
-                serializeJsonPretty(root, output);
-                ESP_LOGI("weather", "Daily forecast:\n%s", output.c_str());
-          on_error:
-            - logger.log: "Daily forecast call failed"
-
   # SCD40 CO2 Sensor Calibration to Outdoor Air
   # ⚠️ WARNING: Use ONLY outdoors or in well-ventilated area!
   #
@@ -9480,90 +9457,7 @@ button:
     entity_category: config
     on_press:
       - sen5x.start_fan_autoclean: sen55
-  # - platform: template
-  #   name: "Test Weather Call"
-  #   id: btn_test_weather_call
-  #   on_press:
-  #     - homeassistant.action:
-  #         action: weather.get_forecasts
-  #         data:
-  #           entity_id: weather.hhut
-  #           type: daily
-  #           return_response: true
-  #         capture_response: true
-  #         on_success:
-  #           - lambda: |-
-  #               // response is JsonObjectConst
-  #               if (!response.containsKey("response")) {
-  #                 ESP_LOGE("weather", "Missing 'response' key!");
-  #                 return;
-  #               }
-  #               const auto &resp_obj = response["response"];
-  #               if (!resp_obj.containsKey("weather.hhut")) {
-  #                 ESP_LOGE("weather", "Missing 'weather.hhut'!");
-  #                 return;
-  #               }
-  #               const auto &entity = resp_obj["weather.hhut"];
-  #               if (!entity.containsKey("forecast")) {
-  #                 ESP_LOGE("weather", "Missing 'forecast'!");
-  #                 return;
-  #               }
-  #               const auto &forecast = entity["forecast"];
-  #               for (size_t i = 0; i < forecast.size(); i++) {
-  #                 const auto &day = forecast[i];
-  #                 float temp = day.containsKey("temperature") ? day["temperature"].as<float>() : NAN;
-  #                 const char *cond = day.containsKey("condition") ? day["condition"].as<std::string>().c_str() : "N/A";
-  #                 ESP_LOGI("weather", "Day %d temp: %.1f, condition: %s", i, temp, cond);
-  #               }
-  #         on_error:
-  #           - logger.log: "Failed to call weather.get_forecasts!"
-
-  # - platform: template
-  #   name: "Test example from ESPHome"
-  #   id: btn_test_example
-  #   on_press:
-  #     - homeassistant.action:
-  #         action: weather.get_forecasts
-  #         data:
-  #           entity_id: weather.hhut
-  #           type: hourly
-  #           return_response: true
-  #         capture_response: true
-  #         on_success:
-  #           - lambda: |-
-  #               if (!response.containsKey("response")) return;
-  #               const auto &resp_obj = response["response"];
-  #               if (!resp_obj.containsKey("weather.hhut")) return;
-  #               const auto &entity = resp_obj["weather.hhut"];
-  #               if (!entity.containsKey("forecast")) return;
-  #               const auto &forecast = entity["forecast"];
-  #               if (forecast.size() == 0) return;
-  #               const auto &first_hour = forecast[0];
-  #               float temperature = first_hour.containsKey("temperature") ? first_hour["temperature"].as<float>() : NAN;
-  #               ESP_LOGI("weather", "Temperature next hour: %.1f", temperature);
-
-  # - platform: template
-  #   name: "Test Weather Forecast"
-  #   id: btn_test_forecast
-  #   on_press:
-  #     - homeassistant.action:
-  #         action: template.render
-  #         data:
-  #           template: "{{ state_attr('weather.hhut', 'forecast') | tojson }}"
-  #         capture_response: true
-  #         on_success:
-  #           - lambda: |-
-  #               if (!response.containsKey("result")) {
-  #                 ESP_LOGW("weather", "No 'result' key in template response!");
-  #                 return;
-  #               }
-  #               const auto &result = response["result"];
-  #               std::string forecast_json = result.as<std::string>();
-  #               ESP_LOGI("weather", "Forecast attribute JSON:\n%s", forecast_json.c_str());
-  #         on_error:
-  #           - lambda: |-
-  #               ESP_LOGE("weather", "❌ Forecast fetch FAILED!");
-
+  
 # ============================================================================
 # WiFi Configuration
 # ============================================================================
@@ -9657,17 +9551,6 @@ bluetooth_proxy:
 nimble_proxy:
   active: true
   max_connections: 3
-
-# ESPHome native components (incompatible with pure NimBLE)
-# esp32_ble_tracker:
-#   id: ble_tracker
-#   scan_parameters:
-#     interval: 320ms
-#     window: 30ms
-#     active: true
-
-# bluetooth_proxy:
-#   active: true
 
 # ESP32 Improv Configuration (Optional)
 # Allows WiFi provisioning via BLE using the Improv standard
