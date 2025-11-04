@@ -291,8 +291,10 @@ void NimBLEProxy::send_advertisements_() {
   }
 
   // Send to all connected API clients
-  for (auto *client : App.get_api_server()->get_clients()) {
-    client->send_bluetooth_le_raw_advertisements_response(resp);
+  if (global_api_server != nullptr) {
+    for (auto *client : global_api_server->get_clients()) {
+      client->send_bluetooth_le_raw_advertisements_response(resp);
+    }
   }
 
   ESP_LOGV(TAG, "Sent %d BLE advertisements to Home Assistant", this->adv_buffer_count_);
