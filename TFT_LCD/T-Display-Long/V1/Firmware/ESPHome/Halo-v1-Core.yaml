@@ -2606,12 +2606,12 @@ script:
   - id: update_hourly_forecast_display
     mode: single  # Queue if already running to prevent restart overhead
     then:
-      # Skip if not on hourly forecast page (index 4) to reduce SPI traffic
+      # Skip if not on hourly forecast page to reduce SPI traffic
       - if:
           condition:
-            lambda: 'return id(current_page_name) != "daily_forecast";'
+            lambda: 'return id(current_page_name) != "hourly_forecast";'
           then:
-            - logger.log: "Skipping hourly forecast update (not on page 4)"
+            - logger.log: "Skipping hourly forecast update (not on hourly forecast page)"
             - script.stop: update_hourly_forecast_display
       - logger.log: "Updating hourly forecast display..."
       # Update Hour 1
@@ -3516,12 +3516,12 @@ script:
   - id: update_daily_forecast_display
     mode: single  # Queue if already running to prevent restart overhead
     then:
-      # Skip if not on daily forecast page (index 5) to reduce SPI traffic
+      # Skip if not on daily forecast page to reduce SPI traffic
       - if:
           condition:
-            lambda: 'return id(current_page_name) != "hourly_forecast";'
+            lambda: 'return id(current_page_name) != "daily_forecast";'
           then:
-            - logger.log: "Skipping daily forecast update (not on page 5)"
+            - logger.log: "Skipping daily forecast update (not on daily forecast page)"
             - script.stop: update_daily_forecast_display
       - logger.log: "Updating daily forecast display..."
       # Update Day 2
