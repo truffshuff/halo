@@ -48,8 +48,8 @@ class NimBLEProxy : public Component {
   template<typename T> void bluetooth_gatt_notify(const T &msg) { }
   void send_connections_free(void *conn) { }
   void bluetooth_scanner_set_mode(bool mode) { }
-  uint32_t get_feature_flags() { return 0; }
-  std::string get_bluetooth_mac_address_pretty() { return "00:00:00:00:00:00"; }
+  uint32_t get_feature_flags();
+  std::string get_bluetooth_mac_address_pretty();
 
  protected:
   bool active_{true};

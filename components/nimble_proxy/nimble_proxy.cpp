@@ -364,6 +364,35 @@ void NimBLEProxy::loop() {
   }
 }
 
+uint32_t NimBLEProxy::get_feature_flags() {
+  // Define feature flags (matching bluetooth_proxy enums)
+  const uint32_t FEATURE_PASSIVE_SCAN = 1 << 0;
+  const uint32_t FEATURE_ACTIVE_CONNECTIONS = 1 << 1;
+  const uint32_t FEATURE_REMOTE_CACHING = 1 << 2;
+  const uint32_t FEATURE_PAIRING = 1 << 3;
+  const uint32_t FEATURE_CACHE_CLEARING = 1 << 4;
+  const uint32_t FEATURE_RAW_ADVERTISEMENTS = 1 << 5;
+
+  // We support passive scanning and raw advertisements
+  // Active connections not yet implemented
+  return FEATURE_PASSIVE_SCAN | FEATURE_RAW_ADVERTISEMENTS;
+}
+
+std::string NimBLEProxy::get_bluetooth_mac_address_pretty() {
+  // Get the ESP32's BLE MAC address
+  uint8_t mac[6];
+  esp_err_t err = esp_read_mac(mac, ESP_MAC_BT);
+  if (err != ESP_OK) {
+    ESP_LOGW(TAG, "Failed to read BLE MAC address: %s", esp_err_to_name(err));
+    return "00:00:00:00:00:00";
+  }
+
+  char mac_str[18];
+  snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return std::string(mac_str);
+}
+
 void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
   // Add this API connection to our list if not already present
   for (auto *existing : this->api_connections_) {
