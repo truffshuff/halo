@@ -1,6 +1,8 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.const import CONF_ID
+from pathlib import Path
+import shutil
 
 CODEOWNERS = ["@truffshuff"]
 DEPENDENCIES = ["api"]
@@ -22,13 +24,26 @@ CONFIG_SCHEMA = cv.Schema(
 
 
 async def to_code(config):
+    import os
+
     # Define USE_BLUETOOTH_PROXY to enable bluetooth proxy API types
     cg.add_define("USE_BLUETOOTH_PROXY")
 
-    # Ensure our shim headers are on the include path so API can find
-    # esphome/components/bluetooth_proxy/bluetooth_proxy.h
-    # Add the project root so $PROJECT_DIR/esphome/... is resolvable
-    cg.add_build_flag("-I" + str(cg.RawExpression("$PROJECT_DIR")))
+    # Copy the stub bluetooth_proxy header to the build directory
+    # This is needed because ESPHome's API component includes it
+    component_dir = Path(__file__).parent
+    stub_header_src = component_dir / "esphome" / "components" / "bluetooth_proxy" / "bluetooth_proxy.h"
+
+    # Get the actual build directory from CORE
+    from esphome import cpp_generator as cpp
+    from esphome.core import CORE
+    build_dir = Path(CORE.relative_build_path("src"))
+    stub_header_dst = build_dir / "esphome" / "components" / "bluetooth_proxy"
+
+    # Ensure the destination directory exists and copy the header
+    stub_header_dst.mkdir(parents=True, exist_ok=True)
+    if stub_header_src.exists():
+        shutil.copy2(str(stub_header_src), str(stub_header_dst / "bluetooth_proxy.h"))
 
     # Provide sane defaults for API compile-time constants if not set
     cg.add_build_flag("-DBLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE=5")
