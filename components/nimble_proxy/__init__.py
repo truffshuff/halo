@@ -25,6 +25,15 @@ async def to_code(config):
     # Define USE_BLUETOOTH_PROXY to enable bluetooth proxy API types
     cg.add_define("USE_BLUETOOTH_PROXY")
 
+    # Ensure our shim headers are on the include path so API can find
+    # esphome/components/bluetooth_proxy/bluetooth_proxy.h
+    # This points to the external_components copy of this component.
+    cg.add_build_flag("-I" + str(cg.RawExpression("$PROJECT_DIR/.esphome/external_components/nimble_proxy")))
+
+    # Provide sane defaults for API compile-time constants if not set
+    cg.add_build_flag("-DBLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE=5")
+    cg.add_build_flag("-DBLUETOOTH_PROXY_MAX_CONNECTIONS=%d" % config[CONF_MAX_CONNECTIONS])
+
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
