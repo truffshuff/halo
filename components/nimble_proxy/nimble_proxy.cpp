@@ -45,10 +45,11 @@ static NimBLEProxy *global_nimble_proxy = nullptr;
 
 }  // namespace nimble_proxy
 
-// Create the global_bluetooth_proxy alias in the bluetooth_proxy namespace
+// Create the global_bluetooth_proxy pointer in the bluetooth_proxy namespace
 // This allows the API component to access nimble_proxy via bluetooth_proxy::global_bluetooth_proxy
 namespace bluetooth_proxy {
-  nimble_proxy::NimBLEProxy *&global_bluetooth_proxy = nimble_proxy::global_nimble_proxy;
+  // Define the actual storage for the pointer here
+  nimble_proxy::NimBLEProxy *global_bluetooth_proxy = nullptr;
 }
 
 namespace nimble_proxy {
@@ -57,7 +58,9 @@ void NimBLEProxy::setup() {
   ESP_LOGI(TAG, "NimBLEProxy::setup() called on instance %p", this);
   ESP_LOGI(TAG, "Setting global_nimble_proxy from %p to %p", global_nimble_proxy, this);
   global_nimble_proxy = this;
-  ESP_LOGI(TAG, "Verify global_nimble_proxy is now %p", global_nimble_proxy);
+  bluetooth_proxy::global_bluetooth_proxy = this;
+  ESP_LOGI(TAG, "Verify global_nimble_proxy=%p, bluetooth_proxy::global=%p",
+           global_nimble_proxy, bluetooth_proxy::global_bluetooth_proxy);
 
   if (!this->active_) {
     ESP_LOGI(TAG, "NimBLE Proxy is disabled");
