@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.04.1600"
+  version: "25.11.04.1612"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -2594,6 +2594,45 @@ script:
             char buf[32];
             snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
             return std::string(buf);
+
+      # Calculate and update weather gauge percentage locally
+      # Formula: ((apparent - low) / (high - low)) * 100
+      # This replaces the need for a Home Assistant template sensor
+      - lambda: |-
+          float apparent = id(weather_current_apparent_temp);
+          float high = id(weather_forecast_temp_high)[0];
+          float low = id(weather_forecast_temp_low)[0];
+          
+          // Only calculate if we have valid values
+          if (!isnan(apparent) && !isnan(high) && !isnan(low)) {
+            float range = high - low;
+            
+            // Prevent division by zero
+            if (range == 0) {
+              range = 1.0;
+            }
+            
+            // Calculate percentage
+            float pct = ((apparent - low) / range) * 100.0;
+            
+            // Clamp between 0 and 100
+            if (pct < 0) pct = 0;
+            if (pct > 100) pct = 100;
+            
+            // Round to nearest integer
+            int gauge_value = (int)(pct + 0.5);
+            
+            // Update the gauge
+            auto call = id(weather_gauge_value).make_call();
+            call.set_value(gauge_value);
+            call.perform();
+            
+            ESP_LOGI("weather", "Gauge calculation: apparent=%.1f, high=%.1f, low=%.1f, pct=%d%%", 
+                     apparent, high, low, gauge_value);
+          } else {
+            ESP_LOGW("weather", "Cannot calculate gauge value - missing data (apparent=%.1f, high=%.1f, low=%.1f)", 
+                     apparent, high, low);
+          }
 
       - logger.log: "✓ Weather display labels updated (page 3)"
 
