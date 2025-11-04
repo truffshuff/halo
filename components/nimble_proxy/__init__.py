@@ -27,11 +27,8 @@ async def to_code(config):
 
     # Ensure our shim headers are on the include path so API can find
     # esphome/components/bluetooth_proxy/bluetooth_proxy.h
-    # This points to the external_components copy of this component.
-    cg.add_build_flag("-I" + str(cg.RawExpression("$PROJECT_DIR/.esphome/external_components/nimble_proxy")))
-
-    # Also add the local repo path where the shim header lives
-    cg.add_build_flag("-I" + str(cg.RawExpression("$PROJECT_DIR/components/nimble_proxy")))
+    # Add the project root so $PROJECT_DIR/esphome/... is resolvable
+    cg.add_build_flag("-I" + str(cg.RawExpression("$PROJECT_DIR")))
 
     # Provide sane defaults for API compile-time constants if not set
     cg.add_build_flag("-DBLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE=5")
