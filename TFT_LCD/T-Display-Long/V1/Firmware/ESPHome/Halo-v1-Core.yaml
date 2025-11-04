@@ -6532,12 +6532,13 @@ lvgl:
                   id: aqi_widget
                   bg_color: !lambda |-
                     float aqi = id(computed_halo_aqi).state;
-                    if (aqi <= 50) return 0x76fa76;       // green
-                    else if (aqi <= 100) return 0xffff00; // yellow
-                    else if (aqi <= 150) return 0xffa500; // orange
-                    else if (aqi <= 200) return 0xff0000; // red
-                    else if (aqi <= 300) return 0x800080; // purple
-                    else return 0x800000;                 // maroon
+                    if (aqi <= 50) return id(my_green);
+                    else if (aqi <= 100) return id(my_yellow);
+                    else if (aqi <= 150) return id(my_orange);
+                    else if (aqi <= 200) return id(my_red);
+                    // For purple (300) and maroon (>300), use hex since they're not defined
+                    else if (aqi <= 300) return lv_color_hex(0x800080);
+                    else return lv_color_hex(0x800000);
         - logger.log: "Forced sensor UI update on AirQ page load"
       widgets:
         # Header: Logo, Time, WiFi Status
