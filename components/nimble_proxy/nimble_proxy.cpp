@@ -23,6 +23,7 @@
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
 #include "esp_err.h"
+#include "esp_system.h"
 #include "nvs_flash.h"
 #include <cstring>
 
@@ -379,17 +380,31 @@ uint32_t NimBLEProxy::get_feature_flags() {
 }
 
 std::string NimBLEProxy::get_bluetooth_mac_address_pretty() {
-  // Get the ESP32's BLE MAC address
-  uint8_t mac[6];
-  esp_err_t err = esp_read_mac(mac, ESP_MAC_BT);
-  if (err != ESP_OK) {
-    ESP_LOGW(TAG, "Failed to read BLE MAC address: %s", esp_err_to_name(err));
+  // Get the BLE device address from NimBLE stack
+  // The address is available after NimBLE is initialized
+  if (!this->initialized_) {
     return "00:00:00:00:00:00";
   }
 
+  // Get the public device address from NimBLE
+  uint8_t addr_type;
+  ble_addr_t addr;
+  int rc = ble_hs_id_infer_auto(0, &addr_type);
+  if (rc != 0) {
+    ESP_LOGW(TAG, "Failed to determine BLE address type: %d", rc);
+    return "00:00:00:00:00:00";
+  }
+
+  rc = ble_hs_id_copy_addr(addr_type, addr.val, NULL);
+  if (rc != 0) {
+    ESP_LOGW(TAG, "Failed to copy BLE address: %d", rc);
+    return "00:00:00:00:00:00";
+  }
+
+  // Format as MAC address string (reversed byte order for display)
   char mac_str[18];
   snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X",
-           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+           addr.val[5], addr.val[4], addr.val[3], addr.val[2], addr.val[1], addr.val[0]);
   return std::string(mac_str);
 }
 
