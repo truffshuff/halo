@@ -525,6 +525,12 @@ font:
     glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
 
   - file: "gfonts://Montserrat"
+    id: montserrat_16
+    size: 16
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
     id: montserrat_14
     size: 14
     bpp: 4
@@ -557,6 +563,7 @@ font:
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
+      "-",         # hyphen for placeholder text
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -581,6 +588,7 @@ font:
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
       "\U000F07D0", # home-assistant icon
+      "-",         # hyphen for placeholder text
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -604,6 +612,7 @@ font:
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
+      "-",         # hyphen for placeholder text
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -627,6 +636,7 @@ font:
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
+      "-",         # hyphen for placeholder text
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -650,6 +660,7 @@ font:
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
+      "-",         # hyphen for placeholder text
       ]
 
 # ============================================================================
