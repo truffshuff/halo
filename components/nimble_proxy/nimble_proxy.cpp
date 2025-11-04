@@ -305,6 +305,14 @@ void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
   __sync_synchronize();
   void *conn = this->api_connection_;
 
+  // Debug: log pointer addresses every 100 advertisements
+  static int adv_count = 0;
+  if (++adv_count % 100 == 0) {
+    ESP_LOGD(TAG, "Add adv: this=%p, api_connection_=%p, global=%p, global->api=%p",
+             this, conn, global_nimble_proxy,
+             global_nimble_proxy ? global_nimble_proxy->api_connection_ : nullptr);
+  }
+
   if (conn == nullptr) {
     ESP_LOGV(TAG, "No API connection, buffering advertisement (buffer has %d)", this->adv_buffer_count_);
   }
@@ -492,6 +500,9 @@ void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
   // Memory barrier to ensure write is visible to NimBLE host thread
   __sync_synchronize();
   ESP_LOGI(TAG, "API connection %p subscribed (flags=0x%x)", conn, flags);
+  ESP_LOGD(TAG, "Verify: this=%p, this->api_connection_=%p, global_nimble_proxy=%p, global=%p",
+           this, this->api_connection_, global_nimble_proxy,
+           global_nimble_proxy ? global_nimble_proxy->api_connection_ : nullptr);
 
   // Send current scanner state to the newly subscribed connection
   if (this->initialized_) {
