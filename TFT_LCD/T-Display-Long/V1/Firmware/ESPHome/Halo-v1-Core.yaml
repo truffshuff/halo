@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.04.1702"
+  version: "25.11.04.1710"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -9735,6 +9735,20 @@ button:
     entity_category: config
     on_press:
       - sen5x.start_fan_autoclean: sen55
+
+  # Display Refresh Button
+  # Use this when display goes black but backlight is still on
+  # Forces LVGL to redraw the display and can help recover from display glitches
+  - platform: template
+    name: "Refresh Display"
+    id: refresh_display
+    icon: mdi:monitor-refresh
+    on_press:
+      - logger.log: "Refreshing LVGL display..."
+      - lvgl.pause:
+      - delay: 100ms
+      - lvgl.resume:
+      - logger.log: "Display refresh complete"
   
 # ============================================================================
 # WiFi Configuration
