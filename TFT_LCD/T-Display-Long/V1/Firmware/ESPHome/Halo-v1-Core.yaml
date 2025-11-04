@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.04.1546"
+  version: "25.11.04.1600"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -731,6 +731,7 @@ esp32:
 external_components:
   - source: github://truffshuff/esphome-components
     components: [axs15231, sy6970, nimble_proxy, bluetooth_proxy]
+    refresh: always
   
   # # NimBLE compatibility and proxy components
   # - source:
