@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.04.1710"
+  version: "25.11.04.1719"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -6202,8 +6202,10 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 30%  # Larger buffers in PSRAM for better performance
-                    # ESP32-S3 PSRAM is DMAable, so buffers can use DMA transfers
+  buffer_size: 75%  # Maximum buffer size for best stability and performance
+                    # With 8MB PSRAM available, we can afford large buffers
+                    # Reduces display glitches, tearing, and black screen issues
+                    # ESP32-S3 PSRAM is DMAable for optimal DMA transfers
   # Use DMAable PSRAM for frame buffers (ESP32-S3 feature)
   # This combines DMA capability with external PSRAM for optimal performance
   byte_order: big_endian
