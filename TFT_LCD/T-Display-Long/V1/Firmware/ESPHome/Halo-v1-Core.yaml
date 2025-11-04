@@ -9389,8 +9389,13 @@ wireguard:
 # - Faster connection handling
 # ============================================================================
 
-# Custom nimble_proxy - required for pure NimBLE mode
-# ESPHome's native bluetooth_proxy requires Bluedroid headers
+# Stub bluetooth_proxy component (NOT the native ESPHome one)
+# This ONLY provides header files and USE_BLUETOOTH_PROXY define for API types
+# It contains NO Bluedroid code - just enables the protobuf message types
+bluetooth_proxy:
+
+# Custom nimble_proxy - the actual BLE proxy implementation using NimBLE stack
+# ESPHome's native bluetooth_proxy uses Bluedroid which we're NOT using
 nimble_proxy:
   active: true
   max_connections: 3
