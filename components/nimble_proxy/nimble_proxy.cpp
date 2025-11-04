@@ -46,7 +46,7 @@ static NimBLEProxy *global_nimble_proxy = nullptr;
 // Create the global_bluetooth_proxy alias in the bluetooth_proxy namespace
 // This allows the API component to access nimble_proxy via bluetooth_proxy::global_bluetooth_proxy
 namespace bluetooth_proxy {
-  NimBLEProxy *&global_bluetooth_proxy = nimble_proxy::global_nimble_proxy;
+  nimble_proxy::NimBLEProxy *&global_bluetooth_proxy = nimble_proxy::global_nimble_proxy;
 }
 
 namespace nimble_proxy {
