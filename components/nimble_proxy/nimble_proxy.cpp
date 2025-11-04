@@ -1,4 +1,25 @@
 #include "nimble_proxy.h"
+
+// Undefine NimBLE macros that conflict with ESPHome API enums
+#ifdef LOG_LEVEL_NONE
+#undef LOG_LEVEL_NONE
+#endif
+#ifdef LOG_LEVEL_ERROR
+#undef LOG_LEVEL_ERROR
+#endif
+#ifdef LOG_LEVEL_WARN
+#undef LOG_LEVEL_WARN
+#endif
+#ifdef LOG_LEVEL_INFO
+#undef LOG_LEVEL_INFO
+#endif
+#ifdef LOG_LEVEL_DEBUG
+#undef LOG_LEVEL_DEBUG
+#endif
+#ifdef LOG_LEVEL_VERBOSE
+#undef LOG_LEVEL_VERBOSE
+#endif
+
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
 #include "esp_err.h"
