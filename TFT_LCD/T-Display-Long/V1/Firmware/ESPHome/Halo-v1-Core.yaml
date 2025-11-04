@@ -2543,7 +2543,7 @@ script:
           id: lbl_weather_today_outdoor_temp
           text: !lambda |-
             if (isnan(id(weather_current_temp))) {
-              return std::string("--.- °F");
+              return std::string("??.- °F");
             }
             char buf[16];
             snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
@@ -2553,7 +2553,7 @@ script:
           id: lbl_weather_today_tempap
           text: !lambda |-
             if (isnan(id(weather_current_apparent_temp))) {
-              return std::string("--°");
+              return std::string("??°");
             }
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
@@ -2711,63 +2711,63 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour1_temp
           text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[0])) return std::string("--°");
+            if (isnan(id(weather_hourly_temp)[0])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_feels
           text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[0])) return std::string("--°");
+            if (isnan(id(weather_hourly_apparent_temp)[0])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_precip
           text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[0])) return std::string("--%");
+            if (isnan(id(weather_hourly_precip_prob)[0])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_humid
           text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[0])) return std::string("--%");
+            if (isnan(id(weather_hourly_humidity)[0])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_precip_amt
           text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[0])) return std::string("--\"");
+            if (isnan(id(weather_hourly_precipitation)[0])) return std::string("??\"");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_pressure
           text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[0])) return std::string("--");
+            if (isnan(id(weather_hourly_pressure)[0])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_uv
           text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[0])) return std::string("--");
+            if (isnan(id(weather_hourly_uv_index)[0])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[0])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_speed)[0])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[0]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour1_wind_dir
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[0])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_bearing)[0])) return std::string("??");
             float bearing = id(weather_hourly_wind_bearing)[0];
             const char* dir;
             if (bearing >= 337.5 || bearing < 22.5) dir = "N";
@@ -2856,63 +2856,63 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour2_temp
           text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[1])) return std::string("--°");
+            if (isnan(id(weather_hourly_temp)[1])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_feels
           text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[1])) return std::string("--°");
+            if (isnan(id(weather_hourly_apparent_temp)[1])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_precip
           text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[1])) return std::string("--%");
+            if (isnan(id(weather_hourly_precip_prob)[1])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_humid
           text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[1])) return std::string("--%");
+            if (isnan(id(weather_hourly_humidity)[1])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_precip_amt
           text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[1])) return std::string("--\"");
+            if (isnan(id(weather_hourly_precipitation)[1])) return std::string("??\"");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_pressure
           text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[1])) return std::string("--");
+            if (isnan(id(weather_hourly_pressure)[1])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_uv
           text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[1])) return std::string("--");
+            if (isnan(id(weather_hourly_uv_index)[1])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[1])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_speed)[1])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour2_wind_dir
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[1])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_bearing)[1])) return std::string("??");
             float bearing = id(weather_hourly_wind_bearing)[1];
             const char* dir;
             if (bearing >= 337.5 || bearing < 22.5) dir = "N";
@@ -3001,63 +3001,63 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour3_temp
           text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[2])) return std::string("--°");
+            if (isnan(id(weather_hourly_temp)[2])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_feels
           text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[2])) return std::string("--°");
+            if (isnan(id(weather_hourly_apparent_temp)[2])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_precip
           text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[2])) return std::string("--%");
+            if (isnan(id(weather_hourly_precip_prob)[2])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_humid
           text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[2])) return std::string("--%");
+            if (isnan(id(weather_hourly_humidity)[2])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_precip_amt
           text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[2])) return std::string("--\"");
+            if (isnan(id(weather_hourly_precipitation)[2])) return std::string("??\"");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_pressure
           text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[2])) return std::string("--");
+            if (isnan(id(weather_hourly_pressure)[2])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_uv
           text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[2])) return std::string("--");
+            if (isnan(id(weather_hourly_uv_index)[2])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[2])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_speed)[2])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour3_wind_dir
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[2])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_bearing)[2])) return std::string("??");
             float bearing = id(weather_hourly_wind_bearing)[2];
             const char* dir;
             if (bearing >= 337.5 || bearing < 22.5) dir = "N";
@@ -3146,63 +3146,63 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour4_temp
           text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[3])) return std::string("--°");
+            if (isnan(id(weather_hourly_temp)[3])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_feels
           text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[3])) return std::string("--°");
+            if (isnan(id(weather_hourly_apparent_temp)[3])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_precip
           text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[3])) return std::string("--%");
+            if (isnan(id(weather_hourly_precip_prob)[3])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_humid
           text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[3])) return std::string("--%");
+            if (isnan(id(weather_hourly_humidity)[3])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_precip_amt
           text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[3])) return std::string("--\"");
+            if (isnan(id(weather_hourly_precipitation)[3])) return std::string("??\"");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_pressure
           text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[3])) return std::string("--");
+            if (isnan(id(weather_hourly_pressure)[3])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_uv
           text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[3])) return std::string("--");
+            if (isnan(id(weather_hourly_uv_index)[3])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[3])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_speed)[3])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour4_wind_dir
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[3])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_bearing)[3])) return std::string("??");
             float bearing = id(weather_hourly_wind_bearing)[3];
             const char* dir;
             if (bearing >= 337.5 || bearing < 22.5) dir = "N";
@@ -3291,63 +3291,63 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour5_temp
           text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[4])) return std::string("--°");
+            if (isnan(id(weather_hourly_temp)[4])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_feels
           text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[4])) return std::string("--°");
+            if (isnan(id(weather_hourly_apparent_temp)[4])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_precip
           text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[4])) return std::string("--%");
+            if (isnan(id(weather_hourly_precip_prob)[4])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_humid
           text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[4])) return std::string("--%");
+            if (isnan(id(weather_hourly_humidity)[4])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_precip_amt
           text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[4])) return std::string("--\"");
+            if (isnan(id(weather_hourly_precipitation)[4])) return std::string("??\"");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_pressure
           text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[4])) return std::string("--");
+            if (isnan(id(weather_hourly_pressure)[4])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_uv
           text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[4])) return std::string("--");
+            if (isnan(id(weather_hourly_uv_index)[4])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[4])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_speed)[4])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour5_wind_dir
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[4])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_bearing)[4])) return std::string("??");
             float bearing = id(weather_hourly_wind_bearing)[4];
             const char* dir;
             if (bearing >= 337.5 || bearing < 22.5) dir = "N";
@@ -3436,63 +3436,63 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour6_temp
           text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[5])) return std::string("--°");
+            if (isnan(id(weather_hourly_temp)[5])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_feels
           text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[5])) return std::string("--°");
+            if (isnan(id(weather_hourly_apparent_temp)[5])) return std::string("??°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_precip
           text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[5])) return std::string("--%");
+            if (isnan(id(weather_hourly_precip_prob)[5])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_humid
           text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[5])) return std::string("--%");
+            if (isnan(id(weather_hourly_humidity)[5])) return std::string("??%");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_precip_amt
           text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[5])) return std::string("--\"");
+            if (isnan(id(weather_hourly_precipitation)[5])) return std::string("??\"");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_pressure
           text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[5])) return std::string("--");
+            if (isnan(id(weather_hourly_pressure)[5])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mb", id(weather_hourly_pressure)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_uv
           text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[5])) return std::string("--");
+            if (isnan(id(weather_hourly_uv_index)[5])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[5])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_speed)[5])) return std::string("??");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_hourly_hour6_wind_dir
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[5])) return std::string("--");
+            if (isnan(id(weather_hourly_wind_bearing)[5])) return std::string("??");
             float bearing = id(weather_hourly_wind_bearing)[5];
             const char* dir;
             if (bearing >= 337.5 || bearing < 22.5) dir = "N";
@@ -3651,7 +3651,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day2_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[1].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[1].empty()) return std::string("??-");
             return id(weather_forecast_condition)[1];
 
       # Small delay to prevent system overload
@@ -3781,7 +3781,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day3_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[2].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[2].empty()) return std::string("??-");
             return id(weather_forecast_condition)[2];
 
       - delay: 30ms
@@ -3909,7 +3909,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day4_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[3].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[3].empty()) return std::string("??-");
             return id(weather_forecast_condition)[3];
 
       - delay: 30ms
@@ -4037,7 +4037,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day5_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[4].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[4].empty()) return std::string("??-");
             return id(weather_forecast_condition)[4];
 
       - delay: 30ms
@@ -4165,7 +4165,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day6_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[5].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[5].empty()) return std::string("??-");
             return id(weather_forecast_condition)[5];
 
       - delay: 30ms
@@ -4293,7 +4293,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day7_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[6].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[6].empty()) return std::string("??-");
             return id(weather_forecast_condition)[6];
 
       - delay: 30ms
@@ -4421,7 +4421,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day8_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[7].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[7].empty()) return std::string("??-");
             return id(weather_forecast_condition)[7];
 
       - delay: 30ms
@@ -4549,7 +4549,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day9_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[8].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[8].empty()) return std::string("??-");
             return id(weather_forecast_condition)[8];
 
       # Update Day 10
@@ -4621,7 +4621,7 @@ script:
       - lvgl.label.update:
           id: lbl_forecast_day10_condition
           text: !lambda |-
-            if (id(weather_forecast_condition)[9].empty()) return std::string("---");
+            if (id(weather_forecast_condition)[9].empty()) return std::string("??-");
             return id(weather_forecast_condition)[9];
 
       - logger.log: "✓ Daily forecast display updated (page 5)"
@@ -4669,7 +4669,7 @@ script:
                 id: vclock_hours
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
+                  if (!now.is_valid()) return std::string("??");
                   bool is_pm = now.hour >= 12;
                   int hour_12 = now.hour % 12;
                   if (hour_12 == 0) hour_12 = 12;
@@ -4684,7 +4684,7 @@ script:
                 id: vclock_minutes
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
+                  if (!now.is_valid()) return std::string("??");
                   char buf[3];
                   snprintf(buf, sizeof(buf), "%02d", now.minute);
                   return std::string(buf);
@@ -4700,7 +4700,7 @@ script:
                 id: vclock_date
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
+                  if (!now.is_valid()) return std::string("??");
                   static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
                   char buf[20];
                   snprintf(buf, sizeof(buf), "%s %d", months[now.month - 1], now.day_of_month);
@@ -4709,7 +4709,7 @@ script:
                 id: vclock_day_top
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
+                  if (!now.is_valid()) return std::string("??");
                   static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
                   return std::string(days[now.day_of_week - 1]);
       - script.execute: update_colon_widget
@@ -6150,7 +6150,7 @@ lvgl:
             align: TOP_MID
             x: 0
             y: 105
-            
+
         # Semicircle meter gauge for apparent temperature
         - obj:
             align: CENTER
@@ -6211,7 +6211,7 @@ lvgl:
             id: lbl_weather_today_tempap
             text: !lambda |-
               if (isnan(id(weather_current_apparent_temp))) {
-                return std::string("--°");
+                return std::string("??°");
               }
               char buf[16];
               snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
@@ -6298,7 +6298,7 @@ lvgl:
             id: lbl_weather_today_outdoor_temp
             text: !lambda |-
               if (isnan(id(weather_current_temp))) {
-                return std::string("--.- °F");
+                return std::string("??.- °F");
               }
               char buf[16];
               snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
@@ -7242,10 +7242,7 @@ lvgl:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 4;'  # hourly_forecast_page
         - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
-        # Always update display first with existing data (even if stale)
-        - script.execute: update_hourly_forecast_display
-        - delay: 10ms  # Yield to prevent blocking warning
-        # Then check if we need to fetch fresh data
+        # Check if we have data and if it needs refresh
         - if:
             condition:
               lambda: |-
@@ -7262,8 +7259,11 @@ lvgl:
                   return false;
                 }
             then:
-              # Fetch will update display when complete
+              # Fetch will update display when complete (no need to call update_hourly_forecast_display here)
               - script.execute: fetch_hourly_forecast
+            else:
+              # Data is fresh, update display with existing data
+              - script.execute: update_hourly_forecast_display
       widgets:
         # Page Header
         - label:
@@ -7309,12 +7309,12 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour1_icon
-                        text: "--"
+                        text: "??"
                         text_font: icons_40
                         text_color: my_white
                     - label:
                         id: lbl_hourly_hour1_temp
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_24
                         text_color: my_white
               - obj:
@@ -7334,7 +7334,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_feels
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7354,7 +7354,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_humid
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7374,7 +7374,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_precip
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -7394,7 +7394,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_precip_amt
-                        text: "-- in"
+                        text: "?? in"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -7414,7 +7414,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_pressure
-                        text: "-- mb"
+                        text: "?? mb"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7434,7 +7434,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_uv
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7454,7 +7454,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_wind
-                        text: "-- mph"
+                        text: "?? mph"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7474,7 +7474,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour1_wind_dir
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
 
@@ -7513,12 +7513,12 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour2_icon
-                        text: "--"
+                        text: "??"
                         text_font: icons_40
                         text_color: my_white
                     - label:
                         id: lbl_hourly_hour2_temp
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_24
                         text_color: my_white
               - obj:
@@ -7538,7 +7538,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_feels
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7558,7 +7558,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_humid
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7578,7 +7578,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_precip
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -7598,7 +7598,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_precip_amt
-                        text: "-- in"
+                        text: "?? in"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -7618,7 +7618,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_pressure
-                        text: "-- mb"
+                        text: "?? mb"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7638,7 +7638,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_uv
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7658,7 +7658,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_wind
-                        text: "-- mph"
+                        text: "?? mph"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7678,7 +7678,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour2_wind_dir
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
 
@@ -7717,12 +7717,12 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour3_icon
-                        text: "--"
+                        text: "??"
                         text_font: icons_40
                         text_color: my_white
                     - label:
                         id: lbl_hourly_hour3_temp
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_24
                         text_color: my_white
               - obj:
@@ -7742,7 +7742,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_feels
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7762,7 +7762,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_humid
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7782,7 +7782,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_precip
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -7802,7 +7802,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_precip_amt
-                        text: "-- in"
+                        text: "?? in"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -7822,7 +7822,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_pressure
-                        text: "-- mb"
+                        text: "?? mb"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7842,7 +7842,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_uv
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7862,7 +7862,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_wind
-                        text: "-- mph"
+                        text: "?? mph"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -7882,7 +7882,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour3_wind_dir
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
 
@@ -8002,12 +8002,12 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour4_icon
-                        text: "--"
+                        text: "??"
                         text_font: icons_40
                         text_color: my_white
                     - label:
                         id: lbl_hourly_hour4_temp
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_24
                         text_color: my_white
               - obj:
@@ -8027,7 +8027,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_feels
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8047,7 +8047,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_humid
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8067,7 +8067,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_precip
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -8087,7 +8087,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_precip_amt
-                        text: "-- in"
+                        text: "?? in"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -8107,7 +8107,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_pressure
-                        text: "-- mb"
+                        text: "?? mb"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8127,7 +8127,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_uv
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8147,7 +8147,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_wind
-                        text: "-- mph"
+                        text: "?? mph"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8167,7 +8167,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour4_wind_dir
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
 
@@ -8206,12 +8206,12 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour5_icon
-                        text: "--"
+                        text: "??"
                         text_font: icons_40
                         text_color: my_white
                     - label:
                         id: lbl_hourly_hour5_temp
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_24
                         text_color: my_white
               - obj:
@@ -8231,7 +8231,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_feels
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8251,7 +8251,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_humid
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8271,7 +8271,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_precip
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -8291,7 +8291,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_precip_amt
-                        text: "-- in"
+                        text: "?? in"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -8311,7 +8311,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_pressure
-                        text: "-- mb"
+                        text: "?? mb"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8331,7 +8331,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_uv
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8351,7 +8351,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_wind
-                        text: "-- mph"
+                        text: "?? mph"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8371,7 +8371,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour5_wind_dir
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
 
@@ -8410,12 +8410,12 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour6_icon
-                        text: "--"
+                        text: "??"
                         text_font: icons_40
                         text_color: my_white
                     - label:
                         id: lbl_hourly_hour6_temp
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_24
                         text_color: my_white
               - obj:
@@ -8435,7 +8435,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_feels
-                        text: "--°"
+                        text: "??°"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8455,7 +8455,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_humid
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8475,7 +8475,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_precip
-                        text: "--%"
+                        text: "??%"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -8495,7 +8495,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_precip_amt
-                        text: "-- in"
+                        text: "?? in"
                         text_font: montserrat_10
                         text_color: my_teal
               - obj:
@@ -8515,7 +8515,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_pressure
-                        text: "-- mb"
+                        text: "?? mb"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8535,7 +8535,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_uv
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8555,7 +8555,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_wind
-                        text: "-- mph"
+                        text: "?? mph"
                         text_font: montserrat_10
                         text_color: my_white
               - obj:
@@ -8575,7 +8575,7 @@ lvgl:
                         text_color: my_gray
                     - label:
                         id: lbl_hourly_hour6_wind_dir
-                        text: "--"
+                        text: "??"
                         text_font: montserrat_10
                         text_color: my_white
 
@@ -8628,10 +8628,7 @@ lvgl:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 5;'  # daily_forecast_page
         - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
-        # Always update display first with existing data (even if stale)
-        - script.execute: update_daily_forecast_display
-        - delay: 10ms  # Yield to prevent blocking warning
-        # Then check if we need to fetch fresh data
+        # Check if we have data and if it needs refresh
         - if:
             condition:
               lambda: |-
@@ -8648,8 +8645,11 @@ lvgl:
                   return false;
                 }
             then:
-              # Fetch will update display when complete
+              # Fetch will update display when complete (no need to call update_daily_forecast_display here)
               - script.execute: fetch_daily_forecast
+            else:
+              # Data is fresh, update display with existing data
+              - script.execute: update_daily_forecast_display
       widgets:
         # Page Header
         - label:
@@ -8684,12 +8684,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day2_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day2_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
@@ -8729,12 +8729,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day3_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day3_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
@@ -8835,12 +8835,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day4_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day4_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
@@ -8880,12 +8880,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day5_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day5_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
@@ -9006,12 +9006,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day6_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day6_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
@@ -9051,12 +9051,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day7_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day7_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
@@ -9177,12 +9177,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day8_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day8_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
@@ -9222,12 +9222,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day9_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day9_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
@@ -9348,12 +9348,12 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day10_icon
-                  text: "--"
+                  text: "??"
                   text_font: icons_80
                   text_color: my_white
               - label:
                   id: lbl_forecast_day10_condition
-                  text: "---"
+                  text: "??-"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
