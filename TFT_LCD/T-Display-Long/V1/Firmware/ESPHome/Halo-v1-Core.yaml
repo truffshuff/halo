@@ -7244,7 +7244,7 @@ lvgl:
       on_load:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 4;'  # hourly_forecast_page
-        - delay: 10ms  # Yield to prevent blocking warning
+        - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
         # Always update display first with existing data (even if stale)
         - script.execute: update_hourly_forecast_display
         - delay: 10ms  # Yield to prevent blocking warning
@@ -8630,7 +8630,7 @@ lvgl:
       on_load:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_index) = 5;'  # daily_forecast_page
-        - delay: 10ms  # Yield to prevent blocking warning
+        - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
         # Always update display first with existing data (even if stale)
         - script.execute: update_daily_forecast_display
         - delay: 10ms  # Yield to prevent blocking warning
