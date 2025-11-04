@@ -756,6 +756,9 @@ captive_portal:
 
 logger:
   level: INFO
+  logs:
+    nimble_proxy: DEBUG
+    api.connection: DEBUG
 
 switch:
   - platform: template
