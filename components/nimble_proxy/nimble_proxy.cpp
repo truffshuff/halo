@@ -352,8 +352,8 @@ void NimBLEProxy::send_advertisements_() {
     resp.advertisements[i] = buffer[i];
   }
 
-  // Send to all connected Home Assistant API clients
-  send_bluetooth_advertisements_to_clients(this->api_connections_, resp);
+  // Send to the connected Home Assistant API client
+  send_bluetooth_advertisements_to_client(this->api_connection_, resp);
 
   // Reset buffer
   this->adv_buffer_count_ = 0;
@@ -436,7 +436,7 @@ std::string NimBLEProxy::get_bluetooth_mac_address_pretty() {
 
 void NimBLEProxy::send_scanner_state_() {
 #ifdef USE_API
-  if (this->api_connections_.empty()) {
+  if (this->api_connection_ == nullptr) {
     return;
   }
 
@@ -457,8 +457,8 @@ void NimBLEProxy::send_scanner_state_() {
   resp.mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
   resp.configured_mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
 
-  // Send to all connected API clients
-  send_scanner_state_to_clients(this->api_connections_, resp);
+  // Send to the connected API client
+  send_scanner_state_to_client(this->api_connection_, resp);
 #endif
 }
 
@@ -468,30 +468,25 @@ void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
     return;
   }
 
-  // Add this API connection to our list if not already present
-  for (auto *existing : this->api_connections_) {
-    if (existing == conn) {
-      ESP_LOGD(TAG, "API connection %p already subscribed", conn);
-      return;
-    }
+  if (this->api_connection_ == conn) {
+    ESP_LOGD(TAG, "API connection %p already subscribed", conn);
+    return;
   }
 
-  this->api_connections_.push_back(conn);
-  ESP_LOGI(TAG, "API connection %p subscribed, total connections: %d", conn, (int)this->api_connections_.size());
+  // Store the API connection (only one at a time, like native bluetooth_proxy)
+  this->api_connection_ = conn;
+  ESP_LOGI(TAG, "API connection %p subscribed (flags=0x%x)", conn, flags);
 
   // Send current scanner state to the newly subscribed connection
-  // Delay slightly to ensure the connection is fully established
   if (this->initialized_) {
     this->send_scanner_state_();
   }
 }
 
 void NimBLEProxy::unsubscribe_api_connection(void *conn) {
-  // Remove this API connection from our list
-  auto it = std::find(this->api_connections_.begin(), this->api_connections_.end(), conn);
-  if (it != this->api_connections_.end()) {
-    this->api_connections_.erase(it);
-    ESP_LOGI(TAG, "API connection %p unsubscribed, remaining connections: %d", conn, this->api_connections_.size());
+  if (this->api_connection_ == conn) {
+    this->api_connection_ = nullptr;
+    ESP_LOGI(TAG, "API connection %p unsubscribed", conn);
   }
 }
 
@@ -501,7 +496,7 @@ void NimBLEProxy::dump_config() {
   ESP_LOGCONFIG(TAG, "  Max Connections: %d", this->max_connections_);
   ESP_LOGCONFIG(TAG, "  Initialized: %s", YESNO(this->initialized_));
   ESP_LOGCONFIG(TAG, "  Host task started: %s", YESNO(this->host_task_started_));
-  ESP_LOGCONFIG(TAG, "  API Connections: %d", this->api_connections_.size());
+  ESP_LOGCONFIG(TAG, "  API Connection: %s", this->api_connection_ ? "connected" : "none");
   ESP_LOGCONFIG(TAG, "  BT controller status: %d", (int) esp_bt_controller_get_status());
 }
 
