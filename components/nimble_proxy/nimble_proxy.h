@@ -48,7 +48,7 @@ class NimBLEProxy : public Component {
 
 #ifdef USE_API
   // Advertisement batching for Home Assistant
-  std::array<api::BluetoothLERawAdvertisement, BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE> adv_buffer_{};
+  std::array<esphome::api::BluetoothLERawAdvertisement, BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE> adv_buffer_{};
   uint16_t adv_buffer_count_{0};
   uint32_t last_send_time_{0};
 #else
