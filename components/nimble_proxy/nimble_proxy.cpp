@@ -29,6 +29,7 @@
 #ifdef USE_API
 #include "esphome/components/api/api_server.h"
 #include "esphome/components/api/api_pb2.h"
+#include "api_server_extensions.h"
 #endif
 
 extern "C" void ble_store_config_init(void);
@@ -344,15 +345,8 @@ void NimBLEProxy::send_advertisements_() {
     resp.advertisements[i] = buffer[i];
   }
 
-  // TODO: Send to Home Assistant API clients
-  // The APIServer in this ESPHome version doesn't expose clients_ or provide
-  // a send_bluetooth_le_advertisements() method. We'll need to either:
-  // 1. Update ESPHome to a version with full bluetooth proxy support
-  // 2. Add a friend declaration or helper method to APIServer
-  // 3. Use raw protobuf send_message() calls
-  //
-  // For now, just log that we collected the advertisements
-  ESP_LOGD(TAG, "Collected %d BLE advertisements (API transmission pending)", this->adv_buffer_count_);
+  // Send to all connected Home Assistant API clients
+  send_bluetooth_advertisements_to_clients(this->api_connections_, resp);
 
   // Reset buffer
   this->adv_buffer_count_ = 0;
@@ -370,12 +364,34 @@ void NimBLEProxy::loop() {
   }
 }
 
+void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
+  // Add this API connection to our list if not already present
+  for (auto *existing : this->api_connections_) {
+    if (existing == conn) {
+      ESP_LOGD(TAG, "API connection %p already subscribed", conn);
+      return;
+    }
+  }
+  this->api_connections_.push_back(conn);
+  ESP_LOGI(TAG, "API connection %p subscribed, total connections: %d", conn, this->api_connections_.size());
+}
+
+void NimBLEProxy::unsubscribe_api_connection(void *conn) {
+  // Remove this API connection from our list
+  auto it = std::find(this->api_connections_.begin(), this->api_connections_.end(), conn);
+  if (it != this->api_connections_.end()) {
+    this->api_connections_.erase(it);
+    ESP_LOGI(TAG, "API connection %p unsubscribed, remaining connections: %d", conn, this->api_connections_.size());
+  }
+}
+
 void NimBLEProxy::dump_config() {
   ESP_LOGCONFIG(TAG, "NimBLE Proxy:");
   ESP_LOGCONFIG(TAG, "  Active: %s", YESNO(this->active_));
   ESP_LOGCONFIG(TAG, "  Max Connections: %d", this->max_connections_);
   ESP_LOGCONFIG(TAG, "  Initialized: %s", YESNO(this->initialized_));
   ESP_LOGCONFIG(TAG, "  Host task started: %s", YESNO(this->host_task_started_));
+  ESP_LOGCONFIG(TAG, "  API Connections: %d", this->api_connections_.size());
   ESP_LOGCONFIG(TAG, "  BT controller status: %d", (int) esp_bt_controller_get_status());
 }
 
