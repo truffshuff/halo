@@ -4,11 +4,6 @@
 #include "esphome/core/log.h"
 #include "esphome/core/defines.h"
 
-#ifdef USE_API
-#include "esphome/components/api/api_server.h"
-#include "esphome/components/api/api_pb2.h"
-#endif
-
 // ESP-IDF native NimBLE headers
 #include "esp_bt.h"
 #include "host/ble_hs.h"
@@ -46,16 +41,11 @@ class NimBLEProxy : public Component {
   bool host_task_started_{false};
   bool scanning_{false};
 
-#ifdef USE_API
-  // Advertisement batching for Home Assistant
-  std::array<esphome::api::BluetoothLERawAdvertisement, BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE> adv_buffer_{};
+  // Advertisement batching for Home Assistant (opaque buffer to avoid header dependencies)
+  void *adv_buffer_{nullptr};
   uint16_t adv_buffer_count_{0};
   uint32_t last_send_time_{0};
-#else
-  // Dummy variables when API is not available
-  uint16_t adv_buffer_count_{0};
-  uint32_t last_send_time_{0};
-#endif
+  bool adv_buffer_allocated_{false};
 
   void start_scan_();
   void stop_scan_();
