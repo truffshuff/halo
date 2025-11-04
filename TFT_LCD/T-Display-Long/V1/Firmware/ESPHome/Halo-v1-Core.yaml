@@ -2642,7 +2642,10 @@ script:
           id: lbl_hourly_hour1_icon
           text: !lambda |-
             std::string condition = id(weather_hourly_condition)[0];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) {
+              ESP_LOGW("weather", "Hour 1 condition is empty");
+              return std::string("\U000F14E4");  // question-mark-circle icon
+            }
             // Map condition to Material Design Icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
@@ -2659,6 +2662,7 @@ script:
             if (condition == "sunny") return std::string("\U000F0599");
             if (condition == "windy") return std::string("\U000F059D");
             if (condition == "windy-variant") return std::string("\U000F059E");
+            ESP_LOGW("weather", "Unknown hour 1 condition: '%s', using sunny icon", condition.c_str());
             return std::string("\U000F0599");  // default to sunny
           text_color: !lambda |-
             std::string condition = id(weather_hourly_condition)[0];
@@ -2788,7 +2792,7 @@ script:
           id: lbl_hourly_hour2_icon
           text: !lambda |-
             std::string condition = id(weather_hourly_condition)[1];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -2933,7 +2937,7 @@ script:
           id: lbl_hourly_hour3_icon
           text: !lambda |-
             std::string condition = id(weather_hourly_condition)[2];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -3078,7 +3082,7 @@ script:
           id: lbl_hourly_hour4_icon
           text: !lambda |-
             std::string condition = id(weather_hourly_condition)[3];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -3223,7 +3227,7 @@ script:
           id: lbl_hourly_hour5_icon
           text: !lambda |-
             std::string condition = id(weather_hourly_condition)[4];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -3368,7 +3372,7 @@ script:
           id: lbl_hourly_hour6_icon
           text: !lambda |-
             std::string condition = id(weather_hourly_condition)[5];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -3565,7 +3569,7 @@ script:
           id: lbl_forecast_day2_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[1];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -3695,7 +3699,7 @@ script:
           id: lbl_forecast_day3_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[2];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -3823,7 +3827,7 @@ script:
           id: lbl_forecast_day4_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[3];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -3951,7 +3955,7 @@ script:
           id: lbl_forecast_day5_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[4];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -4079,7 +4083,7 @@ script:
           id: lbl_forecast_day6_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[5];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -4207,7 +4211,7 @@ script:
           id: lbl_forecast_day7_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[6];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -4335,7 +4339,7 @@ script:
           id: lbl_forecast_day8_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[7];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -4463,7 +4467,7 @@ script:
           id: lbl_forecast_day9_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[8];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
@@ -4535,7 +4539,7 @@ script:
           id: lbl_forecast_day10_icon
           text: !lambda |-
             std::string condition = id(weather_forecast_condition)[9];
-            if (condition.empty()) return std::string("--");
+            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
             if (condition == "clear-night") return std::string("\U000F0594");
             if (condition == "cloudy") return std::string("\U000F0590");
             if (condition == "exceptional") return std::string("\U000F0F2F");
