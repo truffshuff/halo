@@ -6353,176 +6353,192 @@ lvgl:
                   text_color: my_red
               - lambda: 'id(airq_wifi_stat_connected_state) = false;'
         # Force immediate update of all sensor values on page load
-        - lambda: |-
-            // Update CO2
-            if (id(co2).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%d", (int)id(co2).state);
-              id(co2_value).set_text(buffer);
-              // Update color
-              float co2_val = id(co2).state;
-              if (co2_val <= 600) {
-                id(co2_value).set_text_color(id(my_green));
-              } else if (co2_val <= 1000) {
-                id(co2_value).set_text_color(id(my_yellow));
-              } else if (co2_val <= 1500) {
-                id(co2_value).set_text_color(id(my_orange));
-              } else {
-                id(co2_value).set_text_color(id(my_red));
-              }
-            }
-            
-            // Update NO2
-            if (id(no2).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.02f", id(no2).state);
-              id(no2_value).set_text(buffer);
-              float no2_val = id(no2).state;
-              if (no2_val <= 0.03) {
-                id(no2_value).set_text_color(id(my_green));
-              } else if (no2_val <= 0.06) {
-                id(no2_value).set_text_color(id(my_yellow));
-              } else if (no2_val <= 0.1) {
-                id(no2_value).set_text_color(id(my_orange));
-              } else {
-                id(no2_value).set_text_color(id(my_red));
-              }
-            }
-            
-            // Update CO
-            if (id(co).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.02f", id(co).state);
-              id(co_value).set_text(buffer);
-              float co_val = id(co).state;
-              if (co_val <= 15) {
-                id(co_value).set_text_color(id(my_green));
-              } else if (co_val <= 30) {
-                id(co_value).set_text_color(id(my_yellow));
-              } else if (co_val <= 36) {
-                id(co_value).set_text_color(id(my_orange));
-              } else {
-                id(co_value).set_text_color(id(my_red));
-              }
-            }
-            
-            // Update H2
-            if (id(h2).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.02f", id(h2).state);
-              id(h2_value).set_text(buffer);
-              float h2_val = id(h2).state;
-              if (h2_val <= 0.4) {
-                id(h2_value).set_text_color(id(my_green));
-              } else if (h2_val <= 1.0) {
-                id(h2_value).set_text_color(id(my_yellow));
-              } else if (h2_val <= 2.0) {
-                id(h2_value).set_text_color(id(my_orange));
-              } else {
-                id(h2_value).set_text_color(id(my_red));
-              }
-            }
-            
-            // Update CH4
-            if (id(ch4).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.02f", id(ch4).state);
-              id(ch4_value).set_text(buffer);
-              float ch4_val = id(ch4).state;
-              if (ch4_val <= 2.0) {
-                id(ch4_value).set_text_color(id(my_green));
-              } else if (ch4_val <= 10.0) {
-                id(ch4_value).set_text_color(id(my_yellow));
-              } else {
-                id(ch4_value).set_text_color(id(my_red));
-              }
-            }
-            
-            // Update Ethanol
-            if (id(ethanol).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.02f", id(ethanol).state);
-              id(ethanol_value).set_text(buffer);
-              float ethanol_val = id(ethanol).state;
-              if (ethanol_val <= 0.5) {
-                id(ethanol_value).set_text_color(id(my_green));
-              } else if (ethanol_val <= 1.5) {
-                id(ethanol_value).set_text_color(id(my_yellow));
-              } else if (ethanol_val <= 3.0) {
-                id(ethanol_value).set_text_color(id(my_orange));
-              } else {
-                id(ethanol_value).set_text_color(id(my_red));
-              }
-            }
-            
-            // Update NH3
-            if (id(nh3).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.02f", id(nh3).state);
-              id(nh3_value).set_text(buffer);
-              float nh3_val = id(nh3).state;
-              if (nh3_val <= 0.5) {
-                id(nh3_value).set_text_color(id(my_green));
-              } else if (nh3_val <= 1.0) {
-                id(nh3_value).set_text_color(id(my_yellow));
-              } else if (nh3_val <= 2.0) {
-                id(nh3_value).set_text_color(id(my_orange));
-              } else {
-                id(nh3_value).set_text_color(id(my_red));
-              }
-            }
-            
-            // Update PM1.0
-            if (id(pm_1_0).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.01f", id(pm_1_0).state);
-              id(pm1_value).set_text(buffer);
-            }
-            
-            // Update PM2.5
-            if (id(pm_2_5).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.01f", id(pm_2_5).state);
-              id(pm25_value).set_text(buffer);
-            }
-            
-            // Update PM4.0
-            if (id(pm_4_0).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.01f", id(pm_4_0).state);
-              id(pm4_value).set_text(buffer);
-            }
-            
-            // Update PM10
-            if (id(pm_10_0).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%.01f", id(pm_10_0).state);
-              id(pm10_value).set_text(buffer);
-            }
-            
-            // Update computed AQI
-            if (id(computed_halo_aqi).has_state()) {
-              char buffer[10];
-              snprintf(buffer, sizeof(buffer), "%d", (int)id(computed_halo_aqi).state);
-              id(aqi_value).set_text(buffer);
-              // Update AQI color
-              float aqi = id(computed_halo_aqi).state;
-              if (aqi <= 50) {
-                id(aqi_widget).set_style_bg_color(lv_color_hex(0x76fa76), 0);  // green
-              } else if (aqi <= 100) {
-                id(aqi_widget).set_style_bg_color(lv_color_hex(0xffff00), 0);  // yellow
-              } else if (aqi <= 150) {
-                id(aqi_widget).set_style_bg_color(lv_color_hex(0xffa500), 0);  // orange
-              } else if (aqi <= 200) {
-                id(aqi_widget).set_style_bg_color(lv_color_hex(0xff0000), 0);  // red
-              } else if (aqi <= 300) {
-                id(aqi_widget).set_style_bg_color(lv_color_hex(0x800080), 0);  // purple
-              } else {
-                id(aqi_widget).set_style_bg_color(lv_color_hex(0x800000), 0);  // maroon
-              }
-            }
-            
-            ESP_LOGD("airq_page", "Forced sensor UI update on page load");
+        - if:
+            condition:
+              lambda: 'return id(co2).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: co2_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%d", (int)id(co2).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: co2_value
+                  text_color: !lambda |-
+                    float co2_val = id(co2).state;
+                    if (co2_val <= 600) return id(my_green);
+                    else if (co2_val <= 1000) return id(my_yellow);
+                    else if (co2_val <= 1500) return id(my_orange);
+                    else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(no2).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: no2_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.02f", id(no2).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: no2_value
+                  text_color: !lambda |-
+                    float no2_val = id(no2).state;
+                    if (no2_val <= 0.03) return id(my_green);
+                    else if (no2_val <= 0.06) return id(my_yellow);
+                    else if (no2_val <= 0.1) return id(my_orange);
+                    else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(co).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: co_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.02f", id(co).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: co_value
+                  text_color: !lambda |-
+                    float co_val = id(co).state;
+                    if (co_val <= 15) return id(my_green);
+                    else if (co_val <= 30) return id(my_yellow);
+                    else if (co_val <= 36) return id(my_orange);
+                    else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(h2).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: h2_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.02f", id(h2).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: h2_value
+                  text_color: !lambda |-
+                    float h2_val = id(h2).state;
+                    if (h2_val <= 0.4) return id(my_green);
+                    else if (h2_val <= 1.0) return id(my_yellow);
+                    else if (h2_val <= 2.0) return id(my_orange);
+                    else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(ch4).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: ch4_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.02f", id(ch4).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: ch4_value
+                  text_color: !lambda |-
+                    float ch4_val = id(ch4).state;
+                    if (ch4_val <= 2.0) return id(my_green);
+                    else if (ch4_val <= 10.0) return id(my_yellow);
+                    else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(ethanol).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: ethanol_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.02f", id(ethanol).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: ethanol_value
+                  text_color: !lambda |-
+                    float ethanol_val = id(ethanol).state;
+                    if (ethanol_val <= 0.5) return id(my_green);
+                    else if (ethanol_val <= 1.5) return id(my_yellow);
+                    else if (ethanol_val <= 3.0) return id(my_orange);
+                    else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(nh3).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: nh3_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.02f", id(nh3).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: nh3_value
+                  text_color: !lambda |-
+                    float nh3_val = id(nh3).state;
+                    if (nh3_val <= 0.5) return id(my_green);
+                    else if (nh3_val <= 1.0) return id(my_yellow);
+                    else if (nh3_val <= 2.0) return id(my_orange);
+                    else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(pm_1_0).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: pm1_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.01f", id(pm_1_0).state);
+                    return buffer;
+        - if:
+            condition:
+              lambda: 'return id(pm_2_5).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: pm25_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.01f", id(pm_2_5).state);
+                    return buffer;
+        - if:
+            condition:
+              lambda: 'return id(pm_4_0).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: pm4_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.01f", id(pm_4_0).state);
+                    return buffer;
+        - if:
+            condition:
+              lambda: 'return id(pm_10_0).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: pm10_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%.01f", id(pm_10_0).state);
+                    return buffer;
+        - if:
+            condition:
+              lambda: 'return id(computed_halo_aqi).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: aqi_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%d", (int)id(computed_halo_aqi).state);
+                    return buffer;
+              - lvgl.widget.update:
+                  id: aqi_widget
+                  bg_color: !lambda |-
+                    float aqi = id(computed_halo_aqi).state;
+                    if (aqi <= 50) return 0x76fa76;       // green
+                    else if (aqi <= 100) return 0xffff00; // yellow
+                    else if (aqi <= 150) return 0xffa500; // orange
+                    else if (aqi <= 200) return 0xff0000; // red
+                    else if (aqi <= 300) return 0x800080; // purple
+                    else return 0x800000;                 // maroon
+        - logger.log: "Forced sensor UI update on AirQ page load"
       widgets:
         # Header: Logo, Time, WiFi Status
         - image:
