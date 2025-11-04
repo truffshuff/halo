@@ -17,6 +17,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <mutex>
 
 #ifndef BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE
 #define BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE 5
@@ -36,7 +37,10 @@ class NimBLEProxy : public Component {
   void set_max_connections(uint8_t max_connections) { this->max_connections_ = max_connections; }
 
   // API integration methods for Home Assistant connectivity
-  void *get_api_connection() { return this->api_connection_; }
+  void *get_api_connection() {
+    std::lock_guard<std::mutex> lock(this->api_connection_mutex_);
+    return this->api_connection_;
+  }
   void subscribe_api_connection(void *conn, uint32_t flags);
   void unsubscribe_api_connection(void *conn);
   template<typename T> void bluetooth_device_request(const T &msg) { }
@@ -60,8 +64,9 @@ class NimBLEProxy : public Component {
 
   // API connection tracking (void* to avoid including api headers)
   // We only support one active API connection at a time (like native bluetooth_proxy)
-  // Volatile because it's accessed from NimBLE host thread and ESPHome main thread
-  void * volatile api_connection_{nullptr};
+  // Protected by mutex since it's accessed from NimBLE host thread and ESPHome main thread
+  void *api_connection_{nullptr};
+  std::mutex api_connection_mutex_;
 
   // Advertisement batching for Home Assistant (opaque buffer to avoid header dependencies)
   void *adv_buffer_{nullptr};

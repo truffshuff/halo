@@ -307,16 +307,18 @@ void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
     return;
   }
 
-  // Memory barrier to ensure we see the latest api_connection_ value from main thread
-  __sync_synchronize();
-  void *conn = this->api_connection_;
+  // Thread-safe check for API connection
+  void *conn = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(this->api_connection_mutex_);
+    conn = this->api_connection_;
+  }
 
   // Debug: log pointer addresses every 100 advertisements
   static int adv_count = 0;
   if (++adv_count % 100 == 0) {
-    ESP_LOGD(TAG, "Add adv: this=%p, api_connection_=%p, global=%p, global->api=%p",
-             this, conn, global_nimble_proxy,
-             global_nimble_proxy ? global_nimble_proxy->api_connection_ : nullptr);
+    ESP_LOGD(TAG, "Add adv: this=%p, api_connection_=%p, global=%p",
+             this, conn, global_nimble_proxy);
   }
 
   if (conn == nullptr) {
@@ -326,13 +328,19 @@ void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
   // Cast the opaque buffer to the correct type
   auto *buffer = static_cast<esphome::api::BluetoothLERawAdvertisement *>(this->adv_buffer_);
 
+  // Bounds check: prevent buffer overflow BEFORE writing
+  if (this->adv_buffer_count_ >= BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE) {
+    ESP_LOGW(TAG, "Advertisement buffer full, forcing send before adding new advertisement");
+    this->send_advertisements_();
+  }
+
   // Build 64-bit MAC address from 6-byte array
   uint64_t address = 0;
   for (int i = 0; i < 6; i++) {
     address |= ((uint64_t) disc->addr.val[i]) << (i * 8);
   }
 
-  // Add to buffer
+  // Add to buffer (now safe due to bounds check above)
   auto &adv = buffer[this->adv_buffer_count_];
   adv.address = address;
   adv.rssi = disc->rssi;
@@ -364,8 +372,15 @@ void NimBLEProxy::send_advertisements_() {
     return;
   }
 
+  // Thread-safe access to api_connection_
+  void *conn = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(this->api_connection_mutex_);
+    conn = this->api_connection_;
+  }
+
   ESP_LOGD(TAG, "Attempting to send %d advertisements (api_connection=%p)",
-           this->adv_buffer_count_, this->api_connection_);
+           this->adv_buffer_count_, conn);
 
   // Cast the opaque buffer to the correct type
   auto *buffer = static_cast<esphome::api::BluetoothLERawAdvertisement *>(this->adv_buffer_);
@@ -379,7 +394,7 @@ void NimBLEProxy::send_advertisements_() {
   }
 
   // Send to the connected Home Assistant API client
-  send_bluetooth_advertisements_to_client(this->api_connection_, resp);
+  send_bluetooth_advertisements_to_client(conn, resp);
 
   ESP_LOGD(TAG, "Sent %d advertisements to Home Assistant", this->adv_buffer_count_);
 
@@ -464,7 +479,13 @@ std::string NimBLEProxy::get_bluetooth_mac_address_pretty() {
 
 void NimBLEProxy::send_scanner_state_() {
 #ifdef USE_API
-  if (this->api_connection_ == nullptr) {
+  void *conn = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(this->api_connection_mutex_);
+    conn = this->api_connection_;
+  }
+
+  if (conn == nullptr) {
     return;
   }
 
@@ -486,7 +507,7 @@ void NimBLEProxy::send_scanner_state_() {
   resp.configured_mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_ACTIVE;
 
   // Send to the connected API client
-  send_scanner_state_to_client(this->api_connection_, resp);
+  send_scanner_state_to_client(conn, resp);
 #endif
 }
 
@@ -496,19 +517,20 @@ void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
     return;
   }
 
-  if (this->api_connection_ == conn) {
-    ESP_LOGD(TAG, "API connection %p already subscribed", conn);
-    return;
+  {
+    std::lock_guard<std::mutex> lock(this->api_connection_mutex_);
+    if (this->api_connection_ == conn) {
+      ESP_LOGD(TAG, "API connection %p already subscribed", conn);
+      return;
+    }
+
+    // Store the API connection (only one at a time, like native bluetooth_proxy)
+    this->api_connection_ = conn;
   }
 
-  // Store the API connection (only one at a time, like native bluetooth_proxy)
-  this->api_connection_ = conn;
-  // Memory barrier to ensure write is visible to NimBLE host thread
-  __sync_synchronize();
   ESP_LOGI(TAG, "API connection %p subscribed (flags=0x%x)", conn, flags);
-  ESP_LOGD(TAG, "Verify: this=%p, this->api_connection_=%p, global_nimble_proxy=%p, global=%p",
-           this, this->api_connection_, global_nimble_proxy,
-           global_nimble_proxy ? global_nimble_proxy->api_connection_ : nullptr);
+  ESP_LOGD(TAG, "Verify: this=%p, api_connection_=%p, global_nimble_proxy=%p",
+           this, conn, global_nimble_proxy);
 
   // Send current scanner state to the newly subscribed connection
   if (this->initialized_) {
@@ -517,6 +539,7 @@ void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
 }
 
 void NimBLEProxy::unsubscribe_api_connection(void *conn) {
+  std::lock_guard<std::mutex> lock(this->api_connection_mutex_);
   if (this->api_connection_ == conn) {
     this->api_connection_ = nullptr;
     ESP_LOGI(TAG, "API connection %p unsubscribed", conn);
@@ -524,12 +547,18 @@ void NimBLEProxy::unsubscribe_api_connection(void *conn) {
 }
 
 void NimBLEProxy::dump_config() {
+  bool has_connection = false;
+  {
+    std::lock_guard<std::mutex> lock(this->api_connection_mutex_);
+    has_connection = (this->api_connection_ != nullptr);
+  }
+
   ESP_LOGCONFIG(TAG, "NimBLE Proxy:");
   ESP_LOGCONFIG(TAG, "  Active: %s", YESNO(this->active_));
   ESP_LOGCONFIG(TAG, "  Max Connections: %d", this->max_connections_);
   ESP_LOGCONFIG(TAG, "  Initialized: %s", YESNO(this->initialized_));
   ESP_LOGCONFIG(TAG, "  Host task started: %s", YESNO(this->host_task_started_));
-  ESP_LOGCONFIG(TAG, "  API Connection: %s", this->api_connection_ ? "connected" : "none");
+  ESP_LOGCONFIG(TAG, "  API Connection: %s", has_connection ? "connected" : "none");
   ESP_LOGCONFIG(TAG, "  BT controller status: %d", (int) esp_bt_controller_get_status());
 }
 
