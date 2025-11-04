@@ -443,8 +443,9 @@ void NimBLEProxy::send_scanner_state_() {
   esphome::api::BluetoothScannerStateResponse resp;
 
   // Set scanner state based on whether we're scanning
+  // States: IDLE=0, STARTING=1, RUNNING=2, FAILED=3, STOPPING=4, STOPPED=5
   if (this->scanning_) {
-    resp.state = esphome::api::enums::BLUETOOTH_SCANNER_STATE_SCANNING;
+    resp.state = esphome::api::enums::BLUETOOTH_SCANNER_STATE_RUNNING;
   } else if (this->initialized_) {
     resp.state = esphome::api::enums::BLUETOOTH_SCANNER_STATE_STOPPED;
   } else {
@@ -452,6 +453,7 @@ void NimBLEProxy::send_scanner_state_() {
   }
 
   // We're always in passive scan mode (active scan is not implemented)
+  // Modes: PASSIVE=0, ACTIVE=1
   resp.mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
   resp.configured_mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
 
