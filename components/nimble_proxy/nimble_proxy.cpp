@@ -334,16 +334,15 @@ void NimBLEProxy::send_advertisements_() {
     resp.advertisements[i] = buffer[i];
   }
 
-  // Send to all connected API clients
-  if (esphome::api::global_api_server != nullptr) {
-    for (auto &client : esphome::api::global_api_server->get_clients()) {
-      if (client->is_connection_setup()) {
-        client->send_bluetooth_le_raw_advertisements_response(resp);
-      }
-    }
-  }
-
-  ESP_LOGV(TAG, "Sent %d BLE advertisements to Home Assistant", this->adv_buffer_count_);
+  // TODO: Send to Home Assistant API clients
+  // The APIServer in this ESPHome version doesn't expose clients_ or provide
+  // a send_bluetooth_le_advertisements() method. We'll need to either:
+  // 1. Update ESPHome to a version with full bluetooth proxy support
+  // 2. Add a friend declaration or helper method to APIServer
+  // 3. Use raw protobuf send_message() calls
+  //
+  // For now, just log that we collected the advertisements
+  ESP_LOGD(TAG, "Collected %d BLE advertisements (API transmission pending)", this->adv_buffer_count_);
 
   // Reset buffer
   this->adv_buffer_count_ = 0;
