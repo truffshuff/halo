@@ -5,6 +5,11 @@
 #include "nvs_flash.h"
 #include <cstring>
 
+#ifdef USE_API
+#include "esphome/components/api/api_server.h"
+#include "esphome/components/api/api_pb2.h"
+#endif
+
 extern "C" void ble_store_config_init(void);
 
 namespace esphome {
@@ -22,6 +27,14 @@ void NimBLEProxy::setup() {
     ESP_LOGI(TAG, "NimBLE Proxy is disabled");
     return;
   }
+
+#ifdef USE_API
+  // Allocate advertisement buffer
+  if (!this->adv_buffer_allocated_) {
+    this->adv_buffer_ = new esphome::api::BluetoothLERawAdvertisement[BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE];
+    this->adv_buffer_allocated_ = true;
+  }
+#endif
 
   ESP_LOGI(TAG, "Setting up NimBLE Proxy...");
 
@@ -244,6 +257,13 @@ void NimBLEProxy::setup_services_() {
 
 void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
 #ifdef USE_API
+  if (!this->adv_buffer_allocated_ || this->adv_buffer_ == nullptr) {
+    return;
+  }
+
+  // Cast the opaque buffer to the correct type
+  auto *buffer = static_cast<esphome::api::BluetoothLERawAdvertisement *>(this->adv_buffer_);
+
   // Build 64-bit MAC address from 6-byte array
   uint64_t address = 0;
   for (int i = 0; i < 6; i++) {
@@ -251,7 +271,7 @@ void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
   }
 
   // Add to buffer
-  auto &adv = this->adv_buffer_[this->adv_buffer_count_];
+  auto &adv = buffer[this->adv_buffer_count_];
   adv.address = address;
   adv.rssi = disc->rssi;
   adv.address_type = disc->addr.type;
@@ -278,22 +298,27 @@ void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
 
 void NimBLEProxy::send_advertisements_() {
 #ifdef USE_API
-  if (this->adv_buffer_count_ == 0) {
+  if (this->adv_buffer_count_ == 0 || !this->adv_buffer_allocated_ || this->adv_buffer_ == nullptr) {
     return;
   }
+
+  // Cast the opaque buffer to the correct type
+  auto *buffer = static_cast<esphome::api::BluetoothLERawAdvertisement *>(this->adv_buffer_);
 
   esphome::api::BluetoothLERawAdvertisementsResponse resp;
   resp.advertisements_len = this->adv_buffer_count_;
 
   // Copy buffered advertisements
   for (uint16_t i = 0; i < this->adv_buffer_count_; i++) {
-    resp.advertisements[i] = this->adv_buffer_[i];
+    resp.advertisements[i] = buffer[i];
   }
 
   // Send to all connected API clients
   if (esphome::api::global_api_server != nullptr) {
-    for (auto *client : esphome::api::global_api_server->get_clients()) {
-      client->send_bluetooth_le_raw_advertisements_response(resp);
+    for (auto &client : esphome::api::global_api_server->get_clients()) {
+      if (client->is_connection_setup()) {
+        client->send_bluetooth_le_raw_advertisements_response(resp);
+      }
     }
   }
 
