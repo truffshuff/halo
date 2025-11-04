@@ -503,7 +503,38 @@ font:
     id: montserrat_24
     size: 24
     bpp: 4
-    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,:-"
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%\""
+
+  # Weather display fonts - various sizes
+  - file: "gfonts://Montserrat"
+    id: montserrat_28
+    size: 28
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%\""
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_20
+    size: 20
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%\""
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_18
+    size: 18
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%\""
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_14
+    size: 14
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%\""
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_10
+    size: 10
+    bpp: 4
+    glyphs: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%\""
 
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: icons_100
