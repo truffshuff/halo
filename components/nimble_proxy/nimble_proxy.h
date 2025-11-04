@@ -36,7 +36,7 @@ class NimBLEProxy : public Component {
   void set_max_connections(uint8_t max_connections) { this->max_connections_ = max_connections; }
 
   // API integration methods for Home Assistant connectivity
-  void *get_api_connection() { return this->api_connections_.empty() ? nullptr : this->api_connections_[0]; }
+  void *get_api_connection() { return this->api_connection_; }
   void subscribe_api_connection(void *conn, uint32_t flags);
   void unsubscribe_api_connection(void *conn);
   template<typename T> void bluetooth_device_request(const T &msg) { }
@@ -59,7 +59,8 @@ class NimBLEProxy : public Component {
   bool scanning_{false};
 
   // API connection tracking (void* to avoid including api headers)
-  std::vector<void *> api_connections_;
+  // We only support one active API connection at a time (like native bluetooth_proxy)
+  void *api_connection_{nullptr};
 
   // Advertisement batching for Home Assistant (opaque buffer to avoid header dependencies)
   void *adv_buffer_{nullptr};

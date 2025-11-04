@@ -7,62 +7,46 @@
 namespace esphome {
 namespace nimble_proxy {
 
-// Helper to broadcast bluetooth advertisements to all connected API clients
-// Takes a vector of API connections (as void*) and sends the advertisement response to each
-inline void send_bluetooth_advertisements_to_clients(
-    const std::vector<void *> &api_connections,
+// Helper to send bluetooth advertisements to the connected API client
+inline void send_bluetooth_advertisements_to_client(
+    void *api_connection,
     api::BluetoothLERawAdvertisementsResponse &resp) {
 
-  if (api_connections.empty()) {
-    ESP_LOGV("nimble_proxy", "No API connections to send %d advertisements to", resp.advertisements_len);
+  if (api_connection == nullptr) {
+    ESP_LOGV("nimble_proxy", "No API connection to send %d advertisements to", resp.advertisements_len);
     return;
   }
 
-  ESP_LOGD("nimble_proxy", "Sending %d BLE advertisements to %d API client(s)",
-           resp.advertisements_len, api_connections.size());
+  ESP_LOGD("nimble_proxy", "Sending %d BLE advertisements to API client", resp.advertisements_len);
 
-  // Send to each connected API client
-  for (void *conn_ptr : api_connections) {
-    if (conn_ptr == nullptr) {
-      continue;
-    }
+  // Cast void* back to APIConnection*
+  auto *conn = static_cast<api::APIConnection *>(api_connection);
 
-    // Cast void* back to APIConnection*
-    auto *conn = static_cast<api::APIConnection *>(conn_ptr);
-
-    // Send the message using the API connection's send_message method
-    if (!conn->send_message(resp, api::BluetoothLERawAdvertisementsResponse::MESSAGE_TYPE)) {
-      ESP_LOGW("nimble_proxy", "Failed to send BLE advertisements to API connection %p", conn_ptr);
-    }
+  // Send the message using the API connection's send_message method
+  if (!conn->send_message(resp, api::BluetoothLERawAdvertisementsResponse::MESSAGE_TYPE)) {
+    ESP_LOGW("nimble_proxy", "Failed to send BLE advertisements to API connection %p", api_connection);
   }
 }
 
-// Helper to send scanner state to all connected API clients
-inline void send_scanner_state_to_clients(
-    const std::vector<void *> &api_connections,
+// Helper to send scanner state to the connected API client
+inline void send_scanner_state_to_client(
+    void *api_connection,
     api::BluetoothScannerStateResponse &resp) {
 
-  if (api_connections.empty()) {
-    ESP_LOGV("nimble_proxy", "No API connections to send scanner state to");
+  if (api_connection == nullptr) {
+    ESP_LOGV("nimble_proxy", "No API connection to send scanner state to");
     return;
   }
 
-  ESP_LOGD("nimble_proxy", "Sending scanner state (state=%d, mode=%d) to %d API client(s)",
-           resp.state, resp.mode, api_connections.size());
+  ESP_LOGD("nimble_proxy", "Sending scanner state (state=%d, mode=%d) to API client",
+           resp.state, resp.mode);
 
-  // Send to each connected API client
-  for (void *conn_ptr : api_connections) {
-    if (conn_ptr == nullptr) {
-      continue;
-    }
+  // Cast void* back to APIConnection*
+  auto *conn = static_cast<api::APIConnection *>(api_connection);
 
-    // Cast void* back to APIConnection*
-    auto *conn = static_cast<api::APIConnection *>(conn_ptr);
-
-    // Send the message using the API connection's send_message method
-    if (!conn->send_message(resp, api::BluetoothScannerStateResponse::MESSAGE_TYPE)) {
-      ESP_LOGW("nimble_proxy", "Failed to send scanner state to API connection %p", conn_ptr);
-    }
+  // Send the message using the API connection's send_message method
+  if (!conn->send_message(resp, api::BluetoothScannerStateResponse::MESSAGE_TYPE)) {
+    ESP_LOGW("nimble_proxy", "Failed to send scanner state to API connection %p", api_connection);
   }
 }
 
