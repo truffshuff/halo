@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.04.1612"
+  version: "25.11.04.1631"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -2543,7 +2543,28 @@ script:
             if (id(weather_current_condition).empty()) {
               return std::string("Unknown");
             }
-            return id(weather_current_condition);
+            // Format condition text to be more readable
+            std::string condition = id(weather_current_condition);
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - lvgl.label.update:
           id: lbl_weather_today_outdoor_temp
@@ -3697,7 +3718,28 @@ script:
           id: lbl_forecast_day2_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[1].empty()) return std::string("---");
-            return id(weather_forecast_condition)[1];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[1];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       # Small delay to prevent system overload
       - delay: 30ms
@@ -3827,7 +3869,28 @@ script:
           id: lbl_forecast_day3_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[2].empty()) return std::string("---");
-            return id(weather_forecast_condition)[2];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[2];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - delay: 30ms
       # Update Day 4
@@ -3955,7 +4018,28 @@ script:
           id: lbl_forecast_day4_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[3].empty()) return std::string("---");
-            return id(weather_forecast_condition)[3];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[3];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - delay: 30ms
       # Update Day 5
@@ -4083,7 +4167,28 @@ script:
           id: lbl_forecast_day5_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[4].empty()) return std::string("---");
-            return id(weather_forecast_condition)[4];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[4];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - delay: 30ms
       # Update Day 6
@@ -4211,7 +4316,28 @@ script:
           id: lbl_forecast_day6_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[5].empty()) return std::string("---");
-            return id(weather_forecast_condition)[5];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[5];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - delay: 30ms
       # Update Day 7
@@ -4339,7 +4465,28 @@ script:
           id: lbl_forecast_day7_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[6].empty()) return std::string("---");
-            return id(weather_forecast_condition)[6];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[6];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - delay: 30ms
       # Update Day 8
@@ -4467,7 +4614,28 @@ script:
           id: lbl_forecast_day8_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[7].empty()) return std::string("---");
-            return id(weather_forecast_condition)[7];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[7];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - delay: 30ms
       # Update Day 9
@@ -4595,7 +4763,28 @@ script:
           id: lbl_forecast_day9_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[8].empty()) return std::string("---");
-            return id(weather_forecast_condition)[8];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[8];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       # Update Day 10
       - lvgl.label.update:
@@ -4667,7 +4856,28 @@ script:
           id: lbl_forecast_day10_condition
           text: !lambda |-
             if (id(weather_forecast_condition)[9].empty()) return std::string("---");
-            return id(weather_forecast_condition)[9];
+            // Format condition text to be more readable
+            std::string condition = id(weather_forecast_condition)[9];
+            if (condition == "clear-night") return std::string("Clear Night");
+            if (condition == "cloudy") return std::string("Cloudy");
+            if (condition == "exceptional") return std::string("Exceptional");
+            if (condition == "fog") return std::string("Fog");
+            if (condition == "hail") return std::string("Hail");
+            if (condition == "lightning") return std::string("Lightning");
+            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+            if (condition == "partlycloudy") return std::string("Partly Cloudy");
+            if (condition == "pouring") return std::string("Pouring");
+            if (condition == "rainy") return std::string("Rainy");
+            if (condition == "snowy") return std::string("Snowy");
+            if (condition == "snowy-rainy") return std::string("Sleet");
+            if (condition == "sunny") return std::string("Sunny");
+            if (condition == "windy") return std::string("Windy");
+            if (condition == "windy-variant") return std::string("Windy Windy");
+            // Return capitalized version if not matched
+            if (!condition.empty()) {
+              condition[0] = toupper(condition[0]);
+            }
+            return condition;
 
       - logger.log: "✓ Daily forecast display updated (page 5)"
 
@@ -6188,7 +6398,28 @@ lvgl:
               if (id(weather_current_condition).empty()) {
                 return std::string("Unknown");
               }
-              return id(weather_current_condition);
+              // Format condition text to be more readable
+              std::string condition = id(weather_current_condition);
+              if (condition == "clear-night") return std::string("Clear Night");
+              if (condition == "cloudy") return std::string("Cloudy");
+              if (condition == "exceptional") return std::string("Exceptional");
+              if (condition == "fog") return std::string("Fog");
+              if (condition == "hail") return std::string("Hail");
+              if (condition == "lightning") return std::string("Lightning");
+              if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+              if (condition == "partlycloudy") return std::string("Partly Cloudy");
+              if (condition == "pouring") return std::string("Pouring");
+              if (condition == "rainy") return std::string("Rainy");
+              if (condition == "snowy") return std::string("Snowy");
+              if (condition == "snowy-rainy") return std::string("Sleet");
+              if (condition == "sunny") return std::string("Sunny");
+              if (condition == "windy") return std::string("Windy");
+              if (condition == "windy-variant") return std::string("Windy");
+              // Return capitalized version if not matched
+              if (!condition.empty()) {
+                condition[0] = toupper(condition[0]);
+              }
+              return condition;
             text_align: CENTER
             text_font: montserrat_20
             text_color: my_white
