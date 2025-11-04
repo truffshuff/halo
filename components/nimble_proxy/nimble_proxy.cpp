@@ -301,7 +301,11 @@ void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
     return;
   }
 
-  if (this->api_connection_ == nullptr) {
+  // Memory barrier to ensure we see the latest api_connection_ value from main thread
+  __sync_synchronize();
+  void *conn = this->api_connection_;
+
+  if (conn == nullptr) {
     ESP_LOGV(TAG, "No API connection, buffering advertisement (buffer has %d)", this->adv_buffer_count_);
   }
 
@@ -485,6 +489,8 @@ void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
 
   // Store the API connection (only one at a time, like native bluetooth_proxy)
   this->api_connection_ = conn;
+  // Memory barrier to ensure write is visible to NimBLE host thread
+  __sync_synchronize();
   ESP_LOGI(TAG, "API connection %p subscribed (flags=0x%x)", conn, flags);
 
   // Send current scanner state to the newly subscribed connection

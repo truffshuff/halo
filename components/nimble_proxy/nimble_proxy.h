@@ -60,7 +60,8 @@ class NimBLEProxy : public Component {
 
   // API connection tracking (void* to avoid including api headers)
   // We only support one active API connection at a time (like native bluetooth_proxy)
-  void *api_connection_{nullptr};
+  // Volatile because it's accessed from NimBLE host thread and ESPHome main thread
+  void * volatile api_connection_{nullptr};
 
   // Advertisement batching for Home Assistant (opaque buffer to avoid header dependencies)
   void *adv_buffer_{nullptr};
