@@ -452,10 +452,10 @@ void NimBLEProxy::send_scanner_state_() {
     resp.state = esphome::api::enums::BLUETOOTH_SCANNER_STATE_STARTING;
   }
 
-  // We're always in passive scan mode (active scan is not implemented)
+  // We're in active scan mode (scan_params.passive = 0 in start_scan_)
   // Modes: PASSIVE=0, ACTIVE=1
-  resp.mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
-  resp.configured_mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
+  resp.mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_ACTIVE;
+  resp.configured_mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_ACTIVE;
 
   // Send to the connected API client
   send_scanner_state_to_client(this->api_connection_, resp);
