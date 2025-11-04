@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.04.1719"
+  version: "25.11.04.1724"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -9751,6 +9751,97 @@ button:
       - delay: 100ms
       - lvgl.resume:
       - logger.log: "Display refresh complete"
+
+  # ============================================================================
+  # Go-To Page Buttons
+  # ============================================================================
+  # These buttons allow users to directly navigate to any page from Home Assistant
+  # without waiting for auto-rotation. Useful for quick access to specific info.
+  # ============================================================================
+  
+  - platform: template
+    name: "Go to Clock Page"
+    id: goto_clock_page
+    icon: mdi:clock-outline
+    on_press:
+      - logger.log: "Navigating to Clock page"
+      - lambda: |-
+          id(current_page_name) = "vertical_clock";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: vertical_clock_page
+          animation: OUT_LEFT
+          time: 300ms
+
+  - platform: template
+    name: "Go to Air Quality Page"
+    id: goto_airq_page
+    icon: mdi:air-filter
+    on_press:
+      - logger.log: "Navigating to Air Quality page"
+      - lambda: |-
+          id(current_page_name) = "airq";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: AirQ_page
+          animation: OUT_LEFT
+          time: 300ms
+
+  - platform: template
+    name: "Go to WiFi Page"
+    id: goto_wifi_page
+    icon: mdi:wifi
+    on_press:
+      - logger.log: "Navigating to WiFi page"
+      - lambda: |-
+          id(current_page_name) = "wifi";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: wifi_page
+          animation: OUT_LEFT
+          time: 300ms
+
+  - platform: template
+    name: "Go to Weather Page"
+    id: goto_weather_page
+    icon: mdi:weather-partly-cloudy
+    on_press:
+      - logger.log: "Navigating to Weather page"
+      - lambda: |-
+          id(current_page_name) = "weather";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: weather_forecast_page
+          animation: OUT_LEFT
+          time: 300ms
+
+  - platform: template
+    name: "Go to Hourly Forecast Page"
+    id: goto_hourly_forecast_page
+    icon: mdi:clock-time-four-outline
+    on_press:
+      - logger.log: "Navigating to Hourly Forecast page"
+      - lambda: |-
+          id(current_page_name) = "hourly_forecast";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: hourly_forecast_page
+          animation: OUT_LEFT
+          time: 300ms
+
+  - platform: template
+    name: "Go to Daily Forecast Page"
+    id: goto_daily_forecast_page
+    icon: mdi:calendar-week
+    on_press:
+      - logger.log: "Navigating to Daily Forecast page"
+      - lambda: |-
+          id(current_page_name) = "daily_forecast";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: daily_forecast_page
+          animation: OUT_LEFT
+          time: 300ms
   
 # ============================================================================
 # WiFi Configuration
