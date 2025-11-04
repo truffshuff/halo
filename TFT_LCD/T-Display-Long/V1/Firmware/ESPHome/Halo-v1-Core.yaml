@@ -2190,7 +2190,7 @@ script:
                   App.feed_wdt();
                   
                   // Parse JSON response with smaller buffer
-                  DynamicJsonDocument doc(12288);  // Reduced from 16KB to 12KB
+                  JsonDocument doc;
                   DeserializationError error = deserializeJson(
                       doc, body_str, DeserializationOption::NestingLimit(10));
                   
@@ -2337,8 +2337,8 @@ script:
                   App.feed_wdt();
                   
                   // Parse JSON response with reduced buffer size to prevent OOM
-                  // Using PSRAM for JSON document via SpiRamJsonDocument or reduce size
-                  DynamicJsonDocument doc(24576);  // Reduced from 32KB to 24KB
+                  // Using JsonDocument which dynamically allocates memory as needed
+                  JsonDocument doc;
                   DeserializationError error = deserializeJson(
                       doc, body_str, DeserializationOption::NestingLimit(10));
                   
