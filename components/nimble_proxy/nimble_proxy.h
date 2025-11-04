@@ -36,18 +36,19 @@ class NimBLEProxy : public Component {
   void set_max_connections(uint8_t max_connections) { this->max_connections_ = max_connections; }
 
   // API integration methods (stubs for now - to be implemented)
+  // These use templates to accept any message type without needing to include api_pb2.h
   void *get_api_connection() { return nullptr; }
   void subscribe_api_connection(void *conn, uint32_t flags) { }
   void unsubscribe_api_connection(void *conn) { }
-  void bluetooth_device_request(const void &msg) { }
-  void bluetooth_gatt_read(const void &msg) { }
-  void bluetooth_gatt_write(const void &msg) { }
-  void bluetooth_gatt_read_descriptor(const void &msg) { }
-  void bluetooth_gatt_write_descriptor(const void &msg) { }
-  void bluetooth_gatt_send_services(const void &msg) { }
-  void bluetooth_gatt_notify(const void &msg) { }
+  template<typename T> void bluetooth_device_request(const T &msg) { }
+  template<typename T> void bluetooth_gatt_read(const T &msg) { }
+  template<typename T> void bluetooth_gatt_write(const T &msg) { }
+  template<typename T> void bluetooth_gatt_read_descriptor(const T &msg) { }
+  template<typename T> void bluetooth_gatt_write_descriptor(const T &msg) { }
+  template<typename T> void bluetooth_gatt_send_services(const T &msg) { }
+  template<typename T> void bluetooth_gatt_notify(const T &msg) { }
   void send_connections_free(void *conn) { }
-  void bluetooth_scanner_set_mode(uint32_t active, uint32_t passive) { }
+  void bluetooth_scanner_set_mode(bool mode) { }
   uint32_t get_feature_flags() { return 0; }
   std::string get_bluetooth_mac_address_pretty() { return "00:00:00:00:00:00"; }
 
