@@ -30,6 +30,9 @@ async def to_code(config):
     # This points to the external_components copy of this component.
     cg.add_build_flag("-I" + str(cg.RawExpression("$PROJECT_DIR/.esphome/external_components/nimble_proxy")))
 
+    # Also add the local repo path where the shim header lives
+    cg.add_build_flag("-I" + str(cg.RawExpression("$PROJECT_DIR/components/nimble_proxy")))
+
     # Provide sane defaults for API compile-time constants if not set
     cg.add_build_flag("-DBLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE=5")
     cg.add_build_flag("-DBLUETOOTH_PROXY_MAX_CONNECTIONS=%d" % config[CONF_MAX_CONNECTIONS])
