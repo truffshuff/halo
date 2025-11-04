@@ -155,8 +155,12 @@ int NimBLEProxy::scan_callback_(struct ble_gap_event *event, void *arg) {
            disc->addr.val[2], disc->addr.val[1], disc->addr.val[0],
            disc->rssi);
 
-  // TODO: Send scan results to Home Assistant via ESPHome API
-  // This requires implementing the bluetooth proxy API protocol
+#ifdef USE_API
+  // Add to buffer and send to Home Assistant
+  if (global_nimble_proxy != nullptr) {
+    global_nimble_proxy->add_advertisement_(disc);
+  }
+#endif
 
   return 0;
 }
@@ -240,8 +244,72 @@ void NimBLEProxy::setup_services_() {
   // For now, just basic GAP/GATT services from ble_svc_gap/gatt_init()
 }
 
+#ifdef USE_API
+void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
+  // Build 64-bit MAC address from 6-byte array
+  uint64_t address = 0;
+  for (int i = 0; i < 6; i++) {
+    address |= ((uint64_t) disc->addr.val[i]) << (i * 8);
+  }
+
+  // Add to buffer
+  auto &adv = this->adv_buffer_[this->adv_buffer_count_];
+  adv.address = address;
+  adv.rssi = disc->rssi;
+  adv.address_type = disc->addr.type;
+
+  // Copy advertisement data (limited to 62 bytes per ESPHome API)
+  adv.data_len = std::min((size_t) disc->length_data, sizeof(adv.data));
+  if (adv.data_len > 0 && disc->data != nullptr) {
+    memcpy(adv.data, disc->data, adv.data_len);
+  }
+
+  this->adv_buffer_count_++;
+
+  // Send when buffer is full or after 100ms timeout
+  uint32_t now = millis();
+  if (this->adv_buffer_count_ >= BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE ||
+      (this->adv_buffer_count_ > 0 && (now - this->last_send_time_) >= 100)) {
+    this->send_advertisements_();
+  }
+}
+
+void NimBLEProxy::send_advertisements_() {
+  if (this->adv_buffer_count_ == 0) {
+    return;
+  }
+
+  api::BluetoothLERawAdvertisementsResponse resp;
+  resp.advertisements_len = this->adv_buffer_count_;
+
+  // Copy buffered advertisements
+  for (uint16_t i = 0; i < this->adv_buffer_count_; i++) {
+    resp.advertisements[i] = this->adv_buffer_[i];
+  }
+
+  // Send to all connected API clients
+  for (auto *client : App.get_api_server()->get_clients()) {
+    client->send_bluetooth_le_raw_advertisements_response(resp);
+  }
+
+  ESP_LOGV(TAG, "Sent %d BLE advertisements to Home Assistant", this->adv_buffer_count_);
+
+  // Reset buffer
+  this->adv_buffer_count_ = 0;
+  this->last_send_time_ = millis();
+}
+#endif
+
 void NimBLEProxy::loop() {
-  // NimBLE runs in its own FreeRTOS task, nothing needed here
+#ifdef USE_API
+  // Send any pending advertisements periodically
+  if (this->adv_buffer_count_ > 0) {
+    uint32_t now = millis();
+    if ((now - this->last_send_time_) >= 100) {
+      this->send_advertisements_();
+    }
+  }
+#endif
 }
 
 void NimBLEProxy::dump_config() {

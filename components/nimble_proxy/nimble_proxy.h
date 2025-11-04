@@ -3,6 +3,11 @@
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
 
+#ifdef USE_API
+#include "esphome/components/api/api_server.h"
+#include "esphome/components/api/api_pb2.h"
+#endif
+
 // ESP-IDF native NimBLE headers
 #include "esp_bt.h"
 #include "host/ble_hs.h"
@@ -12,6 +17,13 @@
 #include "nimble/nimble_port_freertos.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
+
+#include <vector>
+#include <array>
+
+#ifndef BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE
+#define BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE 5
+#endif
 
 namespace esphome {
 namespace nimble_proxy {
@@ -33,10 +45,22 @@ class NimBLEProxy : public Component {
   bool host_task_started_{false};
   bool scanning_{false};
 
+#ifdef USE_API
+  // Advertisement batching for Home Assistant
+  std::array<api::BluetoothLERawAdvertisement, BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE> adv_buffer_{};
+  uint16_t adv_buffer_count_{0};
+  uint32_t last_send_time_{0};
+#endif
+
   void start_scan_();
   void stop_scan_();
   void start_advertising_();
   void setup_services_();
+
+#ifdef USE_API
+  void send_advertisements_();
+  void add_advertisement_(const ble_gap_disc_desc *disc);
+#endif
 
   // NimBLE callbacks
   static int gap_event_handler_(struct ble_gap_event *event, void *arg);
