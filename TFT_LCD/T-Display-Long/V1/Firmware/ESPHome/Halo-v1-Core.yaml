@@ -563,6 +563,7 @@ font:
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
+      
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -7315,7 +7316,7 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour1_icon
-                        text: "--"
+                        text: "\U000F14E4"
                         text_font: icons_40
                         text_color: my_white
                     - label:
@@ -7519,7 +7520,7 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour2_icon
-                        text: "--"
+                        text: "\U000F14E4"
                         text_font: icons_40
                         text_color: my_white
                     - label:
@@ -7723,7 +7724,7 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour3_icon
-                        text: "--"
+                        text: "\U000F14E4"
                         text_font: icons_40
                         text_color: my_white
                     - label:
@@ -8008,7 +8009,7 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour4_icon
-                        text: "--"
+                        text: "\U000F14E4"
                         text_font: icons_40
                         text_color: my_white
                     - label:
@@ -8212,7 +8213,7 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour5_icon
-                        text: "--"
+                        text: "\U000F14E4"
                         text_font: icons_40
                         text_color: my_white
                     - label:
@@ -8416,7 +8417,7 @@ lvgl:
                   widgets:
                     - label:
                         id: lbl_hourly_hour6_icon
-                        text: "--"
+                        text: "\U000F14E4"
                         text_font: icons_40
                         text_color: my_white
                     - label:
@@ -8690,7 +8691,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day2_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -8735,7 +8736,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day3_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -8841,7 +8842,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day4_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -8886,7 +8887,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day5_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -9012,7 +9013,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day6_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -9057,7 +9058,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day7_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -9183,7 +9184,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day8_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -9228,7 +9229,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day9_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
@@ -9354,7 +9355,7 @@ lvgl:
                   text_color: my_white
               - label:
                   id: lbl_forecast_day10_icon
-                  text: "--"
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
