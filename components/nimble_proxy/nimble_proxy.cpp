@@ -171,6 +171,9 @@ void NimBLEProxy::start_scan_() {
 
   this->scanning_ = true;
   ESP_LOGI(TAG, "BLE scan started");
+
+  // Notify Home Assistant that we're now scanning
+  this->send_scanner_state_();
 }
 
 void NimBLEProxy::stop_scan_() {
@@ -186,6 +189,9 @@ void NimBLEProxy::stop_scan_() {
 
   this->scanning_ = false;
   ESP_LOGI(TAG, "BLE scan stopped");
+
+  // Notify Home Assistant that we've stopped scanning
+  this->send_scanner_state_();
 }
 
 int NimBLEProxy::scan_callback_(struct ble_gap_event *event, void *arg) {
@@ -365,6 +371,25 @@ void NimBLEProxy::loop() {
   }
 }
 
+void NimBLEProxy::bluetooth_scanner_set_mode(bool mode) {
+  // mode: true = scanning enabled, false = scanning disabled
+  ESP_LOGI(TAG, "Home Assistant requested scanner mode: %s", mode ? "enabled" : "disabled");
+
+  if (mode) {
+    // Start scanning if not already scanning
+    if (!this->scanning_ && this->initialized_) {
+      this->start_scan_();
+      // start_scan_() will call send_scanner_state_()
+    }
+  } else {
+    // Stop scanning if currently scanning
+    if (this->scanning_) {
+      this->stop_scan_();
+      // stop_scan_() will call send_scanner_state_()
+    }
+  }
+}
+
 uint32_t NimBLEProxy::get_feature_flags() {
   // Define feature flags (matching bluetooth_proxy enums)
   const uint32_t FEATURE_PASSIVE_SCAN = 1 << 0;
@@ -373,10 +398,11 @@ uint32_t NimBLEProxy::get_feature_flags() {
   const uint32_t FEATURE_PAIRING = 1 << 3;
   const uint32_t FEATURE_CACHE_CLEARING = 1 << 4;
   const uint32_t FEATURE_RAW_ADVERTISEMENTS = 1 << 5;
+  const uint32_t FEATURE_STATE_AND_MODE = 1 << 6;
 
-  // We support passive scanning and raw advertisements
+  // We support passive scanning, raw advertisements, and mode reporting
   // Active connections not yet implemented
-  return FEATURE_PASSIVE_SCAN | FEATURE_RAW_ADVERTISEMENTS;
+  return FEATURE_PASSIVE_SCAN | FEATURE_RAW_ADVERTISEMENTS | FEATURE_STATE_AND_MODE;
 }
 
 std::string NimBLEProxy::get_bluetooth_mac_address_pretty() {
@@ -408,6 +434,40 @@ std::string NimBLEProxy::get_bluetooth_mac_address_pretty() {
   return std::string(mac_str);
 }
 
+void NimBLEProxy::send_scanner_state_() {
+#ifdef USE_API
+  if (this->api_connections_.empty()) {
+    return;
+  }
+
+  esphome::api::BluetoothScannerStateResponse resp;
+
+  // Set scanner state based on whether we're scanning
+  if (this->scanning_) {
+    resp.state = esphome::api::enums::BLUETOOTH_SCANNER_STATE_SCANNING;
+  } else if (this->initialized_) {
+    resp.state = esphome::api::enums::BLUETOOTH_SCANNER_STATE_STOPPED;
+  } else {
+    resp.state = esphome::api::enums::BLUETOOTH_SCANNER_STATE_STARTING;
+  }
+
+  // We're always in passive scan mode (active scan is not implemented)
+  resp.mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
+  resp.configured_mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
+
+  ESP_LOGD(TAG, "Sending scanner state: state=%d, mode=%d", resp.state, resp.mode);
+
+  // Send to all connected API clients
+  for (void *conn_ptr : this->api_connections_) {
+    if (conn_ptr == nullptr) {
+      continue;
+    }
+    auto *conn = static_cast<esphome::api::APIConnection *>(conn_ptr);
+    conn->send_message(resp, esphome::api::BluetoothScannerStateResponse::MESSAGE_TYPE);
+  }
+#endif
+}
+
 void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
   // Add this API connection to our list if not already present
   for (auto *existing : this->api_connections_) {
@@ -418,6 +478,9 @@ void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
   }
   this->api_connections_.push_back(conn);
   ESP_LOGI(TAG, "API connection %p subscribed, total connections: %d", conn, this->api_connections_.size());
+
+  // Send current scanner state to the newly subscribed connection
+  this->send_scanner_state_();
 }
 
 void NimBLEProxy::unsubscribe_api_connection(void *conn) {
