@@ -2,6 +2,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
+#include "esphome/core/defines.h"
 
 #ifdef USE_API
 #include "esphome/components/api/api_server.h"
