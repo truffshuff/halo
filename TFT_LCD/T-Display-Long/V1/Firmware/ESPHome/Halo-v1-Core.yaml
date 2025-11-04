@@ -9646,6 +9646,7 @@ wireguard:
 # This ONLY provides header files and USE_BLUETOOTH_PROXY define for API types
 # It contains NO Bluedroid code - just enables the protobuf message types
 bluetooth_proxy:
+  active: true
 
 # Custom nimble_proxy - the actual BLE proxy implementation using NimBLE stack
 # ESPHome's native bluetooth_proxy uses Bluedroid which we're NOT using
