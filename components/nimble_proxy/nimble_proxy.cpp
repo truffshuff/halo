@@ -457,20 +457,17 @@ void NimBLEProxy::send_scanner_state_() {
   resp.mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
   resp.configured_mode = esphome::api::enums::BLUETOOTH_SCANNER_MODE_PASSIVE;
 
-  ESP_LOGD(TAG, "Sending scanner state: state=%d, mode=%d", resp.state, resp.mode);
-
   // Send to all connected API clients
-  for (void *conn_ptr : this->api_connections_) {
-    if (conn_ptr == nullptr) {
-      continue;
-    }
-    auto *conn = static_cast<esphome::api::APIConnection *>(conn_ptr);
-    conn->send_message(resp, esphome::api::BluetoothScannerStateResponse::MESSAGE_TYPE);
-  }
+  send_scanner_state_to_clients(this->api_connections_, resp);
 #endif
 }
 
 void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
+  if (conn == nullptr) {
+    ESP_LOGW(TAG, "Attempted to subscribe null API connection");
+    return;
+  }
+
   // Add this API connection to our list if not already present
   for (auto *existing : this->api_connections_) {
     if (existing == conn) {
@@ -478,11 +475,15 @@ void NimBLEProxy::subscribe_api_connection(void *conn, uint32_t flags) {
       return;
     }
   }
+
   this->api_connections_.push_back(conn);
-  ESP_LOGI(TAG, "API connection %p subscribed, total connections: %d", conn, this->api_connections_.size());
+  ESP_LOGI(TAG, "API connection %p subscribed, total connections: %d", conn, (int)this->api_connections_.size());
 
   // Send current scanner state to the newly subscribed connection
-  this->send_scanner_state_();
+  // Delay slightly to ensure the connection is fully established
+  if (this->initialized_) {
+    this->send_scanner_state_();
+  }
 }
 
 void NimBLEProxy::unsubscribe_api_connection(void *conn) {

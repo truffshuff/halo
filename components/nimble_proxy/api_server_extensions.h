@@ -37,5 +37,34 @@ inline void send_bluetooth_advertisements_to_clients(
   }
 }
 
+// Helper to send scanner state to all connected API clients
+inline void send_scanner_state_to_clients(
+    const std::vector<void *> &api_connections,
+    api::BluetoothScannerStateResponse &resp) {
+
+  if (api_connections.empty()) {
+    ESP_LOGV("nimble_proxy", "No API connections to send scanner state to");
+    return;
+  }
+
+  ESP_LOGD("nimble_proxy", "Sending scanner state (state=%d, mode=%d) to %d API client(s)",
+           resp.state, resp.mode, api_connections.size());
+
+  // Send to each connected API client
+  for (void *conn_ptr : api_connections) {
+    if (conn_ptr == nullptr) {
+      continue;
+    }
+
+    // Cast void* back to APIConnection*
+    auto *conn = static_cast<api::APIConnection *>(conn_ptr);
+
+    // Send the message using the API connection's send_message method
+    if (!conn->send_message(resp, api::BluetoothScannerStateResponse::MESSAGE_TYPE)) {
+      ESP_LOGW("nimble_proxy", "Failed to send scanner state to API connection %p", conn_ptr);
+    }
+  }
+}
+
 }  // namespace nimble_proxy
 }  // namespace esphome
