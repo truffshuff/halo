@@ -6155,7 +6155,7 @@ lvgl:
             text_color: my_white
             align: TOP_MID
             x: 0
-            y: 105
+            y: 115
 
         # Semicircle meter gauge for apparent temperature
         - obj:
