@@ -1976,6 +1976,43 @@ script:
           then:
             - lvgl.label.update:
                 id: lbl_weather_forecast_condition_icon
+                text: !lambda |-
+                  // Map normalized condition to Material Design Icon glyph
+                  const std::string condition = id(weather_last_condition);
+                  // Specific combos first
+                  if (condition.find("lightning-rainy") != std::string::npos) {
+                    return std::string("\U000F067E");
+                  } else if (condition.find("snowy-rainy") != std::string::npos) {
+                    return std::string("\U000F067F");
+                  } else if (condition.find("clear-night") != std::string::npos) {
+                    return std::string("\U000F0594");
+                  } else if (condition.find("partlycloudy") != std::string::npos) {
+                    return std::string("\U000F0595");
+                  } else if (condition.find("pouring") != std::string::npos) {
+                    return std::string("\U000F0596");
+                  } else if (condition.find("lightning") != std::string::npos) {
+                    return std::string("\U000F0593");
+                  } else if (condition.find("snowy") != std::string::npos) {
+                    return std::string("\U000F0598");
+                  } else if (condition.find("rainy") != std::string::npos) {
+                    return std::string("\U000F0597");
+                  } else if (condition.find("hail") != std::string::npos) {
+                    return std::string("\U000F0592");
+                  } else if (condition.find("fog") != std::string::npos) {
+                    return std::string("\U000F0591");
+                  } else if (condition.find("windy-variant") != std::string::npos) {
+                    return std::string("\U000F059E");
+                  } else if (condition.find("windy") != std::string::npos) {
+                    return std::string("\U000F059D");
+                  } else if (condition.find("cloudy") != std::string::npos) {
+                    return std::string("\U000F0590");
+                  } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
+                    return std::string("\U000F0599");
+                  } else if (condition.find("exceptional") != std::string::npos) {
+                    return std::string("\U000F0F2F");
+                  }
+                  // Default/fallback icon
+                  return std::string("\U000F14E4");
                 text_color: !lambda |-
                   const std::string condition = id(weather_last_condition);
                   ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
