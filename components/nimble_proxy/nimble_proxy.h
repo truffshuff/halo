@@ -50,6 +50,10 @@ class NimBLEProxy : public Component {
   std::array<api::BluetoothLERawAdvertisement, BLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE> adv_buffer_{};
   uint16_t adv_buffer_count_{0};
   uint32_t last_send_time_{0};
+#else
+  // Dummy variables when API is not available
+  uint16_t adv_buffer_count_{0};
+  uint32_t last_send_time_{0};
 #endif
 
   void start_scan_();
@@ -57,10 +61,8 @@ class NimBLEProxy : public Component {
   void start_advertising_();
   void setup_services_();
 
-#ifdef USE_API
   void send_advertisements_();
   void add_advertisement_(const ble_gap_disc_desc *disc);
-#endif
 
   // NimBLE callbacks
   static int gap_event_handler_(struct ble_gap_event *event, void *arg);

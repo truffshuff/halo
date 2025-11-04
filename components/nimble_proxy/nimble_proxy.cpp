@@ -155,12 +155,10 @@ int NimBLEProxy::scan_callback_(struct ble_gap_event *event, void *arg) {
            disc->addr.val[2], disc->addr.val[1], disc->addr.val[0],
            disc->rssi);
 
-#ifdef USE_API
   // Add to buffer and send to Home Assistant
   if (global_nimble_proxy != nullptr) {
     global_nimble_proxy->add_advertisement_(disc);
   }
-#endif
 
   return 0;
 }
@@ -244,8 +242,8 @@ void NimBLEProxy::setup_services_() {
   // For now, just basic GAP/GATT services from ble_svc_gap/gatt_init()
 }
 
-#ifdef USE_API
 void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
+#ifdef USE_API
   // Build 64-bit MAC address from 6-byte array
   uint64_t address = 0;
   for (int i = 0; i < 6; i++) {
@@ -272,9 +270,14 @@ void NimBLEProxy::add_advertisement_(const ble_gap_disc_desc *disc) {
       (this->adv_buffer_count_ > 0 && (now - this->last_send_time_) >= 100)) {
     this->send_advertisements_();
   }
+#else
+  // API not available, just log
+  (void) disc;
+#endif
 }
 
 void NimBLEProxy::send_advertisements_() {
+#ifdef USE_API
   if (this->adv_buffer_count_ == 0) {
     return;
   }
@@ -297,11 +300,10 @@ void NimBLEProxy::send_advertisements_() {
   // Reset buffer
   this->adv_buffer_count_ = 0;
   this->last_send_time_ = millis();
-}
 #endif
+}
 
 void NimBLEProxy::loop() {
-#ifdef USE_API
   // Send any pending advertisements periodically
   if (this->adv_buffer_count_ > 0) {
     uint32_t now = millis();
@@ -309,7 +311,6 @@ void NimBLEProxy::loop() {
       this->send_advertisements_();
     }
   }
-#endif
 }
 
 void NimBLEProxy::dump_config() {
