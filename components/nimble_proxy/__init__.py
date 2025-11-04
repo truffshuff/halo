@@ -1,8 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.const import CONF_ID
-from pathlib import Path
-import shutil
 
 CODEOWNERS = ["@truffshuff"]
 DEPENDENCIES = ["api"]
@@ -24,26 +22,36 @@ CONFIG_SCHEMA = cv.Schema(
 
 
 async def to_code(config):
-    import os
-
     # Define USE_BLUETOOTH_PROXY to enable bluetooth proxy API types
     cg.add_define("USE_BLUETOOTH_PROXY")
 
-    # Copy the stub bluetooth_proxy header to the build directory
-    # This is needed because ESPHome's API component includes it
-    component_dir = Path(__file__).parent
-    stub_header_src = component_dir / "esphome" / "components" / "bluetooth_proxy" / "bluetooth_proxy.h"
-
-    # Get the actual build directory from CORE
-    from esphome import cpp_generator as cpp
+    # Add the component directory to the include path so our stub header
+    # at bluetooth_proxy_shim.h can be found
+    # This will be used by creating a symlink or copying during build
+    from pathlib import Path
+    import shutil
+    import os
     from esphome.core import CORE
-    build_dir = Path(CORE.relative_build_path("src"))
-    stub_header_dst = build_dir / "esphome" / "components" / "bluetooth_proxy"
 
-    # Ensure the destination directory exists and copy the header
-    stub_header_dst.mkdir(parents=True, exist_ok=True)
-    if stub_header_src.exists():
-        shutil.copy2(str(stub_header_src), str(stub_header_dst / "bluetooth_proxy.h"))
+    # Get component directory
+    component_dir = Path(__file__).parent
+
+    # Get build source directory
+    build_src_dir = Path(CORE.relative_build_path("src"))
+
+    # Create the bluetooth_proxy directory in build
+    bt_proxy_dir = build_src_dir / "esphome" / "components" / "bluetooth_proxy"
+    bt_proxy_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the stub header from the nested location
+    src_header = component_dir / "esphome" / "components" / "bluetooth_proxy" / "bluetooth_proxy.h"
+    dst_header = bt_proxy_dir / "bluetooth_proxy.h"
+
+    if src_header.exists():
+        shutil.copy2(str(src_header), str(dst_header))
+        print(f"Copied BT proxy stub header from {src_header} to {dst_header}")
+    else:
+        print(f"WARNING: Stub header not found at {src_header}")
 
     # Provide sane defaults for API compile-time constants if not set
     cg.add_build_flag("-DBLUETOOTH_PROXY_ADVERTISEMENT_BATCH_SIZE=5")
