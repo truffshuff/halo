@@ -145,10 +145,8 @@ globals:
     type: int
     restore_value: yes
     initial_value: '0'
-  - id: current_page_index
-    type: int
-    restore_value: no
-    initial_value: '0'
+  # current_page_index replaced with current_page_name (defined at top of globals)
+  # Using string page IDs instead of numeric indices for flexibility
   - id: boot_complete
     type: bool
     restore_value: no
@@ -838,7 +836,7 @@ switch:
       # Force immediate display update when page rotation is enabled
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 3;'  # Only if on weather page
+            lambda: 'return id(current_page_name) == "weather";'
           then:
             - script.execute: update_weather_icon_color
     on_turn_off:
@@ -858,7 +856,7 @@ switch:
       # Force immediate display update when page rotation is enabled
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 4;'  # Only if on daily forecast page
+            lambda: 'return id(current_page_name) == "daily_forecast";'
           then:
             - script.execute: update_weather_icon_color
     on_turn_off:
@@ -878,7 +876,7 @@ switch:
       # Force immediate display update when page rotation is enabled
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 5;'  # Only if on hourly forecast page
+            lambda: 'return id(current_page_name) == "hourly_forecast";'
           then:
             - script.execute: update_weather_icon_color
     on_turn_off:
@@ -913,7 +911,7 @@ switch:
       # Note: WireGuard-specific flags removed - they're handled by wireguard-display.yaml
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
+            lambda: 'return id(current_page_name) == "wifi";'
           then:
             - lambda: |-
                 id(wifi_signal_needs_render) = true;
@@ -1112,42 +1110,42 @@ interval:
 
               // Build separate parallel arrays for page info
               std::vector<int> page_orders;
-              std::vector<int> page_indices;  // Maps to the page in sorted order
+              std::vector<std::string> page_ids;  // Maps to the page ID in sorted order
 
-              // Collect enabled pages with their orders (use index to identify page)
-              // Index: 0=vertical_clock, 1=AirQ, 2=wifi, 3=weather, 4=hourly_forecast, 5=daily_forecast
+              // Collect enabled pages with their orders (use string ID to identify page)
+              // Page IDs: vertical_clock, airq, wifi, weather, hourly_forecast, daily_forecast
 
               // Core pages
               if (id(page_rotation_vertical_clock_enabled)) {
                 page_orders.push_back(id(page_rotation_vertical_clock_order));
-                page_indices.push_back(0);
+                page_ids.push_back("vertical_clock");
               }
               // AirQ page (conditionally available based on AirQ package)
               // This global is provided by either airq-core.yaml or airq-stubs.yaml
               if (id(page_rotation_AirQ_enabled)) {
                 page_orders.push_back(id(page_rotation_AirQ_order));
-                page_indices.push_back(1);
+                page_ids.push_back("airq");
               }
               // WiFi page (conditionally available based on WiFi package)
               // This global is provided by either wifi-core.yaml or wifi-stubs.yaml
               if (id(page_rotation_wifi_enabled)) {
                 page_orders.push_back(id(page_rotation_wifi_order));
-                page_indices.push_back(2);
+                page_ids.push_back("wifi");
               }
 
               // Weather pages (conditionally available based on weather package)
               // These globals are provided by either weather-core.yaml or weather-stubs.yaml
               if (id(page_rotation_weather_enabled)) {
                 page_orders.push_back(id(page_rotation_weather_order));
-                page_indices.push_back(3);
+                page_ids.push_back("weather");
               }
               if (id(page_rotation_hourly_forecast_enabled)) {
                 page_orders.push_back(id(page_rotation_hourly_forecast_order));
-                page_indices.push_back(4);
+                page_ids.push_back("hourly_forecast");
               }
               if (id(page_rotation_daily_forecast_enabled)) {
                 page_orders.push_back(id(page_rotation_daily_forecast_order));
-                page_indices.push_back(5);
+                page_ids.push_back("daily_forecast");
               }
 
               // If no pages are enabled, don't rotate
@@ -1156,12 +1154,12 @@ interval:
                 return false;
               }
 
-              // Sort indices based on their order numbers (bubble sort for simplicity)
+              // Sort IDs based on their order numbers (bubble sort for simplicity)
               for (size_t i = 0; i < page_orders.size(); i++) {
                 for (size_t j = i + 1; j < page_orders.size(); j++) {
                   if (page_orders[j] < page_orders[i]) {
                     std::swap(page_orders[i], page_orders[j]);
-                    std::swap(page_indices[i], page_indices[j]);
+                    std::swap(page_ids[i], page_ids[j]);
                   }
                 }
               }
@@ -1170,32 +1168,32 @@ interval:
               static int rotation_position = 0;
 
               // Make sure rotation_position is within bounds
-              if (rotation_position >= page_indices.size()) {
+              if (rotation_position >= page_ids.size()) {
                 rotation_position = 0;
               }
 
               // Get the next page to show
-              int next_page_id = page_indices[rotation_position];
+              std::string next_page_id = page_ids[rotation_position];
 
-              // Store the next page ID in current_page_index for the action to use
-              id(current_page_index) = next_page_id;
+              // Store the next page ID in current_page_name for the action to use
+              id(current_page_name) = next_page_id;
 
               // Advance rotation position for next time (wrap around)
-              rotation_position = (rotation_position + 1) % page_indices.size();
+              rotation_position = (rotation_position + 1) % page_ids.size();
 
               // Show the next page
-              ESP_LOGD("page_rotation", "Rotating to page index %d (order: %d)",
-                       next_page_id, page_orders[rotation_position > 0 ? rotation_position - 1 : page_orders.size() - 1]);
+              ESP_LOGD("page_rotation", "Rotating to page '%s' (order: %d)",
+                       next_page_id.c_str(), page_orders[rotation_position > 0 ? rotation_position - 1 : page_orders.size() - 1]);
 
               id(last_auto_rotation_time) = now;
               return true;
           then:
             # Note: Core no longer shows pages - device files must handle this
-            # The rotation logic above sets current_page_index, but device files
+            # The rotation logic above sets current_page_name, but device files
             # must implement their own interval to actually show the pages
             - logger.log:
-                format: "Core: Rotation scheduled to page index %d"
-                args: ['id(current_page_index)']
+                format: "Core: Rotation scheduled to page '%s'"
+                args: ['id(current_page_name).c_str()']
                 level: DEBUG
 
   # Colon blink interval - runs every second when on vertical clock page
@@ -1203,7 +1201,7 @@ interval:
     then:
       - if:
           condition:
-            lambda: 'return id(boot_complete) && id(current_page_index) == 0;'  # vertical_clock_page
+            lambda: 'return id(boot_complete) && id(current_page_name) == "vertical_clock";'
           then:
             - lambda: |-
                 if (id(colon_blink_enabled).state) {
@@ -1258,81 +1256,81 @@ interval:
       - if:
           condition:
             lambda: |-
-              static int last_displayed_index = -1;
+              static std::string last_displayed_page = "";
 
               // Don't do anything until boot is complete
               if (!id(boot_complete)) return false;
 
-              // Check if page index has changed
-              int current = id(current_page_index);
-              if (current == last_displayed_index) return false;
+              // Check if page ID has changed
+              std::string current = id(current_page_name);
+              if (current == last_displayed_page) return false;
 
-              // Page index changed
-              last_displayed_index = current;
-              ESP_LOGD("page_rotation", "Page index changed to %d", current);
+              // Page ID changed
+              last_displayed_page = current;
+              ESP_LOGD("page_rotation", "Page changed to '%s'", current.c_str());
               return true;
           then:
-            # Page 0: Vertical Clock
+            # Vertical Clock
             - if:
                 condition:
-                  lambda: 'return id(current_page_index) == 0;'
+                  lambda: 'return id(current_page_name) == "vertical_clock";'
                 then:
-                  - logger.log: "Page rotation: Showing Vertical Clock (index 0)"
+                  - logger.log: "Page rotation: Showing Vertical Clock"
                   - lvgl.page.show:
                       id: vertical_clock_page
                       animation: OUT_LEFT
                       time: 300ms
                 else:
-                  # Page 1: AirQ
+                  # AirQ
                   - if:
                       condition:
-                        lambda: 'return id(current_page_index) == 1;'
+                        lambda: 'return id(current_page_name) == "airq";'
                       then:
-                        - logger.log: "Page rotation: Showing AirQ page (index 1)"
+                        - logger.log: "Page rotation: Showing AirQ page"
                         - lvgl.page.show:
                             id: AirQ_page
                             animation: OUT_LEFT
                             time: 300ms
                       else:
-                        # Page 2: WiFi
+                        # WiFi
                         - if:
                             condition:
-                              lambda: 'return id(current_page_index) == 2;'
+                              lambda: 'return id(current_page_name) == "wifi";'
                             then:
-                              - logger.log: "Page rotation: Showing WiFi page (index 2)"
+                              - logger.log: "Page rotation: Showing WiFi page"
                               - lvgl.page.show:
                                   id: wifi_page
                                   animation: OUT_LEFT
                                   time: 300ms
                             else:
-                              # Page 3: Weather
+                              # Weather (Current)
                               - if:
                                   condition:
-                                    lambda: 'return id(current_page_index) == 3;'
+                                    lambda: 'return id(current_page_name) == "weather";'
                                   then:
-                                    - logger.log: "Page rotation: Showing Weather page (index 3)"
+                                    - logger.log: "Page rotation: Showing Weather page"
                                     - lvgl.page.show:
                                         id: weather_forecast_page
                                         animation: OUT_LEFT
                                         time: 300ms
                                   else:
-                                    # Page 4: Hourly Forecast
+                                    # Hourly Forecast
                                     - if:
                                         condition:
-                                          lambda: 'return id(current_page_index) == 4;'
+                                          lambda: 'return id(current_page_name) == "hourly_forecast";'
                                         then:
-                                          - logger.log: "Page rotation: Showing Hourly Forecast page (index 4)"
+                                          - logger.log: "Page rotation: Showing Hourly Forecast page"
                                           - lvgl.page.show:
                                               id: hourly_forecast_page
                                               animation: OUT_LEFT
                                               time: 300ms
                                         else:
-                                          # Page 5: Daily Forecast
+                                          # Daily Forecast
                                           - if:
                                               condition:
-                                                lambda: 'return id(current_page_index) == 5;'
+                                                lambda: 'return id(current_page_name) == "daily_forecast";'
                                               then:
-                                                - logger.log: "Page rotation: Showing Daily Forecast page (index 5)"
+                                                - logger.log: "Page rotation: Showing Daily Forecast page"
                                                 - lvgl.page.show:
                                                     id: daily_forecast_page
                                                     animation: OUT_LEFT
@@ -1340,8 +1338,8 @@ interval:
                                               else:
                                                 # Unknown page - fall back to vertical clock
                                                 - logger.log:
-                                                    format: "Page rotation: Page index %d not available, falling back to Vertical Clock"
-                                                    args: ['id(current_page_index)']
+                                                    format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
+                                                    args: ['id(current_page_name).c_str()']
                                                     level: WARN
                                                 - lvgl.page.show:
                                                     id: vertical_clock_page
@@ -1363,7 +1361,7 @@ interval:
                   # This is guarded to avoid errors in wifi-only mode
                   # - if:
                   #     condition:
-                  #       lambda: 'return !id(wifi_logo_visible) && id(current_page_index) == 2;'  # wifi_page
+                  #       lambda: 'return !id(wifi_logo_visible) && id(current_page_name) == "wifi";'
                   #     then:
                   #       - lvgl.widget.show:
                   #           id: ym_image
@@ -1383,7 +1381,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wifi_signal_label
@@ -1401,7 +1399,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.bar.update:
                             id: wifi_signal_bar
@@ -1417,7 +1415,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_ssid_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_ssid_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wifi_ssid_label
@@ -1436,7 +1434,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_ip_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_ip_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wifi_ip_label
@@ -1451,7 +1449,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(ha_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(ha_status_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.widget.update:
                             id: ha_status_icon
@@ -1462,7 +1460,7 @@ interval:
                   # This is guarded to avoid errors in wifi-only mode
                   # - if:
                   #     condition:
-                  #       lambda: 'return id(wifi_logo_visible) && id(current_page_index) == 1;'  # AirQ_page
+                  #       lambda: 'return id(wifi_logo_visible) && id(current_page_name) == "airq";'
                   #     then:
                   #       - lvgl.widget.hide:
                   #           id: ym_image
@@ -1480,7 +1478,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wifi_signal_label
@@ -1495,7 +1493,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.bar.update:
                             id: wifi_signal_bar
@@ -1510,7 +1508,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_ssid_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_ssid_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wifi_ssid_label
@@ -1525,7 +1523,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wifi_ip_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wifi_ip_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wifi_ip_label
@@ -1540,7 +1538,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(ha_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(ha_status_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.widget.update:
                             id: ha_status_icon
@@ -1572,7 +1570,7 @@ interval:
                   # Render WireGuard status text if needed
                   - if:
                       condition:
-                        lambda: 'return id(wg_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_status_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wg_status_label
@@ -1581,7 +1579,7 @@ interval:
                   # Update WireGuard status color if needed
                   - if:
                       condition:
-                        lambda: 'return id(wg_status_color_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_status_color_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.widget.update:
                             id: wg_status_label
@@ -1605,7 +1603,7 @@ interval:
                   # Render WireGuard address if needed
                   - if:
                       condition:
-                        lambda: 'return id(wg_address_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_address_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wg_address_label
@@ -1614,7 +1612,7 @@ interval:
                   # Initialize WireGuard endpoint label once
                   - if:
                       condition:
-                        lambda: 'return !id(wg_endpoint_initialized) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return !id(wg_endpoint_initialized) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wg_endpoint_label
@@ -1657,7 +1655,7 @@ interval:
                   # Render WireGuard handshake if needed
                   - if:
                       condition:
-                        lambda: 'return id(wg_handshake_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_handshake_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wg_handshake_label
@@ -1678,7 +1676,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wg_status_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_status_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wg_status_label
@@ -1686,7 +1684,7 @@ interval:
                         - lambda: 'id(wg_status_needs_render) = false;'
                   - if:
                       condition:
-                        lambda: 'return id(wg_status_color_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_status_color_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.widget.update:
                             id: wg_status_label
@@ -1700,7 +1698,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wg_address_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_address_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wg_address_label
@@ -1714,7 +1712,7 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(wg_handshake_needs_render) && id(current_page_index) == 2;'  # wifi_page
+                        lambda: 'return id(wg_handshake_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wg_handshake_label
@@ -2461,7 +2459,7 @@ script:
       # Skip if not on weather page (index 3) to reduce SPI traffic
       - if:
           condition:
-            lambda: 'return id(current_page_index) != 3;'
+            lambda: 'return id(current_page_name) != "weather";'
           then:
             - logger.log: "Skipping weather display update (not on page 3)"
             - script.stop: update_weather_display
@@ -2611,7 +2609,7 @@ script:
       # Skip if not on hourly forecast page (index 4) to reduce SPI traffic
       - if:
           condition:
-            lambda: 'return id(current_page_index) != 4;'
+            lambda: 'return id(current_page_name) != "daily_forecast";'
           then:
             - logger.log: "Skipping hourly forecast update (not on page 4)"
             - script.stop: update_hourly_forecast_display
@@ -3521,7 +3519,7 @@ script:
       # Skip if not on daily forecast page (index 5) to reduce SPI traffic
       - if:
           condition:
-            lambda: 'return id(current_page_index) != 5;'
+            lambda: 'return id(current_page_name) != "hourly_forecast";'
           then:
             - logger.log: "Skipping daily forecast update (not on page 5)"
             - script.stop: update_daily_forecast_display
@@ -4663,14 +4661,14 @@ script:
           }
       - if:
           condition:
-            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 1;'  # AirQ_page
+            lambda: 'return id(time_update_needs_render) && id(current_page_name) == "airq";'
           then:
             - lvgl.label.update:
                 id: timeVal
                 text: !lambda 'return id(time_update_last_text);'
       - if:
           condition:
-            lambda: 'return id(time_update_needs_render) && id(current_page_index) == 0;'  # vertical_clock_page
+            lambda: 'return id(time_update_needs_render) && id(current_page_name) == "vertical_clock";'
           then:
             - lvgl.label.update:
                 id: vclock_hours
@@ -4798,7 +4796,7 @@ number:
       # Force immediate display update when page order changes
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 3;'  # Only if on weather page
+            lambda: 'return id(current_page_name) == "weather";'
           then:
             - script.execute: update_weather_icon_color
 
@@ -4822,7 +4820,7 @@ number:
       # Force immediate display update when page order changes
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 4;'  # Only if on daily forecast page
+            lambda: 'return id(current_page_name) == "daily_forecast";'
           then:
             - script.execute: update_weather_icon_color
 
@@ -4846,7 +4844,7 @@ number:
       # Force immediate display update when page order changes
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 5;'  # Only if on hourly forecast page
+            lambda: 'return id(current_page_name) == "hourly_forecast";'
           then:
             - script.execute: update_weather_icon_color
 
@@ -4887,7 +4885,7 @@ number:
       # Force immediate display refresh when on AirQ page (simple version - just execute time_update)
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 1;'
+            lambda: 'return id(current_page_name) == "airq";'
           then:
             - script.execute: time_update
 
@@ -4939,7 +4937,7 @@ number:
       # Force immediate display update when page order changes
       - if:
           condition:
-            lambda: 'return id(current_page_index) == 2;'  # Only if on WiFi page
+            lambda: 'return id(current_page_name) == "wifi";'
           then:
             - lambda: |-
                 id(wifi_signal_needs_render) = true;
@@ -5886,9 +5884,9 @@ light:
                 color = Color(128, 0, 0);  // Maroon
               }
             } else {
-              // Only show weather condition color on the current weather page (index 3)
+              // Only show weather condition color on the current weather page
               // Turn off LEDs when on other pages if AQI <= 50
-              if (id(current_page_index) != 3) {
+              if (id(current_page_name) != "weather") {
                 it.all() = Color::BLACK;
                 return;
               }
@@ -5998,7 +5996,7 @@ lvgl:
       on_load:
         - script.execute: page_transition_cleanup
         - lambda: |-
-            id(current_page_index) = 0;
+            id(current_page_name) = "vertical_clock";
             id(time_update_last_text).clear();
             id(colon_blink_state) = true;  // Ensure colon is visible when page loads
         - script.execute: time_update
@@ -6091,7 +6089,7 @@ lvgl:
       on_load:
         - script.execute: page_transition_cleanup
         - lambda: |-
-            id(current_page_index) = 3;  // weather_forecast_page
+            id(current_page_name) = "weather";
             id(weather_last_condition).clear();
             id(weather_on_weather_page) = true;
         - delay: 10ms  # Yield to prevent blocking warning
@@ -6342,7 +6340,7 @@ lvgl:
       on_load:
         - script.execute: page_transition_cleanup
         - lambda: |-
-            id(current_page_index) = 1;  // AirQ_page
+            id(current_page_name) = "airq";
             id(time_update_last_text).clear();
         - script.execute: time_update
         # Immediately update WiFi indicator when page loads
@@ -7112,7 +7110,7 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - script.execute: page_transition_cleanup
-        - lambda: 'id(current_page_index) = 2;'  # wifi_page
+        - lambda: 'id(current_page_name) = "wifi";'
         # Trigger immediate WiFi display updates when page loads
         - lambda: |-
             id(wifi_signal_needs_render) = true;
@@ -7247,7 +7245,7 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - script.execute: page_transition_cleanup
-        - lambda: 'id(current_page_index) = 4;'  # hourly_forecast_page
+        - lambda: 'id(current_page_name) = "hourly_forecast";'
         - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
         # Check if we have data and if it needs refresh
         - if:
@@ -7941,7 +7939,7 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - script.execute: page_transition_cleanup
-        - lambda: 'id(current_page_index) = 4;'  # Same as hourly_forecast_page
+        - lambda: 'id(current_page_name) = "hourly_forecast";'  # Same as hourly_forecast_page
         - delay: 10ms  # Yield to prevent blocking warning
         - if:
             condition:
@@ -8633,7 +8631,7 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - script.execute: page_transition_cleanup
-        - lambda: 'id(current_page_index) = 5;'  # daily_forecast_page
+        - lambda: 'id(current_page_name) = "daily_forecast";'
         - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
         # Check if we have data and if it needs refresh
         - if:
