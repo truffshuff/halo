@@ -54,7 +54,10 @@ namespace bluetooth_proxy {
 namespace nimble_proxy {
 
 void NimBLEProxy::setup() {
+  ESP_LOGI(TAG, "NimBLEProxy::setup() called on instance %p", this);
+  ESP_LOGI(TAG, "Setting global_nimble_proxy from %p to %p", global_nimble_proxy, this);
   global_nimble_proxy = this;
+  ESP_LOGI(TAG, "Verify global_nimble_proxy is now %p", global_nimble_proxy);
 
   if (!this->active_) {
     ESP_LOGI(TAG, "NimBLE Proxy is disabled");
