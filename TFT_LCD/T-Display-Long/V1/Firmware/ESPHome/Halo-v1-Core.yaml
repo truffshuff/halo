@@ -697,7 +697,7 @@ external_components:
       type: git
       url: https://github.com/truffshuff/halo
       ref: Test
-    components: [nimble_proxy]
+    components: [nimble_proxy, bluetooth_proxy]
     refresh: always
 
   # - source: github://pr#7770 # RMT driver, remove rmt_channel when using esp-idf
