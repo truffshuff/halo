@@ -22,10 +22,13 @@ CONFIG_SCHEMA = cv.Schema(
 
 
 async def to_code(config):
+    # Define USE_BLUETOOTH_PROXY to enable bluetooth proxy API types
+    cg.add_define("USE_BLUETOOTH_PROXY")
+
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
     cg.add(var.set_active(config[CONF_ACTIVE]))
     cg.add(var.set_max_connections(config[CONF_MAX_CONNECTIONS]))
-    
+
     # No library dependency needed - using ESP-IDF native NimBLE
