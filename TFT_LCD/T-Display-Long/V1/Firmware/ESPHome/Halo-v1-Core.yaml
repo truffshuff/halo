@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.04.1755"
+  version: "25.11.04.1758"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -708,7 +708,7 @@ esp32:
     type: esp-idf
     # Use ESPHome-supported framework channels. Options: recommended (default), latest, dev
     # Switch to 'dev' to pick up the very latest ESP-IDF/NimBLE fixes sooner.
-    version: latest
+    version: recommended
     sdkconfig_options:
       # Enable NimBLE stack (disable Bluedroid)
       CONFIG_BT_ENABLED: "y"
