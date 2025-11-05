@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0736"
+  version: "25.11.05.0742"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1157,16 +1157,12 @@ interval:
             - delay: 200ms
             - output.turn_off: backlight
             - delay: 300ms
-            - lambda: |-
-                // Hardware reset via reset pin (GPIO16)
-                auto reset_pin = App.get_pin(16);
-                reset_pin->setup();
-                reset_pin->pin_mode(gpio::FLAG_OUTPUT);
-                reset_pin->digital_write(false);  // Assert reset (active low)
-                delay(100);
-                reset_pin->digital_write(true);   // De-assert reset
-                delay(200);
-                ESP_LOGI("display_watchdog", "Hardware reset complete");
+            - logger.log: "Hardware resetting display controller..."
+            - output.turn_off: display_reset_pin
+            - delay: 100ms
+            - output.turn_on: display_reset_pin
+            - delay: 200ms
+            - logger.log: "Hardware reset complete"
             - output.turn_on: backlight
             - delay: 200ms
             - lvgl.resume:
@@ -1910,6 +1906,11 @@ output:
     pin: 1
     id: backlight
     frequency: 100Hz  #Datasheet suggests low-frequency PWM. Should prevent stability issues.
+
+  - platform: gpio
+    pin: 16
+    id: display_reset_pin
+    inverted: false
     
 # sy6970:
 #   i2c_id: touch_i2c
@@ -9843,16 +9844,10 @@ button:
       - delay: 300ms
       
       - logger.log: "Step 3: Resetting display hardware via reset pin..."
-      - lambda: |-
-          // Toggle display reset pin (GPIO16) to hard reset the display controller
-          auto reset_pin = App.get_pin(16);
-          reset_pin->setup();
-          reset_pin->pin_mode(gpio::FLAG_OUTPUT);
-          reset_pin->digital_write(false);  // Assert reset (active low)
-          delay(100);
-          reset_pin->digital_write(true);   // De-assert reset
-          delay(200);
-          ESP_LOGI("display_reset", "Display controller hardware reset complete");
+      - output.turn_off: display_reset_pin
+      - delay: 100ms
+      - output.turn_on: display_reset_pin
+      - delay: 200ms
       
       - logger.log: "Step 4: Turning backlight ON..."
       - output.turn_on: backlight
