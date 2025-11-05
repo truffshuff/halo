@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0820"
+  version: "25.11.05.0840"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1085,6 +1085,7 @@ interval:
             lambda: 'return id(boot_complete);'
           then:
             - script.execute: time_update
+            - lambda: 'id(last_display_update_time) = millis();'  # Update watchdog
 
   # Note: 1s interval for colon blink is defined in vertical-clock-core.yaml
 
@@ -10091,6 +10092,7 @@ esphome:
     - priority: 800
       then:
         - delay: 50ms
+        - lambda: 'id(last_display_update_time) = millis();'  # Initialize watchdog timer
         - lvgl.page.show: vertical_clock_page
         - logger.log: "Set initial page to Vertical Clock"
 
