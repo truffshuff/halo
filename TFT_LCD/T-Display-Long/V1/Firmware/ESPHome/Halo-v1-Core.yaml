@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1710"
+  version: "25.11.05.1714"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -770,14 +770,8 @@ esp32:
 
 external_components:
   - source: github://truffshuff/esphome-components
-    components: [axs15231, sy6970, nimble_proxy, bluetooth_proxy]
+    components: [axs15231, sy6970, nimble_proxy, bluetooth_proxy, nimble_improv]
     refresh: always
-
-  # Local custom component with full GATT service implementation
-  - source:
-      type: local
-      path: custom_components
-    components: [nimble_improv]
   
   # # NimBLE compatibility and proxy components
   # - source:
@@ -807,21 +801,27 @@ spi:
 captive_portal:
 
 # ============================================================================
-# NimBLE Improv WiFi Provisioning - EXPERIMENTAL (Partial Implementation)
+# NimBLE Improv WiFi Provisioning - FULLY IMPLEMENTED ✅
 # ============================================================================
-# WARNING: GATT service registration is NOT yet implemented in nimble_improv
-# The component will compile but BLE characteristics are not registered yet
-# This means the Improv service won't be visible to BLE clients
+# Allows WiFi reconfiguration via BLE using the Improv protocol
+# Uses ESP-IDF native NimBLE stack for compatibility with nimble_proxy
 #
-# TODO in nimble_improv component:
-#   - Implement start_service_() with ble_gatt_svc_def structures
-#   - Register GATT characteristics (status, error, rpc_command, rpc_result, capabilities)
-#   - Implement characteristic_access_callback() for read/write operations
-#   - Add BLE advertising with Improv service UUID
+# Features:
+#   ✅ Complete GATT service with all 5 Improv characteristics
+#   ✅ BLE advertising as "Halo Improv" with Improv service UUID
+#   ✅ WiFi provisioning flow (receive credentials → connect → send IP)
+#   ✅ Auto-authorization on connection (no button press required)
+#   ✅ Device info response (firmware, version, hardware, name)
+#   ✅ State management and error handling
 #
-# When fully implemented: Allows WiFi reconfiguration via BLE while device is connected
-# Uses NimBLE stack for compatibility with nimble_proxy
-# Access via Improv WiFi apps or https://www.improv-wifi.com/
+# Usage:
+#   1. Open https://www.improv-wifi.com/ in Chrome browser
+#   2. Click "Connect device via Improv"
+#   3. Select "Halo Improv" from BLE devices
+#   4. Enter WiFi credentials and provision
+#
+# Compatible with standard Improv protocol clients
+# Protocol spec: https://www.improv-wifi.com/
 # ============================================================================
 nimble_improv:
   authorized_duration: 2min  # How long authorization lasts
