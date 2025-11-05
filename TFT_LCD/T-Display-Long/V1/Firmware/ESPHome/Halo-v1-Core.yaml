@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1531"
+  version: "25.11.05.1654"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -790,15 +790,17 @@ spi:
 captive_portal:
 
 # ============================================================================
-# NimBLE Improv WiFi Provisioning
+# NimBLE Improv WiFi Provisioning - DISABLED (Stub Implementation)
 # ============================================================================
-# Allows WiFi reconfiguration via BLE while device is connected
+# TODO: Complete GATT service implementation before enabling
+# Currently just a stub - BLE service registration not implemented yet
+# When ready: Allows WiFi reconfiguration via BLE while device is connected
 # Uses NimBLE stack for compatibility with nimble_proxy
 # Access via Improv WiFi apps or https://www.improv-wifi.com/
 # ============================================================================
-nimble_improv:
-  authorized_duration: 2min  # How long authorization lasts
-  wifi_timeout: 1min         # Timeout for WiFi connection attempts
+# nimble_improv:
+#   authorized_duration: 2min  # How long authorization lasts
+#   wifi_timeout: 1min         # Timeout for WiFi connection attempts
 
 logger:
   level: INFO
@@ -1179,15 +1181,14 @@ interval:
             - delay: 500ms
             - lvgl.pause:
             - delay: 300ms
+            # Properly reset and re-initialize the display controller
             - lambda: |-
-                // Hardware reset the display controller using ESP-IDF GPIO functions
-                // GPIO16 is the display reset pin - toggle it LOW then HIGH
-                gpio_set_direction(GPIO_NUM_16, GPIO_MODE_OUTPUT);
-                gpio_set_level(GPIO_NUM_16, 0);  // Pull LOW (reset asserted)
-                delay(100);
-                gpio_set_level(GPIO_NUM_16, 1);  // Pull HIGH (reset de-asserted)
-                delay(200);
-                ESP_LOGI("display_watchdog", "Display hardware reset completed");
+                ESP_LOGI("display_watchdog", "Resetting and re-initializing display hardware...");
+                auto *display = id(lily_display);
+                if (display != nullptr) {
+                  display->setup();  // This re-initializes the display controller completely
+                }
+            - delay: 500ms
             - lvgl.resume:
             - delay: 300ms
             - output.turn_on: backlight
@@ -9964,18 +9965,16 @@ button:
       - logger.log: "Step 2: Pausing LVGL..."
       - lvgl.pause:
       - delay: 300ms
-      
-      - logger.log: "Step 3: Hardware resetting display controller..."
+
+      - logger.log: "Step 3: Resetting and re-initializing display controller..."
       - lambda: |-
-          // Hardware reset the display controller using ESP-IDF GPIO functions
-          // GPIO16 is the display reset pin - toggle it LOW then HIGH
-          gpio_set_direction(GPIO_NUM_16, GPIO_MODE_OUTPUT);
-          gpio_set_level(GPIO_NUM_16, 0);  // Pull LOW (reset asserted)
-          delay(100);
-          gpio_set_level(GPIO_NUM_16, 1);  // Pull HIGH (reset de-asserted)
-          delay(200);
-          ESP_LOGI("display_reset", "Display hardware reset completed");
-      
+          ESP_LOGI("display_reset", "Resetting and re-initializing display hardware...");
+          auto *display = id(lily_display);
+          if (display != nullptr) {
+            display->setup();  // This re-initializes the display controller completely
+          }
+      - delay: 500ms
+
       - logger.log: "Step 4: Resuming LVGL..."
       - lvgl.resume:
       - delay: 300ms
