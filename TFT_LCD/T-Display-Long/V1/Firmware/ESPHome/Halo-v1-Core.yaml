@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1356"
+  version: "25.11.05.1415"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)

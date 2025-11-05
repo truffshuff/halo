@@ -1,5 +1,16 @@
-# Gitignore settings for ESPHome
-# This is an example and may include too much for your use-case.
-# You can modify this file to suit your needs.
-/.esphome/
-/secrets.yaml
+# ESPHome-specific ignores
+# Build artifacts and secrets for this ESPHome project
+
+# ESPHome build cache
+.esphome/
+
+# Secrets file (NEVER commit this!)
+secrets.yaml
+
+# Backup files
+*.backup
+*.old
+
+# IDE files
+.vscode/
+.idea/
