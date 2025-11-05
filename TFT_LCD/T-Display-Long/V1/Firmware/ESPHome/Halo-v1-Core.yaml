@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0717"
+  version: "25.11.05.0726"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -6485,7 +6485,7 @@ lvgl:
             text_color: my_white
             align: TOP_MID
             x: 0
-            y: 25
+            y: 30
 
         # Condition name below icon
         - label:
@@ -6521,7 +6521,7 @@ lvgl:
             text_color: my_white
             align: TOP_MID
             x: 0
-            y: 115
+            y: 130
 
         # Semicircle meter gauge for apparent temperature
         - obj:
