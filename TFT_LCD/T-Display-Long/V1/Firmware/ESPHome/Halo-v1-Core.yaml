@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0801"
+  version: "25.11.05.0804"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1905,7 +1905,6 @@ i2c:
     scl: 10
     id: touch_i2c
 
-output:
 output:
   - platform: ledc
     pin: 1
