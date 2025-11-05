@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1459"
+  version: "25.11.05.1503"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -6355,10 +6355,6 @@ lvgl:
   # This combines DMA capability with external PSRAM for optimal performance
   byte_order: big_endian
   color_depth: 16
-  
-  idle_timeout: 16ms # ~60 FPS max (default: 5ms = 200 FPS wasteful)
-  full_refresh: false  # Only redraw changed widgets
-
   
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
