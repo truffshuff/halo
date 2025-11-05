@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0808"
+  version: "25.11.05.0820"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -744,8 +744,10 @@ esp32:
       CONFIG_LWIP_TCP_RECVMBOX_SIZE: "12"       # TCP mailbox size (default: 6)
       CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "64"     # TCPIP task mailbox (default: 32)
 
-      # Watchdog timeout for HTTP operations
-      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "20"
+      # Watchdog timeout for HTTP operations and JSON parsing
+      # Increased from 20s to 30s to accommodate large weather JSON parsing
+      # deserializeJson() can block for extended periods on complex data
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
 
 external_components:
   - source: github://truffshuff/esphome-components
@@ -2318,6 +2320,11 @@ script:
                   for (int i = 0; i < day_count; i++) {
                     JsonObject day = forecast_array[i];
 
+                    // Feed watchdog every 3 days to prevent timeout during processing
+                    if (i > 0 && i % 3 == 0) {
+                      App.feed_wdt();
+                    }
+
                     if (day["temperature"].is<float>()) {
                       id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
                     }
@@ -2465,6 +2472,11 @@ script:
 
                   for (int i = 0; i < hour_count; i++) {
                     JsonObject hour = forecast_array[i];
+
+                    // Feed watchdog every 6 hours to prevent timeout during processing
+                    if (i > 0 && i % 6 == 0) {
+                      App.feed_wdt();
+                    }
 
                     if (hour["temperature"].is<float>()) {
                       id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
@@ -2755,6 +2767,8 @@ script:
           then:
             - logger.log: "Skipping hourly forecast update (not on hourly forecast page)"
             - script.stop: update_hourly_forecast_display
+      # Feed watchdog before long LVGL operation
+      - lambda: 'App.feed_wdt();'
       - logger.log: "Updating hourly forecast display..."
       # Update Hour 1
       - lvgl.label.update:
@@ -3665,6 +3679,8 @@ script:
           then:
             - logger.log: "Skipping daily forecast update (not on daily forecast page)"
             - script.stop: update_daily_forecast_display
+      # Feed watchdog before long LVGL operation
+      - lambda: 'App.feed_wdt();'
       - logger.log: "Updating daily forecast display..."
       # Update Day 2
       - lvgl.label.update:
