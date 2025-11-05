@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0726"
+  version: "25.11.05.0732"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1155,7 +1155,7 @@ interval:
             - logger.log: "=== WATCHDOG: AUTOMATIC DISPLAY RECOVERY TRIGGERED ==="
             - lvgl.pause:
             - delay: 200ms
-            - light.turn_off: backlight
+            - output.turn_off: backlight
             - delay: 300ms
             - lambda: |-
                 // Hardware reset via reset pin
@@ -1165,9 +1165,7 @@ interval:
                 digitalWrite(16, HIGH);
                 delay(200);
                 ESP_LOGI("display_watchdog", "Hardware reset complete");
-            - light.turn_on: 
-                id: backlight
-                brightness: 100%
+            - output.turn_on: backlight
             - delay: 200ms
             - lvgl.resume:
             - lambda: |-
@@ -9839,7 +9837,7 @@ button:
       - delay: 200ms
       
       - logger.log: "Step 2: Turning backlight OFF..."
-      - light.turn_off: backlight
+      - output.turn_off: backlight
       - delay: 300ms
       
       - logger.log: "Step 3: Resetting display hardware via reset pin..."
@@ -9853,9 +9851,7 @@ button:
           ESP_LOGI("display_reset", "Display controller hardware reset complete");
       
       - logger.log: "Step 4: Turning backlight ON..."
-      - light.turn_on: 
-          id: backlight
-          brightness: 100%
+      - output.turn_on: backlight
       - delay: 200ms
       
       - logger.log: "Step 5: Resuming LVGL..."
