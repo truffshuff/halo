@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1505"
+  version: "25.11.05.1531"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -759,7 +759,7 @@ esp32:
 
 external_components:
   - source: github://truffshuff/esphome-components
-    components: [axs15231, sy6970, nimble_proxy, bluetooth_proxy]
+    components: [axs15231, sy6970, nimble_proxy, bluetooth_proxy, nimble_improv]
     refresh: always
   
   # # NimBLE compatibility and proxy components
@@ -788,6 +788,17 @@ spi:
     - 14
 
 captive_portal:
+
+# ============================================================================
+# NimBLE Improv WiFi Provisioning
+# ============================================================================
+# Allows WiFi reconfiguration via BLE while device is connected
+# Uses NimBLE stack for compatibility with nimble_proxy
+# Access via Improv WiFi apps or https://www.improv-wifi.com/
+# ============================================================================
+nimble_improv:
+  authorized_duration: 2min  # How long authorization lasts
+  wifi_timeout: 1min         # Timeout for WiFi connection attempts
 
 logger:
   level: INFO
