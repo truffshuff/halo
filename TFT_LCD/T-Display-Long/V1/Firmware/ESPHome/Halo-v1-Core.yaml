@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0804"
+  version: "25.11.05.0808"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1158,12 +1158,12 @@ interval:
             - lvgl.pause:
             - delay: 300ms
             - lambda: |-
-                // Hardware reset the display controller
+                // Hardware reset the display controller using ESP-IDF GPIO functions
                 // GPIO16 is the display reset pin - toggle it LOW then HIGH
-                auto *gpio16 = new GPIOPin(16, OUTPUT);
-                gpio16->digital_write(false);  // Pull LOW (reset asserted)
+                gpio_set_direction(GPIO_NUM_16, GPIO_MODE_OUTPUT);
+                gpio_set_level(GPIO_NUM_16, 0);  // Pull LOW (reset asserted)
                 delay(100);
-                gpio16->digital_write(true);   // Pull HIGH (reset de-asserted)
+                gpio_set_level(GPIO_NUM_16, 1);  // Pull HIGH (reset de-asserted)
                 delay(200);
                 ESP_LOGI("display_watchdog", "Display hardware reset completed");
             - lvgl.resume:
@@ -9844,12 +9844,12 @@ button:
       
       - logger.log: "Step 3: Hardware resetting display controller..."
       - lambda: |-
-          // Hardware reset the display controller
+          // Hardware reset the display controller using ESP-IDF GPIO functions
           // GPIO16 is the display reset pin - toggle it LOW then HIGH
-          auto *gpio16 = new GPIOPin(16, OUTPUT);
-          gpio16->digital_write(false);  // Pull LOW (reset asserted)
+          gpio_set_direction(GPIO_NUM_16, GPIO_MODE_OUTPUT);
+          gpio_set_level(GPIO_NUM_16, 0);  // Pull LOW (reset asserted)
           delay(100);
-          gpio16->digital_write(true);   // Pull HIGH (reset de-asserted)
+          gpio_set_level(GPIO_NUM_16, 1);  // Pull HIGH (reset de-asserted)
           delay(200);
           ESP_LOGI("display_reset", "Display hardware reset completed");
       
