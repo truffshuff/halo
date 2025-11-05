@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.0742"
+  version: "25.11.05.0743"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1153,19 +1153,14 @@ interval:
               return false;
           then:
             - logger.log: "=== WATCHDOG: AUTOMATIC DISPLAY RECOVERY TRIGGERED ==="
-            - lvgl.pause:
-            - delay: 200ms
             - output.turn_off: backlight
+            - delay: 500ms
+            - lvgl.pause:
             - delay: 300ms
-            - logger.log: "Hardware resetting display controller..."
-            - output.turn_off: display_reset_pin
-            - delay: 100ms
-            - output.turn_on: display_reset_pin
-            - delay: 200ms
-            - logger.log: "Hardware reset complete"
+            - lvgl.resume:
+            - delay: 300ms
             - output.turn_on: backlight
             - delay: 200ms
-            - lvgl.resume:
             - lambda: |-
                 id(last_display_update_time) = millis();
                 ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE ===");
@@ -1902,15 +1897,11 @@ i2c:
     id: touch_i2c
 
 output:
+output:
   - platform: ledc
     pin: 1
     id: backlight
     frequency: 100Hz  #Datasheet suggests low-frequency PWM. Should prevent stability issues.
-
-  - platform: gpio
-    pin: 16
-    id: display_reset_pin
-    inverted: false
     
 # sy6970:
 #   i2c_id: touch_i2c
@@ -9834,30 +9825,24 @@ button:
     id: recover_display
     icon: mdi:monitor-refresh
     on_press:
-      - logger.log: "=== PERFORMING AGGRESSIVE DISPLAY RECOVERY ==="
-      - logger.log: "Step 1: Pausing LVGL..."
-      - lvgl.pause:
-      - delay: 200ms
-      
-      - logger.log: "Step 2: Turning backlight OFF..."
+      - logger.log: "=== PERFORMING DISPLAY RECOVERY ==="
+      - logger.log: "Step 1: Turning backlight OFF..."
       - output.turn_off: backlight
+      - delay: 500ms
+      
+      - logger.log: "Step 2: Pausing LVGL..."
+      - lvgl.pause:
       - delay: 300ms
       
-      - logger.log: "Step 3: Resetting display hardware via reset pin..."
-      - output.turn_off: display_reset_pin
-      - delay: 100ms
-      - output.turn_on: display_reset_pin
-      - delay: 200ms
+      - logger.log: "Step 3: Resuming LVGL..."
+      - lvgl.resume:
+      - delay: 300ms
       
       - logger.log: "Step 4: Turning backlight ON..."
       - output.turn_on: backlight
       - delay: 200ms
       
-      - logger.log: "Step 5: Resuming LVGL..."
-      - lvgl.resume:
-      - delay: 100ms
-      
-      - logger.log: "Step 6: Forcing page redraw..."
+      - logger.log: "Step 5: Updating watchdog timestamp..."
       - lambda: |-
           id(last_display_update_time) = millis();
           ESP_LOGI("display_reset", "=== DISPLAY RECOVERY COMPLETE ===");
