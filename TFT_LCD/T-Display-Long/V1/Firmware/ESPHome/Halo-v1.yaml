@@ -1,3 +1,28 @@
+substitutions:
+
+  # Home Assistant connection for HTTP API calls
+  # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
+  ha_url: !secret ha_url  # Example: "http://homeassistant.local:8123"
+  ha_token: !secret ha_token  # Your long-lived access token
+
+  # Weather configuration (if enabled below)
+  weather_entity_id: "weather.hhut"
+  weather_refresh_interval: "900"
+  weather_daily_refresh_interval: "3600"  # 60 minutes for daily forecast
+  weather_hourly_refresh_interval: "900"  # 15 minutes for hourly forecast
+  current_temp_sensor: "sensor.hhut_temperature"  # Your actual sensor
+  apparent_temp_sensor: "sensor.hhut_feels_like"  # Your actual sensor
+
+  # Network Configuration
+  wifi_ssid: !secret wifihome_ssid
+  wifi_password: !secret wifihome_password
+
+  # Security
+  ota_password: !secret ota_password
+
+  # API
+  api_reboot_timeout: "30min"
+
 esphome:
   name: halo-v1
   friendly_name: Halo Air Quality Sensor
@@ -9,7 +34,7 @@ esphome:
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
 
-  min_version: 2025.6.2
+  min_version: 2025.10.3
 
   project:
     name: "yashmulgaonkar.Halo-v1"
@@ -22,48 +47,6 @@ dashboard_import:
 ota:
   - platform: esphome
     id: ota_default
-
-wireguard:
-  address: 10.6.0.2
-  private_key: !secret wg_privkey
-  peer_endpoint: !secret wg_peerendpt
-  peer_public_key: !secret wg_pubkey
-  
-  # Optional netmask (this is the default, no outgoing traffic
-  # will pass through the tunnel if omitted)
-  netmask: 0.0.0.0
-
-  # Optional endpoint port (WireGuard default if omitted)
-  peer_port: 51820
-
-  # Optional pre-shared key (omit if not in use)
-  peer_preshared_key: !secret wg_shrdkey
-
-  # Optional list of ip/mask (any host is allowed if omitted)
-  peer_allowed_ips:
-    - 192.168.1.0/24
-    - 10.6.0.1/32 # the /32 can be omitted for single host
-    - 10.6.0.2/32
-  # Optional keepalive (disabled by default)
-  peer_persistent_keepalive: 25s
-
-binary_sensor:
-  - platform: wireguard
-    status:
-      name: 'WireGuard Status'
-
-  - platform: wireguard
-    enabled:
-      name: 'WireGuard Enabled'
-sensor:
-  - platform: wireguard
-    latest_handshake:
-      name: 'WireGuard Latest Handshake'
-
-text_sensor:
-  - platform: wireguard
-    address:
-      name: 'WireGuard Address'
 
 wifi:
   on_connect:
@@ -79,4 +62,4 @@ packages:
     ref: WireGuard
     files:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
-    refresh: 0d
+    refresh: Always

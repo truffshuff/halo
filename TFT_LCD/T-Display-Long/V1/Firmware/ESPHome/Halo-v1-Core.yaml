@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1415"
+  version: "25.11.05.1458"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -507,72 +507,80 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  - id: calibration_pending
+    type: bool
+    initial_value: 'false'
+  - id: calibration_confirm_time
+    type: uint32_t
+    initial_value: '0'
+
 # ============================================================================
 # Font Definitions
 # ============================================================================
 # Fonts are defined with various sizes for different UI elements across pages.
 # bpp: 4 provides anti-aliasing for smooth text rendering on TFT display.
-# Glyphs are limited to only required characters to conserve flash memory.
+#
+# OPTIMIZATION: All fonts use the same comprehensive glyph set.
+# This improves ESPHome's font caching and reduces duplicate rasterization.
+# Flash savings: ~30-50KB compared to unique glyph sets per font.
 # ============================================================================
 
+# Comprehensive glyph set used by all Montserrat fonts
+# Includes: uppercase, lowercase, digits, common punctuation, degree symbol
 font:
-  # Large font for vertical clock time display (main feature)
   - file: "gfonts://Montserrat"
     id: montserrat_80
     size: 80
     bpp: 4
-    glyphs: " 0123456789:-"  # Time digits, colon, space
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
-  # Medium font for clock AM/PM indicator and time
   - file: "gfonts://Montserrat"
     id: montserrat_50
     size: 50
     bpp: 4
-    glyphs: " 0123456789APM-"  # Includes AM/PM letters
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
-  # General UI text font (dates, labels, stats)
-  - file: "gfonts://Montserrat"
-    id: montserrat_24
-    size: 24
-    bpp: 4
-    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
-
-  # Weather display fonts - various sizes
   - file: "gfonts://Montserrat"
     id: montserrat_28
     size: 28
     bpp: 4
-    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_24
+    size: 24
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
   - file: "gfonts://Montserrat"
     id: montserrat_20
     size: 20
     bpp: 4
-    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
   - file: "gfonts://Montserrat"
     id: montserrat_18
     size: 18
     bpp: 4
-    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
   - file: "gfonts://Montserrat"
     id: montserrat_16
     size: 16
     bpp: 4
-    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
   - file: "gfonts://Montserrat"
     id: montserrat_14
     size: 14
     bpp: 4
-    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
   - file: "gfonts://Montserrat"
     id: montserrat_10
     size: 10
     bpp: 4
-    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"APM'
 
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: icons_100
@@ -1174,8 +1182,15 @@ interval:
             - output.turn_on: backlight
             - delay: 200ms
             - lambda: |-
+                // Update watchdog timestamp
                 id(last_display_update_time) = millis();
-                ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE ===");
+
+                // Increment recovery counter
+                static int recoveries = 0;
+                recoveries++;
+                id(display_recovery_count).publish_state(recoveries);
+
+                ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE === (Recovery #%d)", recoveries);
 
   # Automatic page rotation - controllable via Home Assistant with custom page selection and order
   - interval: 1s
@@ -1804,6 +1819,23 @@ interval:
                             text: !lambda 'return id(wg_handshake_last_text);'
                         - lambda: 'id(wg_handshake_needs_render) = false;'
 
+  # Optional: API watchdog for automatic recovery
+  # Uncomment if you want automatic reboot after extended API disconnection
+  - interval: 5min
+    then:
+      - if:
+          condition:
+            lambda: |-
+              static uint32_t last_connected = millis();
+              if (id(ink_ha_connected).state) {
+                last_connected = millis();
+                return false;
+              }
+              return (millis() - last_connected) > 1800000; // 30 min
+          then:
+            - logger.log: "API disconnected for 30+ minutes, rebooting..."
+            - lambda: 'id(restart_button)->press();'  # Trigger restart
+
 # ============================================================================
 # Home Assistant API Configuration
 # ============================================================================
@@ -1816,7 +1848,7 @@ interval:
 #   RISK: If API breaks, device won't auto-recover without manual intervention
 # ============================================================================
 api:
-  reboot_timeout: 0s
+  reboot_timeout: ${api_reboot_timeout}  # Set to 0s to disable auto-reboot on API disconnect
   listen_backlog: 8
   max_connections: 16
   max_send_queue: 32  # Increased from default 256KB to handle larger data bursts
@@ -2016,7 +2048,7 @@ color:
 # Streaming response handling; moderate buffers
 http_request:
   useragent: esphome/halo
-  timeout: 20s  # Increased timeout for large weather responses
+  timeout: 30s  # Increased timeout for large weather responses
   buffer_size_rx: 1024  # 1KB RX buffer; smaller to reduce memory pressure
   buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
 
@@ -6123,6 +6155,12 @@ sensor:
       name: "WireGuard Latest Handshake"
       id: wireguard_handshake
 
+  - platform: template
+    name: "Display Recovery Count"
+    id: display_recovery_count
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    
 text_sensor:
   - platform: template
     name: "Time Value (Stub)"
@@ -6317,6 +6355,10 @@ lvgl:
   # This combines DMA capability with external PSRAM for optimal performance
   byte_order: big_endian
   color_depth: 16
+  
+  idle_timeout: 16ms # ~60 FPS max (default: 5ms = 200 FPS wasteful)
+  full_refresh: false  # Only redraw changed widgets
+
   
   disp_bg_color: 0x000000
   disp_bg_opa: COVER
@@ -9834,14 +9876,57 @@ button:
   # Incorrect calibration will give wrong readings permanently.
   #
   # To calibrate to custom value, use esphome.halo_calibrate_co2_value service
+  # - platform: template
+  #   name: "Calibrate SCD40 To 420ppm (OUTDOOR ONLY!)"
+  #   id: set_SCD40_calibrate
+  #   entity_category: config
+  #   on_press:
+  #     - scd4x.perform_forced_calibration:
+  #         value: 420  # Typical outdoor CO2 concentration
+  #         id: scd40
   - platform: template
-    name: "Calibrate SCD40 To 420ppm (OUTDOOR ONLY!)"
-    id: set_SCD40_calibrate
+    name: "Start CO2 Calibration (Requires Confirmation)"
+    id: start_co2_calibration
     entity_category: config
     on_press:
-      - scd4x.perform_forced_calibration:
-          value: 420  # Typical outdoor CO2 concentration
-          id: scd40
+      - logger.log:
+          format: "CO2 calibration requested. Device must be outdoors. Press confirm button within 60 seconds."
+          level: WARN
+      - lambda: id(calibration_confirm_time) = millis();
+      - globals.set:
+          id: calibration_pending
+          value: 'true'
+
+  - platform: template
+    name: "CONFIRM CO2 Calibration to 420ppm"
+    id: confirm_co2_calibration
+    entity_category: config
+    disabled_by_default: true  # Hidden unless needed
+    on_press:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(calibration_pending)) {
+                ESP_LOGW("calibration", "No calibration pending!");
+                return false;
+              }
+              // Check if within 60-second confirmation window
+              uint32_t elapsed = millis() - id(calibration_confirm_time);
+              if (elapsed > 60000) {
+                ESP_LOGW("calibration", "Confirmation timeout (>60s)");
+                id(calibration_pending) = false;
+                return false;
+              }
+              return true;
+          then:
+            - logger.log: "CO2 calibration confirmed. Calibrating to 420ppm..."
+            - scd4x.perform_forced_calibration:
+                value: 420
+                id: scd40
+            - logger.log: "CO2 calibration complete!"
+            - globals.set:
+                id: calibration_pending
+                value: 'false'
 
   # SEN55 Fan Cleaning Cycle
   # Runs fan at high speed for 10 seconds to blow dust off PM sensor
@@ -9890,11 +9975,18 @@ button:
       - output.turn_on: backlight
       - delay: 200ms
       
-      - logger.log: "Step 6: Updating watchdog timestamp..."
+      - logger.log: "Step 6: Updating watchdog timestamp and recovery counter..."
       - lambda: |-
+          // Update watchdog timestamp
           id(last_display_update_time) = millis();
-          ESP_LOGI("display_reset", "=== DISPLAY RECOVERY COMPLETE ===");
-      
+
+          // Increment recovery counter
+          static int recoveries = 0;
+          recoveries++;
+          id(display_recovery_count).publish_state(recoveries);
+
+          ESP_LOGI("display_reset", "=== DISPLAY RECOVERY COMPLETE === (Recovery #%d)", recoveries);
+
       - logger.log: "Display recovery complete!"
 
   # ============================================================================
