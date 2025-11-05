@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1503"
+  version: "25.11.05.1505"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1820,7 +1820,8 @@ interval:
                         - lambda: 'id(wg_handshake_needs_render) = false;'
 
   # Optional: API watchdog for automatic recovery
-  # Uncomment if you want automatic reboot after extended API disconnection
+  # Monitors Home Assistant API connection and reboots if disconnected for 30+ minutes
+  # This provides automatic recovery from API failures while still allowing HA restarts
   - interval: 5min
     then:
       - if:
@@ -1833,8 +1834,8 @@ interval:
               }
               return (millis() - last_connected) > 1800000; // 30 min
           then:
-            - logger.log: "API disconnected for 30+ minutes, rebooting..."
-            - lambda: 'id(restart_button)->press();'  # Trigger restart
+            - logger.log: "API disconnected for 30+ minutes, triggering automatic reboot..."
+            - button.press: esp_reboot_button  # Trigger ESP restart
 
 # ============================================================================
 # Home Assistant API Configuration
@@ -9847,6 +9848,7 @@ button:
   - platform: restart
     icon: mdi:power-cycle
     name: "ESP Reboot"
+    id: esp_reboot_button
 
   - platform: factory_reset
     disabled_by_default: True
