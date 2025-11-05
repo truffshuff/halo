@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1339"
+  version: "25.11.05.1349"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -1817,7 +1817,6 @@ interval:
 # ============================================================================
 api:
   reboot_timeout: 0s
-  buffer_size: 2048  # Increase from default 512
   # Optimized settings for improved switch responsiveness and connection stability
   # These reduce latency and ensure faster state updates between device and Home Assistant
   on_client_connected:
