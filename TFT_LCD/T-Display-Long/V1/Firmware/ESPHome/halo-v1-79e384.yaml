@@ -67,6 +67,16 @@ wifi:
   ap:
     ssid: "Halo Hotspot"
 
+# logger:
+#   level: DEBUG
+#   logs:
+#     component: INFO       # Suppress component setup messages
+#     wifi: INFO            # Suppress WiFi debug messages
+#     api: INFO             # Keep general API at INFO
+#     api.connection: DEBUG # But enable API connection debug for BLE proxy
+#     nimble_proxy: DEBUG 
+#     nimble_improv: DEBUG
+
 packages:
   remote_package:
     url: https://github.com/truffshuff/halo/

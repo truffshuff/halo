@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.06.1619"
+  version: "25.11.06.1634"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -9188,7 +9188,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day2_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9232,7 +9232,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day3_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9339,7 +9339,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day4_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9384,7 +9384,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day5_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9510,7 +9510,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day6_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9555,7 +9555,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day7_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9681,7 +9681,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day8_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9726,7 +9726,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day9_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -9852,7 +9852,7 @@ lvgl:
                   recolor: true
               - label:
                   id: lbl_forecast_day10_precip_prob
-                  text: "Rain: --%"
+                  text: "Precip Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
