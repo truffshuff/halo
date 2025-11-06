@@ -24,6 +24,20 @@ esphome:
   name: halo-v1-79e384
   friendly_name: Halo Air Quality Sensor Dev
   name_add_mac_suffix: false
+
+  # # ⚠️ ONE-TIME: Clear Improv WiFi credentials on next boot
+  # # REMOVE or comment out after one boot!
+  # on_boot:
+  #   - priority: 800  # Run very early, before WiFi
+  #     then:
+  #       - lambda: |-
+  #           ESP_LOGW("main", "ONE-TIME: Clearing Improv WiFi credentials from NVS");
+  #           auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
+  #           uint8_t dummy = 0;
+  #           pref.save(&dummy);
+  #           ESP_LOGI("main", "Improv WiFi credentials cleared! YAML WiFi will be used.");
+  #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
+
   platformio_options:
     upload_speed: 921600
     board_build.flash_mode: qio

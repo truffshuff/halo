@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.06.1100"
+  version: "25.11.06.1619"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -9901,6 +9901,20 @@ button:
     disabled_by_default: True
     name: "Factory Reset ESP"
     id: factory_reset_all
+
+  - platform: template
+    name: "Clear Improv WiFi Credentials"
+    id: clear_improv_wifi
+    icon: mdi:wifi-off
+    entity_category: config
+    on_press:
+      - lambda: |-
+          // Clear only the Improv WiFi credentials from NVS (key: 0x9B5A7C21)
+          auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
+          uint8_t dummy = 0;
+          pref.save(&dummy);
+          ESP_LOGI("main", "Cleared Improv WiFi credentials from NVS");
+      - logger.log: "Improv WiFi credentials cleared. Device will use YAML WiFi config on next boot."
 
   - platform: template
     name: "Refresh Weather"
