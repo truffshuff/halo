@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.06.1653"
+  version: "25.11.06.1712"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -3879,7 +3879,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[1])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[1]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[1]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day2_condition
@@ -4030,7 +4030,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[2])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[2]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[2]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day3_condition
@@ -4179,7 +4179,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[3])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[3]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[3]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day4_condition
@@ -4328,7 +4328,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[4])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[4]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[4]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day5_condition
@@ -4477,7 +4477,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[5])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[5]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[5]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day6_condition
@@ -4626,7 +4626,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[6])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[6]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[6]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day7_condition
@@ -4775,7 +4775,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[7])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[7]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[7]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day8_condition
@@ -4924,7 +4924,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[8])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[8]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[8]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day9_condition
@@ -5017,7 +5017,7 @@ script:
           text: !lambda |-
             if (isnan(id(weather_forecast_precip_prob)[9])) return std::string("Rain: --%");
             char buf[32];
-            snprintf(buf, sizeof(buf), "Rain: %.0f%%", id(weather_forecast_precip_prob)[9]);
+            snprintf(buf, sizeof(buf), "Precip Chance: %.0f%%", id(weather_forecast_precip_prob)[9]);
             return std::string(buf);
       - lvgl.label.update:
           id: lbl_forecast_day10_condition
