@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1949"
+  version: "25.11.06.1100"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -767,6 +767,16 @@ esp32:
       # Increased from 20s to 30s to accommodate large weather JSON parsing
       # deserializeJson() can block for extended periods on complex data
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
+
+      # Increase ATT MTU (browser commonly negotiates 185/247)
+      CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU: "247"
+      # Allow more concurrent GATT procedures and prep entries
+      CONFIG_BT_NIMBLE_GATT_MAX_PROCS: "16"
+      CONFIG_BT_NIMBLE_GATT_PREP_WRITE_COUNT: "16"
+      # More CCCDs (we have multiple notifies)
+      CONFIG_BT_NIMBLE_MAX_CCCDS: "16"
+      # Optional: extra NimBLE debug logging
+      CONFIG_BT_NIMBLE_LOG_LEVEL: "DEBUG"
 
 external_components:
   - source: github://truffshuff/esphome-components
@@ -7677,7 +7687,7 @@ lvgl:
             text: "${version}"
             align: BOTTOM_MID
             x: 0
-            y: -105
+            y: -5
             text_font: montserrat_14
             text_color: my_gray
 
@@ -7687,7 +7697,7 @@ lvgl:
             text: "\U000F07D0"  # Home Assistant icon (MDI)
             align: BOTTOM_MID
             x: 0
-            y: -20
+            y: -40
             text_font: icons_80
             text_color: my_gray  # Will be updated based on connection status
 
