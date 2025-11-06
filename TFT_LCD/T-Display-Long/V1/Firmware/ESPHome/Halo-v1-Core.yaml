@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1837"
+  version: "25.11.05.1900"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -10220,6 +10220,10 @@ nimble_proxy:
 
 esphome:
   name: ${name}
+  platformio_options:
+    build_flags:
+      - -I$IDF_PATH/components/bt/include
+      - -I$IDF_PATH/components/bt/common/include
   on_boot:
     # -------------------------------------------------------------------------
     # Boot Stage 1: Early Display Initialization (Priority 800)
