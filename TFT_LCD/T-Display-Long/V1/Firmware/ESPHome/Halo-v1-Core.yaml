@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.06.1847"
+  version: "25.11.06.1849"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -833,6 +833,8 @@ captive_portal:
 # Compatible with standard Improv protocol clients
 # Protocol spec: https://www.improv-wifi.com/
 # ============================================================================
+nimble_base:
+
 nimble_improv:
   authorized_duration: 2min  # How long authorization lasts
   wifi_timeout: 1min         # Timeout for WiFi connection attempts
