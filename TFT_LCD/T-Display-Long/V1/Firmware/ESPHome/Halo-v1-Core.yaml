@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.05.1900"
+  version: "25.11.05.1942"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -10219,11 +10219,21 @@ nimble_proxy:
 # This saves power and reduces heap usage when HA is disconnected
 
 esphome:
-  name: ${name}
   platformio_options:
+    # Force NimBLE-only build; mirrors nimble_improv compile-time flags
     build_flags:
-      - -I$IDF_PATH/components/bt/include
-      - -I$IDF_PATH/components/bt/common/include
+      - "-DCONFIG_BT_NIMBLE_ENABLED=1"
+      - "-DCONFIG_BT_BLUEDROID_ENABLED=0"
+      - "-DCONFIG_BLUEDROID_ENABLED=0"
+      - "-DCONFIG_BT_CLASSIC_ENABLED=0"
+      - "-DCONFIG_BT_BLE_ENABLED=0"
+      - "-DCONFIG_BT_BLUFI_ENABLE=0"
+      - "-DCONFIG_BT_SPP_ENABLED=0"
+      - "-DCONFIG_BT_HFP_ENABLE=0"
+      - "-DCONFIG_BT_A2DP_ENABLE=0"
+      - "-DCONFIG_BT_GATTS_ENABLE=0"
+      - "-DCONFIG_BT_GATTC_ENABLE=0"
+  name: ${name}
   on_boot:
     # -------------------------------------------------------------------------
     # Boot Stage 1: Early Display Initialization (Priority 800)
