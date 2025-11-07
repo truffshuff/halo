@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.07.0833
+# Version: 25.11.07.0846
 # Last Updated: November 07, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.07.0833"
+  version: "25.11.07.0846"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -115,6 +115,32 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'true'
+
+  # Flip clock previous values for change detection and animation
+  - id: flip_prev_hour_tens
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: flip_prev_hour_ones
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: flip_prev_minute_tens
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: flip_prev_minute_ones
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: flip_prev_second_tens
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: flip_prev_second_ones
+    type: int
+    restore_value: no
+    initial_value: '-1'
 
   # Startup light blink cycle counter
   # Tracks how many 1-second intervals have passed during startup LED animation
@@ -5178,8 +5204,69 @@ script:
           condition:
             lambda: 'return id(current_page_name) == "flip_clock";'
           then:
+            - lambda: |-
+                auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                if (!now.is_valid()) return;
+
+                int hour = id(time_format).state ? now.hour : (now.hour % 12 == 0 ? 12 : now.hour % 12);
+                int hour_tens = hour / 10;
+                int hour_ones = hour % 10;
+                int minute_tens = now.minute / 10;
+                int minute_ones = now.minute % 10;
+                int second_tens = now.second / 10;
+                int second_ones = now.second % 10;
+
+                // Hour tens - animate if changed
+                if (id(flip_prev_hour_tens) != hour_tens) {
+                  auto call = id(flip_hour_tens_label).make_call();
+                  call.set_text_color(0x444444);  // Dim during flip
+                  call.perform();
+                  id(flip_prev_hour_tens) = hour_tens;
+                }
+
+                // Hour ones - animate if changed
+                if (id(flip_prev_hour_ones) != hour_ones) {
+                  auto call = id(flip_hour_ones_label).make_call();
+                  call.set_text_color(0x444444);  // Dim during flip
+                  call.perform();
+                  id(flip_prev_hour_ones) = hour_ones;
+                }
+
+                // Minute tens - animate if changed
+                if (id(flip_prev_minute_tens) != minute_tens) {
+                  auto call = id(flip_minute_tens_label).make_call();
+                  call.set_text_color(0x444444);  // Dim during flip
+                  call.perform();
+                  id(flip_prev_minute_tens) = minute_tens;
+                }
+
+                // Minute ones - animate if changed
+                if (id(flip_prev_minute_ones) != minute_ones) {
+                  auto call = id(flip_minute_ones_label).make_call();
+                  call.set_text_color(0x444444);  // Dim during flip
+                  call.perform();
+                  id(flip_prev_minute_ones) = minute_ones;
+                }
+
+                // Second tens - animate if changed
+                if (id(flip_prev_second_tens) != second_tens) {
+                  auto call = id(flip_second_tens_label).make_call();
+                  call.set_text_color(0x444444);  // Dim during flip
+                  call.perform();
+                  id(flip_prev_second_tens) = second_tens;
+                }
+
+                // Second ones - animate if changed
+                if (id(flip_prev_second_ones) != second_ones) {
+                  auto call = id(flip_second_ones_label).make_call();
+                  call.set_text_color(0x444444);  // Dim during flip
+                  call.perform();
+                  id(flip_prev_second_ones) = second_ones;
+                }
+            - delay: 80ms  # Brief pause for flip effect
             - lvgl.label.update:
                 id: flip_hour_tens_label
+                text_color: 0xe0e0e0
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("-");
@@ -5187,6 +5274,7 @@ script:
                   return std::string(1, '0' + (hour / 10));
             - lvgl.label.update:
                 id: flip_hour_ones_label
+                text_color: 0xe0e0e0
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("-");
@@ -5194,37 +5282,32 @@ script:
                   return std::string(1, '0' + (hour % 10));
             - lvgl.label.update:
                 id: flip_minute_tens_label
+                text_color: 0xe0e0e0
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("-");
                   return std::string(1, '0' + (now.minute / 10));
             - lvgl.label.update:
                 id: flip_minute_ones_label
+                text_color: 0xe0e0e0
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("-");
                   return std::string(1, '0' + (now.minute % 10));
             - lvgl.label.update:
                 id: flip_second_tens_label
+                text_color: 0xe0e0e0
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("-");
                   return std::string(1, '0' + (now.second / 10));
-            # Fade out, update, fade in for second ones digit
-            - lvgl.widget.animate:
-                id: flip_second_ones_label
-                opa: 0
-                time: 100ms
             - lvgl.label.update:
                 id: flip_second_ones_label
+                text_color: 0xe0e0e0
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("-");
                   return std::string(1, '0' + (now.second % 10));
-            - lvgl.widget.animate:
-                id: flip_second_ones_label
-                opa: 255
-                time: 100ms
             - lvgl.label.update:
                 id: flip_ampm
                 text: !lambda |-
@@ -6634,7 +6717,7 @@ lvgl:
                   time: 300ms
     
     - id: flip_clock_page
-      bg_color: 0x000000
+      bg_color: 0x1a1a1a
       bg_opa: COVER
       scrollbar_mode: "OFF"
       on_load:
@@ -6644,7 +6727,7 @@ lvgl:
             id(time_update_last_text).clear();
         - script.execute: time_update
       widgets:
-        # Hour tens digit
+        # Hour tens digit card
         - obj:
             id: flip_hour_tens
             width: 70
@@ -6652,18 +6735,29 @@ lvgl:
             align: CENTER
             x: -55
             y: -60
-            bg_color: 0x222222
-            border_width: 3
-            border_color: 0x444444
-            radius: 10
+            bg_color: 0x2a2a2a
+            border_width: 2
+            border_color: 0x1a1a1a
+            radius: 5
+            shadow_width: 8
+            shadow_color: 0x000000
+            shadow_opa: 60
             widgets:
+              # Split line in middle (simulates two halves of flip card)
+              - obj:
+                  width: 70
+                  height: 2
+                  align: CENTER
+                  y: 0
+                  bg_color: 0x0a0a0a
+                  border_width: 0
               - label:
                   id: flip_hour_tens_label
                   text: "1"
                   text_font: montserrat_80
-                  text_color: my_white
+                  text_color: 0xe0e0e0
                   align: CENTER
-        # Hour ones digit
+        # Hour ones digit card
         - obj:
             id: flip_hour_ones
             width: 70
@@ -6671,27 +6765,38 @@ lvgl:
             align: CENTER
             x: 55
             y: -60
-            bg_color: 0x222222
-            border_width: 3
-            border_color: 0x444444
-            radius: 10
+            bg_color: 0x2a2a2a
+            border_width: 2
+            border_color: 0x1a1a1a
+            radius: 5
+            shadow_width: 8
+            shadow_color: 0x000000
+            shadow_opa: 60
             widgets:
+              # Split line in middle
+              - obj:
+                  width: 70
+                  height: 2
+                  align: CENTER
+                  y: 0
+                  bg_color: 0x0a0a0a
+                  border_width: 0
               - label:
                   id: flip_hour_ones_label
                   text: "2"
                   text_font: montserrat_80
-                  text_color: my_white
+                  text_color: 0xe0e0e0
                   align: CENTER
-        # Colon
+        # Colon separator
         - label:
             id: flip_colon
             text: ":"
             text_font: montserrat_80
-            text_color: my_white
+            text_color: 0x666666
             align: CENTER
             x: 0
             y: 60
-        # Minute tens digit
+        # Minute tens digit card
         - obj:
             id: flip_minute_tens
             width: 70
@@ -6699,18 +6804,29 @@ lvgl:
             align: CENTER
             x: -55
             y: 180
-            bg_color: 0x222222
-            border_width: 3
-            border_color: 0x444444
-            radius: 10
+            bg_color: 0x2a2a2a
+            border_width: 2
+            border_color: 0x1a1a1a
+            radius: 5
+            shadow_width: 8
+            shadow_color: 0x000000
+            shadow_opa: 60
             widgets:
+              # Split line in middle
+              - obj:
+                  width: 70
+                  height: 2
+                  align: CENTER
+                  y: 0
+                  bg_color: 0x0a0a0a
+                  border_width: 0
               - label:
                   id: flip_minute_tens_label
                   text: "3"
                   text_font: montserrat_80
-                  text_color: my_white
+                  text_color: 0xe0e0e0
                   align: CENTER
-        # Minute ones digit
+        # Minute ones digit card
         - obj:
             id: flip_minute_ones
             width: 70
@@ -6718,25 +6834,29 @@ lvgl:
             align: CENTER
             x: 55
             y: 180
-            bg_color: 0x222222
-            border_width: 3
-            border_color: 0x444444
-            radius: 10
+            bg_color: 0x2a2a2a
+            border_width: 2
+            border_color: 0x1a1a1a
+            radius: 5
+            shadow_width: 8
+            shadow_color: 0x000000
+            shadow_opa: 60
             widgets:
+              # Split line in middle
+              - obj:
+                  width: 70
+                  height: 2
+                  align: CENTER
+                  y: 0
+                  bg_color: 0x0a0a0a
+                  border_width: 0
               - label:
                   id: flip_minute_ones_label
                   text: "4"
                   text_font: montserrat_80
-                  text_color: my_white
+                  text_color: 0xe0e0e0
                   align: CENTER
-        # Divider line between hours and minutes
-        - line:
-            points:
-              - -80, 60
-              - 80, 60
-            line_width: 4
-            line_color: 0x444444
-        # Second tens digit
+        # Second tens digit card
         - obj:
             id: flip_second_tens
             width: 70
@@ -6744,18 +6864,29 @@ lvgl:
             align: CENTER
             x: -55
             y: 300
-            bg_color: 0x222222
-            border_width: 3
-            border_color: 0x444444
-            radius: 10
+            bg_color: 0x2a2a2a
+            border_width: 2
+            border_color: 0x1a1a1a
+            radius: 5
+            shadow_width: 8
+            shadow_color: 0x000000
+            shadow_opa: 60
             widgets:
+              # Split line in middle
+              - obj:
+                  width: 70
+                  height: 2
+                  align: CENTER
+                  y: 0
+                  bg_color: 0x0a0a0a
+                  border_width: 0
               - label:
                   id: flip_second_tens_label
                   text: "5"
                   text_font: montserrat_80
-                  text_color: my_white
+                  text_color: 0xe0e0e0
                   align: CENTER
-        # Second ones digit
+        # Second ones digit card
         - obj:
             id: flip_second_ones
             width: 70
@@ -6763,30 +6894,34 @@ lvgl:
             align: CENTER
             x: 55
             y: 300
-            bg_color: 0x222222
-            border_width: 3
-            border_color: 0x444444
-            radius: 10
+            bg_color: 0x2a2a2a
+            border_width: 2
+            border_color: 0x1a1a1a
+            radius: 5
+            shadow_width: 8
+            shadow_color: 0x000000
+            shadow_opa: 60
             widgets:
+              # Split line in middle
+              - obj:
+                  width: 70
+                  height: 2
+                  align: CENTER
+                  y: 0
+                  bg_color: 0x0a0a0a
+                  border_width: 0
               - label:
                   id: flip_second_ones_label
                   text: "9"
                   text_font: montserrat_80
-                  text_color: my_white
+                  text_color: 0xe0e0e0
                   align: CENTER
-        # Divider line between minutes and seconds
-        - line:
-            points:
-              - -80, 240
-              - 80, 240
-            line_width: 4
-            line_color: 0x444444
-        # AM/PM indicator (optional)
+        # AM/PM indicator
         - label:
             id: flip_ampm
             text: "AM"
             text_font: montserrat_24
-            text_color: my_gray
+            text_color: 0x808080
             align: BOTTOM_MID
             x: 0
             y: -20
