@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.07.1052
+# Version: 25.11.07.1109
 # Last Updated: November 07, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.07.1052"
+  version: "25.11.07.1109"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -97,50 +97,12 @@ globals:
     restore_value: yes
     initial_value: '6'
 
-  # Page rotation settings - which pages are included
-  - id: page_rotation_flip_clock_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-
-  # Page rotation order (1-6, 0 means disabled)
-  - id: page_rotation_flip_clock_order
-    type: int
-    restore_value: yes
-    initial_value: '7'
-
   # Colon blink state for clock display
   # Toggles every second to create blinking colon animation (:)
   - id: colon_blink_state
     type: bool
     restore_value: no
     initial_value: 'true'
-
-  # Flip clock previous values for change detection and animation
-  - id: flip_prev_hour_tens
-    type: int
-    restore_value: no
-    initial_value: '-1'
-  - id: flip_prev_hour_ones
-    type: int
-    restore_value: no
-    initial_value: '-1'
-  - id: flip_prev_minute_tens
-    type: int
-    restore_value: no
-    initial_value: '-1'
-  - id: flip_prev_minute_ones
-    type: int
-    restore_value: no
-    initial_value: '-1'
-  - id: flip_prev_second_tens
-    type: int
-    restore_value: no
-    initial_value: '-1'
-  - id: flip_prev_second_ones
-    type: int
-    restore_value: no
-    initial_value: '-1'
 
   # Startup light blink cycle counter
   # Tracks how many 1-second intervals have passed during startup LED animation
@@ -938,20 +900,6 @@ switch:
       - lambda: 'id(page_rotation_vertical_clock_enabled) = false;'
       - logger.log: "Vertical clock page disabled in rotation"
 
-  - platform: template
-    name: "Page Rotation: Flip Clock Page"
-    id: page_rotation_flip_clock_switch
-    icon: mdi:clock-outline
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(page_rotation_flip_clock_enabled) = true;'
-      - logger.log: "Flip clock page enabled in rotation"
-    on_turn_off:
-      - lambda: 'id(page_rotation_flip_clock_enabled) = false;'
-      - logger.log: "Flip clock page disabled in rotation"
-
   # Clock format and display options
   - platform: template
     name: "24h Clock Format"
@@ -1327,10 +1275,6 @@ interval:
                 page_orders.push_back(id(page_rotation_vertical_clock_order));
                 page_ids.push_back("vertical_clock");
               }
-              if (id(page_rotation_flip_clock_enabled)) {
-                page_orders.push_back(id(page_rotation_flip_clock_order));
-                page_ids.push_back("flip_clock");
-              }
               // AirQ page (conditionally available based on AirQ package)
               // This global is provided by either airq-core.yaml or airq-stubs.yaml
               if (id(page_rotation_AirQ_enabled)) {
@@ -1547,23 +1491,12 @@ interval:
                                                     animation: OUT_LEFT
                                                     time: 300ms
                                               else:
-                                                # Flip Clock
-                                                - if:
-                                                    condition:
-                                                      lambda: 'return id(current_page_name) == "flip_clock";'
-                                                    then:
-                                                      - logger.log: "Page rotation: Showing Flip Clock page"
-                                                      - lvgl.page.show:
-                                                          id: flip_clock_page
-                                                          animation: OUT_LEFT
-                                                          time: 300ms
-                                                    else:
-                                                      # Unknown page - fall back to vertical clock
-                                                      - logger.log:
-                                                          format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
-                                                          args: ['id(current_page_name).c_str()']
-                                                          level: WARN
-                                                      - lvgl.page.show:
+                                                # Unknown page - fall back to vertical clock
+                                                - logger.log:
+                                                    format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
+                                                    args: ['id(current_page_name).c_str()']
+                                                    level: WARN
+                                                - lvgl.page.show:
                                                           id: vertical_clock_page
                                                           animation: OUT_LEFT
                                                           time: 300ms
@@ -5209,54 +5142,6 @@ script:
                   if (!now.is_valid()) return std::string("--");
                   static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
                   return std::string(days[now.day_of_week - 1]);
-      - if:
-          condition:
-            lambda: 'return id(current_page_name) == "flip_clock";'
-          then:
-            - lvgl.label.update:
-                id: flip_hour_tens_label
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("-");
-                  int hour = id(time_format).state ? now.hour : (now.hour % 12 == 0 ? 12 : now.hour % 12);
-                  return std::string(1, '0' + (hour / 10));
-            - lvgl.label.update:
-                id: flip_hour_ones_label
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("-");
-                  int hour = id(time_format).state ? now.hour : (now.hour % 12 == 0 ? 12 : now.hour % 12);
-                  return std::string(1, '0' + (hour % 10));
-            - lvgl.label.update:
-                id: flip_minute_tens_label
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("-");
-                  return std::string(1, '0' + (now.minute / 10));
-            - lvgl.label.update:
-                id: flip_minute_ones_label
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("-");
-                  return std::string(1, '0' + (now.minute % 10));
-            - lvgl.label.update:
-                id: flip_second_tens_label
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("-");
-                  return std::string(1, '0' + (now.second / 10));
-            - lvgl.label.update:
-                id: flip_second_ones_label
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("-");
-                  return std::string(1, '0' + (now.second % 10));
-            - lvgl.label.update:
-                id: flip_ampm
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid() || id(time_format).state) return std::string("");
-                  return std::string(now.hour >= 12 ? "PM" : "AM");
       - script.execute: update_colon_widget
       - lambda: |-
           const uint32_t now = millis();
@@ -5313,7 +5198,7 @@ number:
     restore_value: true
     initial_value: 6
     min_value: 1
-    max_value: 7
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5325,31 +5210,13 @@ number:
           args: ['(int)x']
 
   - platform: template
-    name: "Page Order: Flip Clock Page"
-    id: page_order_flip_clock
-    icon: mdi:numeric
-    restore_value: true
-    initial_value: 7
-    min_value: 1
-    max_value: 7
-    entity_category: "config"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(page_rotation_flip_clock_order) = (int)x;'
-      - logger.log:
-          format: "Flip clock page order set to %d"
-          args: ['(int)x']
-
-  - platform: template
     name: "Page Order: Weather Page"
     id: page_order_weather
     icon: mdi:numeric
     restore_value: true
     initial_value: 3
     min_value: 1
-    max_value: 7
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5373,7 +5240,7 @@ number:
     restore_value: true
     initial_value: 4
     min_value: 1
-    max_value: 7
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5397,7 +5264,7 @@ number:
     restore_value: true
     initial_value: 5
     min_value: 1
-    max_value: 7
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5438,7 +5305,7 @@ number:
     restore_value: true
     initial_value: 1
     min_value: 1
-    max_value: 7
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5490,7 +5357,7 @@ number:
     restore_value: true
     initial_value: 2
     min_value: 1
-    max_value: 7
+    max_value: 6
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5567,8 +5434,6 @@ sensor:
         - lambda: |-
             id(weather_current_apparent_temp) = x;
             ESP_LOGD("weather", "Apparent temp updated: %.1f°F", x);
-
-  # Note: wifi_signal (RSSI) sensor is defined in wifi-core.yaml
 
   - platform: template
     name: "Time Update Duration"
@@ -6666,217 +6531,7 @@ lvgl:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
-    
-    - id: flip_clock_page
-      bg_color: 0x1a1a1a
-      bg_opa: COVER
-      scrollbar_mode: "OFF"
-      on_load:
-        - script.execute: page_transition_cleanup
-        - lambda: |-
-            id(current_page_name) = "flip_clock";
-            id(time_update_last_text).clear();
-        - script.execute: time_update
-      widgets:
-        # Hour tens digit card
-        - obj:
-            id: flip_hour_tens
-            width: 70
-            height: 110
-            align: CENTER
-            x: -55
-            y: -180
-            bg_color: 0x2a2a2a
-            border_width: 2
-            border_color: 0x1a1a1a
-            radius: 5
-            shadow_width: 8
-            shadow_color: 0x000000
-            shadow_opa: 60%
-            widgets:
-              # Split line in middle (simulates two halves of flip card)
-              - obj:
-                  width: 70
-                  height: 2
-                  align: CENTER
-                  y: 0
-                  bg_color: 0x0a0a0a
-                  border_width: 0
-              - label:
-                  id: flip_hour_tens_label
-                  text: "1"
-                  text_font: montserrat_80
-                  text_color: 0xe0e0e0
-                  align: CENTER
-        # Hour ones digit card
-        - obj:
-            id: flip_hour_ones
-            width: 70
-            height: 110
-            align: CENTER
-            x: 55
-            y: -180
-            bg_color: 0x2a2a2a
-            border_width: 2
-            border_color: 0x1a1a1a
-            radius: 5
-            shadow_width: 8
-            shadow_color: 0x000000
-            shadow_opa: 60%
-            widgets:
-              # Split line in middle
-              - obj:
-                  width: 70
-                  height: 2
-                  align: CENTER
-                  y: 0
-                  bg_color: 0x0a0a0a
-                  border_width: 0
-              - label:
-                  id: flip_hour_ones_label
-                  text: "2"
-                  text_font: montserrat_80
-                  text_color: 0xe0e0e0
-                  align: CENTER
-        # Colon separator
-        - label:
-            id: flip_colon
-            text: ":"
-            text_font: montserrat_80
-            text_color: 0x666666
-            align: CENTER
-            x: 0
-            y: -60
-        # Minute tens digit card
-        - obj:
-            id: flip_minute_tens
-            width: 70
-            height: 110
-            align: CENTER
-            x: -55
-            y: 60
-            bg_color: 0x2a2a2a
-            border_width: 2
-            border_color: 0x1a1a1a
-            radius: 5
-            shadow_width: 8
-            shadow_color: 0x000000
-            shadow_opa: 60%
-            widgets:
-              # Split line in middle
-              - obj:
-                  width: 70
-                  height: 2
-                  align: CENTER
-                  y: 0
-                  bg_color: 0x0a0a0a
-                  border_width: 0
-              - label:
-                  id: flip_minute_tens_label
-                  text: "3"
-                  text_font: montserrat_80
-                  text_color: 0xe0e0e0
-                  align: CENTER
-        # Minute ones digit card
-        - obj:
-            id: flip_minute_ones
-            width: 70
-            height: 110
-            align: CENTER
-            x: 55
-            y: 60
-            bg_color: 0x2a2a2a
-            border_width: 2
-            border_color: 0x1a1a1a
-            radius: 5
-            shadow_width: 8
-            shadow_color: 0x000000
-            shadow_opa: 60%
-            widgets:
-              # Split line in middle
-              - obj:
-                  width: 70
-                  height: 2
-                  align: CENTER
-                  y: 0
-                  bg_color: 0x0a0a0a
-                  border_width: 0
-              - label:
-                  id: flip_minute_ones_label
-                  text: "4"
-                  text_font: montserrat_80
-                  text_color: 0xe0e0e0
-                  align: CENTER
-        # Second tens digit card
-        - obj:
-            id: flip_second_tens
-            width: 70
-            height: 110
-            align: CENTER
-            x: -55
-            y: 300
-            bg_color: 0x2a2a2a
-            border_width: 2
-            border_color: 0x1a1a1a
-            radius: 5
-            shadow_width: 8
-            shadow_color: 0x000000
-            shadow_opa: 60%
-            widgets:
-              # Split line in middle
-              - obj:
-                  width: 70
-                  height: 2
-                  align: CENTER
-                  y: 0
-                  bg_color: 0x0a0a0a
-                  border_width: 0
-              - label:
-                  id: flip_second_tens_label
-                  text: "5"
-                  text_font: montserrat_80
-                  text_color: 0xe0e0e0
-                  align: CENTER
-        # Second ones digit card
-        - obj:
-            id: flip_second_ones
-            width: 70
-            height: 110
-            align: CENTER
-            x: 55
-            y: 300
-            bg_color: 0x2a2a2a
-            border_width: 2
-            border_color: 0x1a1a1a
-            radius: 5
-            shadow_width: 8
-            shadow_color: 0x000000
-            shadow_opa: 60%
-            widgets:
-              # Split line in middle
-              - obj:
-                  width: 70
-                  height: 2
-                  align: CENTER
-                  y: 0
-                  bg_color: 0x0a0a0a
-                  border_width: 0
-              - label:
-                  id: flip_second_ones_label
-                  text: "9"
-                  text_font: montserrat_80
-                  text_color: 0xe0e0e0
-                  align: CENTER
-        # AM/PM indicator
-        - label:
-            id: flip_ampm
-            text: "AM"
-            text_font: montserrat_24
-            text_color: 0x808080
-            align: BOTTOM_MID
-            x: 0
-            y: -20
-
+                  
     # Weather Forecast Page (Page 3)
     # Main weather display with current conditions
     - id: weather_forecast_page
@@ -10542,10 +10197,7 @@ wireguard:
   peer_endpoint: !secret wg_peerendpt
   peer_public_key: !secret wg_pubkey
   peer_preshared_key: !secret wg_shrdkey
-  peer_allowed_ips:
-    - 192.168.1.0/24  # Home LAN traffic
-    - 10.6.0.1/32     # VPN gateway
-    - 10.6.0.2/32     # Additional VPN peer
+  peer_allowed_ips: !secret wg_allowed_ips
   peer_persistent_keepalive: 25s
   require_connection_to_proceed: false  # Non-blocking boot
 
