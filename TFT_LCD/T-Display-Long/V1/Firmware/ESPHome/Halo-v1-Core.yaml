@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.07.0847
+# Version: 25.11.07.0904
 # Last Updated: November 07, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.07.0847"
+  version: "25.11.07.0904"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -5218,52 +5218,40 @@ script:
 
                 // Hour tens - animate if changed
                 if (id(flip_prev_hour_tens) != hour_tens) {
-                  auto call = id(flip_hour_tens_label).make_call();
-                  call.set_text_color(0x444444);  // Dim during flip
-                  call.perform();
+                  lv_obj_set_style_text_color(id(flip_hour_tens_label), lv_color_hex(0x444444), LV_PART_MAIN);
                   id(flip_prev_hour_tens) = hour_tens;
                 }
 
                 // Hour ones - animate if changed
                 if (id(flip_prev_hour_ones) != hour_ones) {
-                  auto call = id(flip_hour_ones_label).make_call();
-                  call.set_text_color(0x444444);  // Dim during flip
-                  call.perform();
+                  lv_obj_set_style_text_color(id(flip_hour_ones_label), lv_color_hex(0x444444), LV_PART_MAIN);
                   id(flip_prev_hour_ones) = hour_ones;
                 }
 
                 // Minute tens - animate if changed
                 if (id(flip_prev_minute_tens) != minute_tens) {
-                  auto call = id(flip_minute_tens_label).make_call();
-                  call.set_text_color(0x444444);  // Dim during flip
-                  call.perform();
+                  lv_obj_set_style_text_color(id(flip_minute_tens_label), lv_color_hex(0x444444), LV_PART_MAIN);
                   id(flip_prev_minute_tens) = minute_tens;
                 }
 
                 // Minute ones - animate if changed
                 if (id(flip_prev_minute_ones) != minute_ones) {
-                  auto call = id(flip_minute_ones_label).make_call();
-                  call.set_text_color(0x444444);  // Dim during flip
-                  call.perform();
+                  lv_obj_set_style_text_color(id(flip_minute_ones_label), lv_color_hex(0x444444), LV_PART_MAIN);
                   id(flip_prev_minute_ones) = minute_ones;
                 }
 
                 // Second tens - animate if changed
                 if (id(flip_prev_second_tens) != second_tens) {
-                  auto call = id(flip_second_tens_label).make_call();
-                  call.set_text_color(0x444444);  // Dim during flip
-                  call.perform();
+                  lv_obj_set_style_text_color(id(flip_second_tens_label), lv_color_hex(0x444444), LV_PART_MAIN);
                   id(flip_prev_second_tens) = second_tens;
                 }
 
                 // Second ones - animate if changed
                 if (id(flip_prev_second_ones) != second_ones) {
-                  auto call = id(flip_second_ones_label).make_call();
-                  call.set_text_color(0x444444);  // Dim during flip
-                  call.perform();
+                  lv_obj_set_style_text_color(id(flip_second_ones_label), lv_color_hex(0x444444), LV_PART_MAIN);
                   id(flip_prev_second_ones) = second_ones;
                 }
-            - delay: 80ms  # Brief pause for flip effect
+            - delay: 100ms  # Brief pause for flip effect
             - lvgl.label.update:
                 id: flip_hour_tens_label
                 text_color: 0xe0e0e0
