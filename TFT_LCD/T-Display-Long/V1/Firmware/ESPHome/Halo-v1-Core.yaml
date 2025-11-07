@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.07.0801
+# Version: 25.11.07.0813
 # Last Updated: November 07, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.07.0801"
+  version: "25.11.07.0813"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -912,6 +912,20 @@ switch:
       - lambda: 'id(page_rotation_vertical_clock_enabled) = false;'
       - logger.log: "Vertical clock page disabled in rotation"
 
+  - platform: template
+    name: "Page Rotation: Flip Clock Page"
+    id: page_rotation_flip_clock_switch
+    icon: mdi:clock-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_flip_clock_enabled) = true;'
+      - logger.log: "Flip clock page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_flip_clock_enabled) = false;'
+      - logger.log: "Flip clock page disabled in rotation"
+
   # Clock format and display options
   - platform: template
     name: "24h Clock Format"
@@ -1277,6 +1291,10 @@ interval:
               if (id(page_rotation_vertical_clock_enabled)) {
                 page_orders.push_back(id(page_rotation_vertical_clock_order));
                 page_ids.push_back("vertical_clock");
+              }
+              if (id(page_rotation_flip_clock_enabled)) {
+                page_orders.push_back(id(page_rotation_flip_clock_order));
+                page_ids.push_back("flip_clock");
               }
               // AirQ page (conditionally available based on AirQ package)
               // This global is provided by either airq-core.yaml or airq-stubs.yaml
