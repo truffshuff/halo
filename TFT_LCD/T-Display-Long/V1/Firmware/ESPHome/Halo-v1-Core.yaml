@@ -14,7 +14,7 @@
 
 substitutions:
   name: halo
-  version: "25.11.06.1849"
+  version: "25.11.06.1915"
   device_description: ${name} - v${version}.
   
   # Weather refresh intervals (can be overridden in device-specific file)
@@ -6649,8 +6649,8 @@ lvgl:
                         - tick_style:
                             start_value: 0
                             end_value: 100
-                            color_start: 0x0099FF
-                            color_end: 0xFF6600
+                            color_start: 0x00FFFF
+                            color_end: 0xFF0000
                     - range_from: 0
                       range_to: 100
                       angle_range: 180
