@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.07.0813
+# Version: 25.11.07.0829
 # Last Updated: November 07, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.07.0813"
+  version: "25.11.07.0829"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -5194,6 +5194,27 @@ script:
                   if (!now.is_valid()) return std::string("-");
                   return std::string(1, '0' + (now.minute % 10));
             - lvgl.label.update:
+                id: flip_second_tens_label
+                text: !lambda |-
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                  if (!now.is_valid()) return std::string("-");
+                  return std::string(1, '0' + (now.second / 10));
+            # Fade out, update, fade in for second ones digit
+            - lvgl.anim.fade:
+                id: flip_second_ones_label
+                value: 0
+                time: 100ms
+            - lvgl.label.update:
+                id: flip_second_ones_label
+                text: !lambda |-
+                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
+                  if (!now.is_valid()) return std::string("-");
+                  return std::string(1, '0' + (now.second % 10));
+            - lvgl.anim.fade:
+                id: flip_second_ones_label
+                value: 255
+                time: 100ms
+            - lvgl.label.update:
                 id: flip_ampm
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
@@ -6702,6 +6723,51 @@ lvgl:
             points:
               - -80, 60
               - 80, 60
+            line_width: 4
+            line_color: 0x444444
+        # Second tens digit
+        - obj:
+            id: flip_second_tens
+            width: 70
+            height: 110
+            align: CENTER
+            x: -55
+            y: 300
+            bg_color: 0x222222
+            border_width: 3
+            border_color: 0x444444
+            radius: 10
+            widgets:
+              - label:
+                  id: flip_second_tens_label
+                  text: "5"
+                  text_font: montserrat_80
+                  text_color: my_white
+                  align: CENTER
+        # Second ones digit
+        - obj:
+            id: flip_second_ones
+            width: 70
+            height: 110
+            align: CENTER
+            x: 55
+            y: 300
+            bg_color: 0x222222
+            border_width: 3
+            border_color: 0x444444
+            radius: 10
+            widgets:
+              - label:
+                  id: flip_second_ones_label
+                  text: "9"
+                  text_font: montserrat_80
+                  text_color: my_white
+                  align: CENTER
+        # Divider line between minutes and seconds
+        - line:
+            points:
+              - -80, 240
+              - 80, 240
             line_width: 4
             line_color: 0x444444
         # AM/PM indicator (optional)
