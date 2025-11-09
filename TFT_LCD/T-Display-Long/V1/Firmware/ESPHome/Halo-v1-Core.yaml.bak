@@ -8,41 +8,34 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1700
+# Version: 25.11.09.1648
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1700"
+  version: "25.11.09.1648"
   device_description: ${name} - v${version}.
   
-  # Weather refresh intervals (can be overridden in device-specific file)
-  weather_daily_refresh_interval: "3600"   # 60 minutes for daily forecast
-  weather_hourly_refresh_interval: "900"   # 15 minutes for hourly forecast
+  # # Weather refresh intervals (can be overridden in device-specific file)
+  # weather_daily_refresh_interval: "3600"   # 60 minutes for daily forecast
+  # weather_hourly_refresh_interval: "900"   # 15 minutes for hourly forecast
 
-  # --------------------------------------------------------------------------
-  # Required substitutions referenced throughout this config
-  # Values can come from secrets.yaml where appropriate
-  # --------------------------------------------------------------------------
-  # Home Assistant API base URL and token (JWT without "Bearer ")
-  ha_url: !secret ha_url
-  ha_token: !secret ha_token
-  # Weather entity ID in Home Assistant (override if different)
-  weather_entity_id: weather.hhut
-  # Sensors used for current temperature display (override as needed)
-  current_temp_sensor: sensor.outdoor_temperature
-  apparent_temp_sensor: sensor.outdoor_apparent_temperature
-  # WiFi credentials (pulled from secrets)
-  wifi_ssid: !secret wifi_ssid
-  wifi_password: !secret wifi_password
-  
-  # API configuration
-  api_reboot_timeout: 15min
-  
-  # Wind sensors
-  wind_speed_sensor: sensor.hhut_wind_speed
-  wind_direction_sensor: sensor.hhut_wind_bearing
+  # # --------------------------------------------------------------------------
+  # # Required substitutions referenced throughout this config
+  # # Values can come from secrets.yaml where appropriate
+  # # --------------------------------------------------------------------------
+  # # Home Assistant API base URL and token (JWT without "Bearer ")
+  # ha_url: !secret ha_url
+  # ha_token: !secret ha_token
+  # # Weather entity ID in Home Assistant (override if different)
+  # weather_entity_id: weather.hhut
+  # # Sensors used for current temperature display (override as needed)
+  # current_temp_sensor: sensor.outdoor_temperature
+  # apparent_temp_sensor: sensor.outdoor_apparent_temperature
+  # # WiFi credentials (pulled from secrets)
+  # wifi_ssid: !secret wifi_ssid
+  # wifi_password: !secret wifi_password
 
 # ============================================================================
 # Configuration Architecture - Monolithic Design
@@ -705,58 +698,12 @@ font:
       "\U000F0595", # partlycloudy
       "\U000F0596", # pouring
       "\U000F0597", # rainy
-      "\U000F0F36", # snowy
+      "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
-      "\U000F0598", # sunny
-      "\U000F14E4", # sunny-off
+      "\U000F0599", # sunny
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
-      ]
-
-  - file: "fonts/materialdesignicons-webfont.ttf"
-    id: icons_28
-    size: 28
-    bpp: 4
-    glyphs: [
-      "\U000F0594", # clear-night
-      "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
-      "\U000F0591", # fog
-      "\U000F0592", # hail
-      "\U000F0593", # lightning
-      "\U000F067E", # lightning-rainy
-      "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
-      "\U000F0597", # rainy
-      "\U000F0F36", # snowy
-      "\U000F067F", # snowy-rainy
-      "\U000F0598", # sunny
       "\U000F14E4", # sunny-off
-      "\U000F059D", # windy
-      "\U000F059E", # windy-variant
-      ]
-
-  - file: "fonts/materialdesignicons-webfont.ttf"
-    id: icons_40
-    size: 40
-    bpp: 4
-    glyphs: [
-      "\U000F0594", # clear-night
-      "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
-      "\U000F0591", # fog
-      "\U000F0592", # hail
-      "\U000F0593", # lightning
-      "\U000F067E", # lightning-rainy
-      "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
-      "\U000F0597", # rainy
-      "\U000F0F36", # snowy
-      "\U000F067F", # snowy-rainy
-      "\U000F0598", # sunny
-      "\U000F14E4", # sunny-off
-      "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       ]
 
 # ============================================================================
@@ -9045,8 +8992,8 @@ lvgl:
               flex_flow: row
               flex_align_main: START
               flex_align_cross: START
-              # flex_wrap: WRAP  # Not supported in current ESPHome LVGL version
-              # gap: 6  # Not supported in current ESPHome LVGL version
+              flex_wrap: WRAP
+              gap: 6
             widgets:
               # Generate up to 12 compact hour columns (each is a small vertical stack)
               - obj:
@@ -9059,43 +9006,43 @@ lvgl:
                   radius: 6
                   pad_all: 6
                   layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 1 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour1_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour1_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour1_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour1_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 1 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour1_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour1_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour1_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour1_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
 
               - obj:
                   id: hourly_col_2
@@ -9147,475 +9094,545 @@ lvgl:
 
               - obj:
                   id: hourly_col_3
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 3 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour3_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour3_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour3_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour3_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 3 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour3_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour3_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour3_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour3_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
 
               - obj:
-                  id: hourly_col_4
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 4 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour4_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour4_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour4_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour4_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_4
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 4 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour4_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour4_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour4_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour4_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_5
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 5 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour5_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour5_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour5_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour5_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_5
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 5 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour5_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour5_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour5_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour5_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_6
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 6 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour6_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour6_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour6_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour6_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_6
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 6 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour6_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour6_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour6_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour6_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_7
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 7 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour7_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour7_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour7_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour7_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_7
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 7 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour7_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour7_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour7_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour7_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_8
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 8 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour8_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour8_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour8_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour8_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_8
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 8 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour8_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour8_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour8_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour8_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_9
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 9 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour9_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour9_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour9_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour9_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_9
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 9 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour9_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour9_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour9_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour9_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_10
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 10 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour10_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour10_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour10_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour10_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_10
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 10 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour10_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour10_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour10_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour10_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_11
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 11 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour11_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour11_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour11_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour11_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_11
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 11 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour11_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour11_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour11_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour11_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+
               - obj:
-                  id: hourly_col_12
-                  width: 80
-                  height: SIZE_CONTENT
-                  bg_color: 0x101010
-                  bg_opa: COVER
-                  border_width: 0
-                  radius: 6
-                  pad_all: 6
-                  layout:
-                    type: flex
-                    flex_flow: column
-                    pad_row: 2
-                  clickable: true
-                  on_release:
-                    - logger.log: "Hourly summary column 12 clicked"
-                    - lambda: |-
-                        id(last_auto_rotation_time) = millis();
-                    - lvgl.page.show:
-                        id: hourly_forecast_page
-                        animation: OUT_LEFT
-                        time: 300ms
-                  widgets:
-                    - label:
-                        id: lbl_sum_hour12_time
-                        text: "--:--"
-                        text_font: montserrat_12
-                        text_color: my_gray
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour12_icon
-                        text: "\U000F14E4"
-                        text_font: icons_28
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour12_temp
-                        text: "--°"
-                        text_font: montserrat_16
-                        text_color: my_white
-                        text_align: CENTER
-                    - label:
-                        id: lbl_sum_hour12_precip
-                        text: "--%"
-                        text_font: montserrat_12
-                        text_color: my_teal
-                        text_align: CENTER
+                id: hourly_col_12
+                width: 80
+                height: SIZE_CONTENT
+                bg_color: 0x101010
+                bg_opa: COVER
+                border_width: 0
+                radius: 6
+                pad_all: 6
+                layout:
+                type: flex
+                flex_flow: column
+                pad_row: 2
+                clickable: true
+                on_release:
+                - logger.log: "Hourly summary column 12 clicked"
+                - lambda: |-
+                    id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_LEFT
+                    time: 300ms
+                widgets:
+                - label:
+                    id: lbl_sum_hour12_time
+                    text: "--:--"
+                    text_font: montserrat_12
+                    text_color: my_gray
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour12_icon
+                    text: "\U000F14E4"
+                    text_font: icons_28
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour12_temp
+                    text: "--°"
+                    text_font: montserrat_16
+                    text_color: my_white
+                    text_align: CENTER
+                - label:
+                    id: lbl_sum_hour12_precip
+                    text: "--%"
+                    text_font: montserrat_12
+                    text_color: my_teal
+                    text_align: CENTER
+    - id: hourly_forecast_page_2
+      skip: true
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_name) = "hourly_forecast";'  # Same as hourly_forecast_page
+        - delay: 10ms  # Yield to prevent blocking warning
+        - if:
+            condition:
+              lambda: |-
+                // Check if hourly forecast needs refresh (stale > 15 minutes)
+                uint32_t time_since_update = millis() - id(weather_hourly_last_update);
+                bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
+                
+                if (is_stale) {
+                  ESP_LOGI("weather", "Hourly forecast is stale (age: %u minutes), fetching now...",
+                           id(weather_hourly_last_update) == 0 ? 0 : time_since_update / 60000);
+                  return true;
+                } else {
+                  ESP_LOGD("weather", "Hourly forecast is fresh (updated %u minutes ago)", time_since_update / 60000);
+                  return false;
+                }
+            then:
+              - script.execute: fetch_hourly_forecast
+            else:
+              # Data is fresh, just update the display
+              - delay: 100ms
+              - script.execute: update_hourly_forecast_display
+      widgets:
+        # Page Header
+        - label:
+            text: "6-Hour Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # Hour 4 Card
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 35
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour4_header
+                  text: "Hour +4"
+                  text_font: montserrat_14
+                  text_color: my_white
               - obj:
                   width: 100%
                   height: SIZE_CONTENT
