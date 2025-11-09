@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1439
+# Version: 25.11.09.1449
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1439"
+  version: "25.11.09.1449"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -6842,17 +6842,17 @@ lvgl:
         - obj:
             align: BOTTOM_MID
             x: 0
-            y: -30
+            y: -90    # moved higher so the compass is above the precip probability label
             width: 160
-            height: 48
+            height: 64
             bg_opa: 0
             border_width: 0
             widgets:
               - meter:
                   id: wind_compass_meter
                   align: LEFT_MID
-                  width: 48
-                  height: 48
+                  width: 56
+                  height: 56
                   border_width: 0
                   bg_opa: TRANSP
                   scales:
@@ -9996,6 +9996,15 @@ lvgl:
                   text_font: montserrat_16
                   text_color: my_white
 
+
+        - label:
+            text: "Beginning >"
+            align: BOTTOM_MID
+            y: -5
+            text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
         # Navigation button (center bottom) - goes back to Days 2-3
         - obj:
             id: nav_button_forecast_10
@@ -10003,12 +10012,12 @@ lvgl:
             x: 0
             y: 0
             width: 100
-            height: 100
+            height: 60
             bg_opa: 0
             border_width: 0
             clickable: true
             on_release:
-              - logger.log: "Day 10 BOTTOM button RELEASED - going back to 3-day!"
+              - logger.log: "Day 10 BOTTOM button RELEASED - going back to 2/3-day!"
               - lvgl.page.show:
                   id: daily_forecast_page
                   animation: OUT_RIGHT
