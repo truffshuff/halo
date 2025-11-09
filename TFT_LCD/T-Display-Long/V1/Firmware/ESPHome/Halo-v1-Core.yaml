@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1724
+# Version: 25.11.09.1728
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1724"
+  version: "25.11.09.1728"
   device_description: ${name} - v${version}.
   
   
@@ -3884,123 +3884,123 @@ script:
       # hours 7..12
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour7_time
-          text:text: !lambda |-
+          id: lbl_sum_hour7_time
+          text: !lambda |-
             if (id(weather_hourly_datetime)[6].empty()) return std::string("--:--"); std::string dt = id(weather_hourly_datetime)[6]; if (dt.length()<13) return std::string("--:--"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours=0; if (dt.length()>=20){ if (dt[19]=='Z') source_offset_hours=0; else if (dt.length()>=24 && (dt[19]=='+'||dt[19]=='-')){ source_offset_hours= std::stoi(dt.substr(20,2)); if (dt[19]=='-') source_offset_hours=-source_offset_hours; }} auto now = id(sntp_time).now(); if (now.is_valid()){ int local_offset_hours = now.timezone_offset()/3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while(hour<0) hour+=24; while(hour>=24) hour-=24;} char b7[8]; snprintf(b7,sizeof(b7),"%02d:00",hour); return std::string(b7);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour7_icon
-          text:text: !lambda |-
+          id: lbl_sum_hour7_icon
+          text: !lambda |-
             std::string condition = id(weather_hourly_condition)[6]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour7_temp
-          text:text: !lambda |-
+          id: lbl_sum_hour7_temp
+          text: !lambda |-
             if (isnan(id(weather_hourly_temp)[6])) return std::string("--°"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[6]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour7_precip
-          text:text: !lambda |-
+          id: lbl_sum_hour7_precip
+          text: !lambda |-
             if (isnan(id(weather_hourly_precip_prob)[6])) return std::string("--%"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[6]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour8_time
-          text:text: !lambda |-
+          id: lbl_sum_hour8_time
+          text: !lambda |-
             if (id(weather_hourly_datetime)[7].empty()) return std::string("--:--"); std::string dt = id(weather_hourly_datetime)[7]; if (dt.length()<13) return std::string("--:--"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours=0; if (dt.length()>=20){ if (dt[19]=='Z') source_offset_hours=0; else if (dt.length()>=24 && (dt[19]=='+'||dt[19]=='-')){ source_offset_hours= std::stoi(dt.substr(20,2)); if (dt[19]=='-') source_offset_hours=-source_offset_hours; }} auto now = id(sntp_time).now(); if (now.is_valid()){ int local_offset_hours = now.timezone_offset()/3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while(hour<0) hour+=24; while(hour>=24) hour-=24;} char b8[8]; snprintf(b8,sizeof(b8),"%02d:00",hour); return std::string(b8);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour8_icon
-          text:text: !lambda |-
+          id: lbl_sum_hour8_icon
+          text: !lambda |-
             std::string condition = id(weather_hourly_condition)[7]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour8_temp
-          text:text: !lambda |-
+          id: lbl_sum_hour8_temp
+          text: !lambda |-
             if (isnan(id(weather_hourly_temp)[7])) return std::string("--°"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[7]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour8_precip
-          text:text: !lambda |-
+          id: lbl_sum_hour8_precip
+          text: !lambda |-
             if (isnan(id(weather_hourly_precip_prob)[7])) return std::string("--%"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[7]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour9_time
-          text:text: !lambda |-
+          id: lbl_sum_hour9_time
+          text: !lambda |-
             if (id(weather_hourly_datetime)[8].empty()) return std::string("--:--"); std::string dt = id(weather_hourly_datetime)[8]; if (dt.length()<13) return std::string("--:--"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours=0; if (dt.length()>=20){ if (dt[19]=='Z') source_offset_hours=0; else if (dt.length()>=24 && (dt[19]=='+'||dt[19]=='-')){ source_offset_hours= std::stoi(dt.substr(20,2)); if (dt[19]=='-') source_offset_hours=-source_offset_hours; }} auto now = id(sntp_time).now(); if (now.is_valid()){ int local_offset_hours = now.timezone_offset()/3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while(hour<0) hour+=24; while(hour>=24) hour-=24;} char b9[8]; snprintf(b9,sizeof(b9),"%02d:00",hour); return std::string(b9);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour9_icon
-          text:text: !lambda |-
+          id: lbl_sum_hour9_icon
+          text: !lambda |-
             std::string condition = id(weather_hourly_condition)[8]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour9_temp
-          text:text: !lambda |-
+          id: lbl_sum_hour9_temp
+          text: !lambda |-
             if (isnan(id(weather_hourly_temp)[8])) return std::string("--°"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[8]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour9_precip
-          text:text: !lambda |-
+          id: lbl_sum_hour9_precip
+          text: !lambda |-
             if (isnan(id(weather_hourly_precip_prob)[8])) return std::string("--%"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[8]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour10_time
-          text:text: !lambda |-
+          id: lbl_sum_hour10_time
+          text: !lambda |-
             if (id(weather_hourly_datetime)[9].empty()) return std::string("--:--"); std::string dt = id(weather_hourly_datetime)[9]; if (dt.length()<13) return std::string("--:--"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours=0; if (dt.length()>=20){ if (dt[19]=='Z') source_offset_hours=0; else if (dt.length()>=24 && (dt[19]=='+'||dt[19]=='-')){ source_offset_hours= std::stoi(dt.substr(20,2)); if (dt[19]=='-') source_offset_hours=-source_offset_hours; }} auto now = id(sntp_time).now(); if (now.is_valid()){ int local_offset_hours = now.timezone_offset()/3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while(hour<0) hour+=24; while(hour>=24) hour-=24;} char b10[8]; snprintf(b10,sizeof(b10),"%02d:00",hour); return std::string(b10);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour10_icon
-          text:text: !lambda |-
+          id: lbl_sum_hour10_icon
+          text: !lambda |-
             std::string condition = id(weather_hourly_condition)[9]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour10_temp
-          text:text: !lambda |-
+          id: lbl_sum_hour10_temp
+          text: !lambda |-
             if (isnan(id(weather_hourly_temp)[9])) return std::string("--°"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[9]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour10_precip
-          text:text: !lambda |-
+          id: lbl_sum_hour10_precip
+          text: !lambda |-
             if (isnan(id(weather_hourly_precip_prob)[9])) return std::string("--%"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[9]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour11_time
-          text:text: !lambda |-
+          id: lbl_sum_hour11_time
+          text: !lambda |-
             if (id(weather_hourly_datetime)[10].empty()) return std::string("--:--"); std::string dt = id(weather_hourly_datetime)[10]; if (dt.length()<13) return std::string("--:--"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours=0; if (dt.length()>=20){ if (dt[19]=='Z') source_offset_hours=0; else if (dt.length()>=24 && (dt[19]=='+'||dt[19]=='-')){ source_offset_hours= std::stoi(dt.substr(20,2)); if (dt[19]=='-') source_offset_hours=-source_offset_hours; }} auto now = id(sntp_time).now(); if (now.is_valid()){ int local_offset_hours = now.timezone_offset()/3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while(hour<0) hour+=24; while(hour>=24) hour-=24;} char b11[8]; snprintf(b11,sizeof(b11),"%02d:00",hour); return std::string(b11);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour11_icon
-          text:text: !lambda |-
+          id: lbl_sum_hour11_icon
+          text: !lambda |-
             std::string condition = id(weather_hourly_condition)[10]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour11_temp
-          text:text: !lambda |-
+          id: lbl_sum_hour11_temp
+          text: !lambda |-
             if (isnan(id(weather_hourly_temp)[10])) return std::string("--°"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[10]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour11_precip
-          text:text: !lambda |-
+          id: lbl_sum_hour11_precip
+          text: !lambda |-
             if (isnan(id(weather_hourly_precip_prob)[10])) return std::string("--%"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[10]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour12_time
-          text:text: !lambda |-
+          id: lbl_sum_hour12_time
+          text: !lambda |-
             if (id(weather_hourly_datetime)[11].empty()) return std::string("--:--"); std::string dt = id(weather_hourly_datetime)[11]; if (dt.length()<13) return std::string("--:--"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours=0; if (dt.length()>=20){ if (dt[19]=='Z') source_offset_hours=0; else if (dt.length()>=24 && (dt[19]=='+'||dt[19]=='-')){ source_offset_hours= std::stoi(dt.substr(20,2)); if (dt[19]=='-') source_offset_hours=-source_offset_hours; }} auto now = id(sntp_time).now(); if (now.is_valid()){ int local_offset_hours = now.timezone_offset()/3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while(hour<0) hour+=24; while(hour>=24) hour-=24;} char b12[8]; snprintf(b12,sizeof(b12),"%02d:00",hour); return std::string(b12);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour12_icon
-          text:text: !lambda |-
+          id: lbl_sum_hour12_icon
+          text: !lambda |-
             std::string condition = id(weather_hourly_condition)[11]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour12_temp
-          text:text: !lambda |-
+          id: lbl_sum_hour12_temp
+          text: !lambda |-
             if (isnan(id(weather_hourly_temp)[11])) return std::string("--°"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[11]); return std::string(buf);
 
       - lvgl.label.update:
-          id:id: lbl_sum_hour12_precip
-          text:text: !lambda |-
+          id: lbl_sum_hour12_precip
+          text: !lambda |-
             if (isnan(id(weather_hourly_precip_prob)[11])) return std::string("--%"); char buf[12]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[11]); return std::string(buf);
 
               # Detailed hourly cards 10..24 (indices 9..23)
