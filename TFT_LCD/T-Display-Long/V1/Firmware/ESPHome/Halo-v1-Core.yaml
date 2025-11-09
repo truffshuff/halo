@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1748
+# Version: 25.11.09.1755
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1748"
+  version: "25.11.09.1755"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -7154,7 +7154,7 @@ lvgl:
             pad_all: 10
             widgets:
               - meter:
-          id: weather_temp_gauge
+                  id: weather_temp_gauge
                   height: 100%
                   width: 100%
                   border_width: 0
@@ -7285,7 +7285,7 @@ lvgl:
             border_width: 0
             widgets:
               - meter:
-          id: wind_compass_meter
+                  id: wind_compass_meter
                   align: LEFT_MID
                   width: 56
                   height: 56
@@ -7306,8 +7306,8 @@ lvgl:
                             value: 0
                             color: 0x00DFFF
               - label:
-          id: lbl_wind_speed
-          text: !lambda |-
+                  id: lbl_wind_speed
+                  text: !lambda |-
                     if (std::isnan(id(wind_speed_sensor).state)) return std::string("-- mph");
                     char buf[24];
                     snprintf(buf, sizeof(buf), "%.0f mph", id(wind_speed_sensor).state);
@@ -7318,8 +7318,8 @@ lvgl:
                   x: -6
                   y: -6
               - label:
-          id: lbl_wind_direction_text
-          text: !lambda |-
+                  id: lbl_wind_direction_text
+                  text: !lambda |-
                     float b = id(wind_direction_sensor).state;
                     if (std::isnan(b)) return std::string("--");
                     const char* dir;
@@ -8355,8 +8355,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour1_header
-          text: "Hour +1"
+                  id: lbl_hourly_hour1_header
+                  text: "Hour +1"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -8559,8 +8559,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour2_header
-          text: "Hour +2"
+                  id: lbl_hourly_hour2_header
+                  text: "Hour +2"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -8763,8 +8763,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour3_header
-          text: "Hour +3"
+                  id: lbl_hourly_hour3_header
+                  text: "Hour +3"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -9653,8 +9653,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour4_header
-          text: "Hour +4"
+                  id: lbl_hourly_hour4_header
+                  text: "Hour +4"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -9857,8 +9857,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour5_header
-          text: "Hour +5"
+                  id: lbl_hourly_hour5_header
+                  text: "Hour +5"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -10061,8 +10061,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour6_header
-          text: "Hour +6"
+                  id: lbl_hourly_hour6_header
+                  text: "Hour +6"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -10335,8 +10335,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour7_header
-          text: "Hour +7"
+                  id: lbl_hourly_hour7_header
+                  text: "Hour +7"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -10439,8 +10439,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour8_header
-          text: "Hour +8"
+                  id: lbl_hourly_hour8_header
+                  text: "Hour +8"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -10543,8 +10543,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour9_header
-          text: "Hour +9"
+                  id: lbl_hourly_hour9_header
+                  text: "Hour +9"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -10648,8 +10648,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour10_header
-          text: "Hour +10"
+                  id: lbl_hourly_hour10_header
+                  text: "Hour +10"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -10753,8 +10753,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour11_header
-          text: "Hour +11"
+                  id: lbl_hourly_hour11_header
+                  text: "Hour +11"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -10858,8 +10858,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour12_header
-          text: "Hour +12"
+                  id: lbl_hourly_hour12_header
+                  text: "Hour +12"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11028,8 +11028,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour13_header
-          text: "Hour +13"
+                  id: lbl_hourly_hour13_header
+                  text: "Hour +13"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11133,8 +11133,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour14_header
-          text: "Hour +14"
+                  id: lbl_hourly_hour14_header
+                  text: "Hour +14"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11238,8 +11238,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour15_header
-          text: "Hour +15"
+                  id: lbl_hourly_hour15_header
+                  text: "Hour +15"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11343,8 +11343,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour16_header
-          text: "Hour +16"
+                  id: lbl_hourly_hour16_header
+                  text: "Hour +16"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11448,8 +11448,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour17_header
-          text: "Hour +17"
+                  id: lbl_hourly_hour17_header
+                  text: "Hour +17"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11542,8 +11542,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour20_header
-          text: "Hour +20"
+                  id: lbl_hourly_hour20_header
+                  text: "Hour +20"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11647,8 +11647,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour21_header
-          text: "Hour +21"
+                  id: lbl_hourly_hour21_header
+                  text: "Hour +21"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11752,8 +11752,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour22_header
-          text: "Hour +22"
+                  id: lbl_hourly_hour22_header
+                  text: "Hour +22"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11857,8 +11857,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour23_header
-          text: "Hour +23"
+                  id: lbl_hourly_hour23_header
+                  text: "Hour +23"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -11900,8 +11900,8 @@ lvgl:
               pad_row: 2
             widgets:
               - label:
-          id: lbl_hourly_hour19_header
-          text: "Hour +19"
+                  id: lbl_hourly_hour19_header
+                  text: "Hour +19"
                   text_font: montserrat_14
                   text_color: my_white
               - obj:
@@ -12044,30 +12044,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day2_header
-          text: "Day +2 (--/--)"
+                  id: lbl_forecast_day2_header
+                  text: "Day +2 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day2_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day2_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day2_condition
-          text: "---"
+                  id: lbl_forecast_day2_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day2_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day2_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day2_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day2_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12089,29 +12089,29 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day3_header
-          text: "Day +3 (--/--)"
+                  id: lbl_forecast_day3_header
+                  text: "Day +3 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day3_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day3_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day3_condition
-          text: "---"
+                  id: lbl_forecast_day3_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day3_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day3_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day3_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day3_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12195,30 +12195,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day4_header
-          text: "Day +4 (--/--)"
+                  id: lbl_forecast_day4_header
+                  text: "Day +4 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day4_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day4_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day4_condition
-          text: "---"
+                  id: lbl_forecast_day4_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day4_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day4_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day4_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day4_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12240,30 +12240,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day5_header
-          text: "Day +5 (--/--)"
+                  id: lbl_forecast_day5_header
+                  text: "Day +5 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day5_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day5_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day5_condition
-          text: "---"
+                  id: lbl_forecast_day5_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day5_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day5_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day5_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day5_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12366,30 +12366,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day6_header
-          text: "Day +6 (--/--)"
+                  id: lbl_forecast_day6_header
+                  text: "Day +6 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day6_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day6_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day6_condition
-          text: "---"
+                  id: lbl_forecast_day6_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day6_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day6_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day6_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day6_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12411,30 +12411,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day7_header
-          text: "Day +7 (--/--)"
+                  id: lbl_forecast_day7_header
+                  text: "Day +7 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day7_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day7_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day7_condition
-          text: "---"
+                  id: lbl_forecast_day7_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day7_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day7_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day7_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day7_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12537,30 +12537,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day8_header
-          text: "Day +8 (--/--)"
+                  id: lbl_forecast_day8_header
+                  text: "Day +8 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day8_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day8_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day8_condition
-          text: "---"
+                  id: lbl_forecast_day8_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day8_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day8_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day8_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day8_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12582,30 +12582,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day9_header
-          text: "Day +9 (--/--)"
+                  id: lbl_forecast_day9_header
+                  text: "Day +9 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day9_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day9_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day9_condition
-          text: "---"
+                  id: lbl_forecast_day9_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day9_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day9_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day9_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day9_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
@@ -12708,30 +12708,30 @@ lvgl:
               pad_row: 6
             widgets:
               - label:
-          id: lbl_forecast_day10_header
-          text: "Day +10 (--/--)"
+                  id: lbl_forecast_day10_header
+                  text: "Day +10 (--/--)"
                   text_font: montserrat_18
                   text_color: my_white
               - label:
-          id: lbl_forecast_day10_icon
-          text: "\U000F14E4"
+                  id: lbl_forecast_day10_icon
+                  text: "\U000F14E4"
                   text_font: icons_80
                   text_color: my_white
               - label:
-          id: lbl_forecast_day10_condition
-          text: "---"
+                  id: lbl_forecast_day10_condition
+                  text: "---"
                   text_font: montserrat_18
                   text_color: my_white
                   long_mode: SCROLL_CIRCULAR
               - label:
-          id: lbl_forecast_day10_temps
-          text: "H:--° L:--°"
+                  id: lbl_forecast_day10_temps
+                  text: "H:--° L:--°"
                   text_font: montserrat_18
                   text_color: my_white
                   recolor: true
               - label:
-          id: lbl_forecast_day10_precip_prob
-          text: "Chance: --%"
+                  id: lbl_forecast_day10_precip_prob
+                  text: "Chance: --%"
                   text_font: montserrat_16
                   text_color: my_white
 
