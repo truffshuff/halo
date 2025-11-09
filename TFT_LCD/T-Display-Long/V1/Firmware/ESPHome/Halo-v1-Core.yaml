@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1527
+# Version: 25.11.09.1609
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1527"
+  version: "25.11.09.1609"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -3827,13 +3827,13 @@ script:
 
       - logger.log: "✓ Hourly forecast display updated (page 4)"
 
-        # Update compact 12-hour summary (if summary page is active, these will be visible)
-        - if:
-            condition:
-              lambda: 'return id(current_page_name) == "hourly_summary" || id(current_page_name) == "hourly_forecast";'
-            then:
-              # Loop-like unrolled updates for summary columns 1..12
-              - lvgl.label.update:
+      # Update compact 12-hour summary (if summary page is active, these will be visible)
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "hourly_summary" || id(current_page_name) == "hourly_forecast";'
+          then:
+            # Loop-like unrolled updates for summary columns 1..12
+            - lvgl.label.update:
                   id: lbl_sum_hour1_time
                   text: !lambda |-
                     if (id(weather_hourly_datetime)[0].empty()) return std::string("--:--");
