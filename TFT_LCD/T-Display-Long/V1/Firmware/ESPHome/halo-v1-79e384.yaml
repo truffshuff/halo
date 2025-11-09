@@ -20,6 +20,9 @@ substitutions:
 
   # Security
   ota_password: !secret ota_password
+  
+  # API Configuration
+  api_reboot_timeout: "15min"
 
 esphome:
   name: halo-v1-79e384
