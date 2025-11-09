@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.08.0713
-# Last Updated: November 08, 2025
+# Version: 25.11.09.1428
+# Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.08.0713"
+  version: "25.11.09.1428"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -2824,6 +2824,35 @@ script:
             snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
             return std::string(buf);
 
+      - lvgl.label.update:
+          id: lbl_wind_speed
+          text: !lambda |-
+            if (std::isnan(id(wind_speed_sensor))) return std::string("-- mph");
+            char buf_ws[24];
+            snprintf(buf_ws, sizeof(buf_ws), "%.0f mph", id(wind_speed_sensor));
+            return std::string(buf_ws);
+      - lvgl.label.update:
+          id: lbl_wind_direction_text
+          text: !lambda |-
+            float b = id(wind_direction_sensor);
+            if (std::isnan(b)) return std::string("--");
+            const char* dir;
+            if (b >= 337.5 || b < 22.5) dir = "N";
+            else if (b >= 22.5 && b < 67.5) dir = "NE";
+            else if (b >= 67.5 && b < 112.5) dir = "E";
+            else if (b >= 112.5 && b < 157.5) dir = "SE";
+            else if (b >= 157.5 && b < 202.5) dir = "S";
+            else if (b >= 202.5 && b < 247.5) dir = "SW";
+            else if (b >= 247.5 && b < 292.5) dir = "W";
+            else dir = "NW";
+            return std::string(dir);
+      - lvgl.indicator.update:
+          id: wind_compass_needle
+          value: !lambda |-
+            float b = id(wind_direction_sensor);
+            if (std::isnan(b)) return 0;
+            return (int)b;
+
       # Calculate and update weather gauge percentage locally
       # Formula: ((apparent - low) / (high - low)) * 100
       # This replaces the need for a Home Assistant template sensor
@@ -5472,6 +5501,15 @@ sensor:
             id(weather_current_apparent_temp) = x;
             ESP_LOGD("weather", "Apparent temp updated: %.1f°F", x);
 
+  - id: wind_speed_sensor
+      entity_id: ${wind_speed_sensor}
+      internal: true
+
+  - id: wind_direction_sensor
+      entity_id: ${wind_direction_sensor}
+      internal: true
+
+
   - platform: template
     name: "Time Update Duration"
     id: time_update_duration_sensor
@@ -6798,6 +6836,69 @@ lvgl:
             align: BOTTOM_MID
             x: 0
             y: -55
+
+        - obj:
+            align: BOTTOM_MID
+            x: 0
+            y: -30
+            width: 160
+            height: 48
+            bg_opa: 0
+            border_width: 0
+            widgets:
+              - meter:
+                  id: wind_compass_meter
+                  align: LEFT_MID
+                  width: 48
+                  height: 48
+                  border_width: 0
+                  bg_opa: TRANSP
+                  scales:
+                    - range_from: 0
+                      range_to: 360
+                      angle_range: 360
+                      rotation: 270
+                      ticks:
+                        count: 0
+                      indicators:
+                        - line:
+                            id: wind_compass_needle
+                            width: 3
+                            r_mod: 2
+                            value: 0
+                            color: 0x00DFFF
+              - label:
+                  id: lbl_wind_speed
+                  text: !lambda |-
+                    if (std::isnan(id(wind_speed_sensor))) return std::string("-- mph");
+                    char buf[24];
+                    snprintf(buf, sizeof(buf), "%.0f mph", id(wind_speed_sensor));
+                    return std::string(buf);
+                  text_font: montserrat_16
+                  text_color: my_white
+                  align: RIGHT_MID
+                  x: -6
+                  y: -6
+              - label:
+                  id: lbl_wind_direction_text
+                  text: !lambda |-
+                    float b = id(wind_direction_sensor);
+                    if (std::isnan(b)) return std::string("--");
+                    const char* dir;
+                    if (b >= 337.5 || b < 22.5) dir = "N";
+                    else if (b >= 22.5 && b < 67.5) dir = "NE";
+                    else if (b >= 67.5 && b < 112.5) dir = "E";
+                    else if (b >= 112.5 && b < 157.5) dir = "SE";
+                    else if (b >= 157.5 && b < 202.5) dir = "S";
+                    else if (b >= 202.5 && b < 247.5) dir = "SW";
+                    else if (b >= 247.5 && b < 292.5) dir = "W";
+                    else dir = "NW";
+                    return std::string(dir);
+                  text_font: montserrat_14
+                  text_color: my_gray
+                  align: RIGHT_MID
+                  x: -6
+                  y: 12
 
         # Current temperature at bottom
         - label:
