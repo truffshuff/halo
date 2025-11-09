@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1430
+# Version: 25.11.09.1434
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1430"
+  version: "25.11.09.1434"
   device_description: ${name} - v${version}.
   
   # # Weather refresh intervals (can be overridden in device-specific file)
@@ -5501,13 +5501,15 @@ sensor:
             id(weather_current_apparent_temp) = x;
             ESP_LOGD("weather", "Apparent temp updated: %.1f°F", x);
 
-  - id: wind_speed_sensor
-      entity_id: ${wind_speed_sensor}
-      internal: true
+  - platform: homeassistant
+    id: wind_speed_sensor
+    entity_id: ${wind_speed_sensor}
+    internal: true
 
-  - id: wind_direction_sensor
-      entity_id: ${wind_direction_sensor}
-      internal: true
+  - platform: homeassistant
+    id: wind_direction_sensor
+    entity_id: ${wind_direction_sensor}
+    internal: true
 
 
   - platform: template
