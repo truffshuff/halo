@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1928
+# Version: 25.11.09.1939
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1928"
+  version: "25.11.09.1939"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -11650,6 +11650,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour7_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour7_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour7_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour7_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour7_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 8 Card
         - obj:
@@ -11754,6 +11854,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour8_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour8_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour8_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour8_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour8_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 9 Card
         - obj:
@@ -11858,6 +12058,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour9_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour9_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour9_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour9_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour9_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Center nav to page 4
         - obj:
@@ -12028,6 +12328,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour10_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour10_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour10_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour10_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour10_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 11 Card (index 10)
         - obj:
@@ -12133,6 +12533,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour11_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour11_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour11_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour11_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour11_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 12 Card (index 11)
         - obj:
@@ -12238,6 +12738,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour12_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour12_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour12_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour12_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour12_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Center navigation button - click to go to page 5
         - obj:
@@ -12407,6 +13007,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour13_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour13_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour13_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour13_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour13_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 14 Card (index 13)
         - obj:
@@ -12512,6 +13212,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour14_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour14_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour14_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour14_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour14_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 15 Card (index 14)
         - obj:
@@ -12617,6 +13417,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour15_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour15_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour15_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour15_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour15_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Center navigation button - click to go to page 6
         - obj:
@@ -12788,6 +13688,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour16_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour16_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour16_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour16_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour16_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 17 Card (index 16)
         - obj:
@@ -12832,6 +13832,166 @@ lvgl:
                         id: lbl_hourly_hour17_temp
                         text: "--°"
                         text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour17_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
                         text_color: my_white
 
         # Hour 18 Card (index 17)
@@ -12878,7 +14038,371 @@ lvgl:
                         text: "--°"
                         text_font: montserrat_24
                         text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour18_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
         
+        # Hour 19 Card (index 18)
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_MID
+            y: 35
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour19_header
+                  text: "Hour +19"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour19_icon
+                        text: "\U000F14E4"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour19_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour19_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
         # Hour 20 Card (index 19)
         - obj:
             width: 170
@@ -12983,6 +14507,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour20_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour20_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour20_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour20_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour20_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 21 Card (index 20)
         - obj:
@@ -13088,6 +14712,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour21_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour21_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour21_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour21_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour21_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 22 Card (index 21)
         - obj:
@@ -13193,6 +14917,106 @@ lvgl:
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour22_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour22_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour22_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour22_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour22_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Hour 23 Card (index 22)
         - obj:
@@ -13238,49 +15062,6 @@ lvgl:
                         text: "--°"
                         text_font: montserrat_24
                         text_color: my_white
-
-        - obj:
-            width: 170
-            height: SIZE_CONTENT
-            align: TOP_MID
-            y: 35
-            bg_color: 0x101010
-            bg_opa: COVER
-            border_width: 0
-            radius: 8
-            pad_all: 6
-            scrollbar_mode: "OFF"
-            layout:
-              type: flex
-              flex_flow: column
-              pad_row: 2
-            widgets:
-              - label:
-                  id: lbl_hourly_hour19_header
-                  text: "Hour +19"
-                  text_font: montserrat_14
-                  text_color: my_white
-              - obj:
-                  width: 100%
-                  height: SIZE_CONTENT
-                  bg_opa: 0
-                  border_width: 0
-                  pad_all: 0
-                  layout:
-                    type: flex
-                    flex_flow: row
-                    flex_align_main: SPACE_BETWEEN
-                  widgets:
-                    - label:
-                        id: lbl_hourly_hour19_icon
-                        text: "\U000F14E4"
-                        text_font: icons_40
-                        text_color: my_white
-                    - label:
-                        id: lbl_hourly_hour19_temp
-                        text: "--°"
-                        text_font: montserrat_24
-                        text_color: my_white
               - obj:
                   width: 100%
                   height: SIZE_CONTENT
@@ -13297,7 +15078,7 @@ lvgl:
                         text_font: montserrat_10
                         text_color: my_gray
                     - label:
-                        id: lbl_hourly_hour19_feels
+                        id: lbl_hourly_hour23_feels
                         text: "--°"
                         text_font: montserrat_10
                         text_color: my_white
@@ -13317,7 +15098,7 @@ lvgl:
                         text_font: montserrat_10
                         text_color: my_gray
                     - label:
-                        id: lbl_hourly_hour19_humid
+                        id: lbl_hourly_hour23_humid
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_white
@@ -13337,10 +15118,315 @@ lvgl:
                         text_font: montserrat_10
                         text_color: my_gray
                     - label:
-                        id: lbl_hourly_hour19_precip
+                        id: lbl_hourly_hour23_precip
                         text: "--%"
                         text_font: montserrat_10
                         text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour23_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour23_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour23_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour23_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour23_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+
+        # Hour 24 Card (index 23)
+        - obj:
+            width: 170
+            height: SIZE_CONTENT
+            align: TOP_LEFT
+            x: 190
+            y: 35
+            bg_color: 0x101010
+            bg_opa: COVER
+            border_width: 0
+            radius: 8
+            pad_all: 6
+            scrollbar_mode: "OFF"
+            layout:
+              type: flex
+              flex_flow: column
+              pad_row: 2
+            widgets:
+              - label:
+                  id: lbl_hourly_hour24_header
+                  text: "Hour +24"
+                  text_font: montserrat_14
+                  text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        id: lbl_hourly_hour24_icon
+                        text: "\U000F14E4"
+                        text_font: icons_40
+                        text_color: my_white
+                    - label:
+                        id: lbl_hourly_hour24_temp
+                        text: "--°"
+                        text_font: montserrat_24
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Feels:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_feels
+                        text: "--°"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Humid:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_humid
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Precip:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_precip
+                        text: "--%"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Amt:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_precip_amt
+                        text: "-- in"
+                        text_font: montserrat_10
+                        text_color: my_teal
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Pressure:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_pressure
+                        text: "-- mb"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "UV:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_uv
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Wind:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_wind
+                        text: "-- mph"
+                        text_font: montserrat_10
+                        text_color: my_white
+              - obj:
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_opa: 0
+                  border_width: 0
+                  pad_all: 0
+                  layout:
+                    type: flex
+                    flex_flow: row
+                    flex_align_main: SPACE_BETWEEN
+                  widgets:
+                    - label:
+                        text: "Dir:"
+                        text_font: montserrat_10
+                        text_color: my_gray
+                    - label:
+                        id: lbl_hourly_hour24_wind_dir
+                        text: "--"
+                        text_font: montserrat_10
+                        text_color: my_white
 
         # Center navigation button - click to go back to page 1
         - obj:
