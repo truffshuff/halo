@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.2036
+# Version: 25.11.09.2148
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.2036"
+  version: "25.11.09.2148"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -1426,51 +1426,9 @@ interval:
                 }
             - script.execute: update_colon_widget
 
-  # Targeted wind area refresh: run at 5s to reduce CPU load during page transitions
-  # Only runs when weather page is actively displayed
-  - interval: 5s
-    then:
-      - if:
-          condition:
-            lambda: |-
-              // Only update wind when on weather page AND device is not under memory pressure
-              if (id(current_page_name) != "weather") return false;
-              if (!id(boot_complete)) return false;
-              return true;
-          then:
-            # Update wind speed label
-            - lvgl.label.update:
-                id: lbl_wind_speed
-                text: !lambda |-
-                  if (std::isnan(id(wind_speed_sensor).state)) return std::string("-- mph");
-                  char buf_ws[24];
-                  snprintf(buf_ws, sizeof(buf_ws), "%.0f mph", id(wind_speed_sensor).state);
-                  return std::string(buf_ws);
-
-            # Update wind direction text label
-            - lvgl.label.update:
-                id: lbl_wind_direction_text
-                text: !lambda |-
-                  float b = id(wind_direction_sensor).state;
-                  if (std::isnan(b)) return std::string("--");
-                  const char* dir;
-                  if (b >= 337.5 || b < 22.5) dir = "N";
-                  else if (b >= 22.5 && b < 67.5) dir = "NE";
-                  else if (b >= 67.5 && b < 112.5) dir = "E";
-                  else if (b >= 112.5 && b < 157.5) dir = "SE";
-                  else if (b >= 157.5 && b < 202.5) dir = "S";
-                  else if (b >= 202.5 && b < 247.5) dir = "SW";
-                  else if (b >= 247.5 && b < 292.5) dir = "W";
-                  else dir = "NW";
-                  return std::string(dir);
-
-            # Update compass/indicator needle
-            - lvgl.indicator.update:
-                id: wind_compass_needle
-                value: !lambda |-
-                  float b = id(wind_direction_sensor).state;
-                  if (std::isnan(b)) return 0;
-                  return (int)b;
+  # NOTE: Wind sensor updates removed - now handled by on_value callbacks in sensor definitions
+  # Wind data from Home Assistant updates automatically when values change (passive, not polled)
+  # Display updates only occur when on weather page - see wind_speed_sensor and wind_direction_sensor
 
   # Auto-refresh DAILY forecast periodically (independent of which page is displayed)
   # Checks every hour if data is stale (>60 min) and refreshes if needed
@@ -2296,28 +2254,47 @@ script:
                   // Feed watchdog before JSON parsing
                   App.feed_wdt();
                   
-                  // Parse JSON response with smaller buffer
-                  JsonDocument doc;
+                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
+                  ESP_LOGI("memory", "Before JSON parse - Internal RAM free: %d, PSRAM free: %d", 
+                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  
+                  // CRITICAL: Allocate JsonDocument explicitly from PSRAM to avoid internal RAM pressure
+                  // Using heap_caps_malloc with MALLOC_CAP_SPIRAM forces allocation to PSRAM
+                  // This keeps the 60KB+ JSON buffer out of limited internal RAM
+                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                  if (json_buffer == nullptr) {
+                    ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
+                    return;
+                  }
+                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
+                  
                   DeserializationError error = deserializeJson(
-                      doc, body_str, DeserializationOption::NestingLimit(10));
+                      *doc, body_str, DeserializationOption::NestingLimit(10));
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
+                    doc->~JsonDocument();  // Call destructor
+                    heap_caps_free(json_buffer);  // Free PSRAM
                     return;
                   }
 
                   // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
                   const char *entity_key = "${weather_entity_id}";
                   
-                  if (!doc["service_response"].is<JsonObject>()) {
+                  if (!(*doc)["service_response"].is<JsonObject>()) {
                     ESP_LOGE("weather", "No 'service_response' key in response");
+                    doc->~JsonDocument();
+                    heap_caps_free(json_buffer);
                     return;
                   }
 
-                  JsonObject service_response = doc["service_response"];
+                  JsonObject service_response = (*doc)["service_response"];
                   
                   if (!service_response[entity_key].is<JsonObject>()) {
                     ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                    doc->~JsonDocument();
+                    heap_caps_free(json_buffer);
                     return;
                   }
 
@@ -2325,6 +2302,8 @@ script:
                   
                   if (!entity_data["forecast"].is<JsonArray>()) {
                     ESP_LOGW("weather", "No 'forecast' key in daily response");
+                    doc->~JsonDocument();
+                    heap_caps_free(json_buffer);
                     return;
                   }
 
@@ -2372,7 +2351,14 @@ script:
                     }
                   }
                   ESP_LOGI("weather", "✓ Daily forecast stored successfully");
-                  ESP_LOGI("weather", "Free heap after daily parse: %d bytes", esp_get_free_heap_size());
+                  
+                  // Clean up PSRAM-allocated JSON document
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM buffer
+                  
+                  ESP_LOGI("weather", "Free heap after parse - Internal: %d, PSRAM: %d", 
+                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
                   
                   // Update daily forecast timestamp
                   id(weather_daily_last_update) = millis();
@@ -2443,34 +2429,51 @@ script:
                   }
 
                   ESP_LOGI("weather", "✓ Hourly forecast HTTP response received (%d bytes)", body_str.length());
-                  ESP_LOGI("weather", "Free heap before JSON parse: %d bytes", esp_get_free_heap_size());
                   
                   // Feed watchdog before JSON parsing
                   App.feed_wdt();
                   
-                  // Parse JSON response with reduced buffer size to prevent OOM
-                  // Using JsonDocument which dynamically allocates memory as needed
-                  JsonDocument doc;
+                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
+                  ESP_LOGI("memory", "Before hourly JSON parse - Internal RAM free: %d, PSRAM free: %d", 
+                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  
+                  // CRITICAL FIX: Allocate JsonDocument explicitly from PSRAM to prevent stack overflow
+                  // The 57KB JSON payload would overflow the stack if allocated there
+                  // Using heap_caps_malloc forces allocation to 8MB PSRAM instead of limited internal RAM
+                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                  if (json_buffer == nullptr) {
+                    ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
+                    return;
+                  }
+                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
+                  
                   DeserializationError error = deserializeJson(
-                      doc, body_str, DeserializationOption::NestingLimit(10));
+                      *doc, body_str, DeserializationOption::NestingLimit(10));
                   
                   if (error) {
                     ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
+                    doc->~JsonDocument();  // Call destructor
+                    heap_caps_free(json_buffer);  // Free PSRAM
                     return;
                   }
 
                   // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
                   const char *entity_key = "${weather_entity_id}";
                   
-                  if (!doc["service_response"].is<JsonObject>()) {
+                  if (!(*doc)["service_response"].is<JsonObject>()) {
                     ESP_LOGE("weather", "No 'service_response' key in response");
+                    doc->~JsonDocument();
+                    heap_caps_free(json_buffer);
                     return;
                   }
 
-                  JsonObject service_response = doc["service_response"];
+                  JsonObject service_response = (*doc)["service_response"];
                   
                   if (!service_response[entity_key].is<JsonObject>()) {
                     ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                    doc->~JsonDocument();
+                    heap_caps_free(json_buffer);
                     return;
                   }
 
@@ -2478,6 +2481,8 @@ script:
                   
                   if (!entity_data["forecast"].is<JsonArray>()) {
                     ESP_LOGW("weather", "No 'forecast' key in hourly response");
+                    doc->~JsonDocument();
+                    heap_caps_free(json_buffer);
                     return;
                   }
 
@@ -2542,7 +2547,15 @@ script:
                     }
                   }
                   ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
-                  ESP_LOGI("weather", "Free heap after parse: %d bytes", esp_get_free_heap_size());
+
+                  // Clean up PSRAM-allocated JSON document to free memory
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM buffer
+                  
+                  ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d", 
+                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  ESP_LOGI("weather", "✓ JSON document cleaned up");
 
                   // Update hourly forecast timestamp
                   id(weather_hourly_last_update) = millis();
@@ -7160,8 +7173,15 @@ sensor:
     on_value:
       then:
         - lambda: |-
+            // Always store the value (needed for calculations)
             id(weather_current_temp) = x;
             ESP_LOGD("weather", "Current temp updated: %.1f°F", x);
+            
+            // Only trigger display update if on weather page (reduces LVGL overhead)
+            if (id(current_page_name) == "weather") {
+              // Trigger weather display update script
+              id(update_weather_display).execute();
+            }
 
   # Import apparent temperature from Home Assistant weather integration
   - platform: homeassistant
@@ -7171,18 +7191,43 @@ sensor:
     on_value:
       then:
         - lambda: |-
+            // Always store the value (needed for gauge calculations)
             id(weather_current_apparent_temp) = x;
             ESP_LOGD("weather", "Apparent temp updated: %.1f°F", x);
+            
+            // Only trigger display update if on weather page (reduces LVGL overhead)
+            if (id(current_page_name) == "weather") {
+              // Trigger weather display update script
+              id(update_weather_display).execute();
+            }
 
   - platform: homeassistant
     id: wind_speed_sensor
     entity_id: ${wind_speed_sensor}
     internal: true
+    on_value:
+      then:
+        # Wind data updates frequently - only trigger full weather page update if viewing it
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "weather";'
+            then:
+              # Call the complete weather display update (includes all wind labels + gauge)
+              - script.execute: update_weather_display
 
   - platform: homeassistant
     id: wind_direction_sensor
     entity_id: ${wind_direction_sensor}
     internal: true
+    on_value:
+      then:
+        # Wind direction updates - only trigger full weather page update if viewing it
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "weather";'
+            then:
+              # Call the complete weather display update (includes wind compass + labels)
+              - script.execute: update_weather_display
 
 
   - platform: template
