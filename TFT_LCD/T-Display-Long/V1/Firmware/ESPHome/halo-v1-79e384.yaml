@@ -1,4 +1,5 @@
 substitutions:
+  version: "25.11.10.0737"  # Must match Core version
 
   # Home Assistant connection for HTTP API calls
   # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
