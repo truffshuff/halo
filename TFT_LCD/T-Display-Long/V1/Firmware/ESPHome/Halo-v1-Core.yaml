@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.1947
+# Version: 25.11.09.2006
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.1947"
+  version: "25.11.09.2006"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -8137,10 +8137,9 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 75%  # Maximum buffer size for best stability and performance
-                    # With 8MB PSRAM available, we can afford large buffers
-                    # Reduces display glitches, tearing, and black screen issues
-                    # ESP32-S3 PSRAM is DMAable for optimal DMA transfers
+  buffer_size: 50%  # Reduced from 75% to prevent memory exhaustion on complex pages
+                    # Fixes reboot issues when navigating to hourly/weather forecast pages
+                    # Trade-off: slightly more tearing, but stable operation
   # Use DMAable PSRAM for frame buffers (ESP32-S3 feature)
   # This combines DMA capability with external PSRAM for optimal performance
   byte_order: big_endian
@@ -9536,7 +9535,9 @@ lvgl:
       on_load:
       - script.execute: page_transition_cleanup
       - lambda: 'id(current_page_name) = "hourly_summary";'
-      - delay: 10ms
+      - delay: 100ms  # Increased delay to allow memory to stabilize
+      - lambda: |-
+          ESP_LOGI("memory", "Before hourly summary page load - Free heap: %d bytes", esp_get_free_heap_size());
       - if:
           condition:
             lambda: |-
@@ -10149,7 +10150,10 @@ lvgl:
       on_load:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_name) = "hourly_forecast";'
-        - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
+        - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
+        # Force garbage collection to free up memory before rendering
+        - lambda: |-
+            ESP_LOGI("memory", "Before hourly page load - Free heap: %d bytes", esp_get_free_heap_size());
         # Check if we have data and if it needs refresh
         - if:
             condition:
@@ -10171,6 +10175,7 @@ lvgl:
               - script.execute: fetch_hourly_forecast
             else:
               # Data is fresh, update display with existing data
+              - delay: 50ms  # Additional delay before rendering
               - script.execute: update_hourly_forecast_display
       widgets:
         # Page Header
@@ -15472,7 +15477,10 @@ lvgl:
       on_load:
         - script.execute: page_transition_cleanup
         - lambda: 'id(current_page_name) = "daily_forecast";'
-        - delay: 50ms  # Allow LVGL widgets to fully initialize before rendering
+        - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
+        # Force garbage collection to free up memory before rendering
+        - lambda: |-
+            ESP_LOGI("memory", "Before daily forecast page load - Free heap: %d bytes", esp_get_free_heap_size());
         # Check if we have data and if it needs refresh
         - if:
             condition:
@@ -15494,6 +15502,7 @@ lvgl:
               - script.execute: fetch_daily_forecast
             else:
               # Data is fresh, update display with existing data
+              - delay: 50ms  # Additional delay before rendering
               - script.execute: update_daily_forecast_display
       widgets:
         # Page Header
