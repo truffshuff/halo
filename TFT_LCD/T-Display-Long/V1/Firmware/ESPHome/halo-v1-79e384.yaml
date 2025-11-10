@@ -48,6 +48,9 @@ esphome:
     board_build.psram_type: opi
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
+    build_flags:
+      - -DCONFIG_ARDUINO_LOOP_STACK_SIZE=16384
+      - -DCONFIG_ASYNC_TCP_STACK_SIZE=8192
 
   min_version: 2025.10.3
 
