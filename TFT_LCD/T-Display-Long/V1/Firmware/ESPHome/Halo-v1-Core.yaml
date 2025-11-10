@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.10.0759
+# Version: 25.11.10.0807
 # Last Updated: November 10, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.10.0759"
+  version: "25.11.10.0807"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -799,7 +799,7 @@ esp32:
 
 external_components:
   - source: github://truffshuff/esphome-components
-    components: [axs15231, sy6970, nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv]
+    components: [axs15231, sy6970, nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv, weather_helpers]
     refresh: always
   
   # # NimBLE compatibility and proxy components
@@ -16699,6 +16699,9 @@ esphome:
   # See weather_helpers.h in repository for the helper code.
   # ============================================================================
   
+  includes:
+    # - weather_helpers.h  # Helper functions for weather data processing
+
   libraries:
     # No additional libraries needed - using standard C++ and ESP-IDF
   
