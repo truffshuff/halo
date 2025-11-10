@@ -90,4 +90,5 @@ packages:
     ref: Test
     files:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/weather_helpers.h
     refresh: Always
