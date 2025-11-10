@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.10.0834
+# Version: 25.11.10.0840
 # Last Updated: November 10, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.10.0834"
+  version: "25.11.10.0840"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -803,7 +803,8 @@ external_components:
     refresh: always
 
 includes:
-    - weather_helpers/weather_helpers.h  # Helper functions for weather data processing
+  - weather_helpers/weather_helpers.h  # Helper functions for weather data processing
+  - weather_helpers.h  # Fallback include in case external_components unpacks header at root
   
   # # NimBLE compatibility and proxy components
   # - source:
