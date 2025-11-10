@@ -29,9 +29,6 @@ esphome:
   friendly_name: Halo Air Quality Sensor Dev
   name_add_mac_suffix: false
 
-  includes:
-    - github://truffshuff/halo@Test/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/weather_helpers.h
-
   # # ⚠️ ONE-TIME: Clear Improv WiFi credentials on next boot
   # # REMOVE or comment out after one boot!
   # on_boot:
@@ -93,4 +90,5 @@ packages:
     ref: Test
     files:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/weather_helpers.h
     refresh: Always
