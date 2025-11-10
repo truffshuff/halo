@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.2006
+# Version: 25.11.09.2022
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.2006"
+  version: "25.11.09.2022"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -1405,15 +1405,33 @@ interval:
                 args: ['id(current_page_name).c_str()']
                 level: DEBUG
 
-  # Colon blink interval - runs every second when on vertical clock page
+  # Colon blink and wind updates - combined interval
   - interval: 1s
     then:
-  # Targeted wind area refresh: run at 3s to match wind sensor update rate
-  - interval: 3s
+      # Colon blink - runs every second when on vertical clock page
+      - if:
+          condition:
+            lambda: 'return id(boot_complete) && id(current_page_name) == "vertical_clock";'
+          then:
+            - lambda: |-
+                if (id(colon_blink_enabled).state) {
+                  id(colon_blink_state) = !id(colon_blink_state);
+                } else if (!id(colon_blink_state)) {
+                  id(colon_blink_state) = true;
+                }
+            - script.execute: update_colon_widget
+
+  # Targeted wind area refresh: run at 5s to reduce CPU load during page transitions
+  # Only runs when weather page is actively displayed
+  - interval: 5s
     then:
       - if:
           condition:
-            lambda: 'return id(current_page_name) == "weather";'
+            lambda: |-
+              // Only update wind when on weather page AND device is not under memory pressure
+              if (id(current_page_name) != "weather") return false;
+              if (!id(boot_complete)) return false;
+              return true;
           then:
             # Update wind speed label
             - lvgl.label.update:
@@ -1448,17 +1466,6 @@ interval:
                   float b = id(wind_direction_sensor).state;
                   if (std::isnan(b)) return 0;
                   return (int)b;
-      - if:
-          condition:
-            lambda: 'return id(boot_complete) && id(current_page_name) == "vertical_clock";'
-          then:
-            - lambda: |-
-                if (id(colon_blink_enabled).state) {
-                  id(colon_blink_state) = !id(colon_blink_state);
-                } else if (!id(colon_blink_state)) {
-                  id(colon_blink_state) = true;
-                }
-            - script.execute: update_colon_widget
 
   # Auto-refresh DAILY forecast periodically (independent of which page is displayed)
   # Checks every hour if data is stale (>60 min) and refreshes if needed
