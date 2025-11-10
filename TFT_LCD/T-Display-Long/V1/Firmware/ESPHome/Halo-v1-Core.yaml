@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.10.0727
+# Version: 25.11.10.0732
 # Last Updated: November 10, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.10.0727"
+  version: "25.11.10.0732"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -16697,9 +16697,10 @@ esphome:
   # These lambdas are compiled once and called multiple times, reducing
   # flash usage and improving maintainability. They eliminate thousands of
   # lines of duplicate code throughout the weather display scripts.
+  # 
+  # NOTE: The weather_helpers.h file should be included in your device-specific
+  # YAML file (e.g., Halo-v1.yaml) in the esphome: section, not here.
   # ============================================================================
-  includes:
-    - weather_helpers.h
   
   libraries:
     # No additional libraries needed - using standard C++ and ESP-IDF
