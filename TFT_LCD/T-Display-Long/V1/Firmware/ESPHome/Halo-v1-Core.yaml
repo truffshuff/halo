@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.10.1537
+# Version: 25.11.10.1609
 # Last Updated: November 10, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.10.1537"
+  version: "25.11.10.1609"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -772,8 +772,9 @@ esp32:
 
       # Stack size configuration - prevent stack overflow in LVGL updates
       # Default loop task stack is 8192 bytes, increase to handle deep call chains
-      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "16384"  # Main task stack (doubled from default 8192)
-      CONFIG_ARDUINO_LOOP_STACK_SIZE: "16384"   # Arduino loop task stack (doubled from 8192)
+      # CRITICAL: 32KB required for hourly forecast updates (312 LVGL labels across 24 hours)
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "32768"  # Main task stack (4x from default 8192)
+      CONFIG_ARDUINO_LOOP_STACK_SIZE: "32768"   # Arduino loop task stack (4x from 8192)
 
       # TCP/IP Configuration for better API throughput
       # Increase buffers to handle BLE advertisement bursts during concurrent operations
@@ -2934,8 +2935,9 @@ script:
           id: lbl_hourly_hour1_wind_dir
           text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[0]);'
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Update Hour 2
       - lvgl.label.update:
@@ -3079,8 +3081,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Update Hour 3
       - lvgl.label.update:
@@ -3224,8 +3227,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Update Hour 4
       - lvgl.label.update:
@@ -3369,8 +3373,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Update Hour 5
       - lvgl.label.update:
@@ -3665,8 +3670,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Update Hour 7
       - lvgl.label.update:
@@ -3810,8 +3816,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Update Hour 8
       - lvgl.label.update:
@@ -3955,8 +3962,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Update Hour 9
       - lvgl.label.update:
@@ -4174,6 +4182,10 @@ script:
             else dir = "NW";
             return std::string(dir);
 
+      # Stack unwind: delay + watchdog feed to prevent overflow
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+
       # Hour 11 (index 10)
       - lvgl.label.update:
           id: lbl_hourly_hour11_header
@@ -4313,6 +4325,10 @@ script:
             else dir = "NW";
             return std::string(dir);
 
+      # Stack unwind: delay + watchdog feed to prevent overflow
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+
       # Hour 13 (index 12)
       - lvgl.label.update:
           id: lbl_hourly_hour13_header
@@ -4382,8 +4398,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Hour 14 (index 13)
       - lvgl.label.update:
@@ -4454,8 +4471,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Hour 15 (index 14)
       - lvgl.label.update:
@@ -4526,8 +4544,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Hour 16 (index 15)
       - lvgl.label.update:
@@ -4598,8 +4617,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Hour 17 (index 16)
       - lvgl.label.update:
@@ -4747,8 +4767,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Hour 19 (index 18)
       - lvgl.label.update:
@@ -4819,8 +4840,9 @@ script:
             else dir = "NW";
             return std::string(dir);
 
-      # Small delay to prevent system overload
+      # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       # Hour 20..24 (indices 19..23) updates
       - lvgl.label.update:
@@ -4889,6 +4911,10 @@ script:
             else dir = "NW";
             return std::string(dir);
 
+      # Stack unwind: delay + watchdog feed to prevent overflow
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+
       - lvgl.label.update:
           id: lbl_hourly_hour21_header
           text: !lambda |-
@@ -4955,6 +4981,10 @@ script:
             else dir = "NW";
             return std::string(dir);
 
+      # Stack unwind: delay + watchdog feed to prevent overflow
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+
       - lvgl.label.update:
           id: lbl_hourly_hour22_header
           text: !lambda |-
@@ -5020,6 +5050,10 @@ script:
             else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
             else dir = "NW";
             return std::string(dir);
+
+      # Stack unwind: delay + watchdog feed to prevent overflow
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_header
