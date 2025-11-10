@@ -30,6 +30,35 @@ esphome:
   name_add_mac_suffix: false
 
   # # ⚠️ ONE-TIME: Clear Improv WiFi credentials on next boot
+  # # REMOVE or comment out after one boot!
+  # on_boot:
+  #   - priority: 800  # Run very early, before WiFi
+  #     then:
+  #       - lambda: |-
+  #           ESP_LOGW("main", "ONE-TIME: Clearing Improv WiFi credentials from NVS");
+  #           auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
+  #           uint8_t dummy = 0;
+  #           pref.save(&dummy);
+  #           ESP_LOGI("main", "Improv WiFi credentials cleared! YAML WiFi will be used.");
+  #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
+
+  platformio_options:
+    upload_speed: 921600
+    board_build.flash_mode: qio
+    board_build.psram_type: opi
+    board_build.f_flash: 80000000L
+    board_build.f_cpu: 240000000L
+    build_flags:
+      - -DCONFIG_ARDUINO_LOOP_STACK_SIZE=16384
+      - -DCONFIG_ASYNC_TCP_STACK_SIZE=8192
+
+  min_version: 2025.10.3
+
+  project:
+    name: "yashmulgaonkar.Halo-v1"
+    version: "${version}"
+
+dashboard_import:
   package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@test
   import_full_config: true
 
@@ -61,5 +90,4 @@ packages:
     ref: Test
     files:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
-    refresh: Always
     refresh: Always
