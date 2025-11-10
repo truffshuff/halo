@@ -62,6 +62,11 @@ dashboard_import:
   package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@test
   import_full_config: true
 
+external_components:
+  - source: github://truffshuff/esphome-components@main
+    components: [ weather_helpers ]
+    refresh: 10min
+
 ota:
   - platform: esphome
     id: ota_default
