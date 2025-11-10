@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.10.1609
+# Version: 25.11.10.1751
 # Last Updated: November 10, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.10.1609"
+  version: "25.11.10.1751"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -2943,143 +2943,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour2_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[1].empty()) return std::string("Hour +2");
-            std::string dt = id(weather_hourly_datetime)[1];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11, 2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20, 2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +2");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +2");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[1], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[1];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[1]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[1];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[1]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[1])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[1]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[1]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[1])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[1]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[1]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[1])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[1]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[1]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[1])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[1]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[1]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[1])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[1]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[1]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[1])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[1]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[1]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[1])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[1]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[1]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[1])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[1])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[1]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour2_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[1])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[1];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[1]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -3089,143 +3007,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour3_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[2].empty()) return std::string("Hour +3");
-            std::string dt = id(weather_hourly_datetime)[2];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11, 2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20, 2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +3");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +3");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[2], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[2];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[2]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[2];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[2]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[2])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[2]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[2]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[2])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[2]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[2]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[2])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[2]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[2]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[2])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[2]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[2]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[2])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[2]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[2]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[2])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[2]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[2]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[2])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[2]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[2]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[2])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[2])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[2]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour3_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[2])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[2];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[2]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -3235,143 +3071,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour4_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[3].empty()) return std::string("Hour +4");
-            std::string dt = id(weather_hourly_datetime)[3];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11, 2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20, 2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +4");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +4");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[3], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[3];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[3]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[3];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[3]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[3])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[3]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[3]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[3])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[3]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[3]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[3])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[3]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[3]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[3])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[3]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[3]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[3])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[3]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[3]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[3])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[3]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[3]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[3])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[3]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[3]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[3])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[3])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[3]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour4_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[3])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[3];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[3]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -3381,295 +3135,125 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour5_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[4].empty()) return std::string("Hour +5");
-            std::string dt = id(weather_hourly_datetime)[4];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11, 2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20, 2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +5");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +5");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[4], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[4];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[4]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[4];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[4]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[4])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[4]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[4]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[4])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[4]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[4]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[4])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[4]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[4]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[4])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[4]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[4]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[4])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[4]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[4]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[4])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[4]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[4]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[4])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[4]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[4]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[4])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[4])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[4]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour5_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[4])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[4];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[4]);'
 
       # Small delay to prevent system overload
       - delay: 50ms
 
       # ========================================================================
-      # Update Hour 6 - WATCHDOG FEED POINT
-      # ========================================================================
-      # Feed watchdog every 6 hours to prevent timeout during long LVGL updates
-      # ========================================================================
-      - lambda: 'App.feed_wdt();'
-      
+      # Update Hour 6
       - lvgl.label.update:
           id: lbl_hourly_hour6_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[5].empty()) return std::string("Hour +6");
-            std::string dt = id(weather_hourly_datetime)[5];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11, 2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20, 2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +6");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +6");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[5], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[5];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[5]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[5];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[5]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[5])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[5]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[5]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[5])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[5]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[5]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[5])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[5]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[5]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[5])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[5]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[5]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[5])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[5]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[5]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[5])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f mb", id(weather_hourly_pressure)[5]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[5]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[5])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[5]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[5]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[5])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[5])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[5]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour6_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[5])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[5];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
-
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[5]);'
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
@@ -3678,144 +3262,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour7_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[6].empty()) return std::string("Hour +7");
-            std::string dt = id(weather_hourly_datetime)[6];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11,2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20,2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +7");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +7");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[6], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[6];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[6]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[6];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[6]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[6])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[6]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[6]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[6])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[6]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[6]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[6])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[6]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[6]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[6])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[6]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[6]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[6])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[6]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[6]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[6])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[6]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[6]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[6])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[6]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[6]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[6])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[6])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[6]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour7_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[6])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[6];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
-
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[6]);'
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
@@ -3824,289 +3325,124 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour8_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[7].empty()) return std::string("Hour +8");
-            std::string dt = id(weather_hourly_datetime)[7];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11,2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20,2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +8");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +8");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[7], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[7];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[7]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[7];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[7]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[7])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[7]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[7]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[7])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[7]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[7]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[7])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[7]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[7]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[7])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[7]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[7]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[7])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[7]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[7]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[7])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[7]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[7]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[7])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[7]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[7]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[7])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[7])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[7]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour8_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[7])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[7];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
-
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[7]);'
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
 
-      # Update Hour 9
+      # Hour 9 (index 8)
       - lvgl.label.update:
           id: lbl_hourly_hour9_header
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_hourly_datetime)[8].empty()) return std::string("Hour +9");
-            std::string dt = id(weather_hourly_datetime)[8];
-            if (dt.length() >= 13) {
-              std::string hour_str = dt.substr(11,2);
-              int hour = std::stoi(hour_str);
-              int source_offset_hours = 0;
-              
-              // Parse timezone info from datetime string
-              if (dt.length() >= 20) {
-                if (dt[19] == 'Z') {
-                  source_offset_hours = 0;  // UTC
-                } else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) {
-                  source_offset_hours = std::stoi(dt.substr(20,2));
-                  if (dt[19] == '-') source_offset_hours = -source_offset_hours;
-                }
-              }
-              
-              // Convert to local time using ESPHome timezone offset
-              auto now = id(sntp_time).now();
-              if (now.is_valid()) {
-                int local_offset_hours = now.timezone_offset() / 3600;
-                int utc_hour_val = hour - source_offset_hours;
-                hour = utc_hour_val + local_offset_hours;
-                while (hour < 0) hour += 24;
-                while (hour >= 24) hour -= 24;
-              }
-              
-              char buf[16];
-              snprintf(buf, sizeof(buf), "%02d:00", hour);
-              return std::string(buf);
-            }
-            return std::string("Hour +9");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +9");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[8], now.timezone_offset());
+            return format_hour(hour);
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_icon
           text: !lambda |-
-            std::string condition = id(weather_hourly_condition)[8];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[8]);
           text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[8];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[8]));
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_temp
-          text: !lambda |-
-            if (isnan(id(weather_hourly_temp)[8])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_temp)[8]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[8]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_feels
-          text: !lambda |-
-            if (isnan(id(weather_hourly_apparent_temp)[8])) return std::string("--°");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_hourly_apparent_temp)[8]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[8]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_precip
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precip_prob)[8])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_precip_prob)[8]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[8]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_humid
-          text: !lambda |-
-            if (isnan(id(weather_hourly_humidity)[8])) return std::string("--%");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f%%", id(weather_hourly_humidity)[8]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[8]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_precip_amt
-          text: !lambda |-
-            if (isnan(id(weather_hourly_precipitation)[8])) return std::string("--\"");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.2f\"", id(weather_hourly_precipitation)[8]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[8]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_pressure
-          text: !lambda |-
-            if (isnan(id(weather_hourly_pressure)[8])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f", id(weather_hourly_pressure)[8]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[8]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_uv
-          text: !lambda |-
-            if (isnan(id(weather_hourly_uv_index)[8])) return std::string("--");
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f", id(weather_hourly_uv_index)[8]);
-            return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[8]);'
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_wind
           text: !lambda |-
-            if (isnan(id(weather_hourly_wind_speed)[8])) return std::string("--");
+            if (std::isnan(id(weather_hourly_wind_speed)[8])) return std::string("--");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[8]);
             return std::string(buf);
+
       - lvgl.label.update:
           id: lbl_hourly_hour9_wind_dir
-          text: !lambda |-
-            if (isnan(id(weather_hourly_wind_bearing)[8])) return std::string("--");
-            float bearing = id(weather_hourly_wind_bearing)[8];
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[8]);'
 
       # Small delay to prevent system overload
       - delay: 50ms
@@ -4116,71 +3452,65 @@ script:
  
       # Detailed hourly cards 10..24 (indices 9..23)
 
+      # Hour 10 (index 9)
       - lvgl.label.update:
           id: lbl_hourly_hour10_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[9].empty()) return std::string("Hour +10"); std::string dt = id(weather_hourly_datetime)[9]; if (dt.length() < 13) return std::string("Hour +10"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b10[16]; snprintf(b10, sizeof(b10), "%02d:00", hour); return std::string(b10);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[9].empty()) return std::string("Hour +10");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +10");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[9], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[9]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[9]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[9]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[9])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[9]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[9]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[9])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[9]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour10_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[9])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[9]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[9]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[9])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[9]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[9]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour10_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[9]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[9])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[9]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[9]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[9])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[9]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[9]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[9])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[9]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[9]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[9])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[9]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[9])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[9]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[9];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[9]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -4190,140 +3520,126 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour11_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[10].empty()) return std::string("Hour +11"); std::string dt = id(weather_hourly_datetime)[10]; if (dt.length() < 13) return std::string("Hour +11"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b11[16]; snprintf(b11, sizeof(b11), "%02d:00", hour); return std::string(b11);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[10].empty()) return std::string("Hour +11");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +11");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[10], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[10]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[10]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[10]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[10])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[10]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[10]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[10])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[10]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour11_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[10])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[10]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[10]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[10])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[10]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[10]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour11_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[10]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[10])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[10]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[10]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[10])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[10]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[10]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[10])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[10]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[10]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[10])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[10]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[10])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[10]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[10];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[10]);'
 
       # ========================================================================
       # Hour 12 - WATCHDOG FEED POINT
       # ========================================================================
       - lambda: 'App.feed_wdt();'
-      
+
       # Hour 12 (index 11)
       - lvgl.label.update:
           id: lbl_hourly_hour12_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[11].empty()) return std::string("Hour +12"); std::string dt = id(weather_hourly_datetime)[11]; if (dt.length() < 13) return std::string("Hour +12"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b12d[16]; snprintf(b12d, sizeof(b12d), "%02d:00", hour); return std::string(b12d);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[11].empty()) return std::string("Hour +12");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +12");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[11], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[11]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[11]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[11]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[11])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[11]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[11]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[11])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[11]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour12_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[11])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[11]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[11]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[11])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[11]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[11]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour12_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[11]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[11])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[11]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[11]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[11])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[11]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[11]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[11])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[11]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[11]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[11])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[11]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[11])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[11]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[11];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[11]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -4333,70 +3649,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour13_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[12].empty()) return std::string("Hour +13"); std::string dt = id(weather_hourly_datetime)[12]; if (dt.length() < 13) return std::string("Hour +13"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b13[16]; snprintf(b13, sizeof(b13), "%02d:00", hour); return std::string(b13);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[12].empty()) return std::string("Hour +13");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +13");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[12], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_icon
-          text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[12]; if (condition.empty()) return lv_color_hex(0xFFFFFF); if (condition=="clear-night") return lv_color_hex(0x4472C4); if (condition=="cloudy") return lv_color_hex(0x808080); if (condition=="exceptional") return lv_color_hex(0xFF6600); if (condition=="fog") return lv_color_hex(0xCCCCCC); if (condition=="hail") return lv_color_hex(0xB0E0E6); if (condition=="lightning") return lv_color_hex(0xFFFF00); if (condition=="lightning-rainy") return lv_color_hex(0xFFD700); if (condition=="partlycloudy") return lv_color_hex(0xFFA500); if (condition=="pouring") return lv_color_hex(0x00008B); if (condition=="rainy") return lv_color_hex(0x4682B4); if (condition=="snowy") return lv_color_hex(0xADD8E6); if (condition=="snowy-rainy") return lv_color_hex(0x87CEEB); if (condition=="sunny") return lv_color_hex(0xFFFF00); if (condition=="windy") return lv_color_hex(0x87CEEB); if (condition=="windy-variant") return lv_color_hex(0x00CED1); return lv_color_hex(0xFFFFFF);
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[12]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[12]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[12]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[12])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[12]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[12]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[12])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[12]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[12]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[12])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[12]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[12]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[12])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[12]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[12]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[12])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[12]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[12]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[12])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[12]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[12]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[12])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[12]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[12]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[12])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[12]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[12])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[12]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[12];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[12]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -4406,70 +3713,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour14_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[13].empty()) return std::string("Hour +14"); std::string dt = id(weather_hourly_datetime)[13]; if (dt.length() < 13) return std::string("Hour +14"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b14[16]; snprintf(b14, sizeof(b14), "%02d:00", hour); return std::string(b14);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[13].empty()) return std::string("Hour +14");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +14");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[13], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_icon
-          text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[13]; if (condition.empty()) return lv_color_hex(0xFFFFFF); if (condition=="clear-night") return lv_color_hex(0x4472C4); if (condition=="cloudy") return lv_color_hex(0x808080); if (condition=="exceptional") return lv_color_hex(0xFF6600); if (condition=="fog") return lv_color_hex(0xCCCCCC); if (condition=="hail") return lv_color_hex(0xB0E0E6); if (condition=="lightning") return lv_color_hex(0xFFFF00); if (condition=="lightning-rainy") return lv_color_hex(0xFFD700); if (condition=="partlycloudy") return lv_color_hex(0xFFA500); if (condition=="pouring") return lv_color_hex(0x00008B); if (condition=="rainy") return lv_color_hex(0x4682B4); if (condition=="snowy") return lv_color_hex(0xADD8E6); if (condition=="snowy-rainy") return lv_color_hex(0x87CEEB); if (condition=="sunny") return lv_color_hex(0xFFFF00); if (condition=="windy") return lv_color_hex(0x87CEEB); if (condition=="windy-variant") return lv_color_hex(0x00CED1); return lv_color_hex(0xFFFFFF);
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[13]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[13]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[13]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[13])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[13]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[13]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[13])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[13]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[13]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[13])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[13]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[13]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[13])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[13]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[13]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[13])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[13]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[13]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[13])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[13]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[13]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[13])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[13]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[13]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[13])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[13]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[13])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[13]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[13];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[13]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -4479,70 +3777,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour15_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[14].empty()) return std::string("Hour +15"); std::string dt = id(weather_hourly_datetime)[14]; if (dt.length() < 13) return std::string("Hour +15"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b15[16]; snprintf(b15, sizeof(b15), "%02d:00", hour); return std::string(b15);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[14].empty()) return std::string("Hour +15");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +15");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[14], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_icon
-          text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[14]; if (condition.empty()) return lv_color_hex(0xFFFFFF); if (condition=="clear-night") return lv_color_hex(0x4472C4); if (condition=="cloudy") return lv_color_hex(0x808080); if (condition=="exceptional") return lv_color_hex(0xFF6600); if (condition=="fog") return lv_color_hex(0xCCCCCC); if (condition=="hail") return lv_color_hex(0xB0E0E6); if (condition=="lightning") return lv_color_hex(0xFFFF00); if (condition=="lightning-rainy") return lv_color_hex(0xFFD700); if (condition=="partlycloudy") return lv_color_hex(0xFFA500); if (condition=="pouring") return lv_color_hex(0x00008B); if (condition=="rainy") return lv_color_hex(0x4682B4); if (condition=="snowy") return lv_color_hex(0xADD8E6); if (condition=="snowy-rainy") return lv_color_hex(0x87CEEB); if (condition=="sunny") return lv_color_hex(0xFFFF00); if (condition=="windy") return lv_color_hex(0x87CEEB); if (condition=="windy-variant") return lv_color_hex(0x00CED1); return lv_color_hex(0xFFFFFF);
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[14]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[14]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[14]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[14])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[14]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[14]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[14])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[14]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[14]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[14])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[14]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[14]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[14])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[14]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[14]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[14])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[14]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[14]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[14])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[14]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[14]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[14])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[14]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[14]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[14])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[14]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[14])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[14]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[14];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[14]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -4552,70 +3841,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour16_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[15].empty()) return std::string("Hour +16"); std::string dt = id(weather_hourly_datetime)[15]; if (dt.length() < 13) return std::string("Hour +16"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b16[16]; snprintf(b16, sizeof(b16), "%02d:00", hour); return std::string(b16);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[15].empty()) return std::string("Hour +16");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +16");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[15], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_icon
-          text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[15]; if (condition.empty()) return lv_color_hex(0xFFFFFF); if (condition=="clear-night") return lv_color_hex(0x4472C4); if (condition=="cloudy") return lv_color_hex(0x808080); if (condition=="exceptional") return lv_color_hex(0xFF6600); if (condition=="fog") return lv_color_hex(0xCCCCCC); if (condition=="hail") return lv_color_hex(0xB0E0E6); if (condition=="lightning") return lv_color_hex(0xFFFF00); if (condition=="lightning-rainy") return lv_color_hex(0xFFD700); if (condition=="partlycloudy") return lv_color_hex(0xFFA500); if (condition=="pouring") return lv_color_hex(0x00008B); if (condition=="rainy") return lv_color_hex(0x4682B4); if (condition=="snowy") return lv_color_hex(0xADD8E6); if (condition=="snowy-rainy") return lv_color_hex(0x87CEEB); if (condition=="sunny") return lv_color_hex(0xFFFF00); if (condition=="windy") return lv_color_hex(0x87CEEB); if (condition=="windy-variant") return lv_color_hex(0x00CED1); return lv_color_hex(0xFFFFFF);
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[15]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[15]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[15]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[15])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[15]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[15]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[15])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[15]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[15]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[15])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[15]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[15]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[15])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[15]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[15]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[15])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[15]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[15]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[15])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[15]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[15]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[15])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[15]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[15]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[15])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[15]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[15])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[15]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[15];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[15]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -4625,70 +3905,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour17_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[16].empty()) return std::string("Hour +17"); std::string dt = id(weather_hourly_datetime)[16]; if (dt.length() < 13) return std::string("Hour +17"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b17[16]; snprintf(b17, sizeof(b17), "%02d:00", hour); return std::string(b17);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[16].empty()) return std::string("Hour +17");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +17");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[16], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_icon
-          text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[16]; if (condition.empty()) return lv_color_hex(0xFFFFFF); if (condition=="clear-night") return lv_color_hex(0x4472C4); if (condition=="cloudy") return lv_color_hex(0x808080); if (condition=="exceptional") return lv_color_hex(0xFF6600); if (condition=="fog") return lv_color_hex(0xCCCCCC); if (condition=="hail") return lv_color_hex(0xB0E0E6); if (condition=="lightning") return lv_color_hex(0xFFFF00); if (condition=="lightning-rainy") return lv_color_hex(0xFFD700); if (condition=="partlycloudy") return lv_color_hex(0xFFA500); if (condition=="pouring") return lv_color_hex(0x00008B); if (condition=="rainy") return lv_color_hex(0x4682B4); if (condition=="snowy") return lv_color_hex(0xADD8E6); if (condition=="snowy-rainy") return lv_color_hex(0x87CEEB); if (condition=="sunny") return lv_color_hex(0xFFFF00); if (condition=="windy") return lv_color_hex(0x87CEEB); if (condition=="windy-variant") return lv_color_hex(0x00CED1); return lv_color_hex(0xFFFFFF);
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[16]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[16]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[16]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[16])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[16]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[16]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[16])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[16]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[16]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[16])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[16]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[16]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[16])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[16]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[16]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[16])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[16]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[16]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[16])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[16]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[16]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[16])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[16]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[16]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[16])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[16]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[16])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[16]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[16];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[16]);'
 
       # ========================================================================
       # Hour 18 - WATCHDOG FEED POINT
@@ -4702,70 +3973,61 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour18_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[17].empty()) return std::string("Hour +18"); std::string dt = id(weather_hourly_datetime)[17]; if (dt.length() < 13) return std::string("Hour +18"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b18[16]; snprintf(b18, sizeof(b18), "%02d:00", hour); return std::string(b18);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[17].empty()) return std::string("Hour +18");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +18");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[17], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_icon
-          text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[17]; if (condition.empty()) return lv_color_hex(0xFFFFFF); if (condition=="clear-night") return lv_color_hex(0x4472C4); if (condition=="cloudy") return lv_color_hex(0x808080); if (condition=="exceptional") return lv_color_hex(0xFF6600); if (condition=="fog") return lv_color_hex(0xCCCCCC); if (condition=="hail") return lv_color_hex(0xB0E0E6); if (condition=="lightning") return lv_color_hex(0xFFFF00); if (condition=="lightning-rainy") return lv_color_hex(0xFFD700); if (condition=="partlycloudy") return lv_color_hex(0xFFA500); if (condition=="pouring") return lv_color_hex(0x00008B); if (condition=="rainy") return lv_color_hex(0x4682B4); if (condition=="snowy") return lv_color_hex(0xADD8E6); if (condition=="snowy-rainy") return lv_color_hex(0x87CEEB); if (condition=="sunny") return lv_color_hex(0xFFFF00); if (condition=="windy") return lv_color_hex(0x87CEEB); if (condition=="windy-variant") return lv_color_hex(0x00CED1); return lv_color_hex(0xFFFFFF);
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[17]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[17]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[17]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[17])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[17]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[17]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[17])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[17]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[17]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[17])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[17]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[17]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[17])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[17]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[17]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[17])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[17]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[17]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[17])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[17]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[17]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[17])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[17]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[17]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[17])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[17]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[17])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[17]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[17];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[17]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
@@ -4775,422 +4037,382 @@ script:
       - lvgl.label.update:
           id: lbl_hourly_hour19_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[18].empty()) return std::string("Hour +19"); std::string dt = id(weather_hourly_datetime)[18]; if (dt.length() < 13) return std::string("Hour +19"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b19[16]; snprintf(b19, sizeof(b19), "%02d:00", hour); return std::string(b19);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[18].empty()) return std::string("Hour +19");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +19");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[18], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_icon
-          text_color: !lambda |-
-            std::string condition = id(weather_hourly_condition)[18]; if (condition.empty()) return lv_color_hex(0xFFFFFF); if (condition=="clear-night") return lv_color_hex(0x4472C4); if (condition=="cloudy") return lv_color_hex(0x808080); if (condition=="exceptional") return lv_color_hex(0xFF6600); if (condition=="fog") return lv_color_hex(0xCCCCCC); if (condition=="hail") return lv_color_hex(0xB0E0E6); if (condition=="lightning") return lv_color_hex(0xFFFF00); if (condition=="lightning-rainy") return lv_color_hex(0xFFD700); if (condition=="partlycloudy") return lv_color_hex(0xFFA500); if (condition=="pouring") return lv_color_hex(0x00008B); if (condition=="rainy") return lv_color_hex(0x4682B4); if (condition=="snowy") return lv_color_hex(0xADD8E6); if (condition=="snowy-rainy") return lv_color_hex(0x87CEEB); if (condition=="sunny") return lv_color_hex(0xFFFF00); if (condition=="windy") return lv_color_hex(0x87CEEB); if (condition=="windy-variant") return lv_color_hex(0x00CED1); return lv_color_hex(0xFFFFFF);
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[18]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[18]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[18]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[18])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[18]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[18]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[18])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[18]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[18]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[18])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[18]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[18]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[18])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[18]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[18]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[18])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[18]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[18]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[18])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[18]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[18]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[18])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[18]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[18]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[18])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[18]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[18])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[18]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[18];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[18]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
 
-      # Hour 20..24 (indices 19..23) updates
+      # Hour 20 (index 19)
       - lvgl.label.update:
           id: lbl_hourly_hour20_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[19].empty()) return std::string("Hour +20"); std::string dt = id(weather_hourly_datetime)[19]; if (dt.length() < 13) return std::string("Hour +20"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b20[16]; snprintf(b20, sizeof(b20), "%02d:00", hour); return std::string(b20);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[19].empty()) return std::string("Hour +20");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +20");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[19], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[19]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[19]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[19]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[19])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[19]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[19]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[19])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[19]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour20_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[19])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[19]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[19]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[19])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[19]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[19]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour20_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[19]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[19])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[19]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[19]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[19])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[19]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[19]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[19])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[19]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[19]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[19])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[19]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[19])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[19]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[19];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[19]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
 
+      # Hour 21 (index 20)
       - lvgl.label.update:
           id: lbl_hourly_hour21_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[20].empty()) return std::string("Hour +21"); std::string dt = id(weather_hourly_datetime)[20]; if (dt.length() < 13) return std::string("Hour +21"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b21[16]; snprintf(b21, sizeof(b21), "%02d:00", hour); return std::string(b21);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[20].empty()) return std::string("Hour +21");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +21");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[20], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[20]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[20]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[20]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[20])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[20]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[20]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[20])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[20]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour21_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[20])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[20]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[20]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[20])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[20]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[20]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour21_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[20]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[20])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[20]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[20]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[20])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[20]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[20]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[20])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[20]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[20]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[20])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[20]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[20])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[20]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[20];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[20]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
 
+      # Hour 22 (index 21)
       - lvgl.label.update:
           id: lbl_hourly_hour22_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[21].empty()) return std::string("Hour +22"); std::string dt = id(weather_hourly_datetime)[21]; if (dt.length() < 13) return std::string("Hour +22"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b22[16]; snprintf(b22, sizeof(b22), "%02d:00", hour); return std::string(b22);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[21].empty()) return std::string("Hour +22");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +22");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[21], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[21]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[21]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[21]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[21])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[21]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[21]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[21])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[21]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour22_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[21])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[21]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[21]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[21])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[21]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[21]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour22_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[21]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[21])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[21]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[21]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[21])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[21]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[21]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[21])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[21]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[21]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[21])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[21]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[21])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[21]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[21];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[21]);'
 
       # Stack unwind: delay + watchdog feed to prevent overflow
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
 
+      # Hour 23 (index 22)
       - lvgl.label.update:
           id: lbl_hourly_hour23_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[22].empty()) return std::string("Hour +23"); std::string dt = id(weather_hourly_datetime)[22]; if (dt.length() < 13) return std::string("Hour +23"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b23[16]; snprintf(b23, sizeof(b23), "%02d:00", hour); return std::string(b23);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[22].empty()) return std::string("Hour +23");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +23");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[22], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[22]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[22]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[22]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[22])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[22]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[22]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[22])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[22]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour23_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[22])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[22]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[22]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[22])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[22]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[22]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour23_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[22]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[22])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[22]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[22]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[22])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[22]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[22]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[22])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[22]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[22]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[22])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[22]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[22])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[22]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[22];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[22]);'
 
       # ========================================================================
       # Hour 24 - FINAL WATCHDOG FEED POINT
       # ========================================================================
       - lambda: 'App.feed_wdt();'
-      
+
+      # Hour 24 (index 23)
       - lvgl.label.update:
           id: lbl_hourly_hour24_header
           text: !lambda |-
-                    if (id(weather_hourly_datetime)[23].empty()) return std::string("Hour +24"); std::string dt = id(weather_hourly_datetime)[23]; if (dt.length() < 13) return std::string("Hour +24"); std::string hour_str = dt.substr(11,2); int hour = std::stoi(hour_str); int source_offset_hours = 0; if (dt.length() >= 20) { if (dt[19] == 'Z') source_offset_hours = 0; else if (dt.length() >= 24 && (dt[19] == '+' || dt[19] == '-')) { source_offset_hours = std::stoi(dt.substr(20,2)); if (dt[19] == '-') source_offset_hours = -source_offset_hours; } } auto now = id(sntp_time).now(); if (now.is_valid()) { int local_offset_hours = now.timezone_offset() / 3600; int utc_hour_val = hour - source_offset_hours; hour = utc_hour_val + local_offset_hours; while (hour < 0) hour += 24; while (hour >= 24) hour -= 24; } char b24[16]; snprintf(b24, sizeof(b24), "%02d:00", hour); return std::string(b24);
+            using namespace weather_helpers;
+            if (id(weather_hourly_datetime)[23].empty()) return std::string("Hour +24");
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return std::string("Hour +24");
+            int hour = convert_to_local_hour(id(weather_hourly_datetime)[23], now.timezone_offset());
+            return format_hour(hour);
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_icon
           text: !lambda |-
-                    std::string condition = id(weather_hourly_condition)[23]; if (condition.empty()) return std::string("\U000F14E4"); if (condition=="clear-night") return std::string("\U000F0594"); if (condition=="cloudy") return std::string("\U000F0590"); if (condition=="exceptional") return std::string("\U000F0F2F"); if (condition=="fog") return std::string("\U000F0591"); if (condition=="hail") return std::string("\U000F0592"); if (condition=="lightning") return std::string("\U000F0593"); if (condition=="lightning-rainy") return std::string("\U000F067E"); if (condition=="partlycloudy") return std::string("\U000F0595"); if (condition=="pouring") return std::string("\U000F0596"); if (condition=="rainy") return std::string("\U000F0597"); if (condition=="snowy") return std::string("\U000F0598"); if (condition=="snowy-rainy") return std::string("\U000F067F"); if (condition=="sunny") return std::string("\U000F0599"); if (condition=="windy") return std::string("\U000F059D"); if (condition=="windy-variant") return std::string("\U000F059E"); return std::string("\U000F0599");
+            using namespace weather_helpers;
+            return get_weather_icon(id(weather_hourly_condition)[23]);
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[23]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_temp
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_temp)[23])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_temp)[23]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_temp)[23]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_feels
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_apparent_temp)[23])) return std::string("--°"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f°",id(weather_hourly_apparent_temp)[23]); return std::string(buf);
-
-      - lvgl.label.update:
-          id: lbl_hourly_hour24_humid
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_humidity)[23])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_humidity)[23]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_temp(id(weather_hourly_apparent_temp)[23]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_precip
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precip_prob)[23])) return std::string("--%"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f%%",id(weather_hourly_precip_prob)[23]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_precip_prob)[23]);'
+
+      - lvgl.label.update:
+          id: lbl_hourly_hour24_humid
+          text: !lambda 'return weather_helpers::format_percent(id(weather_hourly_humidity)[23]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_precip_amt
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_precipitation)[23])) return std::string("--\""); char buf[16]; snprintf(buf,sizeof(buf),"%.2f\"",id(weather_hourly_precipitation)[23]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_precipitation(id(weather_hourly_precipitation)[23]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_pressure
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_pressure)[23])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_pressure)[23]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_pressure)[23]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_uv
-          text: !lambda |-
-                    if (isnan(id(weather_hourly_uv_index)[23])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_uv_index)[23]); return std::string(buf);
+          text: !lambda 'return weather_helpers::format_numeric(id(weather_hourly_uv_index)[23]);'
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_wind
           text: !lambda |-
-                    if (isnan(id(weather_hourly_wind_speed)[23])) return std::string("--"); char buf[16]; snprintf(buf,sizeof(buf),"%.0f",id(weather_hourly_wind_speed)[23]); return std::string(buf);
+            if (std::isnan(id(weather_hourly_wind_speed)[23])) return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f mph", id(weather_hourly_wind_speed)[23]);
+            return std::string(buf);
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_wind_dir
-          text: !lambda |-
-            float bearing = id(weather_hourly_wind_bearing)[23];
-            if (isnan(bearing)) return std::string("--");
-            const char* dir;
-            if (bearing >= 337.5 || bearing < 22.5) dir = "N";
-            else if (bearing >= 22.5 && bearing < 67.5) dir = "NE";
-            else if (bearing >= 67.5 && bearing < 112.5) dir = "E";
-            else if (bearing >= 112.5 && bearing < 157.5) dir = "SE";
-            else if (bearing >= 157.5 && bearing < 202.5) dir = "S";
-            else if (bearing >= 202.5 && bearing < 247.5) dir = "SW";
-            else if (bearing >= 247.5 && bearing < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+          text: !lambda 'return weather_helpers::bearing_to_direction(id(weather_hourly_wind_bearing)[23]);'
 
      # Update compact 12-hour summary (if summary page is active, these will be visible)
       - if:
