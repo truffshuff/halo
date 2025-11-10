@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.09.2148
+# Version: 25.11.09.2205
 # Last Updated: November 09, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.09.2148"
+  version: "25.11.09.2205"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -1085,6 +1085,7 @@ select:
       - "Fireworks"
       - "Strobe"
       - "Random Twinkle"
+      - "Pink Lightning"
       - "AQI Color"
       - "Weather Condition"
       - "Auto Context"
@@ -8090,7 +8091,25 @@ light:
             } else if (condition.find("snowy-rainy") != std::string::npos) {
               color = Color(175, 238, 238);  // Light Cyan
             } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
-              color = Color(255, 20, 147);  // Deep Pink
+              // Lightning: produce occasional short pink flashes (lightning-like)
+              // Use a tiny state machine with esp_random() to trigger short flashes
+              unsigned long now = millis();
+              static unsigned long flash_until = 0;
+              if (now < flash_until) {
+                // Currently in a flash window
+                color = Color(255, 20, 147);  // Deep Pink
+              } else {
+                // Small chance each update to start a new flash
+                // Lambda runs every ~100ms; tune probability to make flashes occasional
+                if ((esp_random() % 1000) < 12) {  // ~1.2% chance per call
+                  // Flash lasts between 80ms and 300ms
+                  flash_until = now + 80 + (esp_random() % 220);
+                  color = Color(255, 20, 147);
+                } else {
+                  // Dark background between flashes
+                  color = Color(0, 0, 0);
+                }
+              }
             } else if (condition.find("partlycloudy") != std::string::npos) {
               color = Color(135, 206, 250);  // Light Sky Blue
             } else if (condition.find("cloudy") != std::string::npos) {
@@ -8106,6 +8125,26 @@ light:
             }
             
             // Set all LEDs to the weather condition color
+            it.all() = color;
+      - addressable_lambda:
+          name: "Pink Lightning"
+          update_interval: 100ms
+          lambda: |-
+            // Always produce occasional short pink flashes for preview/testing
+            unsigned long now = millis();
+            static unsigned long flash_until_pink = 0;
+            Color color = Color(0, 0, 0);
+            if (now < flash_until_pink) {
+              color = Color(255, 20, 147);  // Deep Pink during flash
+            } else {
+              // ~15% chance per update to start a flash
+              if ((esp_random() % 1000) < 150) {
+                flash_until_pink = now + 60 + (esp_random() % 340); // 60-400ms
+                color = Color(255, 20, 147);
+              } else {
+                color = Color(0, 0, 0);
+              }
+            }
             it.all() = color;
       - addressable_lambda:
           name: "Auto Context"
@@ -8147,7 +8186,19 @@ light:
               } else if (condition.find("snowy-rainy") != std::string::npos) {
                 color = Color(175, 238, 238);  // Light Cyan
               } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
-                color = Color(255, 20, 147);  // Deep Pink
+                // Lightning: occasional short pink flashes while on weather page
+                unsigned long now = millis();
+                static unsigned long flash_until_auto = 0;
+                if (now < flash_until_auto) {
+                  color = Color(255, 20, 147);
+                } else {
+                  if ((esp_random() % 1000) < 12) {
+                    flash_until_auto = now + 80 + (esp_random() % 220);
+                    color = Color(255, 20, 147);
+                  } else {
+                    color = Color(0, 0, 0);
+                  }
+                }
               } else if (condition.find("partlycloudy") != std::string::npos) {
                 color = Color(135, 206, 250);  // Light Sky Blue
               } else if (condition.find("cloudy") != std::string::npos) {
