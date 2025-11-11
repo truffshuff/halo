@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1455
+# Version: 25.11.11.1814
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1455"
+  version: "25.11.11.1814"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -499,12 +499,12 @@ globals:
     initial_value: 'false'
 
   # DISABLED - CO2 calibration globals (SCD4x sensor disabled)
-  # - id: calibration_pending
-  #   type: bool
-  #   initial_value: 'false'
-  # - id: calibration_confirm_time
-  #   type: uint32_t
-  #   initial_value: '0'
+  - id: calibration_pending
+    type: bool
+    initial_value: 'false'
+  - id: calibration_confirm_time
+    type: uint32_t
+    initial_value: '0'
 
 # ============================================================================
 # Font Definitions
@@ -1915,13 +1915,13 @@ api:
     # WHEN: Perform outdoors or in well-ventilated area with known CO2 level
     # WARNING: Incorrect calibration will give permanently wrong readings!
     #          Outdoor air is ~400-420ppm. Indoor air is typically 600-1000ppm.
-    # - service: calibrate_co2_value
-    #   variables:
-    #     co2_ppm: float
-    #   then:
-    #     - scd4x.perform_forced_calibration:
-    #         value: !lambda "return co2_ppm;"
-    #         id: scd40
+    - service: calibrate_co2_value
+      variables:
+        co2_ppm: float
+      then:
+        - scd4x.perform_forced_calibration:
+            value: !lambda "return co2_ppm;"
+            id: scd40
 
     # SEN55 Fan Cleaning
     # Runs fan at high speed for 10 seconds to remove dust from sensor
@@ -6875,55 +6875,55 @@ sensor:
 
   # TEMPORARILY DISABLED - SCD4x sensor causing boot loop due to I2C NACK errors
   # Check hardware connection before re-enabling
-  # - platform: scd4x
-  #   id: scd40
-  #   co2:
-  #     name: "CO2"
-  #     id: "co2"
-  #     filters:
-  #       - throttle_average: 2s
-  #       - delta: 10.0         # Only send to HA if CO2 changes by ±10 ppm
-  #       - heartbeat: 120s     # Force update every 2 minutes even if no change
-  #     on_value:
-  #       then:
-  #         - lvgl.label.update:
-  #             id: co2_value
-  #             text: !lambda |-
-  #               static char buffer[10];
-  #               snprintf(buffer, sizeof(buffer), "%d", (int)x);
-  #               return buffer;
-  #         - if:
-  #             condition:
-  #               lambda: "return x <= 600;"
-  #             then:
-  #               - lvgl.label.update:
-  #                   id: co2_value
-  #                   text_color: my_green
-  #             else:
-  #               - if:
-  #                   condition:
-  #                     lambda: "return x <= 1000;"
-  #                   then:
-  #                     - lvgl.label.update:
-  #                         id: co2_value
-  #                         text_color: my_yellow
-  #                   else:
-  #                     - if:
-  #                         condition:
-  #                           lambda: "return x <= 1500;"
-  #                         then:
-  #                           - lvgl.label.update:
-  #                               id: co2_value
-  #                               text_color: my_orange
-  #                         else:
-  #                           - lvgl.label.update:
-  #                               id: co2_value
-  #                               text_color: my_red
-  #   automatic_self_calibration: false
-  #   update_interval: 30s  # Increased from 10s to reduce I2C blocking frequency
-  #   measurement_mode: "periodic"
-  #   i2c_id: lily_i2c
-  #   ambient_pressure_compensation_source: bme280pressure
+  - platform: scd4x
+    id: scd40
+    co2:
+      name: "CO2"
+      id: "co2"
+      filters:
+        - throttle_average: 2s
+        - delta: 10.0         # Only send to HA if CO2 changes by ±10 ppm
+        - heartbeat: 120s     # Force update every 2 minutes even if no change
+      on_value:
+        then:
+          - lvgl.label.update:
+              id: co2_value
+              text: !lambda |-
+                static char buffer[10];
+                snprintf(buffer, sizeof(buffer), "%d", (int)x);
+                return buffer;
+          - if:
+              condition:
+                lambda: "return x <= 600;"
+              then:
+                - lvgl.label.update:
+                    id: co2_value
+                    text_color: my_green
+              else:
+                - if:
+                    condition:
+                      lambda: "return x <= 1000;"
+                    then:
+                      - lvgl.label.update:
+                          id: co2_value
+                          text_color: my_yellow
+                    else:
+                      - if:
+                          condition:
+                            lambda: "return x <= 1500;"
+                          then:
+                            - lvgl.label.update:
+                                id: co2_value
+                                text_color: my_orange
+                          else:
+                            - lvgl.label.update:
+                                id: co2_value
+                                text_color: my_red
+    automatic_self_calibration: false
+    update_interval: 30s  # Increased from 10s to reduce I2C blocking frequency
+    measurement_mode: "periodic"
+    i2c_id: lily_i2c
+    ambient_pressure_compensation_source: bme280pressure
 
   - platform: mics_4514
     id: mics4514
@@ -7784,7 +7784,7 @@ light:
     name: "Display Backlight"
     id: display_backlight
     restore_mode: ALWAYS_ON
-    default_transition_length: 0s  # CRITICAL: No fade - instant on/off to prevent boot loop
+    # default_transition_length: 0s  # CRITICAL: No fade - instant on/off to prevent boot loop
     on_turn_on:
       - logger.log: "Display backlight turned ON"
       - lambda: 'id(display_backlight_is_on) = true;'
@@ -8303,24 +8303,24 @@ lvgl:
               - lambda: 'id(airq_wifi_stat_connected_state) = false;'
         # Force immediate update of all sensor values on page load
         # DISABLED - CO2 sensor disabled due to I2C errors
-        # - if:
-        #     condition:
-        #       lambda: 'return id(co2).has_state();'
-        #     then:
-        #       - lvgl.label.update:
-        #           id: co2_value
-        #           text: !lambda |-
-        #             static char buffer[10];
-        #             snprintf(buffer, sizeof(buffer), "%d", (int)id(co2).state);
-        #             return buffer;
-        #       - lvgl.label.update:
-        #           id: co2_value
-        #           text_color: !lambda |-
-        #             float co2_val = id(co2).state;
-        #             if (co2_val <= 600) return id(my_green);
-        #             else if (co2_val <= 1000) return id(my_yellow);
-        #             else if (co2_val <= 1500) return id(my_orange);
-        #             else return id(my_red);
+        - if:
+            condition:
+              lambda: 'return id(co2).has_state();'
+            then:
+              - lvgl.label.update:
+                  id: co2_value
+                  text: !lambda |-
+                    static char buffer[10];
+                    snprintf(buffer, sizeof(buffer), "%d", (int)id(co2).state);
+                    return buffer;
+              - lvgl.label.update:
+                  id: co2_value
+                  text_color: !lambda |-
+                    float co2_val = id(co2).state;
+                    if (co2_val <= 600) return id(my_green);
+                    else if (co2_val <= 1000) return id(my_yellow);
+                    else if (co2_val <= 1500) return id(my_orange);
+                    else return id(my_red);
         - if:
             condition:
               lambda: 'return id(no2).has_state();'
@@ -17261,49 +17261,49 @@ button:
   #         value: 420  # Typical outdoor CO2 concentration
   #         id: scd40
   # DISABLED - SCD4x sensor disabled due to I2C errors
-  # - platform: template
-  #   name: "Start CO2 Calibration (Requires Confirmation)"
-  #   id: start_co2_calibration
-  #   entity_category: config
-  #   on_press:
-  #     - logger.log:
-  #         format: "CO2 calibration requested. Device must be outdoors. Press confirm button within 60 seconds."
-  #         level: WARN
-  #     - lambda: id(calibration_confirm_time) = millis();
-  #     - globals.set:
-  #         id: calibration_pending
-  #         value: 'true'
+  - platform: template
+    name: "Start CO2 Calibration (Requires Confirmation)"
+    id: start_co2_calibration
+    entity_category: config
+    on_press:
+      - logger.log:
+          format: "CO2 calibration requested. Device must be outdoors. Press confirm button within 60 seconds."
+          level: WARN
+      - lambda: id(calibration_confirm_time) = millis();
+      - globals.set:
+          id: calibration_pending
+          value: 'true'
 
-  # - platform: template
-  #   name: "CONFIRM CO2 Calibration to 420ppm"
-  #   id: confirm_co2_calibration
-  #   entity_category: config
-  #   disabled_by_default: true  # Hidden unless needed
-  #   on_press:
-  #     - if:
-  #         condition:
-  #           lambda: |-
-  #             if (!id(calibration_pending)) {
-  #               ESP_LOGW("calibration", "No calibration pending!");
-  #               return false;
-  #             }
-  #             // Check if within 60-second confirmation window
-  #             uint32_t elapsed = millis() - id(calibration_confirm_time);
-  #             if (elapsed > 60000) {
-  #               ESP_LOGW("calibration", "Confirmation timeout (>60s)");
-  #               id(calibration_pending) = false;
-  #               return false;
-  #             }
-  #             return true;
-  #         then:
-  #           - logger.log: "CO2 calibration confirmed. Calibrating to 420ppm..."
-  #           - scd4x.perform_forced_calibration:
-  #               value: 420
-  #               id: scd40
-  #           - logger.log: "CO2 calibration complete!"
-  #           - globals.set:
-  #               id: calibration_pending
-  #               value: 'false'
+  - platform: template
+    name: "CONFIRM CO2 Calibration to 420ppm"
+    id: confirm_co2_calibration
+    entity_category: config
+    disabled_by_default: true  # Hidden unless needed
+    on_press:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(calibration_pending)) {
+                ESP_LOGW("calibration", "No calibration pending!");
+                return false;
+              }
+              // Check if within 60-second confirmation window
+              uint32_t elapsed = millis() - id(calibration_confirm_time);
+              if (elapsed > 60000) {
+                ESP_LOGW("calibration", "Confirmation timeout (>60s)");
+                id(calibration_pending) = false;
+                return false;
+              }
+              return true;
+          then:
+            - logger.log: "CO2 calibration confirmed. Calibrating to 420ppm..."
+            - scd4x.perform_forced_calibration:
+                value: 420
+                id: scd40
+            - logger.log: "CO2 calibration complete!"
+            - globals.set:
+                id: calibration_pending
+                value: 'false'
 
   # SEN55 Fan Cleaning Cycle
   # Runs fan at high speed for 10 seconds to blow dust off PM sensor
