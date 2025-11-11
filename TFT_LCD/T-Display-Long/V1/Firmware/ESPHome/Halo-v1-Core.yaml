@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.0855
+# Version: 25.11.11.0954
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.0855"
+  version: "25.11.11.0954"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -1005,6 +1005,26 @@ switch:
       - logger.log: "Hourly forecast page disabled in rotation"
 
   - platform: template
+    name: "Page Rotation: Hourly Summary Page"
+    id: page_rotation_hourly_summary_switch
+    icon: mdi:clock-fast
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_hourly_summary_enabled) = true;'
+      - logger.log: "Hourly summary page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "hourly_summary_1";'
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_hourly_summary_enabled) = false;'
+      - logger.log: "Hourly summary page disabled in rotation"
+
+  - platform: template
     name: "Page Rotation: AirQ Page"
     id: page_rotation_AirQ_switch
     icon: mdi:view-dashboard
@@ -1152,6 +1172,42 @@ select:
       - "Weather"       # if weather_enabled
     initial_option: "Vertical Clock"
     restore_value: true
+
+  - platform: template
+    name: "Goto Page"
+    id: goto_page_select
+    optimistic: false
+    options:
+      - "Vertical Clock"
+      - "AirQ"
+      - "WiFi"
+      - "Weather"
+      - "Hourly Forecast"
+      - "Hourly Summary 1"
+      - "Hourly Summary 2"
+      - "Daily Forecast"
+    on_value:
+      - lambda: |-
+          std::string page = x;
+          id(last_auto_rotation_time) = millis();
+
+          if (page == "Vertical Clock") {
+            id(lvgl_display)->show_page(id(vertical_clock_page));
+          } else if (page == "AirQ") {
+            id(lvgl_display)->show_page(id(AirQ_page));
+          } else if (page == "WiFi") {
+            id(lvgl_display)->show_page(id(wifi_page));
+          } else if (page == "Weather") {
+            id(lvgl_display)->show_page(id(weather_page));
+          } else if (page == "Hourly Forecast") {
+            id(lvgl_display)->show_page(id(hourly_forecast_page));
+          } else if (page == "Hourly Summary 1") {
+            id(lvgl_display)->show_page(id(hourly_summary_page_1));
+          } else if (page == "Hourly Summary 2") {
+            id(lvgl_display)->show_page(id(hourly_summary_page_2));
+          } else if (page == "Daily Forecast") {
+            id(lvgl_display)->show_page(id(daily_forecast_page));
+          }
 
 # ============================================================================
 # DEFAULT PAGE SELECTOR
@@ -8123,6 +8179,30 @@ number:
           then:
             - script.execute: update_weather_icon_color
 
+  - platform: template
+    name: "Page Order: Hourly Summary Page"
+    id: page_order_hourly_summary
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 6
+    min_value: 1
+    max_value: 7
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_hourly_summary_order) = (int)x;'
+      - logger.log:
+          format: "Hourly summary page order set to %d"
+          args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "hourly_summary_1";'
+          then:
+            - script.execute: update_weather_icon_color
+
   # Weather gauge control (for weather page needle)
   - platform: template
     name: "Weather Gauge Value"
@@ -12493,7 +12573,7 @@ lvgl:
       widgets:
         # Page Header
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
@@ -13176,7 +13256,7 @@ lvgl:
               - script.execute: update_hourly_page_2  # Lazy loading: only update hours 4-6
       widgets:
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
@@ -13858,7 +13938,7 @@ lvgl:
               - script.execute: update_hourly_page_3  # Lazy loading: only update hours 7-9
       widgets:
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
@@ -14536,7 +14616,7 @@ lvgl:
               - script.execute: update_hourly_page_4  # Lazy loading: only update hours 10-12
       widgets:
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
@@ -15213,7 +15293,7 @@ lvgl:
               - script.execute: update_hourly_page_5  # Lazy loading: only update hours 13-15
       widgets:
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
@@ -15890,7 +15970,7 @@ lvgl:
               - script.execute: update_hourly_page_6  # Lazy loading: only update hours 16-24
       widgets:
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
@@ -16570,7 +16650,7 @@ lvgl:
               - script.execute: update_hourly_page_7  # Lazy loading: only update hours 19-21
       widgets:
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
@@ -17250,7 +17330,7 @@ lvgl:
               - script.execute: update_hourly_page_8  # Lazy loading: only update hours 22-24
       widgets:
         - label:
-            text: "6-Hour Forecast"
+            text: "Hourly Forecast"
             align: TOP_MID
             y: 5
             text_font: montserrat_18
