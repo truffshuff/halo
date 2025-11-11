@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1149
+# Version: 25.11.11.1155
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1149"
+  version: "25.11.11.1155"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -498,12 +498,13 @@ globals:
     restore_value: no
     initial_value: 'false'
 
-  - id: calibration_pending
-    type: bool
-    initial_value: 'false'
-  - id: calibration_confirm_time
-    type: uint32_t
-    initial_value: '0'
+  # DISABLED - CO2 calibration globals (SCD4x sensor disabled)
+  # - id: calibration_pending
+  #   type: bool
+  #   initial_value: 'false'
+  # - id: calibration_confirm_time
+  #   type: uint32_t
+  #   initial_value: '0'
 
 # ============================================================================
 # Font Definitions
@@ -1909,18 +1910,18 @@ api:
       - logger.log: "Home Assistant disconnected"
   
   services:
-    # CO2 Sensor Calibration
+    # CO2 Sensor Calibration - DISABLED (SCD4x sensor disabled due to I2C errors)
     # USAGE: esphome.halo_calibrate_co2_value co2_ppm: 420
     # WHEN: Perform outdoors or in well-ventilated area with known CO2 level
     # WARNING: Incorrect calibration will give permanently wrong readings!
     #          Outdoor air is ~400-420ppm. Indoor air is typically 600-1000ppm.
-    - service: calibrate_co2_value
-      variables:
-        co2_ppm: float
-      then:
-        - scd4x.perform_forced_calibration:
-            value: !lambda "return co2_ppm;"
-            id: scd40
+    # - service: calibrate_co2_value
+    #   variables:
+    #     co2_ppm: float
+    #   then:
+    #     - scd4x.perform_forced_calibration:
+    #         value: !lambda "return co2_ppm;"
+    #         id: scd40
 
     # SEN55 Fan Cleaning
     # Runs fan at high speed for 10 seconds to remove dust from sensor
@@ -9960,24 +9961,25 @@ lvgl:
                   text_color: my_red
               - lambda: 'id(airq_wifi_stat_connected_state) = false;'
         # Force immediate update of all sensor values on page load
-        - if:
-            condition:
-              lambda: 'return id(co2).has_state();'
-            then:
-              - lvgl.label.update:
-                  id: co2_value
-                  text: !lambda |-
-                    static char buffer[10];
-                    snprintf(buffer, sizeof(buffer), "%d", (int)id(co2).state);
-                    return buffer;
-              - lvgl.label.update:
-                  id: co2_value
-                  text_color: !lambda |-
-                    float co2_val = id(co2).state;
-                    if (co2_val <= 600) return id(my_green);
-                    else if (co2_val <= 1000) return id(my_yellow);
-                    else if (co2_val <= 1500) return id(my_orange);
-                    else return id(my_red);
+        # DISABLED - CO2 sensor disabled due to I2C errors
+        # - if:
+        #     condition:
+        #       lambda: 'return id(co2).has_state();'
+        #     then:
+        #       - lvgl.label.update:
+        #           id: co2_value
+        #           text: !lambda |-
+        #             static char buffer[10];
+        #             snprintf(buffer, sizeof(buffer), "%d", (int)id(co2).state);
+        #             return buffer;
+        #       - lvgl.label.update:
+        #           id: co2_value
+        #           text_color: !lambda |-
+        #             float co2_val = id(co2).state;
+        #             if (co2_val <= 600) return id(my_green);
+        #             else if (co2_val <= 1000) return id(my_yellow);
+        #             else if (co2_val <= 1500) return id(my_orange);
+        #             else return id(my_red);
         - if:
             condition:
               lambda: 'return id(no2).has_state();'
@@ -18891,49 +18893,50 @@ button:
   #     - scd4x.perform_forced_calibration:
   #         value: 420  # Typical outdoor CO2 concentration
   #         id: scd40
-  - platform: template
-    name: "Start CO2 Calibration (Requires Confirmation)"
-    id: start_co2_calibration
-    entity_category: config
-    on_press:
-      - logger.log:
-          format: "CO2 calibration requested. Device must be outdoors. Press confirm button within 60 seconds."
-          level: WARN
-      - lambda: id(calibration_confirm_time) = millis();
-      - globals.set:
-          id: calibration_pending
-          value: 'true'
+  # DISABLED - SCD4x sensor disabled due to I2C errors
+  # - platform: template
+  #   name: "Start CO2 Calibration (Requires Confirmation)"
+  #   id: start_co2_calibration
+  #   entity_category: config
+  #   on_press:
+  #     - logger.log:
+  #         format: "CO2 calibration requested. Device must be outdoors. Press confirm button within 60 seconds."
+  #         level: WARN
+  #     - lambda: id(calibration_confirm_time) = millis();
+  #     - globals.set:
+  #         id: calibration_pending
+  #         value: 'true'
 
-  - platform: template
-    name: "CONFIRM CO2 Calibration to 420ppm"
-    id: confirm_co2_calibration
-    entity_category: config
-    disabled_by_default: true  # Hidden unless needed
-    on_press:
-      - if:
-          condition:
-            lambda: |-
-              if (!id(calibration_pending)) {
-                ESP_LOGW("calibration", "No calibration pending!");
-                return false;
-              }
-              // Check if within 60-second confirmation window
-              uint32_t elapsed = millis() - id(calibration_confirm_time);
-              if (elapsed > 60000) {
-                ESP_LOGW("calibration", "Confirmation timeout (>60s)");
-                id(calibration_pending) = false;
-                return false;
-              }
-              return true;
-          then:
-            - logger.log: "CO2 calibration confirmed. Calibrating to 420ppm..."
-            - scd4x.perform_forced_calibration:
-                value: 420
-                id: scd40
-            - logger.log: "CO2 calibration complete!"
-            - globals.set:
-                id: calibration_pending
-                value: 'false'
+  # - platform: template
+  #   name: "CONFIRM CO2 Calibration to 420ppm"
+  #   id: confirm_co2_calibration
+  #   entity_category: config
+  #   disabled_by_default: true  # Hidden unless needed
+  #   on_press:
+  #     - if:
+  #         condition:
+  #           lambda: |-
+  #             if (!id(calibration_pending)) {
+  #               ESP_LOGW("calibration", "No calibration pending!");
+  #               return false;
+  #             }
+  #             // Check if within 60-second confirmation window
+  #             uint32_t elapsed = millis() - id(calibration_confirm_time);
+  #             if (elapsed > 60000) {
+  #               ESP_LOGW("calibration", "Confirmation timeout (>60s)");
+  #               id(calibration_pending) = false;
+  #               return false;
+  #             }
+  #             return true;
+  #         then:
+  #           - logger.log: "CO2 calibration confirmed. Calibrating to 420ppm..."
+  #           - scd4x.perform_forced_calibration:
+  #               value: 420
+  #               id: scd40
+  #           - logger.log: "CO2 calibration complete!"
+  #           - globals.set:
+  #               id: calibration_pending
+  #               value: 'false'
 
   # SEN55 Fan Cleaning Cycle
   # Runs fan at high speed for 10 seconds to blow dust off PM sensor
