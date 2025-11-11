@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1122
+# Version: 25.11.11.1149
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1122"
+  version: "25.11.11.1149"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -8532,55 +8532,57 @@ sensor:
                     call.perform();
                   }
 
-  - platform: scd4x
-    id: scd40
-    co2:
-      name: "CO2"
-      id: "co2"
-      filters:
-        - throttle_average: 2s
-        - delta: 10.0         # Only send to HA if CO2 changes by ±10 ppm
-        - heartbeat: 120s     # Force update every 2 minutes even if no change
-      on_value:
-        then:
-          - lvgl.label.update:
-              id: co2_value
-              text: !lambda |-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), "%d", (int)x);
-                return buffer;
-          - if:
-              condition:
-                lambda: "return x <= 600;"
-              then:
-                - lvgl.label.update:
-                    id: co2_value
-                    text_color: my_green                     
-              else:
-                - if:
-                    condition:
-                      lambda: "return x <= 1000;"
-                    then:
-                      - lvgl.label.update:
-                          id: co2_value
-                          text_color: my_yellow                         
-                    else:
-                      - if:
-                          condition:
-                            lambda: "return x <= 1500;"
-                          then:
-                            - lvgl.label.update:
-                                id: co2_value
-                                text_color: my_orange                                 
-                          else:
-                            - lvgl.label.update:
-                                id: co2_value
-                                text_color: my_red                                                                              
-    automatic_self_calibration: false
-    update_interval: 30s  # Increased from 10s to reduce I2C blocking frequency
-    measurement_mode: "periodic"
-    i2c_id: lily_i2c
-    ambient_pressure_compensation_source: bme280pressure
+  # TEMPORARILY DISABLED - SCD4x sensor causing boot loop due to I2C NACK errors
+  # Check hardware connection before re-enabling
+  # - platform: scd4x
+  #   id: scd40
+  #   co2:
+  #     name: "CO2"
+  #     id: "co2"
+  #     filters:
+  #       - throttle_average: 2s
+  #       - delta: 10.0         # Only send to HA if CO2 changes by ±10 ppm
+  #       - heartbeat: 120s     # Force update every 2 minutes even if no change
+  #     on_value:
+  #       then:
+  #         - lvgl.label.update:
+  #             id: co2_value
+  #             text: !lambda |-
+  #               static char buffer[10];
+  #               snprintf(buffer, sizeof(buffer), "%d", (int)x);
+  #               return buffer;
+  #         - if:
+  #             condition:
+  #               lambda: "return x <= 600;"
+  #             then:
+  #               - lvgl.label.update:
+  #                   id: co2_value
+  #                   text_color: my_green
+  #             else:
+  #               - if:
+  #                   condition:
+  #                     lambda: "return x <= 1000;"
+  #                   then:
+  #                     - lvgl.label.update:
+  #                         id: co2_value
+  #                         text_color: my_yellow
+  #                   else:
+  #                     - if:
+  #                         condition:
+  #                           lambda: "return x <= 1500;"
+  #                         then:
+  #                           - lvgl.label.update:
+  #                               id: co2_value
+  #                               text_color: my_orange
+  #                         else:
+  #                           - lvgl.label.update:
+  #                               id: co2_value
+  #                               text_color: my_red
+  #   automatic_self_calibration: false
+  #   update_interval: 30s  # Increased from 10s to reduce I2C blocking frequency
+  #   measurement_mode: "periodic"
+  #   i2c_id: lily_i2c
+  #   ambient_pressure_compensation_source: bme280pressure
 
   - platform: mics_4514
     id: mics4514
