@@ -3,3 +3,8 @@
 secrets.yaml
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/halo-v1-79e384.yaml
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/LAZY_LOADING_IMPLEMENTATION.md
+TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/HOURLY_SUMMARY_INTEGRATION_GUIDE.md
+TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/hourly_summary_pages_new.yaml
+.gitignore
+TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/hourly_summary_scripts_new.yaml
+TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/INTEGRATION_VERIFICATION_REPORT.md
