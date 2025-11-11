@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.10.2221
-# Last Updated: November 10, 2025
+# Version: 25.11.11.0731
+# Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.10.2221"
+  version: "25.11.11.0731"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -3865,7 +3865,7 @@ script:
     mode: single
     then:
       - lambda: 'App.feed_wdt();'
-      - logger.log: "Updating hourly forecast page 6 (hours 16-24)..."
+      - logger.log: "Updating hourly forecast page 6 (hours 16-18)..."
 
       # Update Hour 16
       - lvgl.label.update:
@@ -4056,6 +4056,17 @@ script:
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
 
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "✓ Hourly page 6 (hours 16-18) updated successfully"
+
+
+  # Update script for Page 7 (Hours 19-21)
+  - id: update_hourly_page_7
+    mode: single
+    then:
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "Updating hourly forecast page 7 (hours 19-21)..."
       # Update Hour 19
       - lvgl.label.update:
           id: lbl_hourly_hour19_header
@@ -4245,6 +4256,18 @@ script:
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
 
+
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "✓ Hourly page 7 (hours 19-21) updated successfully"
+
+
+  # Update script for Page 8 (Hours 22-24)
+  - id: update_hourly_page_8
+    mode: single
+    then:
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "Updating hourly forecast page 8 (hours 22-24)..."
       # Update Hour 22
       - lvgl.label.update:
           id: lbl_hourly_hour22_header
@@ -4435,8 +4458,11 @@ script:
       - lambda: 'App.feed_wdt();'
       - logger.log: "✓ Hourly page 6 (hours 16-24) updated successfully"
 
-  # Temporary compatibility shim for old script name
-  - id: update_hourly_forecast_display
+
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "✓ Hourly page 8 (hours 22-24) updated successfully"
+
     mode: single
     then:
       - logger.log: "Old script called - redirecting to page 1 only"
@@ -12931,8 +12957,7 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
+            align: TOP_MID
             y: 35
             bg_color: 0x101010
             bg_opa: COVER
@@ -13136,8 +13161,7 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
+            align: TOP_MID
             y: 245
             bg_color: 0x101010
             bg_opa: COVER
@@ -13341,8 +13365,7 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
+            align: TOP_MID
             y: 455
             bg_color: 0x101010
             bg_opa: COVER
@@ -13815,9 +13838,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
-            y: 35
+            align: TOP_MID
+            y: 245
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -14020,9 +14042,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
-            y: 245
+            align: TOP_MID
+            y: 455
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -14291,9 +14312,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
-            y: 455
+            align: TOP_MID
+            y: 35
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -14496,9 +14516,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: BOTTOM_LEFT
-            x: 190
-            y: 665
+            align: TOP_MID
+            y: 245
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -14701,9 +14720,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: BOTTOM_LEFT
-            x: 190
-            y: 665
+            align: TOP_MID
+            y: 455
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -14902,6 +14920,74 @@ lvgl:
                         text_font: montserrat_10
                         text_color: my_white
         
+
+        # Center navigation button - click to go to page 7
+        - obj:
+            id: nav_button_hourly_page6_center
+            align: CENTER
+            width: 150
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_release:
+              - logger.log: "Hourly page 6 CENTER button RELEASED - going to page 7!"
+              - lambda: |-
+                  id(last_auto_rotation_time) = millis();
+              - lvgl.page.show:
+                  id: hourly_forecast_page_7
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        # Top-right navigation button - normal page rotation
+        - obj:
+            id: nav_button_hourly_page6
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 180
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_release:
+              - logger.log: "Hourly Forecast page 6 nav button RELEASED!"
+              - lambda: |-
+                  id(last_auto_rotation_time) = millis();
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+
+    - id: hourly_forecast_page_7
+      skip: true
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_name) = "hourly_forecast";'
+        - delay: 10ms
+        - if:
+            condition:
+              lambda: |-
+                uint32_t time_since_update = millis() - id(weather_hourly_last_update);
+                bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
+                return is_stale;
+            then:
+              - script.execute: fetch_hourly_forecast
+            else:
+              - delay: 50ms
+              - script.execute: update_hourly_page_7  # Lazy loading: only update hours 19-21
+      widgets:
+        - label:
+            text: "6-Hour Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
         # Hour 19 Card (index 18)
         - obj:
             width: 170
@@ -15110,9 +15196,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
-            y: 35
+            align: TOP_MID
+            y: 245
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -15315,9 +15400,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
-            y: 245
+            align: TOP_MID
+            y: 455
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -15516,13 +15600,80 @@ lvgl:
                         text_font: montserrat_10
                         text_color: my_white
 
+
+        # Center navigation button - click to go to page 8
+        - obj:
+            id: nav_button_hourly_page7_center
+            align: CENTER
+            width: 150
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_release:
+              - logger.log: "Hourly page 7 CENTER button RELEASED - going to page 8!"
+              - lambda: |-
+                  id(last_auto_rotation_time) = millis();
+              - lvgl.page.show:
+                  id: hourly_forecast_page_8
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        # Top-right navigation button - normal page rotation
+        - obj:
+            id: nav_button_hourly_page7
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 180
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_release:
+              - logger.log: "Hourly Forecast page 7 nav button RELEASED!"
+              - lambda: |-
+                  id(last_auto_rotation_time) = millis();
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+
+    - id: hourly_forecast_page_8
+      skip: true
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_name) = "hourly_forecast";'
+        - delay: 10ms
+        - if:
+            condition:
+              lambda: |-
+                uint32_t time_since_update = millis() - id(weather_hourly_last_update);
+                bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
+                return is_stale;
+            then:
+              - script.execute: fetch_hourly_forecast
+            else:
+              - delay: 50ms
+              - script.execute: update_hourly_page_8  # Lazy loading: only update hours 22-24
+      widgets:
+        - label:
+            text: "6-Hour Forecast"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
         # Hour 22 Card (index 21)
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
-            y: 455
+            align: TOP_MID
+            y: 35
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -15725,9 +15876,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: BOTTOM_LEFT
-            x: 190
-            y: 665
+            align: TOP_MID
+            y: 245
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -15930,9 +16080,8 @@ lvgl:
         - obj:
             width: 170
             height: SIZE_CONTENT
-            align: TOP_LEFT
-            x: 190
-            y: 35
+            align: TOP_MID
+            y: 455
             bg_color: 0x101010
             bg_opa: COVER
             border_width: 0
@@ -16131,9 +16280,10 @@ lvgl:
                         text_font: montserrat_10
                         text_color: my_white
 
+
         # Center navigation button - click to go back to page 1
         - obj:
-            id: nav_button_hourly_page6_center
+            id: nav_button_hourly_page8_center
             align: CENTER
             width: 150
             height: 150
@@ -16141,7 +16291,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_release:
-              - logger.log: "Hourly page 6 CENTER button RELEASED - going back to page 1!"
+              - logger.log: "Hourly page 8 CENTER button RELEASED - going back to page 1!"
               - lambda: |-
                   id(last_auto_rotation_time) = millis();
               - lvgl.page.show:
@@ -16151,7 +16301,7 @@ lvgl:
 
         # Top-right navigation button - normal page rotation
         - obj:
-            id: nav_button_hourly_page6
+            id: nav_button_hourly_page8
             align: TOP_RIGHT
             x: 0
             y: 0
@@ -16161,7 +16311,7 @@ lvgl:
             border_width: 0
             clickable: true
             on_release:
-              - logger.log: "Hourly Forecast page 6 nav button RELEASED!"
+              - logger.log: "Hourly Forecast page 8 nav button RELEASED!"
               - lambda: |-
                   id(last_auto_rotation_time) = millis();
               - lvgl.page.next:
