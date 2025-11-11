@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.0744
+# Version: 25.11.11.0759
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.0744"
+  version: "25.11.11.0759"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -1570,26 +1570,37 @@ interval:
                                               animation: OUT_LEFT
                                               time: 300ms
                                         else:
-                                          # Daily Forecast
+                                          # Hourly Summary
                                           - if:
                                               condition:
-                                                lambda: 'return id(current_page_name) == "daily_forecast";'
+                                                lambda: 'return id(current_page_name) == "hourly_summary";'
                                               then:
-                                                - logger.log: "Page rotation: Showing Daily Forecast page"
+                                                - logger.log: "Page rotation: Showing Hourly Summary page"
                                                 - lvgl.page.show:
-                                                    id: daily_forecast_page
+                                                    id: hourly_summary_page
                                                     animation: OUT_LEFT
                                                     time: 300ms
                                               else:
-                                                # Unknown page - fall back to vertical clock
-                                                - logger.log:
-                                                    format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
-                                                    args: ['id(current_page_name).c_str()']
-                                                    level: WARN
-                                                - lvgl.page.show:
-                                                          id: vertical_clock_page
+                                                # Daily Forecast
+                                                - if:
+                                                    condition:
+                                                      lambda: 'return id(current_page_name) == "daily_forecast";'
+                                                    then:
+                                                      - logger.log: "Page rotation: Showing Daily Forecast page"
+                                                      - lvgl.page.show:
+                                                          id: daily_forecast_page
                                                           animation: OUT_LEFT
                                                           time: 300ms
+                                                    else:
+                                                      # Unknown page - fall back to vertical clock
+                                                      - logger.log:
+                                                          format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
+                                                          args: ['id(current_page_name).c_str()']
+                                                          level: WARN
+                                                      - lvgl.page.show:
+                                                                id: vertical_clock_page
+                                                                animation: OUT_LEFT
+                                                                time: 300ms
 
 
   - interval: 1s  # Reduced from 5s for faster WiFi stats updates
