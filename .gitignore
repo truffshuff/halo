@@ -2,3 +2,4 @@
 .esphome
 secrets.yaml
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/halo-v1-79e384.yaml
+TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/LAZY_LOADING_IMPLEMENTATION.md
