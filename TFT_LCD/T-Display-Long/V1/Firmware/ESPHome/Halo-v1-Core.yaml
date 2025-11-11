@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.0844
+# Version: 25.11.11.0855
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.0844"
+  version: "25.11.11.0855"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -19073,9 +19073,9 @@ esphome:
   # ============================================================================
   # C++ Helper Functions - Reusable Code to Reduce Duplication
   # ============================================================================
-  # NOTE: Helper functions temporarily removed to fix compilation.
-  # Will be added back once basic compilation is verified.
-  # See weather_helpers.h in repository for the helper code.
+  # weather_helpers component (declared at line 860) provides reusable formatting
+  # functions to eliminate code duplication in weather forecast display scripts.
+  # Functions automatically available via external_components system.
   # ============================================================================
 
   libraries:
