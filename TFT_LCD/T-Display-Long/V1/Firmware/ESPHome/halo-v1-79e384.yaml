@@ -68,6 +68,11 @@ ota:
     safe_mode: false  # Disable safe mode to prevent boot loops
 
 wifi:
+  # Reduce WiFi transmission power to prevent brownouts during WiFi connection
+  # ESP32 default is 20dBm which can cause power spikes and crashes
+  # 8.5dBm is sufficient for most home networks and prevents brownout issues
+  output_power: 8.5dB
+
   on_connect:
     - delay: 5s # Gives time for improv results to be transmitted
 
