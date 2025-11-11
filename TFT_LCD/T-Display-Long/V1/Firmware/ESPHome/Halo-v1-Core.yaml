@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1035
+# Version: 25.11.11.1043
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1035"
+  version: "25.11.11.1043"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -1172,42 +1172,6 @@ select:
       - "Weather"       # if weather_enabled
     initial_option: "Vertical Clock"
     restore_value: true
-
-  - platform: template
-    name: "Goto Page"
-    id: goto_page_select
-    optimistic: false
-    options:
-      - "Vertical Clock"
-      - "AirQ"
-      - "WiFi"
-      - "Weather"
-      - "Hourly Forecast"
-      - "Hourly Summary 1"
-      - "Hourly Summary 2"
-      - "Daily Forecast"
-    on_value:
-      - lambda: |-
-          std::string page = x;
-          id(last_auto_rotation_time) = millis();
-
-          if (page == "Vertical Clock") {
-            id(lvgl_display)->show_page(id(vertical_clock_page));
-          } else if (page == "AirQ") {
-            id(lvgl_display)->show_page(id(AirQ_page));
-          } else if (page == "WiFi") {
-            id(lvgl_display)->show_page(id(wifi_page));
-          } else if (page == "Weather") {
-            id(lvgl_display)->show_page(id(weather_page));
-          } else if (page == "Hourly Forecast") {
-            id(lvgl_display)->show_page(id(hourly_forecast_page));
-          } else if (page == "Hourly Summary 1") {
-            id(lvgl_display)->show_page(id(hourly_summary_page_1));
-          } else if (page == "Hourly Summary 2") {
-            id(lvgl_display)->show_page(id(hourly_summary_page_2));
-          } else if (page == "Daily Forecast") {
-            id(lvgl_display)->show_page(id(daily_forecast_page));
-          }
 
 # ============================================================================
 # DEFAULT PAGE SELECTOR
@@ -19002,6 +18966,20 @@ button:
           id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: weather_forecast_page
+          animation: OUT_LEFT
+          time: 300ms
+
+  - platform: template
+    name: "Go to Hourly Summary Page"
+    id: goto_hourly_summary_forecast_page
+    icon: mdi:clock-time-four-outline
+    on_press:
+      - logger.log: "Navigating to Hourly Summary page"
+      - lambda: |-
+          id(current_page_name) = "hourly_summary_page_1";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: hourly_summary_page_1
           animation: OUT_LEFT
           time: 300ms
 
