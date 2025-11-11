@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1043
+# Version: 25.11.11.1122
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1043"
+  version: "25.11.11.1122"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -9224,22 +9224,44 @@ light:
             } else if (condition.find("snowy-rainy") != std::string::npos) {
               color = Color(175, 238, 238);  // Light Cyan
             } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
-              // Lightning: produce occasional short pink flashes (lightning-like)
-              // Use a tiny state machine with esp_random() to trigger short flashes
+              // Lightning: realistic lightning effect with white and pink flashes
               unsigned long now = millis();
               static unsigned long flash_until = 0;
+              static unsigned long next_flash_sequence_weather = 0;
+              static int flash_stage_weather = 0;
+              static unsigned long last_stage_change_weather = 0;
+
               if (now < flash_until) {
-                // Currently in a flash window
-                color = Color(255, 20, 147);  // Deep Pink
-              } else {
-                // Small chance each update to start a new flash
-                // Lambda runs every ~100ms; tune probability to make flashes occasional
-                if ((esp_random() % 1000) < 12) {  // ~1.2% chance per call
-                  // Flash lasts between 80ms and 300ms
-                  flash_until = now + 80 + (esp_random() % 220);
-                  color = Color(255, 20, 147);
+                // Multi-stage lightning flash
+                if (flash_stage_weather == 0) {
+                  color = Color(255, 255, 255);  // Bright white flash
+                } else if (flash_stage_weather == 1) {
+                  color = Color(255, 100, 180);  // Quick fade to pink
+                } else if (flash_stage_weather == 2) {
+                  color = Color(255, 255, 255);  // Bright white strike again
+                } else if (flash_stage_weather == 3) {
+                  color = Color(255, 20, 147);  // Deep pink glow
                 } else {
-                  // Dark background between flashes
+                  color = Color(200, 200, 255);  // Final white flicker
+                }
+                // Advance flash stage every ~40-80ms
+                if (now - last_stage_change_weather > 40 + (esp_random() % 40)) {
+                  flash_stage_weather = (flash_stage_weather + 1) % 5;
+                  last_stage_change_weather = now;
+                }
+              } else {
+                // Check if we should start a new lightning sequence
+                if (now >= next_flash_sequence_weather) {
+                  if ((esp_random() % 1000) < 12) {  // ~1.2% chance per call
+                    flash_until = now + 200 + (esp_random() % 300);
+                    flash_stage_weather = 0;
+                    last_stage_change_weather = now;
+                    next_flash_sequence_weather = flash_until + 100 + (esp_random() % 400);
+                    color = Color(255, 255, 255);
+                  } else {
+                    color = Color(0, 0, 0);  // Dark background between flashes
+                  }
+                } else {
                   color = Color(0, 0, 0);
                 }
               }
@@ -9263,21 +9285,57 @@ light:
           name: "Pink Lightning"
           update_interval: 100ms
           lambda: |-
-            // Always produce occasional short pink flashes for preview/testing
+            // Realistic lightning effect with pink and white flashes
             unsigned long now = millis();
             static unsigned long flash_until_pink = 0;
+            static unsigned long next_flash_sequence = 0;
+            static int flash_stage = 0;
+
             Color color = Color(0, 0, 0);
+
             if (now < flash_until_pink) {
-              color = Color(255, 20, 147);  // Deep Pink during flash
-            } else {
-              // ~15% chance per update to start a flash
-              if ((esp_random() % 1000) < 150) {
-                flash_until_pink = now + 60 + (esp_random() % 340); // 60-400ms
+              // Multi-stage lightning flash
+              if (flash_stage == 0) {
+                // Initial bright white flash
+                color = Color(255, 255, 255);
+              } else if (flash_stage == 1) {
+                // Quick fade to pink
+                color = Color(255, 100, 180);
+              } else if (flash_stage == 2) {
+                // Bright white strike again
+                color = Color(255, 255, 255);
+              } else if (flash_stage == 3) {
+                // Deep pink glow
                 color = Color(255, 20, 147);
+              } else {
+                // Final white flicker
+                color = Color(200, 200, 255);
+              }
+            } else {
+              // Check if we should start a new lightning sequence
+              if (now >= next_flash_sequence) {
+                // ~15% chance per update to start a flash
+                if ((esp_random() % 1000) < 150) {
+                  // Random duration for the entire sequence (200-500ms)
+                  flash_until_pink = now + 200 + (esp_random() % 300);
+                  flash_stage = 0;
+                  // Schedule next possible sequence
+                  next_flash_sequence = flash_until_pink + 100 + (esp_random() % 400);
+                } else {
+                  color = Color(0, 0, 0);
+                }
               } else {
                 color = Color(0, 0, 0);
               }
             }
+
+            // Advance flash stage every ~40-80ms
+            static unsigned long last_stage_change = 0;
+            if (now < flash_until_pink && now - last_stage_change > 40 + (esp_random() % 40)) {
+              flash_stage = (flash_stage + 1) % 5;
+              last_stage_change = now;
+            }
+
             it.all() = color;
       - addressable_lambda:
           name: "Auto Context"
@@ -9319,15 +9377,43 @@ light:
               } else if (condition.find("snowy-rainy") != std::string::npos) {
                 color = Color(175, 238, 238);  // Light Cyan
               } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
-                // Lightning: occasional short pink flashes while on weather page
+                // Lightning: realistic lightning effect with white and pink flashes
                 unsigned long now = millis();
                 static unsigned long flash_until_auto = 0;
+                static unsigned long next_flash_sequence_auto = 0;
+                static int flash_stage_auto = 0;
+                static unsigned long last_stage_change_auto = 0;
+
                 if (now < flash_until_auto) {
-                  color = Color(255, 20, 147);
+                  // Multi-stage lightning flash
+                  if (flash_stage_auto == 0) {
+                    color = Color(255, 255, 255);  // Bright white flash
+                  } else if (flash_stage_auto == 1) {
+                    color = Color(255, 100, 180);  // Quick fade to pink
+                  } else if (flash_stage_auto == 2) {
+                    color = Color(255, 255, 255);  // Bright white strike again
+                  } else if (flash_stage_auto == 3) {
+                    color = Color(255, 20, 147);  // Deep pink glow
+                  } else {
+                    color = Color(200, 200, 255);  // Final white flicker
+                  }
+                  // Advance flash stage every ~40-80ms
+                  if (now - last_stage_change_auto > 40 + (esp_random() % 40)) {
+                    flash_stage_auto = (flash_stage_auto + 1) % 5;
+                    last_stage_change_auto = now;
+                  }
                 } else {
-                  if ((esp_random() % 1000) < 12) {
-                    flash_until_auto = now + 80 + (esp_random() % 220);
-                    color = Color(255, 20, 147);
+                  // Check if we should start a new lightning sequence
+                  if (now >= next_flash_sequence_auto) {
+                    if ((esp_random() % 1000) < 12) {  // ~1.2% chance per call
+                      flash_until_auto = now + 200 + (esp_random() % 300);
+                      flash_stage_auto = 0;
+                      last_stage_change_auto = now;
+                      next_flash_sequence_auto = flash_until_auto + 100 + (esp_random() % 400);
+                      color = Color(255, 255, 255);
+                    } else {
+                      color = Color(0, 0, 0);
+                    }
                   } else {
                     color = Color(0, 0, 0);
                   }
