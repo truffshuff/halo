@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.10.2157
+# Version: 25.11.10.2201
 # Last Updated: November 10, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.10.2157"
+  version: "25.11.10.2201"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -3071,6 +3071,39 @@ script:
       - delay: 50ms
       - lambda: 'App.feed_wdt();'
       - logger.log: "✓ Hourly page 1 (hours 1-3) updated successfully"
+
+  # Placeholder scripts for pages 2-6 (TODO: implement these)
+  - id: update_hourly_page_2
+    mode: single
+    then:
+      - logger.log: "Page 2 update not yet implemented - hours 4-6 will not update"
+
+  - id: update_hourly_page_3
+    mode: single
+    then:
+      - logger.log: "Page 3 update not yet implemented - hours 7-9 will not update"
+
+  - id: update_hourly_page_4
+    mode: single
+    then:
+      - logger.log: "Page 4 update not yet implemented - hours 10-12 will not update"
+
+  - id: update_hourly_page_5
+    mode: single
+    then:
+      - logger.log: "Page 5 update not yet implemented - hours 13-15 will not update"
+
+  - id: update_hourly_page_6
+    mode: single
+    then:
+      - logger.log: "Page 6 update not yet implemented - hours 16-24 will not update"
+
+  # Temporary compatibility shim for old script name
+  - id: update_hourly_forecast_display
+    mode: single
+    then:
+      - logger.log: "Old script called - redirecting to page 1 only"
+      - script.execute: update_hourly_page_1
 
   # DEPRECATED: Old monolithic script - kept for reference, replaced by update_hourly_page_X scripts
   - id: update_hourly_forecast_display_OLD
