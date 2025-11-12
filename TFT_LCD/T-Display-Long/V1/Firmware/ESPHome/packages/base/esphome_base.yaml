@@ -1,0 +1,318 @@
+# ============================================================================
+# ESPHome Base Configuration
+# ============================================================================
+# Core ESPHome components required by all modules
+# Dependencies: None
+#
+# This module includes:
+#   - Logger configuration
+#   - Font definitions (Montserrat + Material Design Icons)
+#   - Color palette
+#   - Images
+#   - HTTP request component
+#   - Time sources (Home Assistant + SNTP)
+#   - Web server
+# ============================================================================
+
+# ============================================================================
+# Logger Configuration
+# ============================================================================
+logger:
+  level: INFO
+
+# ============================================================================
+# Web Server
+# ============================================================================
+# Allows web-based access to device status and controls
+# ============================================================================
+web_server:
+  port: 80
+
+# ============================================================================
+# Font Definitions
+# ============================================================================
+# Fonts are defined with various sizes for different UI elements across pages.
+# bpp: 4 provides anti-aliasing for smooth text rendering on TFT display.
+#
+# OPTIMIZATION: All fonts use the same comprehensive glyph set.
+# This improves ESPHome's font caching and reduces duplicate rasterization.
+# Flash savings: ~30-50KB compared to unique glyph sets per font.
+# ============================================================================
+
+# Comprehensive glyph set used by all Montserrat fonts
+# Includes: uppercase, lowercase, digits, common punctuation, degree symbol
+font:
+  - file: "gfonts://Montserrat"
+    id: montserrat_80
+    size: 80
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_50
+    size: 50
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_28
+    size: 28
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_24
+    size: 24
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_20
+    size: 20
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_18
+    size: 18
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_16
+    size: 16
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_14
+    size: 14
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_10
+    size: 10
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:-°%"'
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_100
+    size: 100
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_80
+    size: 80
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      "\U000F07D0", # home-assistant icon
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_50
+    size: 50
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_40
+    size: 40
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_24
+    size: 24
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_20
+    size: 20
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_28
+    size: 28
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+# ============================================================================
+# Image Resources
+# ============================================================================
+image:
+  - file: https://yashmulgaonkar.github.io/assets/YM.png
+    id: ym_logo
+    resize: 25x25
+    type: RGB565
+    transparency: alpha_channel
+
+# ============================================================================
+# Color Palette
+# ============================================================================
+# Standard colors used across all UI pages
+# ============================================================================
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_gray
+    red: 50%
+    green: 50%
+    blue: 50%
+  - id: my_orange
+    red: 100%
+    green: 50%
+    blue: 0%
+  - id: my_teal
+    red: 0%
+    green: 100%
+    blue: 100%
+  - id: my_white
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: my_black
+    red: 0%
+    green: 0%
+    blue: 0%
+
+# ============================================================================
+# HTTP Request Component
+# ============================================================================
+# HTTP Request component for calling HA REST API
+# Streaming response handling; moderate buffers
+# ============================================================================
+http_request:
+  useragent: esphome/halo
+  timeout: 30s  # Increased timeout for large weather responses
+  buffer_size_rx: 1024  # 1KB RX buffer; smaller to reduce memory pressure
+  buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
+
+# ============================================================================
+# Time Sources
+# ============================================================================
+# Dual time sources for reliability:
+#   - Home Assistant (preferred, accurate)
+#   - SNTP fallback (when HA unavailable)
+# ============================================================================
+time:
+  - platform: homeassistant
+    id: ha_time
+    on_time_sync:
+      - script.execute: time_update
+  - platform: sntp
+    id: sntp_time
+    timezone: America/New_York
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    on_time_sync:
+      - script.execute: time_update

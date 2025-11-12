@@ -1,0 +1,105 @@
+substitutions:
+
+  # Home Assistant connection for HTTP API calls
+  # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
+  ha_url: !secret ha_url  # Example: "http://homeassistant.local:8123"
+  ha_token: !secret ha_token  # Your long-lived access token
+
+  # Weather configuration (if enabled below)
+  weather_entity_id: "weather.hhut"
+  weather_refresh_interval: "900"
+  weather_daily_refresh_interval: "3600"  # 60 minutes for daily forecast
+  weather_hourly_refresh_interval: "900"  # 15 minutes for hourly forecast
+  current_temp_sensor: "sensor.hhut_temperature"  # Your actual sensor
+  apparent_temp_sensor: "sensor.hhut_feels_like"  # Your actual sensor
+
+  # Network Configuration
+  wifi_ssid: !secret wifihome_ssid
+  wifi_password: !secret wifihome_password
+
+  # Security
+  ota_password: !secret ota_password
+
+  # API
+  api_reboot_timeout: "30min"
+
+esphome:
+  name: halo-v1
+  friendly_name: Halo Air Quality Sensor
+  name_add_mac_suffix: true
+
+  # # ⚠️ ONE-TIME: Clear Improv WiFi credentials on next boot
+  # # REMOVE or comment out after one boot!
+  # on_boot:
+  #   - priority: 800  # Run very early, before WiFi
+  #     then:
+  #       - lambda: |-
+  #           ESP_LOGW("main", "ONE-TIME: Clearing Improv WiFi credentials from NVS");
+  #           auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
+  #           uint8_t dummy = 0;
+  #           pref.save(&dummy);
+  #           ESP_LOGI("main", "Improv WiFi credentials cleared! YAML WiFi will be used.");
+  #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
+
+  platformio_options:
+    upload_speed: 921600
+    board_build.flash_mode: qio
+    board_build.psram_type: opi
+    board_build.f_flash: 80000000L
+    board_build.f_cpu: 240000000L
+
+  min_version: 2025.10.3
+
+  project:
+    name: "yashmulgaonkar.Halo-v1"
+    version: "${version}"
+
+dashboard_import:
+  package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@main
+  import_full_config: true
+
+ota:
+  - platform: esphome
+    id: ota_default
+
+wifi:
+  on_connect:
+    - delay: 5s # Gives time for improv results to be transmitted
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Halo Hotspot"
+
+# logger:
+#   level: DEBUG
+#   logs:
+#     component: INFO       # Suppress component setup messages
+#     wifi: INFO            # Suppress WiFi debug messages
+#     api: INFO             # Keep general API at INFO
+#     api.connection: DEBUG # But enable API connection debug for BLE proxy
+#     nimble_proxy: DEBUG 
+#     nimble_improv: DEBUG
+
+# ============================================================================
+# MODULAR PACKAGE IMPORTS
+# ============================================================================
+# Each package below represents a specific feature or component.
+# Packages are loaded from GitHub for easy updates and sharing.
+#
+# PHASE 1 STATUS: Foundation modules (globals, hardware, esphome_base) extracted
+# REMAINING: Core file still contains rest of config (will be extracted in Phases 2-4)
+# ============================================================================
+
+packages:
+  remote_packages:
+    url: https://github.com/truffshuff/halo/
+    ref: WireGuard  # TODO: Change to 'modular' branch after committing Phase 1
+    files:
+      # Phase 1: Foundation Modules (EXTRACTED)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
+
+      # Remaining Configuration (TEMPORARY - will be removed as Phases 2-4 complete)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+    refresh: Always
