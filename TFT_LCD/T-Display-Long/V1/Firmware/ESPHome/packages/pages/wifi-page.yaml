@@ -22,9 +22,13 @@
 #   - Navigation touch button
 # ============================================================================
 
+# ============================================================================
+# Display Configuration - WiFi & VPN Page
+# ============================================================================
+# This merges into the existing display component defined in hardware.yaml
+# ============================================================================
 display:
-  - platform: qspi_dbi
-    id: main_display
+  - id: lily_display
     pages:
       # ------------------------------------------------------------------------
       # WiFi & VPN Status Page
