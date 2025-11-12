@@ -1,0 +1,133 @@
+substitutions:
+
+  # Home Assistant connection for HTTP API calls
+  # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
+  ha_url: !secret ha_url  # Example: "http://homeassistant.local:8123"
+  ha_token: !secret ha_token  # Your long-lived access token
+
+  # Weather configuration (if enabled below)
+  weather_entity_id: "weather.hhut"
+  weather_daily_refresh_interval: "3600"  # 60 minutes for daily forecast
+  weather_hourly_refresh_interval: "900"  # 15 minutes for hourly forecast
+  current_temp_sensor: "sensor.st_00143056_temperature"  # Your actual sensor
+  apparent_temp_sensor: "sensor.st_00143056_feels_like"  # Your actual sensor
+  wind_speed_sensor: "sensor.st_00143056_wind_speed"  # Your actual sensor
+  wind_direction_sensor: "sensor.st_00143056_wind_direction"  # Your actual sensor
+
+  # Network Configuration
+  wifi_ssid: !secret wifihome_ssid
+  wifi_password: !secret wifihome_password
+
+  # Security
+  ota_password: !secret ota_password
+  
+  # API Configuration
+  api_reboot_timeout: "15min"
+
+esphome:
+  name: halo-v1-79e384
+  friendly_name: Halo Air Quality Sensor Dev
+  name_add_mac_suffix: false
+
+  # # ⚠️ ONE-TIME: Clear Improv WiFi credentials on next boot
+  # # REMOVE or comment out after one boot!
+  # on_boot:
+  #   - priority: 800  # Run very early, before WiFi
+  #     then:
+  #       - lambda: |-
+  #           ESP_LOGW("main", "ONE-TIME: Clearing Improv WiFi credentials from NVS");
+  #           auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
+  #           uint8_t dummy = 0;
+  #           pref.save(&dummy);
+  #           ESP_LOGI("main", "Improv WiFi credentials cleared! YAML WiFi will be used.");
+  #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
+
+  platformio_options:
+    upload_speed: 921600
+    board_build.flash_mode: qio
+    board_build.psram_type: opi
+    board_build.f_flash: 80000000L
+    board_build.f_cpu: 240000000L
+    build_flags:
+      - -DCONFIG_ARDUINO_LOOP_STACK_SIZE=16384
+      - -DCONFIG_ASYNC_TCP_STACK_SIZE=8192
+
+  min_version: 2025.10.3
+
+  project:
+    name: "yashmulgaonkar.Halo-v1"
+    version: "${version}"
+
+dashboard_import:
+  package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@test
+  import_full_config: true
+
+ota:
+  - platform: esphome
+    id: ota_default
+    safe_mode: false  # Disable safe mode to prevent boot loops
+
+wifi:
+  # Reduce WiFi transmission power to prevent brownouts during WiFi connection
+  # ESP32 default is 20dBm which can cause power spikes and crashes
+  # 8.5dBm is sufficient for most home networks and prevents brownout issues
+  output_power: 8.5dB
+
+  on_connect:
+    - delay: 5s # Gives time for improv results to be transmitted
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Halo Hotspot"
+
+# logger:
+#   level: DEBUG
+#   logs:
+#     component: INFO       # Suppress component setup messages
+#     wifi: INFO            # Suppress WiFi debug messages
+#     api: INFO             # Keep general API at INFO
+#     api.connection: DEBUG # But enable API connection debug for BLE proxy
+#     nimble_proxy: DEBUG 
+#     nimble_improv: DEBUG
+
+packages:
+  remote_package:
+    url: https://github.com/truffshuff/halo/
+    ref: Test
+    files:
+      # Phase 1: Foundation Modules (EXTRACTED)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
+
+      # Remaining Configuration (TEMPORARY - will be removed as Phases 2-4 complete)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+    refresh: Always
+
+# ============================================================================
+# MEMORY OPTIMIZATION OVERRIDES
+# ============================================================================
+# Problem: Min free heap is 2KB (critical!) due to excessive stack/buffer allocation
+# Core config allocates 128KB for stacks + 32KB+ for TCP buffers
+# Solution: Reduce stack sizes and TCP buffers while maintaining functionality
+# ============================================================================
+
+esp32:
+  framework:
+    sdkconfig_options:
+      # Reduce stack sizes from 64KB to 24KB each (saves 80KB RAM!)
+      # 24KB is still plenty for LVGL operations without hourly forecast deep nesting
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "24576"    # Was 65536
+      CONFIG_ARDUINO_LOOP_STACK_SIZE: "24576"     # Was 65536
+
+      # Reduce TCP buffers (saves ~16KB RAM)
+      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "8192"     # Was 16384
+      CONFIG_LWIP_TCP_WND_DEFAULT: "8192"         # Was 16384
+      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "8"          # Was 12
+      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "32"       # Was 64
+
+      # Keep PSRAM allocations internal for small objects (helps heap fragmentation)
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "8192" # Was 16384 (saves 8KB)
+
+      # Target: Recover ~100KB of internal RAM
+      # Expected min free heap after changes: 30-40KB (was 2KB)
