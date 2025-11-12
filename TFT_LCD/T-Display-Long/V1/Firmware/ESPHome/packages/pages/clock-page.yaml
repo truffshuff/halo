@@ -156,11 +156,12 @@ script:
                    id(current_page_name).c_str());
 
 # ============================================================================
-# Display Configuration
+# Display Configuration - Clock Page
+# ============================================================================
+# This merges into the existing display component defined in hardware.yaml
 # ============================================================================
 display:
-  - platform: qspi_dbi
-    id: main_display
+  - id: lily_display
     pages:
       # ------------------------------------------------------------------------
       # Vertical Clock Page
