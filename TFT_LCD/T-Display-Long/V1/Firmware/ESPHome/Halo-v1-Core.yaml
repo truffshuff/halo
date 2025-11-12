@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.2116
+# Version: 25.11.11.2121
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.2116"
+  version: "25.11.11.2121"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -7673,47 +7673,33 @@ light:
             } else if (condition.find("snowy-rainy") != std::string::npos) {
               color = Color(175, 238, 238);  // Light Cyan
             } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
-              // Lightning: realistic lightning effect with white and pink flashes
+              // Lightning: constant pink glow with random white flashes on individual LEDs
               unsigned long now = millis();
-              static unsigned long flash_until = 0;
-              static unsigned long next_flash_sequence_weather = 0;
-              static int flash_stage_weather = 0;
-              static unsigned long last_stage_change_weather = 0;
+              static std::vector<unsigned long> led_flash_until_weather;
 
-              if (now < flash_until) {
-                // Multi-stage lightning flash
-                if (flash_stage_weather == 0) {
-                  color = Color(255, 255, 255);  // Bright white flash
-                } else if (flash_stage_weather == 1) {
-                  color = Color(255, 100, 180);  // Quick fade to pink
-                } else if (flash_stage_weather == 2) {
-                  color = Color(255, 255, 255);  // Bright white strike again
-                } else if (flash_stage_weather == 3) {
-                  color = Color(255, 20, 147);  // Deep pink glow
+              // Initialize flash timers if needed
+              if (led_flash_until_weather.size() != it.size()) {
+                led_flash_until_weather.resize(it.size(), 0);
+              }
+
+              // Set base pink glow for all LEDs
+              it.all() = Color(255, 20, 147);  // Deep Pink base
+
+              // Each LED has a chance to flash white
+              for (int i = 0; i < it.size(); i++) {
+                if (now < led_flash_until_weather[i]) {
+                  // This LED is currently flashing white
+                  it[i] = Color(255, 255, 255);  // Bright white flash
                 } else {
-                  color = Color(200, 200, 255);  // Final white flicker
-                }
-                // Advance flash stage every ~40-80ms
-                if (now - last_stage_change_weather > 40 + (esp_random() % 40)) {
-                  flash_stage_weather = (flash_stage_weather + 1) % 5;
-                  last_stage_change_weather = now;
-                }
-              } else {
-                // Check if we should start a new lightning sequence
-                if (now >= next_flash_sequence_weather) {
-                  if ((esp_random() % 1000) < 12) {  // ~1.2% chance per call
-                    flash_until = now + 200 + (esp_random() % 300);
-                    flash_stage_weather = 0;
-                    last_stage_change_weather = now;
-                    next_flash_sequence_weather = flash_until + 100 + (esp_random() % 400);
-                    color = Color(255, 255, 255);
-                  } else {
-                    color = Color(0, 0, 0);  // Dark background between flashes
+                  // Random chance to start a new white flash on this LED
+                  if ((esp_random() % 1000) < 8) {  // ~0.8% chance per LED per update
+                    // Flash for 40-120ms
+                    led_flash_until_weather[i] = now + 40 + (esp_random() % 80);
+                    it[i] = Color(255, 255, 255);
                   }
-                } else {
-                  color = Color(0, 0, 0);
                 }
               }
+              return;
             } else if (condition.find("partlycloudy") != std::string::npos) {
               color = Color(135, 206, 250);  // Light Sky Blue
             } else if (condition.find("cloudy") != std::string::npos) {
@@ -7734,58 +7720,32 @@ light:
           name: "Pink Lightning"
           update_interval: 100ms
           lambda: |-
-            // Realistic lightning effect with pink and white flashes
+            // Constant pink glow with random white lightning strikes on individual LEDs
             unsigned long now = millis();
-            static unsigned long flash_until_pink = 0;
-            static unsigned long next_flash_sequence = 0;
-            static int flash_stage = 0;
+            static std::vector<unsigned long> led_flash_until;
 
-            Color color = Color(0, 0, 0);
+            // Initialize flash timers if needed
+            if (led_flash_until.size() != it.size()) {
+              led_flash_until.resize(it.size(), 0);
+            }
 
-            if (now < flash_until_pink) {
-              // Multi-stage lightning flash
-              if (flash_stage == 0) {
-                // Initial bright white flash
-                color = Color(255, 255, 255);
-              } else if (flash_stage == 1) {
-                // Quick fade to pink
-                color = Color(255, 100, 180);
-              } else if (flash_stage == 2) {
-                // Bright white strike again
-                color = Color(255, 255, 255);
-              } else if (flash_stage == 3) {
-                // Deep pink glow
-                color = Color(255, 20, 147);
+            // Set base pink glow for all LEDs
+            it.all() = Color(255, 20, 147);  // Deep Pink base
+
+            // Each LED has a chance to flash white
+            for (int i = 0; i < it.size(); i++) {
+              if (now < led_flash_until[i]) {
+                // This LED is currently flashing white
+                it[i] = Color(255, 255, 255);  // Bright white flash
               } else {
-                // Final white flicker
-                color = Color(200, 200, 255);
-              }
-            } else {
-              // Check if we should start a new lightning sequence
-              if (now >= next_flash_sequence) {
-                // ~15% chance per update to start a flash
-                if ((esp_random() % 1000) < 150) {
-                  // Random duration for the entire sequence (200-500ms)
-                  flash_until_pink = now + 200 + (esp_random() % 300);
-                  flash_stage = 0;
-                  // Schedule next possible sequence
-                  next_flash_sequence = flash_until_pink + 100 + (esp_random() % 400);
-                } else {
-                  color = Color(0, 0, 0);
+                // Random chance to start a new white flash on this LED
+                if ((esp_random() % 1000) < 8) {  // ~0.8% chance per LED per update
+                  // Flash for 40-120ms
+                  led_flash_until[i] = now + 40 + (esp_random() % 80);
+                  it[i] = Color(255, 255, 255);
                 }
-              } else {
-                color = Color(0, 0, 0);
               }
             }
-
-            // Advance flash stage every ~40-80ms
-            static unsigned long last_stage_change = 0;
-            if (now < flash_until_pink && now - last_stage_change > 40 + (esp_random() % 40)) {
-              flash_stage = (flash_stage + 1) % 5;
-              last_stage_change = now;
-            }
-
-            it.all() = color;
       - addressable_lambda:
           name: "Auto Context"
           update_interval: 100ms
@@ -7826,47 +7786,33 @@ light:
               } else if (condition.find("snowy-rainy") != std::string::npos) {
                 color = Color(175, 238, 238);  // Light Cyan
               } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
-                // Lightning: realistic lightning effect with white and pink flashes
+                // Lightning: constant pink glow with random white flashes on individual LEDs
                 unsigned long now = millis();
-                static unsigned long flash_until_auto = 0;
-                static unsigned long next_flash_sequence_auto = 0;
-                static int flash_stage_auto = 0;
-                static unsigned long last_stage_change_auto = 0;
+                static std::vector<unsigned long> led_flash_until_auto;
 
-                if (now < flash_until_auto) {
-                  // Multi-stage lightning flash
-                  if (flash_stage_auto == 0) {
-                    color = Color(255, 255, 255);  // Bright white flash
-                  } else if (flash_stage_auto == 1) {
-                    color = Color(255, 100, 180);  // Quick fade to pink
-                  } else if (flash_stage_auto == 2) {
-                    color = Color(255, 255, 255);  // Bright white strike again
-                  } else if (flash_stage_auto == 3) {
-                    color = Color(255, 20, 147);  // Deep pink glow
+                // Initialize flash timers if needed
+                if (led_flash_until_auto.size() != it.size()) {
+                  led_flash_until_auto.resize(it.size(), 0);
+                }
+
+                // Set base pink glow for all LEDs
+                it.all() = Color(255, 20, 147);  // Deep Pink base
+
+                // Each LED has a chance to flash white
+                for (int i = 0; i < it.size(); i++) {
+                  if (now < led_flash_until_auto[i]) {
+                    // This LED is currently flashing white
+                    it[i] = Color(255, 255, 255);  // Bright white flash
                   } else {
-                    color = Color(200, 200, 255);  // Final white flicker
-                  }
-                  // Advance flash stage every ~40-80ms
-                  if (now - last_stage_change_auto > 40 + (esp_random() % 40)) {
-                    flash_stage_auto = (flash_stage_auto + 1) % 5;
-                    last_stage_change_auto = now;
-                  }
-                } else {
-                  // Check if we should start a new lightning sequence
-                  if (now >= next_flash_sequence_auto) {
-                    if ((esp_random() % 1000) < 12) {  // ~1.2% chance per call
-                      flash_until_auto = now + 200 + (esp_random() % 300);
-                      flash_stage_auto = 0;
-                      last_stage_change_auto = now;
-                      next_flash_sequence_auto = flash_until_auto + 100 + (esp_random() % 400);
-                      color = Color(255, 255, 255);
-                    } else {
-                      color = Color(0, 0, 0);
+                    // Random chance to start a new white flash on this LED
+                    if ((esp_random() % 1000) < 8) {  // ~0.8% chance per LED per update
+                      // Flash for 40-120ms
+                      led_flash_until_auto[i] = now + 40 + (esp_random() % 80);
+                      it[i] = Color(255, 255, 255);
                     }
-                  } else {
-                    color = Color(0, 0, 0);
                   }
                 }
+                return;
               } else if (condition.find("partlycloudy") != std::string::npos) {
                 color = Color(135, 206, 250);  // Light Sky Blue
               } else if (condition.find("cloudy") != std::string::npos) {
