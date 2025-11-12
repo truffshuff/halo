@@ -22,9 +22,13 @@
 #   - Auto-updates sensor values on page load
 # ============================================================================
 
+# ============================================================================
+# Display Configuration - Air Quality Page
+# ============================================================================
+# This merges into the existing display component defined in hardware.yaml
+# ============================================================================
 display:
-  - platform: qspi_dbi
-    id: main_display
+  - id: lily_display
     pages:
       # ------------------------------------------------------------------------
       # Air Quality Page
@@ -160,7 +164,7 @@ display:
                 - lvgl.label.update:
                     id: ethanol_value
                     text_color: !lambda |-
-                      float ethanol_val = id(ethanol).state);
+                      float ethanol_val = id(ethanol).state;
                       if (ethanol_val <= 0.5) return id(my_green);
                       else if (ethanol_val <= 1.5) return id(my_yellow);
                       else if (ethanol_val <= 3.0) return id(my_orange);

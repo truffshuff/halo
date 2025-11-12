@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.12.1854
+# Version: 25.11.12.1859
 # Last Updated: November 12, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.12.1854"
+  version: "25.11.12.1859"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -6462,24 +6462,21 @@ lvgl:
         - color: 0x00FF00  # Green - strong signal
           position: 255
 
-  # IMPORTANT: Pages are now defined in device-specific configs
-  # Include one of these packages in your device file:
-  #   - lvgl-pages-full.yaml (all features)
-  #   - lvgl-pages-airq-only.yaml (clock + AirQ)
-  #   - lvgl-pages-weather.yaml (clock + weather)
-  #   - lvgl-pages-clock-only.yaml (minimal clock)
-  #
-  # Example in device file:
-  # packages:
-  #   lvgl_pages:
-  #     url: https://github.com/truffshuff/halo/
-  #     ref: main
-  #     files: [TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/lvgl-pages-airq-only.yaml]
-  #     refresh: always
-  pages:
-    # Weather Forecast Page (Page 3)
-    # Main weather display with current conditions
-    - id: weather_forecast_page
+  # IMPORTANT: Pages are now modularized into separate package files
+  # Phase 2 pages (clock, airq, wifi) are in packages/pages/
+  # Remaining weather pages are still defined here (will be extracted in Phase 3)
+
+# ============================================================================
+# Display Configuration - Weather Pages
+# ============================================================================
+# This merges into the existing display component defined in hardware.yaml
+# ============================================================================
+display:
+  - id: lily_display
+    pages:
+      # Weather Forecast Page (Page 3)
+      # Main weather display with current conditions
+      - id: weather_forecast_page
       bg_color: 0x000000
       bg_opa: COVER
       scrollbar_mode: "OFF"
