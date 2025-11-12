@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.12.0946
+# Version: 25.11.12.1353
 # Last Updated: November 12, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.12.0946"
+  version: "25.11.12.1353"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -2681,77 +2681,41 @@ script:
       - lvgl.label.update:
           id: lbl_weather_forecast_condition_name
           text: !lambda |-
+            using namespace weather_helpers;
             if (id(weather_current_condition).empty()) {
               return std::string("Unknown");
             }
-            // Format condition text to be more readable
-            std::string condition = id(weather_current_condition);
-            if (condition == "clear-night") return std::string("Clear Night");
-            if (condition == "cloudy") return std::string("Cloudy");
-            if (condition == "fog") return std::string("Fog");
-            if (condition == "lightning") return std::string("Lightning");
-            if (condition == "lightning-rainy") return std::string("Lightning & Rain");
-            if (condition == "partlycloudy") return std::string("Partly Cloudy");
-            if (condition == "rainy") return std::string("Rainy");
-            if (condition == "snowy") return std::string("Snowy");
-            if (condition == "snowy-rainy") return std::string("Sleet");
-            if (condition == "sunny") return std::string("Sunny");
-            if (condition == "windy") return std::string("Windy");
-            // Return capitalized version if not matched
-            if (!condition.empty()) {
-              condition[0] = toupper(condition[0]);
-            }
-            return condition;
+            return format_condition_text(id(weather_current_condition));
 
       - lvgl.label.update:
           id: lbl_weather_today_outdoor_temp
           text: !lambda |-
-            if (isnan(id(weather_current_temp))) {
-              return std::string("--.- °F");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
-            return std::string(buf);
+            using namespace weather_helpers;
+            return format_temp_precise(id(weather_current_temp)) + " °F";
 
       - lvgl.label.update:
           id: lbl_weather_today_tempap
           text: !lambda |-
-            if (isnan(id(weather_current_apparent_temp))) {
-              return std::string("--°");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
-            return std::string(buf);
+            using namespace weather_helpers;
+            return format_temp(id(weather_current_apparent_temp));
 
       - lvgl.label.update:
           id: lbl_weather_forecast_temphi
           text: !lambda |-
-            if (isnan(id(weather_forecast_temp_high)[0])) {
-              return std::string("H: --°");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
-            return std::string(buf);
+            using namespace weather_helpers;
+            return "H: " + format_temp(id(weather_forecast_temp_high)[0]);
 
       - lvgl.label.update:
           id: lbl_weather_forecast_templo
           text: !lambda |-
-            if (isnan(id(weather_forecast_temp_low)[0])) {
-              return std::string("L: --°");
-            }
-            char buf[16];
-            snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
-            return std::string(buf);
+            using namespace weather_helpers;
+            return "L: " + format_temp(id(weather_forecast_temp_low)[0]);
 
       - lvgl.label.update:
           id: lbl_weather_today_dailyprecipprob
           text: !lambda |-
-            if (isnan(id(weather_forecast_precip_prob)[0])) {
-              return std::string("Chance: --%");
-            }
-            char buf[32];
-            snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
-            return std::string(buf);
+            using namespace weather_helpers;
+            return "Chance: " + format_percent(id(weather_forecast_precip_prob)[0]);
 
       - lvgl.label.update:
           id: lbl_wind_speed
@@ -2763,18 +2727,8 @@ script:
       - lvgl.label.update:
           id: lbl_wind_direction_text
           text: !lambda |-
-            float b = id(wind_direction_sensor).state;
-            if (std::isnan(b)) return std::string("--");
-            const char* dir;
-            if (b >= 337.5 || b < 22.5) dir = "N";
-            else if (b >= 22.5 && b < 67.5) dir = "NE";
-            else if (b >= 67.5 && b < 112.5) dir = "E";
-            else if (b >= 112.5 && b < 157.5) dir = "SE";
-            else if (b >= 157.5 && b < 202.5) dir = "S";
-            else if (b >= 202.5 && b < 247.5) dir = "SW";
-            else if (b >= 247.5 && b < 292.5) dir = "W";
-            else dir = "NW";
-            return std::string(dir);
+            using namespace weather_helpers;
+            return bearing_to_direction(id(wind_direction_sensor).state);
       - lvgl.indicator.update:
           id: wind_compass_needle
           value: !lambda |-
