@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.12.0809
+# Version: 25.11.12.0927
 # Last Updated: November 12, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.12.0809"
+  version: "25.11.12.0927"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -2140,71 +2140,12 @@ script:
             - lvgl.label.update:
                 id: lbl_weather_forecast_condition_icon
                 text: !lambda |-
-                  // Map normalized condition to Material Design Icon glyph
-                  const std::string condition = id(weather_last_condition);
-                  // Specific combos first
-                  if (condition.find("lightning-rainy") != std::string::npos) {
-                    return std::string("\U000F067E");
-                  } else if (condition.find("snowy-rainy") != std::string::npos) {
-                    return std::string("\U000F067F");
-                  } else if (condition.find("clear-night") != std::string::npos) {
-                    return std::string("\U000F0594");
-                  } else if (condition.find("partlycloudy") != std::string::npos) {
-                    return std::string("\U000F0595");
-                  } else if (condition.find("lightning") != std::string::npos) {
-                    return std::string("\U000F0593");
-                  } else if (condition.find("snowy") != std::string::npos) {
-                    return std::string("\U000F0598");
-                  } else if (condition.find("rainy") != std::string::npos) {
-                    return std::string("\U000F0597");
-                  } else if (condition.find("fog") != std::string::npos) {
-                    return std::string("\U000F0591");
-                  } else if (condition.find("windy") != std::string::npos) {
-                    return std::string("\U000F059D");
-                  } else if (condition.find("cloudy") != std::string::npos) {
-                    return std::string("\U000F0590");
-                  } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
-                    return std::string("\U000F0599");
-                  }
-                  // Default/fallback icon
-                  return std::string("\U000F14E4");
+                  using namespace weather_helpers;
+                  return get_weather_icon(id(weather_last_condition));
                 text_color: !lambda |-
-                  const std::string condition = id(weather_last_condition);
-                  ESP_LOGD("weather_color", "Applying color for condition: '%s'", condition.c_str());
-                  if (condition.find("clear-night") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Slate Blue color (night)");
-                    return lv_color_hex(0x6A5ACD);
-                  } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Gold color");
-                    return lv_color_hex(0xFFD700);
-                  } else if (condition.find("snowy-rainy") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Light Cyan color (mixed precipitation)");
-                    return lv_color_hex(0xAFEEEE);
-                  } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Deep Pink color");
-                    return lv_color_hex(0xFF1493);
-                  } else if (condition.find("partlycloudy") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Light Sky Blue color");
-                    return lv_color_hex(0x87CEFA);
-                  } else if (condition.find("cloudy") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Dark Gray color");
-                    return lv_color_hex(0xA9A9A9);
-                  } else if (condition.find("rainy") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Royal Blue color");
-                    return lv_color_hex(0x4169E1);
-                  } else if (condition.find("snowy") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Gainsboro color");
-                    return lv_color_hex(0xDCDCDC);
-                  } else if (condition.find("fog") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Light Steel Blue color");
-                    return lv_color_hex(0xB0C4DE);
-                  } else if (condition.find("windy") != std::string::npos) {
-                    ESP_LOGD("weather_color", "Setting Light Green color");
-                    return lv_color_hex(0x90EE90);
-                  } else {
-                    ESP_LOGD("weather_color", "Setting White color (default)");
-                    return lv_color_hex(0xFFFFFF);
-                  }
+                  using namespace weather_helpers;
+                  ESP_LOGD("weather_color", "Applying color for condition: '%s'", id(weather_last_condition).c_str());
+                  return lv_color_hex(get_weather_icon_color(id(weather_last_condition)));
       - lambda: |-
           const uint32_t elapsed = millis() - id(weather_last_started);
           id(weather_last_duration) = elapsed;
@@ -5107,38 +5048,8 @@ script:
             return std::string("Day +2 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day2_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[1];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[1];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[1]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[1]));'
       - lvgl.label.update:
           id: lbl_forecast_day2_temps
           text: !lambda |-
@@ -5258,38 +5169,8 @@ script:
             return std::string("Day +3 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day3_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[2];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[2];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[2]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[2]));'
       - lvgl.label.update:
           id: lbl_forecast_day3_temps
           text: !lambda |-
@@ -5407,38 +5288,8 @@ script:
             return std::string("Day +4 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day4_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[3];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[3];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[3]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[3]));'
       - lvgl.label.update:
           id: lbl_forecast_day4_temps
           text: !lambda |-
@@ -5556,38 +5407,8 @@ script:
             return std::string("Day +5 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day5_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[4];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[4];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[4]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[4]));'
       - lvgl.label.update:
           id: lbl_forecast_day5_temps
           text: !lambda |-
@@ -5705,38 +5526,8 @@ script:
             return std::string("Day +6 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day6_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[5];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[5];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[5]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[5]));'
       - lvgl.label.update:
           id: lbl_forecast_day6_temps
           text: !lambda |-
@@ -5854,38 +5645,8 @@ script:
             return std::string("Day +7 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day7_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[6];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[6];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[6]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[6]));'
       - lvgl.label.update:
           id: lbl_forecast_day7_temps
           text: !lambda |-
@@ -6003,38 +5764,8 @@ script:
             return std::string("Day +8 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day8_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[7];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[7];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[7]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[7]));'
       - lvgl.label.update:
           id: lbl_forecast_day8_temps
           text: !lambda |-
@@ -6152,38 +5883,8 @@ script:
             return std::string("Day +9 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day9_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[8];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[8];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[8]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[8]));'
       - lvgl.label.update:
           id: lbl_forecast_day9_temps
           text: !lambda |-
@@ -6245,38 +5946,8 @@ script:
             return std::string("Day +10 (--/--)");
       - lvgl.label.update:
           id: lbl_forecast_day10_icon
-          text: !lambda |-
-            std::string condition = id(weather_forecast_condition)[9];
-            if (condition.empty()) return std::string("\U000F14E4");  // question-mark-circle icon
-            if (condition == "clear-night") return std::string("\U000F0594");
-            if (condition == "cloudy") return std::string("\U000F0590");
-            if (condition == "exceptional") return std::string("\U000F0F2F");
-            if (condition == "fog") return std::string("\U000F0591");
-            if (condition == "hail") return std::string("\U000F0592");
-            if (condition == "lightning") return std::string("\U000F0593");
-            if (condition == "lightning-rainy") return std::string("\U000F067E");
-            if (condition == "partlycloudy") return std::string("\U000F0595");
-            if (condition == "pouring") return std::string("\U000F0596");
-            if (condition == "rainy") return std::string("\U000F0597");
-            if (condition == "snowy") return std::string("\U000F0598");
-            if (condition == "snowy-rainy") return std::string("\U000F067F");
-            if (condition == "sunny") return std::string("\U000F0599");
-            if (condition == "windy") return std::string("\U000F059D");
-            if (condition == "windy-variant") return std::string("\U000F059E");
-            return std::string("\U000F0599");
-          text_color: !lambda |-
-            std::string condition = id(weather_forecast_condition)[9];
-            if (condition.find("clear-night") != std::string::npos) return lv_color_hex(0x6A5ACD);
-            else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) return lv_color_hex(0xFFD700);
-            else if (condition.find("snowy-rainy") != std::string::npos) return lv_color_hex(0xAFEEEE);
-            else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) return lv_color_hex(0xFF1493);
-            else if (condition.find("partlycloudy") != std::string::npos) return lv_color_hex(0x87CEFA);
-            else if (condition.find("cloudy") != std::string::npos) return lv_color_hex(0xA9A9A9);
-            else if (condition.find("rainy") != std::string::npos || condition.find("pouring") != std::string::npos) return lv_color_hex(0x4169E1);
-            else if (condition.find("snowy") != std::string::npos) return lv_color_hex(0xDCDCDC);
-            else if (condition.find("fog") != std::string::npos) return lv_color_hex(0xB0C4DE);
-            else if (condition.find("windy") != std::string::npos) return lv_color_hex(0x90EE90);
-            else return lv_color_hex(0xFFFFFF);
+          text: !lambda 'return weather_helpers::get_weather_icon(id(weather_forecast_condition)[9]);'
+          text_color: !lambda 'return lv_color_hex(weather_helpers::get_weather_icon_color(id(weather_forecast_condition)[9]));'
       - lvgl.label.update:
           id: lbl_forecast_day10_temps
           text: !lambda |-
@@ -7815,11 +7486,12 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 50%  # Reduced from 75% to prevent memory exhaustion on complex pages
-                    # Fixes reboot issues when navigating to hourly/weather forecast pages
-                    # Trade-off: slightly more tearing, but stable operation
-  # Use DMAable PSRAM for frame buffers (ESP32-S3 feature)
-  # This combines DMA capability with external PSRAM for optimal performance
+  buffer_size: 30%  # Optimized for memory: 30% buffer (~69KB for 180x640@16bit)
+                    # Allocated to PSRAM to preserve internal RAM for stack/heap
+                    # Trade-off: minimal tearing, stable operation with ~50KB more free heap
+  draw_buf_location: PSRAM  # Explicitly allocate draw buffers to PSRAM (ESP32-S3 8MB)
+                             # Moves ~69KB buffer from internal RAM to external PSRAM
+                             # Significantly improves min free heap (target: 25KB+)
   byte_order: big_endian
   color_depth: 16
   
