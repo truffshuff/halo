@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1914
+# Version: 25.11.11.1945
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1914"
+  version: "25.11.11.1945"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -9839,12 +9839,21 @@ lvgl:
               - delay: 50ms
               - script.execute: update_hourly_summary_page_1
       widgets:
-        # Header area - clickable to go to next page in rotation
+        # Page title at the top
+        - label:
+            text: "12-Hour Summary (1-12)"
+            align: TOP_MID
+            y: 2
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        # Top navigation area - clickable to go to next page in rotation
         - obj:
             id: nav_button_hourly_sum_page_1
-            width: 180
-            height: 150
-            align: TOP_RIGHT
+            width: 100%
+            height: 25
+            align: TOP_MID
             y: 0
             x: 0
             bg_opa: 0
@@ -9859,13 +9868,6 @@ lvgl:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
-            widgets:
-              - label:
-                  text: "12-Hour Summary (1-12)"
-                  align: CENTER
-                  text_font: montserrat_14
-                  text_color: my_white
-                  text_align: CENTER
 
         # Container for 12 rows - clickable to toggle to page 2
         - obj:
@@ -9873,10 +9875,10 @@ lvgl:
             width: 100%
             height: SIZE_CONTENT
             align: TOP_MID
-            y: 25
+            y: 22
             bg_opa: 0
             border_width: 0
-            pad_all: 2
+            pad_all: 1
             layout:
               type: flex
               flex_flow: column
@@ -9898,12 +9900,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_1
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -9919,13 +9921,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour1_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour1_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -9939,12 +9941,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_2
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -9960,13 +9962,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour2_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour2_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -9980,12 +9982,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_3
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10001,13 +10003,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour3_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour3_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10021,12 +10023,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_4
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10042,13 +10044,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour4_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour4_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10062,12 +10064,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_5
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10083,13 +10085,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour5_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour5_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10103,12 +10105,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_6
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10124,13 +10126,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour6_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour6_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10144,12 +10146,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_7
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10165,13 +10167,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour7_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour7_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10185,12 +10187,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_8
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10206,13 +10208,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour8_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour8_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10226,12 +10228,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_9
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10247,13 +10249,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour9_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour9_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10267,12 +10269,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_10
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10288,13 +10290,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour10_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour10_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10308,12 +10310,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_11
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10329,13 +10331,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour11_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour11_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10349,12 +10351,12 @@ lvgl:
               - obj:
                   id: hourly_sum1_row_12
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10370,13 +10372,13 @@ lvgl:
                     - label:
                         id: lbl_sum1_hour12_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum1_hour12_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10412,12 +10414,21 @@ lvgl:
               - delay: 50ms
               - script.execute: update_hourly_summary_page_2
       widgets:
-        # Header area - clickable to go to next page in rotation
+        # Page title at the top
+        - label:
+            text: "12-Hour Summary (13-24)"
+            align: TOP_MID
+            y: 2
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        # Top navigation area - clickable to go to next page in rotation
         - obj:
             id: nav_button_hourly_sum_page_2
-            width: 180
-            height: 150
-            align: TOP_RIGHT
+            width: 100%
+            height: 25
+            align: TOP_MID
             y: 0
             x: 0
             bg_opa: 0
@@ -10432,13 +10443,6 @@ lvgl:
               - lvgl.page.next:
                   animation: OUT_LEFT
                   time: 300ms
-            widgets:
-              - label:
-                  text: "12-Hour Summary (1-12)"
-                  align: CENTER
-                  text_font: montserrat_14
-                  text_color: my_white
-                  text_align: CENTER
 
         # Container for 12 rows - clickable to toggle to page 1
         - obj:
@@ -10446,10 +10450,10 @@ lvgl:
             width: 100%
             height: SIZE_CONTENT
             align: TOP_MID
-            y: 25
+            y: 22
             bg_opa: 0
             border_width: 0
-            pad_all: 2
+            pad_all: 1
             layout:
               type: flex
               flex_flow: column
@@ -10471,12 +10475,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_13
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10492,13 +10496,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour13_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour13_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10512,12 +10516,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_14
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10533,13 +10537,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour14_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour14_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10553,12 +10557,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_15
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10574,13 +10578,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour15_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour15_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10594,12 +10598,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_16
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10615,13 +10619,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour16_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour16_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10635,12 +10639,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_17
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10656,13 +10660,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour17_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour17_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10676,12 +10680,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_18
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10697,13 +10701,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour18_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour18_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10717,12 +10721,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_19
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10738,13 +10742,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour19_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour19_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10758,12 +10762,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_20
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10779,13 +10783,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour20_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour20_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10799,12 +10803,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_21
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10820,13 +10824,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour21_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour21_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10840,12 +10844,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_22
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10861,13 +10865,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour22_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour22_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10881,12 +10885,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_23
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10902,13 +10906,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour23_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour23_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
@@ -10922,12 +10926,12 @@ lvgl:
               - obj:
                   id: hourly_sum2_row_24
                   width: 170
-                  height: 45
+                  height: 41
                   bg_color: 0x101010
                   bg_opa: COVER
                   border_width: 0
-                  radius: 4
-                  pad_all: 3
+                  radius: 3
+                  pad_all: 2
                   layout:
                     type: flex
                     flex_flow: row
@@ -10943,13 +10947,13 @@ lvgl:
                     - label:
                         id: lbl_sum2_hour24_icon
                         text: "\U000F14E4"
-                        text_font: icons_20
+                        text_font: icons_24
                         text_color: my_white
                         width: 30
                     - label:
                         id: lbl_sum2_hour24_temp
                         text: "--°"
-                        text_font: montserrat_14
+                        text_font: montserrat_16
                         text_color: my_white
                         width: 40
                     - label:
