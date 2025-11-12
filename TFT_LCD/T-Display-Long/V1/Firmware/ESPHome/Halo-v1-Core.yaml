@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1902
+# Version: 25.11.11.1914
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1902"
+  version: "25.11.11.1914"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -6738,9 +6738,9 @@ sensor:
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 5000.0       # Only send if changes by ±5KB
-      - heartbeat: 60s      # Force update every 60s (reduced from 300s)
+    # filters:
+    #   - delta: 5000.0       # Only send if changes by ±5KB
+    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
 
   - platform: template
     name: "Largest Free Block"
@@ -6748,9 +6748,9 @@ sensor:
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 5000.0       # Only send if changes by ±5KB
-      - heartbeat: 60s      # Force update every 60s (reduced from 300s)
+    # filters:
+    #   - delta: 5000.0       # Only send if changes by ±5KB
+    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
 
   - platform: template
     name: "Heap Fragmentation"
@@ -6765,9 +6765,9 @@ sensor:
     accuracy_decimals: 1
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 2.0          # Only send if fragmentation changes by ±2%
-      - heartbeat: 60s      # Force update every 60s (reduced from 300s)
+    # filters:
+    #   - delta: 2.0          # Only send if fragmentation changes by ±2%
+    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
 
   # DMA-capable memory monitoring
   - platform: template
@@ -6776,9 +6776,9 @@ sensor:
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 5000.0       # Only send if changes by ±5KB
-      - heartbeat: 60s      # Force update every 60s (reduced from 300s)
+    # filters:
+    #   - delta: 5000.0       # Only send if changes by ±5KB
+    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
 
   - platform: template
     name: "DMA Capable Largest Block"
@@ -6786,9 +6786,9 @@ sensor:
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 5000.0       # Only send if changes by ±5KB
-      - heartbeat: 60s      # Force update every 60s (reduced from 300s)
+    # filters:
+    #   - delta: 5000.0       # Only send if changes by ±5KB
+    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
 
   # PSRAM monitoring (if available)
   - platform: template
@@ -6802,9 +6802,9 @@ sensor:
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 50000.0      # Only send if PSRAM changes by ±50KB
-      - heartbeat: 120s     # Force update every 2 minutes (reduced from 300s)
+    # filters:
+    #   - delta: 50000.0      # Only send if PSRAM changes by ±50KB
+    #   - heartbeat: 120s     # Force update every 2 minutes (reduced from 300s)
 
   # Total free heap across all memory types
   - platform: template
@@ -6813,9 +6813,9 @@ sensor:
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 50000.0      # Only send if total heap changes by ±50KB
-      - heartbeat: 120s     # Force update every 2 minutes (reduced from 300s)
+    # filters:
+    #   - delta: 50000.0      # Only send if total heap changes by ±50KB
+    #   - heartbeat: 120s     # Force update every 2 minutes (reduced from 300s)
 
   # Minimum free heap since boot (indicates worst-case memory pressure)
   - platform: template
@@ -6824,9 +6824,9 @@ sensor:
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
-    filters:
-      - delta: 1000.0       # Only send if min heap changes by ±1KB (important metric)
-      - heartbeat: 60s      # Force update every 60s (reduced from 300s)
+    # filters:
+    #   - delta: 100.0       # Only send if min heap changes by ±1KB (important metric)
+    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
 
   # Display Activity Monitor - shows seconds since last display update
   - platform: template
