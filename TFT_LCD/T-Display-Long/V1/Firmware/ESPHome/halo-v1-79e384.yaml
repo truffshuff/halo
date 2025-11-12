@@ -95,6 +95,12 @@ packages:
     url: https://github.com/truffshuff/halo/
     ref: Test
     files:
+      # Phase 1: Foundation Modules (EXTRACTED)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
+
+      # Remaining Configuration (TEMPORARY - will be removed as Phases 2-4 complete)
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always
 
