@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.1814
+# Version: 25.11.11.1902
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.1814"
+  version: "25.11.11.1902"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -6736,7 +6736,7 @@ sensor:
     name: "Free Heap"
     lambda: return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
-    update_interval: 15s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 5000.0       # Only send if changes by ±5KB
@@ -6746,7 +6746,7 @@ sensor:
     name: "Largest Free Block"
     lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
-    update_interval: 15s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 5000.0       # Only send if changes by ±5KB
@@ -6763,7 +6763,7 @@ sensor:
       return 0.0;
     unit_of_measurement: "%"
     accuracy_decimals: 1
-    update_interval: 15s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 2.0          # Only send if fragmentation changes by ±2%
@@ -6774,7 +6774,7 @@ sensor:
     name: "DMA Capable Heap Free"
     lambda: return heap_caps_get_free_size(MALLOC_CAP_DMA);
     unit_of_measurement: "bytes"
-    update_interval: 15s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 5000.0       # Only send if changes by ±5KB
@@ -6784,7 +6784,7 @@ sensor:
     name: "DMA Capable Largest Block"
     lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
     unit_of_measurement: "bytes"
-    update_interval: 15s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 5000.0       # Only send if changes by ±5KB
@@ -6800,7 +6800,7 @@ sensor:
       }
       return 0;  // No PSRAM available
     unit_of_measurement: "bytes"
-    update_interval: 30s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 50000.0      # Only send if PSRAM changes by ±50KB
@@ -6811,7 +6811,7 @@ sensor:
     name: "Total Free Heap (All)"
     lambda: return heap_caps_get_free_size(MALLOC_CAP_8BIT);
     unit_of_measurement: "bytes"
-    update_interval: 30s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 50000.0      # Only send if total heap changes by ±50KB
@@ -6822,7 +6822,7 @@ sensor:
     name: "Min Free Heap Ever"
     lambda: return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
-    update_interval: 15s
+    update_interval: 5s
     entity_category: "diagnostic"
     filters:
       - delta: 1000.0       # Only send if min heap changes by ±1KB (important metric)
