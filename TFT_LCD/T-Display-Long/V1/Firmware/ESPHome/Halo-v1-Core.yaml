@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.2121
+# Version: 25.11.11.2147
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.2121"
+  version: "25.11.11.2147"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -706,12 +706,12 @@ font:
       "\U000F0595", # partlycloudy
       "\U000F0596", # pouring
       "\U000F0597", # rainy
-      "\U000F0F36", # snowy
+      "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
-      "\U000F0598", # sunny
-      "\U000F14E4", # sunny-off
+      "\U000F0599", # sunny
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -729,12 +729,12 @@ font:
       "\U000F0595", # partlycloudy
       "\U000F0596", # pouring
       "\U000F0597", # rainy
-      "\U000F0F36", # snowy
+      "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
-      "\U000F0598", # sunny
-      "\U000F14E4", # sunny-off
+      "\U000F0599", # sunny
       "\U000F059D", # windy
       "\U000F059E", # windy-variant
+      "\U000F14E4", # sunny-off
       ]
 
 # ============================================================================
