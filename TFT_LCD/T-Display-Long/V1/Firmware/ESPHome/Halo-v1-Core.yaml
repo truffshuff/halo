@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.2147
-# Last Updated: November 11, 2025
+# Version: 25.11.12.0809
+# Last Updated: November 12, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.2147"
+  version: "25.11.12.0809"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -581,21 +581,16 @@ font:
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
       "\U000F0591", # fog
-      "\U000F0592", # hail
       "\U000F0593", # lightning
       "\U000F067E", # lightning-rainy
       "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
       "\U000F0597", # rainy
       "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
       "\U000F0599", # sunny
       "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
-      
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -605,19 +600,15 @@ font:
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
       "\U000F0591", # fog
-      "\U000F0592", # hail
       "\U000F0593", # lightning
       "\U000F067E", # lightning-rainy
       "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
       "\U000F0597", # rainy
       "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
       "\U000F0599", # sunny
       "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
       "\U000F07D0", # home-assistant icon
       ]
@@ -629,19 +620,15 @@ font:
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
       "\U000F0591", # fog
-      "\U000F0592", # hail
       "\U000F0593", # lightning
       "\U000F067E", # lightning-rainy
       "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
       "\U000F0597", # rainy
       "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
       "\U000F0599", # sunny
       "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
       ]
 
@@ -652,19 +639,15 @@ font:
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
       "\U000F0591", # fog
-      "\U000F0592", # hail
       "\U000F0593", # lightning
       "\U000F067E", # lightning-rainy
       "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
       "\U000F0597", # rainy
       "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
       "\U000F0599", # sunny
       "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
       ]
 
@@ -675,19 +658,15 @@ font:
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
       "\U000F0591", # fog
-      "\U000F0592", # hail
       "\U000F0593", # lightning
       "\U000F067E", # lightning-rainy
       "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
       "\U000F0597", # rainy
       "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
       "\U000F0599", # sunny
       "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
       ]
 
@@ -698,19 +677,15 @@ font:
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
       "\U000F0591", # fog
-      "\U000F0592", # hail
       "\U000F0593", # lightning
       "\U000F067E", # lightning-rainy
       "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
       "\U000F0597", # rainy
       "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
       "\U000F0599", # sunny
       "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
       ]
 
@@ -721,19 +696,15 @@ font:
     glyphs: [
       "\U000F0594", # clear-night
       "\U000F0590", # cloudy
-      "\U000F0F2F", # exceptional
       "\U000F0591", # fog
-      "\U000F0592", # hail
       "\U000F0593", # lightning
       "\U000F067E", # lightning-rainy
       "\U000F0595", # partlycloudy
-      "\U000F0596", # pouring
       "\U000F0597", # rainy
       "\U000F0598", # snowy
       "\U000F067F", # snowy-rainy
       "\U000F0599", # sunny
       "\U000F059D", # windy
-      "\U000F059E", # windy-variant
       "\U000F14E4", # sunny-off
       ]
 
@@ -2180,28 +2151,20 @@ script:
                     return std::string("\U000F0594");
                   } else if (condition.find("partlycloudy") != std::string::npos) {
                     return std::string("\U000F0595");
-                  } else if (condition.find("pouring") != std::string::npos) {
-                    return std::string("\U000F0596");
                   } else if (condition.find("lightning") != std::string::npos) {
                     return std::string("\U000F0593");
                   } else if (condition.find("snowy") != std::string::npos) {
                     return std::string("\U000F0598");
                   } else if (condition.find("rainy") != std::string::npos) {
                     return std::string("\U000F0597");
-                  } else if (condition.find("hail") != std::string::npos) {
-                    return std::string("\U000F0592");
                   } else if (condition.find("fog") != std::string::npos) {
                     return std::string("\U000F0591");
-                  } else if (condition.find("windy-variant") != std::string::npos) {
-                    return std::string("\U000F059E");
                   } else if (condition.find("windy") != std::string::npos) {
                     return std::string("\U000F059D");
                   } else if (condition.find("cloudy") != std::string::npos) {
                     return std::string("\U000F0590");
                   } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
                     return std::string("\U000F0599");
-                  } else if (condition.find("exceptional") != std::string::npos) {
-                    return std::string("\U000F0F2F");
                   }
                   // Default/fallback icon
                   return std::string("\U000F14E4");
@@ -2784,19 +2747,15 @@ script:
             std::string condition = id(weather_current_condition);
             if (condition == "clear-night") return std::string("Clear Night");
             if (condition == "cloudy") return std::string("Cloudy");
-            if (condition == "exceptional") return std::string("Exceptional");
             if (condition == "fog") return std::string("Fog");
-            if (condition == "hail") return std::string("Hail");
             if (condition == "lightning") return std::string("Lightning");
             if (condition == "lightning-rainy") return std::string("Lightning & Rain");
             if (condition == "partlycloudy") return std::string("Partly Cloudy");
-            if (condition == "pouring") return std::string("Pouring");
             if (condition == "rainy") return std::string("Rainy");
             if (condition == "snowy") return std::string("Snowy");
             if (condition == "snowy-rainy") return std::string("Sleet");
             if (condition == "sunny") return std::string("Sunny");
             if (condition == "windy") return std::string("Windy");
-            if (condition == "windy-variant") return std::string("Windy Windy");
             // Return capitalized version if not matched
             if (!condition.empty()) {
               condition[0] = toupper(condition[0]);
