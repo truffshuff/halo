@@ -4,6 +4,20 @@
 # All global state variables used across HALO v1
 # Dependencies: None
 #
+# ⚠️ KNOWN ISSUE: This file contains 100+ globals, many of which could be
+# refactored to use better patterns (sensors, local variables, LVGL state).
+# The current implementation works but is not optimal.
+#
+# FUTURE REFACTORING OPPORTUNITIES (Phase 5+):
+#   - Weather data arrays (~45 vars) → Could use text sensors with JSON storage
+#   - UI render flags (~25 vars) → Could use sensor on_value triggers
+#   - Performance tracking (~6 vars) → Could be local to lambda functions
+#
+# LEGITIMATE GLOBALS (~30 vars):
+#   - User preferences with restore_value: yes (persist across reboots)
+#   - Cross-script shared state (locks, timestamps, current page)
+#   - State that must survive deep sleep or span multiple script executions
+#
 # This module contains 100+ global variables used for:
 #   - Page tracking and rotation
 #   - Weather data storage (current, daily forecast, hourly forecast)
