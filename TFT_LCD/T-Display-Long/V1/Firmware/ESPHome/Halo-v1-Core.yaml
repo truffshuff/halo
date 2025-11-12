@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.12.1637
+# Version: 25.11.12.1827
 # Last Updated: November 12, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.12.1637"
+  version: "25.11.12.1827"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -5206,9 +5206,9 @@ number:
     id: page_order_vertical_clock
     icon: mdi:numeric
     restore_value: true
-    initial_value: 6
+    initial_value: 1
     min_value: 1
-    max_value: 6
+    max_value: 7
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5226,7 +5226,7 @@ number:
     restore_value: true
     initial_value: 3
     min_value: 1
-    max_value: 6
+    max_value: 7
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5250,7 +5250,7 @@ number:
     restore_value: true
     initial_value: 4
     min_value: 1
-    max_value: 6
+    max_value: 7
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5274,7 +5274,7 @@ number:
     restore_value: true
     initial_value: 5
     min_value: 1
-    max_value: 6
+    max_value: 7
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5339,7 +5339,7 @@ number:
     restore_value: true
     initial_value: 1
     min_value: 1
-    max_value: 6
+    max_value: 7
     entity_category: "config"
     optimistic: true
     step: 1
@@ -5391,7 +5391,7 @@ number:
     restore_value: true
     initial_value: 2
     min_value: 1
-    max_value: 6
+    max_value: 7
     entity_category: "config"
     optimistic: true
     step: 1
