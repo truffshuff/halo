@@ -80,10 +80,26 @@ wifi:
 #     nimble_proxy: DEBUG 
 #     nimble_improv: DEBUG
 
+# ============================================================================
+# MODULAR PACKAGE IMPORTS
+# ============================================================================
+# Each package below represents a specific feature or component.
+# Packages are loaded from GitHub for easy updates and sharing.
+#
+# PHASE 1 STATUS: Foundation modules (globals, hardware, esphome_base) extracted
+# REMAINING: Core file still contains rest of config (will be extracted in Phases 2-4)
+# ============================================================================
+
 packages:
-  remote_package:
+  remote_packages:
     url: https://github.com/truffshuff/halo/
-    ref: WireGuard
+    ref: WireGuard  # TODO: Change to 'modular' branch after committing Phase 1
     files:
+      # Phase 1: Foundation Modules (EXTRACTED)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
+
+      # Remaining Configuration (TEMPORARY - will be removed as Phases 2-4 complete)
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always

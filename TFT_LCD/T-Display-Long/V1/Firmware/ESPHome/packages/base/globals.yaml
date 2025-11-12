@@ -1,0 +1,461 @@
+# ============================================================================
+# Global Variables - State Management
+# ============================================================================
+# All global state variables used across HALO v1
+# Dependencies: None
+#
+# This module contains 100+ global variables used for:
+#   - Page tracking and rotation
+#   - Weather data storage (current, daily forecast, hourly forecast)
+#   - Display state management (watchdog, backlight, rendering flags)
+#   - WiFi and system status tracking
+#   - Performance monitoring
+# ============================================================================
+
+globals:
+  # Current page tracking using string name
+  - id: current_page_name
+    type: std::string
+    restore_value: no
+    initial_value: '"vertical_clock"'
+
+  # Page rotation settings - which pages are included
+  - id: page_rotation_vertical_clock_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Page rotation order (1-7, 0 means disabled)
+  - id: page_rotation_vertical_clock_order
+    type: int
+    restore_value: yes
+    initial_value: '1'
+
+  # Colon blink state for clock display
+  # Toggles every second to create blinking colon animation (:)
+  - id: colon_blink_state
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  # Startup light blink cycle counter
+  # Tracks how many 1-second intervals have passed during startup LED animation
+  # Used to stop rainbow effect after 30 seconds and turn off light
+  - id: cycleCounter
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+  # Display watchdog - tracks last LVGL update to detect black screen
+  - id: last_display_update_time
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+  # Display watchdog enabled flag
+  - id: display_watchdog_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: weather_fetch_lock
+    type: bool
+    initial_value: 'false'
+
+  # Temperature unit change flag
+  # Set to true when user changes display temperature unit (F/C/K)
+  # Triggers UI refresh to show values in new units
+  - id: temp_unit_changed
+    type: bool
+    initial_value: "true"
+
+  # Last touch time tracking
+  # Records timestamp (milliseconds) of last touchscreen interaction
+  # Used to reset auto-rotation timer when user touches the display
+  - id: last_touch_time
+    type: int
+    initial_value: '0'
+
+  # Auto page rotation master enable/disable
+  # When true, device automatically cycles through enabled pages
+  # Controllable via Home Assistant switch
+  - id: auto_page_rotation_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Auto page rotation interval (seconds)
+  # How long to display each page before rotating to next
+  # Default: 30 seconds. Adjustable via Home Assistant
+  - id: auto_page_rotation_interval
+    type: int
+    restore_value: yes
+    initial_value: '30'
+
+  # Last auto-rotation timestamp
+  # Tracks when last page rotation occurred (in milliseconds)
+  # Used to calculate when next rotation should happen
+  - id: last_auto_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  # ============================================================================
+  # Page Rotation Configuration Globals
+  # ============================================================================
+  # These globals control which pages appear in the rotation and their order.
+  # - *_enabled: Set to true/false to include/exclude page from rotation
+  # - *_order: Numeric order (1-6, lower numbers appear first)
+  #
+  # All page rotation settings are defined in this file.
+  # Adjust values here or via Home Assistant switches at runtime.
+  # ============================================================================
+  - id: default_page_index
+    type: int
+    restore_value: yes
+    initial_value: '0'
+  # current_page_index replaced with current_page_name (defined at top of globals)
+  # Using string page IDs instead of numeric indices for flexibility
+  - id: boot_complete
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ota_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'false'  # Set to true during OTA or other critical operations
+  - id: time_update_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: time_update_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: time_update_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: time_update_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # Display backlight state tracking
+  # Used to prevent redundant backlight on/off commands
+  - id: display_backlight_is_on
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  # ============================================================================
+  # Sensor UI Update Batching
+  # ============================================================================
+  # To prevent excessive LVGL rendering and reduce SPI bus contention,
+  # sensor value updates are batched and refreshed at 2-second intervals
+  # instead of updating the display on every sensor change.
+  #
+  # - sensor_ui_dirty: Set when any sensor value changes
+  # - last_sensor_ui_update: Timestamp of last batch UI refresh (in milliseconds)
+  # ============================================================================
+  - id: sensor_ui_dirty
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: last_sensor_ui_update
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+  # ============================================================================
+  # Weather Page Rotation Settings
+  # ============================================================================
+  # Weather feature includes 3 pages: Current, Daily Forecast, Hourly Forecast
+  # Each can be independently enabled/disabled and ordered in rotation
+  # ============================================================================
+
+  # Weather page rotation enabled flags
+  - id: page_rotation_weather_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_daily_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_hourly_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  # Hourly summary page rotation flag (two pages: 1-12, 13-24)
+  - id: page_rotation_hourly_summary_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: page_rotation_hourly_summary_order
+    type: int
+    restore_value: yes
+    initial_value: '7'
+
+  # Weather page rotation order (1-7, lower numbers show first)
+  - id: page_rotation_weather_order
+    type: int
+    restore_value: yes
+    initial_value: '4'
+  - id: page_rotation_daily_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '5'
+  - id: page_rotation_hourly_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '6'
+
+  # ============================================================================
+  # Weather Data Storage
+  # ============================================================================
+
+  # --- Performance Tracking ---
+  # Used to measure and log weather update operation timing
+  - id: weather_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_condition
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: weather_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # --- Current Weather State ---
+  # Real-time weather conditions from Home Assistant
+  - id: weather_current_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+  - id: weather_current_apparent_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+  - id: weather_current_condition
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: weather_current_humidity
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+
+  # --- Daily Forecast Data (10 days) ---
+  # Arrays store forecast data fetched from Home Assistant weather.get_forecasts API
+  # Index 0 = today, Index 1 = tomorrow, etc.
+  - id: weather_forecast_temp_high
+    type: float[10]
+    restore_value: no
+  - id: weather_forecast_temp_low
+    type: float[10]
+    restore_value: no
+  - id: weather_forecast_condition
+    type: std::string[10]
+    restore_value: no
+  - id: weather_forecast_precip_prob
+    type: float[10]
+    restore_value: no
+  - id: weather_forecast_datetime
+    type: std::string[10]
+    restore_value: no
+
+  # --- Hourly Forecast Data (24 hours) ---
+  # Arrays store hourly forecast from Home Assistant
+  # Index 0 = current hour, Index 1 = next hour, etc.
+  - id: weather_hourly_temp
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_apparent_temp
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_condition
+    type: std::string[24]
+    restore_value: no
+
+  - id: weather_hourly_precip_prob
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_datetime
+    type: std::string[24]
+    restore_value: no
+
+  - id: weather_hourly_humidity
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_precipitation
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_pressure
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_uv_index
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_wind_speed
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_wind_bearing
+    type: float[24]
+    restore_value: no
+
+  # Tracking
+  - id: weather_last_update
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  # Separate tracking for daily vs hourly forecasts
+  - id: weather_daily_last_update
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: weather_hourly_last_update
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: weather_on_weather_page
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # Page rotation settings - which pages are included
+  - id: page_rotation_AirQ_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: page_rotation_AirQ_order
+    type: int
+    restore_value: yes
+    initial_value: '2'
+
+  # WiFi status indicator state for AirQ page
+  - id: airq_wifi_stat_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: page_rotation_wifi_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Page rotation order (1-7, lower numbers show first)
+  - id: page_rotation_wifi_order
+    type: int
+    restore_value: yes
+    initial_value: '3'
+
+  - id: wifi_logo_visible
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_signal_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_signal_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_signal_bar_last_value
+    type: float
+    restore_value: no
+    initial_value: '-200.0'
+  - id: wifi_signal_bar_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_ssid_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ssid_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_ip_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ip_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_status_last_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: wg_status_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_color_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_address_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_address_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_handshake_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_handshake_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_endpoint_initialized
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # DISABLED - CO2 calibration globals (SCD4x sensor disabled)
+  - id: calibration_pending
+    type: bool
+    initial_value: 'false'
+  - id: calibration_confirm_time
+    type: uint32_t
+    initial_value: '0'
