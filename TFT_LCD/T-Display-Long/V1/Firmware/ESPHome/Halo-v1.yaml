@@ -84,22 +84,40 @@ wifi:
 # MODULAR PACKAGE IMPORTS
 # ============================================================================
 # Each package below represents a specific feature or component.
-# Packages are loaded from GitHub for easy updates and sharing.
+# Packages are loaded from local files for development, or from GitHub for deployment.
 #
 # PHASE 1 STATUS: Foundation modules (globals, hardware, esphome_base) extracted
-# REMAINING: Core file still contains rest of config (will be extracted in Phases 2-4)
+# PHASE 2 STATUS: Page modules (clock, airq, wifi) extracted
+# REMAINING: Core file still contains weather/forecast pages (will be extracted in Phase 3)
 # ============================================================================
 
 packages:
-  remote_packages:
-    url: https://github.com/truffshuff/halo/
-    ref: WireGuard  # TODO: Change to 'modular' branch after committing Phase 1
-    files:
-      # Phase 1: Foundation Modules (EXTRACTED)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
+  # Local packages for development
+  base_globals: !include packages/base/globals.yaml
+  base_hardware: !include packages/base/hardware.yaml
+  base_esphome: !include packages/base/esphome_base.yaml
 
-      # Remaining Configuration (TEMPORARY - will be removed as Phases 2-4 complete)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
-    refresh: Always
+  # Phase 2: Page Modules (LOCAL - extracted in Phase 2)
+  page_clock: !include packages/pages/clock-page.yaml
+  page_airq: !include packages/pages/airq-page.yaml
+  page_wifi: !include packages/pages/wifi-page.yaml
+
+  # Remaining Configuration (TEMPORARY - will be removed as Phase 3 completes)
+  core_config: !include Halo-v1-Core.yaml
+
+  # REMOTE PACKAGES (commented out during local development)
+  # remote_packages:
+  #   url: https://github.com/truffshuff/halo/
+  #   ref: WireGuard  # TODO: Change to 'modular' branch after committing
+  #   files:
+  #     # Phase 1: Foundation Modules
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
+  #     # Phase 2: Page Modules
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/clock-page.yaml
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/airq-page.yaml
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
+  #     # Remaining Configuration
+  #     - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+  #   refresh: Always
