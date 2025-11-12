@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.11.2106
+# Version: 25.11.11.2116
 # Last Updated: November 11, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.11.2106"
+  version: "25.11.11.2116"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -4546,6 +4546,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour1_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[0]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[0]));
       - lvgl.label.update:
           id: lbl_sum1_hour1_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[0]);'
@@ -4564,6 +4567,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour2_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[1]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[1]));
       - lvgl.label.update:
           id: lbl_sum1_hour2_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[1]);'
@@ -4582,6 +4588,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour3_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[2]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[2]));
       - lvgl.label.update:
           id: lbl_sum1_hour3_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[2]);'
@@ -4600,6 +4609,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour4_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[3]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[3]));
       - lvgl.label.update:
           id: lbl_sum1_hour4_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[3]);'
@@ -4618,6 +4630,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour5_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[4]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[4]));
       - lvgl.label.update:
           id: lbl_sum1_hour5_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[4]);'
@@ -4636,6 +4651,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour6_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[5]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[5]));
       - lvgl.label.update:
           id: lbl_sum1_hour6_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[5]);'
@@ -4654,6 +4672,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour7_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[6]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[6]));
       - lvgl.label.update:
           id: lbl_sum1_hour7_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[6]);'
@@ -4672,6 +4693,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour8_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[7]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[7]));
       - lvgl.label.update:
           id: lbl_sum1_hour8_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[7]);'
@@ -4690,6 +4714,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour9_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[8]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[8]));
       - lvgl.label.update:
           id: lbl_sum1_hour9_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[8]);'
@@ -4708,6 +4735,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour10_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[9]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[9]));
       - lvgl.label.update:
           id: lbl_sum1_hour10_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[9]);'
@@ -4726,6 +4756,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour11_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[10]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[10]));
       - lvgl.label.update:
           id: lbl_sum1_hour11_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[10]);'
@@ -4744,6 +4777,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum1_hour12_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[11]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[11]));
       - lvgl.label.update:
           id: lbl_sum1_hour12_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[11]);'
@@ -4773,6 +4809,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour13_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[12]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[12]));
       - lvgl.label.update:
           id: lbl_sum2_hour13_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[12]);'
@@ -4791,6 +4830,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour14_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[13]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[13]));
       - lvgl.label.update:
           id: lbl_sum2_hour14_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[13]);'
@@ -4809,6 +4851,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour15_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[14]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[14]));
       - lvgl.label.update:
           id: lbl_sum2_hour15_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[14]);'
@@ -4827,6 +4872,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour16_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[15]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[15]));
       - lvgl.label.update:
           id: lbl_sum2_hour16_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[15]);'
@@ -4845,6 +4893,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour17_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[16]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[16]));
       - lvgl.label.update:
           id: lbl_sum2_hour17_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[16]);'
@@ -4863,6 +4914,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour18_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[17]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[17]));
       - lvgl.label.update:
           id: lbl_sum2_hour18_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[17]);'
@@ -4881,6 +4935,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour19_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[18]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[18]));
       - lvgl.label.update:
           id: lbl_sum2_hour19_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[18]);'
@@ -4899,6 +4956,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour20_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[19]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[19]));
       - lvgl.label.update:
           id: lbl_sum2_hour20_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[19]);'
@@ -4917,6 +4977,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour21_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[20]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[20]));
       - lvgl.label.update:
           id: lbl_sum2_hour21_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[20]);'
@@ -4935,6 +4998,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour22_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[21]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[21]));
       - lvgl.label.update:
           id: lbl_sum2_hour22_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[21]);'
@@ -4953,6 +5019,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour23_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[22]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[22]));
       - lvgl.label.update:
           id: lbl_sum2_hour23_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[22]);'
@@ -4971,6 +5040,9 @@ script:
       - lvgl.label.update:
           id: lbl_sum2_hour24_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[23]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[23]));
       - lvgl.label.update:
           id: lbl_sum2_hour24_temp
           text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[23]);'
