@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.12.1913
+# Version: 25.11.12.1918
 # Last Updated: November 12, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.12.1913"
+  version: "25.11.12.1918"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -135,8 +135,8 @@ switch:
     entity_category: "config"
     on_turn_on:
       - lambda: |-
-          id(display_watchdog_enabled) = true;
-          id(last_display_update_time) = millis();  // Reset timer
+        id(display_watchdog_enabled) = true;
+        id(last_display_update_time) = millis();  // Reset timer
       - logger.log: "Display watchdog enabled - will auto-recover from black screens"
     on_turn_off:
       - lambda: 'id(display_watchdog_enabled) = false;'
@@ -300,11 +300,11 @@ switch:
             lambda: 'return id(current_page_name) == "wifi";'
           then:
             - lambda: |-
-                id(wifi_signal_needs_render) = true;
-                id(wifi_signal_bar_needs_render) = true;
-                id(wifi_ssid_needs_render) = true;
-                id(wifi_ip_needs_render) = true;
-                id(ha_status_needs_render) = true;
+              id(wifi_signal_needs_render) = true;
+              id(wifi_signal_bar_needs_render) = true;
+              id(wifi_ssid_needs_render) = true;
+              id(wifi_ip_needs_render) = true;
+              id(ha_status_needs_render) = true;
     on_turn_off:
       - lambda: 'id(page_rotation_wifi_enabled) = false;'
       - logger.log: "WiFi page disabled in rotation"
@@ -370,40 +370,40 @@ select:
     optimistic: true
     on_value:
       - lambda: |-
-          // Don't apply effects during boot - let startup_light_blink handle it
-          if (!id(boot_complete)) return;
+        // Don't apply effects during boot - let startup_light_blink handle it
+        if (!id(boot_complete)) return;
 
-          std::string effect = id(led_effect_select).state;
-          if (effect == "None") {
+        std::string effect = id(led_effect_select).state;
+        if (effect == "None") {
+          auto call = id(rgb_light).turn_off();
+          call.perform();
+        } else if (effect == "AQI Color") {
+          float aqi = id(computed_halo_aqi).state;
+          if (std::isnan(aqi) || aqi <= 50) {
             auto call = id(rgb_light).turn_off();
             call.perform();
-          } else if (effect == "AQI Color") {
-            float aqi = id(computed_halo_aqi).state;
-            if (std::isnan(aqi) || aqi <= 50) {
-              auto call = id(rgb_light).turn_off();
-              call.perform();
-            } else {
-              Color color;
-              if (aqi <= 100) color = Color(255, 255, 0); // yellow
-              else if (aqi <= 150) color = Color(255, 165, 0); // orange
-              else if (aqi <= 200) color = Color(255, 0, 0); // red
-              else if (aqi <= 300) color = Color(128, 0, 128); // purple
-              else color = Color(128, 0, 0); // maroon
-              auto call = id(rgb_light).turn_on();
-              call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
-              call.perform();
-            }
-          } else if (effect == "Weather Condition" || effect == "Auto Context") {
-            // Lambda-based effects - activate them
-            auto call = id(rgb_light).turn_on();
-            call.set_effect(effect);
-            call.perform();
           } else {
-            // Standard effects
+            Color color;
+            if (aqi <= 100) color = Color(255, 255, 0); // yellow
+            else if (aqi <= 150) color = Color(255, 165, 0); // orange
+            else if (aqi <= 200) color = Color(255, 0, 0); // red
+            else if (aqi <= 300) color = Color(128, 0, 128); // purple
+            else color = Color(128, 0, 0); // maroon
             auto call = id(rgb_light).turn_on();
-            call.set_effect(effect);
+            call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
             call.perform();
           }
+        } else if (effect == "Weather Condition" || effect == "Auto Context") {
+          // Lambda-based effects - activate them
+          auto call = id(rgb_light).turn_on();
+          call.set_effect(effect);
+          call.perform();
+        } else {
+          // Standard effects
+          auto call = id(rgb_light).turn_on();
+          call.set_effect(effect);
+          call.perform();
+        }
   
   - platform: template
     name: "Default Page at Boot"
@@ -471,17 +471,17 @@ interval:
   - interval: 2s
     then:
       - lambda: |-
-          // Only update if sensors changed since last batch
-          if (id(sensor_ui_dirty)) {
-            const uint32_t now = millis();
-            // Ensure minimum 2s between UI refreshes
-            if ((now - id(last_sensor_ui_update)) >= 2000) {
-              ESP_LOGD("sensor_batch", "Batched sensor UI update triggered");
-              id(sensor_ui_dirty) = false;
-              id(last_sensor_ui_update) = now;
-              // Watchdog timer updated by actual LVGL rendering, not here
-            }
+        // Only update if sensors changed since last batch
+        if (id(sensor_ui_dirty)) {
+          const uint32_t now = millis();
+          // Ensure minimum 2s between UI refreshes
+          if ((now - id(last_sensor_ui_update)) >= 2000) {
+            ESP_LOGD("sensor_batch", "Batched sensor UI update triggered");
+            id(sensor_ui_dirty) = false;
+            id(last_sensor_ui_update) = now;
+            // Watchdog timer updated by actual LVGL rendering, not here
           }
+        }
 
   # Display Watchdog - Automatic Black Screen Recovery
   # Checks every 30 seconds if display has been updating
@@ -519,26 +519,26 @@ interval:
             - delay: 300ms
             # Properly reset and re-initialize the display controller
             - lambda: |-
-                ESP_LOGI("display_watchdog", "Resetting and re-initializing display hardware...");
-                auto *display = id(lily_display);
-                if (display != nullptr) {
-                  display->setup();  // This re-initializes the display controller completely
-                }
+              ESP_LOGI("display_watchdog", "Resetting and re-initializing display hardware...");
+              auto *display = id(lily_display);
+              if (display != nullptr) {
+                display->setup();  // This re-initializes the display controller completely
+              }
             - delay: 500ms
             - lvgl.resume:
             - delay: 300ms
             - output.turn_on: backlight
             - delay: 200ms
             - lambda: |-
-                // Update watchdog timestamp
-                id(last_display_update_time) = millis();
+              // Update watchdog timestamp
+              id(last_display_update_time) = millis();
 
-                // Increment recovery counter
-                static int recoveries = 0;
-                recoveries++;
-                id(display_recovery_count).publish_state(recoveries);
+              // Increment recovery counter
+              static int recoveries = 0;
+              recoveries++;
+              id(display_recovery_count).publish_state(recoveries);
 
-                ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE === (Recovery #%d)", recoveries);
+              ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE === (Recovery #%d)", recoveries);
 
   # Periodic Display Controller Health Check
   # The AXS15231 display controller can lose sync even while LVGL continues running
@@ -562,19 +562,19 @@ interval:
             - delay: 200ms
             # Reinitialize display controller
             - lambda: |-
-                ESP_LOGI("display_health", "Reinitializing display controller...");
-                auto *display = id(lily_display);
-                if (display != nullptr) {
-                  display->setup();
-                }
+              ESP_LOGI("display_health", "Reinitializing display controller...");
+              auto *display = id(lily_display);
+              if (display != nullptr) {
+                display->setup();
+              }
             - delay: 300ms
             - lvgl.resume:
             - delay: 200ms
             - output.turn_on: backlight
             - delay: 100ms
             - lambda: |-
-                id(last_display_update_time) = millis();
-                ESP_LOGI("display_health", "=== DISPLAY HEALTH CHECK COMPLETE ===");
+              id(last_display_update_time) = millis();
+              ESP_LOGI("display_health", "=== DISPLAY HEALTH CHECK COMPLETE ===");
 
   # Automatic page rotation - controllable via Home Assistant with custom page selection and order
   - interval: 1s
@@ -694,11 +694,11 @@ interval:
             lambda: 'return id(boot_complete) && id(current_page_name) == "vertical_clock";'
           then:
             - lambda: |-
-                if (id(colon_blink_enabled).state) {
-                  id(colon_blink_state) = !id(colon_blink_state);
-                } else if (!id(colon_blink_state)) {
-                  id(colon_blink_state) = true;
-                }
+              if (id(colon_blink_enabled).state) {
+                id(colon_blink_state) = !id(colon_blink_state);
+              } else if (!id(colon_blink_state)) {
+                id(colon_blink_state) = true;
+              }
             - script.execute: update_colon_widget
 
   # NOTE: Wind sensor updates removed - now handled by on_value callbacks in sensor definitions
@@ -890,13 +890,13 @@ interval:
                   wifi.connected:
                 then:
                   - lambda: |-
-                      char buffer[32];
-                      snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
-                      std::string new_text(buffer);
-                      if (new_text != id(wifi_signal_last_text)) {
-                        id(wifi_signal_last_text) = new_text;
-                        id(wifi_signal_needs_render) = true;
-                      }
+                    char buffer[32];
+                    snprintf(buffer, sizeof(buffer), "Signal: %.0f dBm", id(wifi_signal_db).state);
+                    std::string new_text(buffer);
+                    if (new_text != id(wifi_signal_last_text)) {
+                      id(wifi_signal_last_text) = new_text;
+                      id(wifi_signal_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(current_page_name) == "wifi";'
@@ -907,14 +907,14 @@ interval:
                         - lambda: 'id(wifi_signal_needs_render) = false;'
                   # Update WiFi signal bar
                   - lambda: |-
-                      float signal = id(wifi_signal_db).state;
-                      if (std::isnan(signal)) {
-                        signal = -200.0f;
-                      }
-                      if (signal != id(wifi_signal_bar_last_value)) {
-                        id(wifi_signal_bar_last_value) = signal;
-                        id(wifi_signal_bar_needs_render) = true;
-                      }
+                    float signal = id(wifi_signal_db).state;
+                    if (std::isnan(signal)) {
+                      signal = -200.0f;
+                    }
+                    if (signal != id(wifi_signal_bar_last_value)) {
+                      id(wifi_signal_bar_last_value) = signal;
+                      id(wifi_signal_bar_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(current_page_name) == "wifi";'
@@ -925,12 +925,12 @@ interval:
                         - lambda: 'id(wifi_signal_bar_needs_render) = false;'
                   # Update WiFi SSID
                   - lambda: |-
-                      std::string ssid = esphome::wifi::global_wifi_component->wifi_ssid();
-                      std::string new_text = std::string("SSID: ") + ssid;
-                      if (new_text != id(wifi_ssid_last_text)) {
-                        id(wifi_ssid_last_text) = new_text;
-                        id(wifi_ssid_needs_render) = true;
-                      }
+                    std::string ssid = esphome::wifi::global_wifi_component->wifi_ssid();
+                    std::string new_text = std::string("SSID: ") + ssid;
+                    if (new_text != id(wifi_ssid_last_text)) {
+                      id(wifi_ssid_last_text) = new_text;
+                      id(wifi_ssid_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(wifi_ssid_needs_render) && id(current_page_name) == "wifi";'
@@ -941,15 +941,15 @@ interval:
                         - lambda: 'id(wifi_ssid_needs_render) = false;'
                   # Update WiFi IP address
                   - lambda: |-
-                      auto addresses = esphome::wifi::global_wifi_component->get_ip_addresses();
-                      std::string ip_text = "IP: Not assigned";
-                      if (!addresses.empty()) {
-                        ip_text = std::string("IP: ") + addresses[0].str();
-                      }
-                      if (ip_text != id(wifi_ip_last_text)) {
-                        id(wifi_ip_last_text) = ip_text;
-                        id(wifi_ip_needs_render) = true;
-                      }
+                    auto addresses = esphome::wifi::global_wifi_component->get_ip_addresses();
+                    std::string ip_text = "IP: Not assigned";
+                    if (!addresses.empty()) {
+                      ip_text = std::string("IP: ") + addresses[0].str();
+                    }
+                    if (ip_text != id(wifi_ip_last_text)) {
+                      id(wifi_ip_last_text) = ip_text;
+                      id(wifi_ip_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(wifi_ip_needs_render) && id(current_page_name) == "wifi";'
@@ -960,11 +960,11 @@ interval:
                         - lambda: 'id(wifi_ip_needs_render) = false;'
                   # Update Home Assistant connection status icon
                   - lambda: |-
-                      bool ha_connected = id(ink_ha_connected).state;
-                      if (ha_connected != id(ha_status_last_state)) {
-                        id(ha_status_last_state) = ha_connected;
-                        id(ha_status_needs_render) = true;
-                      }
+                    bool ha_connected = id(ink_ha_connected).state;
+                    if (ha_connected != id(ha_status_last_state)) {
+                      id(ha_status_last_state) = ha_connected;
+                      id(ha_status_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(ha_status_needs_render) && id(current_page_name) == "wifi";'
@@ -989,11 +989,11 @@ interval:
                   #       - lambda: 'id(wifi_logo_visible) = false;'
                   # Update disconnected signal text
                   - lambda: |-
-                      const std::string new_text = "Signal: --";
-                      if (new_text != id(wifi_signal_last_text)) {
-                        id(wifi_signal_last_text) = new_text;
-                        id(wifi_signal_needs_render) = true;
-                      }
+                    const std::string new_text = "Signal: --";
+                    if (new_text != id(wifi_signal_last_text)) {
+                      id(wifi_signal_last_text) = new_text;
+                      id(wifi_signal_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(wifi_signal_needs_render) && id(current_page_name) == "wifi";'
@@ -1004,11 +1004,11 @@ interval:
                         - lambda: 'id(wifi_signal_needs_render) = false;'
                   # Update disconnected signal bar
                   - lambda: |-
-                      float new_value = -200.0f;
-                      if (new_value != id(wifi_signal_bar_last_value)) {
-                        id(wifi_signal_bar_last_value) = new_value;
-                        id(wifi_signal_bar_needs_render) = true;
-                      }
+                    float new_value = -200.0f;
+                    if (new_value != id(wifi_signal_bar_last_value)) {
+                      id(wifi_signal_bar_last_value) = new_value;
+                      id(wifi_signal_bar_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_name) == "wifi";'
@@ -1019,11 +1019,11 @@ interval:
                         - lambda: 'id(wifi_signal_bar_needs_render) = false;'
                   # Update disconnected SSID
                   - lambda: |-
-                      const std::string ssid_text = "SSID: Not connected";
-                      if (ssid_text != id(wifi_ssid_last_text)) {
-                        id(wifi_ssid_last_text) = ssid_text;
-                        id(wifi_ssid_needs_render) = true;
-                      }
+                    const std::string ssid_text = "SSID: Not connected";
+                    if (ssid_text != id(wifi_ssid_last_text)) {
+                      id(wifi_ssid_last_text) = ssid_text;
+                      id(wifi_ssid_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(wifi_ssid_needs_render) && id(current_page_name) == "wifi";'
@@ -1034,11 +1034,11 @@ interval:
                         - lambda: 'id(wifi_ssid_needs_render) = false;'
                   # Update disconnected IP
                   - lambda: |-
-                      const std::string ip_text = "IP: Not connected";
-                      if (ip_text != id(wifi_ip_last_text)) {
-                        id(wifi_ip_last_text) = ip_text;
-                        id(wifi_ip_needs_render) = true;
-                      }
+                    const std::string ip_text = "IP: Not connected";
+                    if (ip_text != id(wifi_ip_last_text)) {
+                      id(wifi_ip_last_text) = ip_text;
+                      id(wifi_ip_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(wifi_ip_needs_render) && id(current_page_name) == "wifi";'
@@ -1056,11 +1056,11 @@ interval:
                             text: !lambda 'return id(wg_address_last_text);'
                         - lambda: 'id(wg_address_needs_render) = false;'
                   - lambda: |-
-                      const std::string handshake_text = "Handshake: \nUnavailable";
-                      if (handshake_text != id(wg_handshake_last_text)) {
-                        id(wg_handshake_last_text) = handshake_text;
-                        id(wg_handshake_needs_render) = true;
-                      }
+                    const std::string handshake_text = "Handshake: \nUnavailable";
+                    if (handshake_text != id(wg_handshake_last_text)) {
+                      id(wg_handshake_last_text) = handshake_text;
+                      id(wg_handshake_needs_render) = true;
+                    }
                   - if:
                       condition:
                         lambda: 'return id(wg_handshake_needs_render) && id(current_page_name) == "wifi";'
@@ -1120,36 +1120,36 @@ api:
       # ========================================================================
       - delay: 2s
       - lambda: |-
-          std::string effect = id(led_effect_select).state;
-          if (effect == "None") {
+        std::string effect = id(led_effect_select).state;
+        if (effect == "None") {
+          auto call = id(rgb_light).turn_off();
+          call.perform();
+        } else if (effect == "AQI Color") {
+          float aqi = id(computed_halo_aqi).state;
+          if (std::isnan(aqi) || aqi <= 50) {
             auto call = id(rgb_light).turn_off();
             call.perform();
-          } else if (effect == "AQI Color") {
-            float aqi = id(computed_halo_aqi).state;
-            if (std::isnan(aqi) || aqi <= 50) {
-              auto call = id(rgb_light).turn_off();
-              call.perform();
-            } else {
-              Color color;
-              if (aqi <= 100) color = Color(255, 255, 0);
-              else if (aqi <= 150) color = Color(255, 165, 0);
-              else if (aqi <= 200) color = Color(255, 0, 0);
-              else if (aqi <= 300) color = Color(128, 0, 128);
-              else color = Color(128, 0, 0);
-              auto call = id(rgb_light).turn_on();
-              call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
-              call.perform();
-            }
-          } else if (effect == "Weather Condition" || effect == "Auto Context") {
-            // New lambda effects - activate them
-            auto call = id(rgb_light).turn_on();
-            call.set_effect(effect);
-            call.perform();
           } else {
+            Color color;
+            if (aqi <= 100) color = Color(255, 255, 0);
+            else if (aqi <= 150) color = Color(255, 165, 0);
+            else if (aqi <= 200) color = Color(255, 0, 0);
+            else if (aqi <= 300) color = Color(128, 0, 128);
+            else color = Color(128, 0, 0);
             auto call = id(rgb_light).turn_on();
-            call.set_effect(effect);
+            call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
             call.perform();
           }
+        } else if (effect == "Weather Condition" || effect == "Auto Context") {
+          // New lambda effects - activate them
+          auto call = id(rgb_light).turn_on();
+          call.set_effect(effect);
+          call.perform();
+        } else {
+          auto call = id(rgb_light).turn_on();
+          call.set_effect(effect);
+          call.perform();
+        }
       # BLE scanning disabled (using NimBLE instead of Bluedroid)
       # - delay: 500ms
       # - esp32_ble_tracker.start_scan:
@@ -1198,43 +1198,43 @@ script:
           then:
             - delay: 50ms  # Small delay to prevent rapid successive calls
             - lambda: |-
-                // Safety check: Only run if LVGL is fully initialized
-                lv_obj_t *scr = lv_scr_act();
-                if (scr == NULL) {
-                  return;  // Silently skip if not initialized
-                }
+              // Safety check: Only run if LVGL is fully initialized
+              lv_obj_t *scr = lv_scr_act();
+              if (scr == NULL) {
+                return;  // Silently skip if not initialized
+              }
 
-                // Log current memory state before cleanup
-                ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %d", esp_get_free_heap_size());
+              // Log current memory state before cleanup
+              ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %d", esp_get_free_heap_size());
 
-                // Clear all cached strings to free memory
-                id(time_update_last_text).clear();
-                id(weather_last_condition).clear();
+              // Clear all cached strings to free memory
+              id(time_update_last_text).clear();
+              id(weather_last_condition).clear();
 
-                // Force LVGL to invalidate current screen and redraw
-                lv_obj_invalidate(scr);
+              // Force LVGL to invalidate current screen and redraw
+              lv_obj_invalidate(scr);
 
-                // Force immediate display flush to prevent buffer buildup
-                lv_refr_now(NULL);
+              // Force immediate display flush to prevent buffer buildup
+              lv_refr_now(NULL);
 
   - id: update_weather_icon_color
     mode: restart
     then:
       - lambda: |-
-          id(weather_last_started) = millis();
-          id(weather_needs_render) = false;
+        id(weather_last_started) = millis();
+        id(weather_needs_render) = false;
       - lambda: |-
-          std::string condition = id(weather_current_condition);
-          ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
-          if (condition.empty()) {
-            return;
-          }
-          std::string normalized = condition;
-          std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
-          if (normalized != id(weather_last_condition)) {
-            id(weather_last_condition) = normalized;
-            id(weather_needs_render) = true;
-          }
+        std::string condition = id(weather_current_condition);
+        ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
+        if (condition.empty()) {
+          return;
+        }
+        std::string normalized = condition;
+        std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+        if (normalized != id(weather_last_condition)) {
+          id(weather_last_condition) = normalized;
+          id(weather_needs_render) = true;
+        }
       - if:
           condition:
             lambda: 'return id(weather_needs_render);'
@@ -1249,15 +1249,15 @@ script:
                   ESP_LOGD("weather_color", "Applying color for condition: '%s'", id(weather_last_condition).c_str());
                   return lv_color_hex(get_weather_icon_color(id(weather_last_condition)));
       - lambda: |-
-          const uint32_t elapsed = millis() - id(weather_last_started);
-          id(weather_last_duration) = elapsed;
-          const bool rendered = id(weather_needs_render);
-          if (elapsed > 80) {
-            ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
-          } else {
-            ESP_LOGD("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
-          }
-          id(weather_needs_render) = false;
+        const uint32_t elapsed = millis() - id(weather_last_started);
+        id(weather_last_duration) = elapsed;
+        const bool rendered = id(weather_needs_render);
+        if (elapsed > 80) {
+          ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+        } else {
+          ESP_LOGD("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+        }
+        id(weather_needs_render) = false;
 
   # ============================================================================
   # WORKAROUND: HTTP-based weather fetch for HA 2025.10.x compatibility
@@ -1279,16 +1279,16 @@ script:
     mode: single
     then:
       - lambda: |-
-          // Ensure lock is set
-          id(weather_fetch_lock) = true;
+        // Ensure lock is set
+        id(weather_fetch_lock) = true;
 
       - logger.log: "Fetching daily forecast from Home Assistant via HTTP..." 
         
       # Feed watchdog before long operation
       - lambda: |-
-          App.feed_wdt();
-          ESP_LOGI("weather", "Free heap before daily fetch: %d bytes", esp_get_free_heap_size());
-          ESP_LOGD("main", "Fetching daily forecast from Home Assistant via HTTP...");
+        App.feed_wdt();
+        ESP_LOGI("weather", "Free heap before daily fetch: %d bytes", esp_get_free_heap_size());
+        ESP_LOGD("main", "Fetching daily forecast from Home Assistant via HTTP...");
       # Fetch daily forecast
       - http_request.post:
           url: !lambda |-
@@ -1302,169 +1302,169 @@ script:
           on_response:
             then:
               - lambda: |-
-                  // Feed watchdog at start of processing
-                  App.feed_wdt();
+                // Feed watchdog at start of processing
+                App.feed_wdt();
                   
-                  ESP_LOGI("weather", "Free heap at daily response: %d bytes", esp_get_free_heap_size());
+                ESP_LOGI("weather", "Free heap at daily response: %d bytes", esp_get_free_heap_size());
                   
-                  // Guard against unexpectedly large payloads (>32KB)
-                  if (response->content_length > 32768) {
-                    ESP_LOGE("weather", "Daily forecast too large: %d bytes", (int)response->content_length);
-                    // Drain the body without storing to keep connection sane
-                    uint8_t drain_buf[256];
-                    while (response->get_bytes_read() < response->content_length) {
-                      int r = response->read(drain_buf, sizeof(drain_buf));
-                      if (r <= 0) break;
-                      App.feed_wdt();
-                    }
-                    return;
-                  }
-                  
-                  // Read response body first (for both success and error cases)
-                  std::string body_str;
-                  // Reserve a smaller amount to reduce fragmentation
-                  size_t reserve_sz = response->content_length;
-                  if (reserve_sz > 12288) reserve_sz = 12288; // cap to 12KB for daily
-                  body_str.reserve(reserve_sz);
-                  uint8_t buffer[256];  // Smaller buffer
+                // Guard against unexpectedly large payloads (>32KB)
+                if (response->content_length > 32768) {
+                  ESP_LOGE("weather", "Daily forecast too large: %d bytes", (int)response->content_length);
+                  // Drain the body without storing to keep connection sane
+                  uint8_t drain_buf[256];
                   while (response->get_bytes_read() < response->content_length) {
-                    int read_len = response->read(buffer, sizeof(buffer));
-                    if (read_len > 0) {
-                      // Cap body accumulation to 24KB for safety
-                      if (body_str.size() + (size_t)read_len > 24576) {
-                        ESP_LOGW("weather", "Daily body truncated at %u bytes", (unsigned)body_str.size());
-                        break;
-                      }
-                      body_str.append((char*)buffer, read_len);
-                    }
-                    // Feed watchdog during long reads
-                    if (body_str.length() % 4096 == 0) {
-                      App.feed_wdt();
-                    }
+                    int r = response->read(drain_buf, sizeof(drain_buf));
+                    if (r <= 0) break;
+                    App.feed_wdt();
                   }
-
-                  // response is already provided by ESPHome http_request
-                  if (response->status_code != 200) {
-                    ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", response->status_code);
-                    ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
-                    return;
-                  }
-
-                  ESP_LOGI("weather", "✓ Daily forecast HTTP response received (%d bytes)", body_str.length());
-                  ESP_LOGI("weather", "Free heap before daily JSON parse: %d bytes", esp_get_free_heap_size());
+                  return;
+                }
                   
-                  // Feed watchdog before JSON parsing
-                  App.feed_wdt();
-                  
-                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
-                  ESP_LOGI("memory", "Before JSON parse - Internal RAM free: %d, PSRAM free: %d", 
-                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-                  
-                  // CRITICAL: Allocate JsonDocument explicitly from PSRAM to avoid internal RAM pressure
-                  // Using heap_caps_malloc with MALLOC_CAP_SPIRAM forces allocation to PSRAM
-                  // This keeps the 60KB+ JSON buffer out of limited internal RAM
-                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-                  if (json_buffer == nullptr) {
-                    ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
-                    return;
-                  }
-                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
-                  
-                  DeserializationError error = deserializeJson(
-                      *doc, body_str, DeserializationOption::NestingLimit(10));
-                  
-                  if (error) {
-                    ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
-                    doc->~JsonDocument();  // Call destructor
-                    heap_caps_free(json_buffer);  // Free PSRAM
-                    return;
-                  }
-
-                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
-                  const char *entity_key = "${weather_entity_id}";
-                  
-                  if (!(*doc)["service_response"].is<JsonObject>()) {
-                    ESP_LOGE("weather", "No 'service_response' key in response");
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
-                    return;
-                  }
-
-                  JsonObject service_response = (*doc)["service_response"];
-                  
-                  if (!service_response[entity_key].is<JsonObject>()) {
-                    ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
-                    return;
-                  }
-
-                  JsonObject entity_data = service_response[entity_key];
-                  
-                  if (!entity_data["forecast"].is<JsonArray>()) {
-                    ESP_LOGW("weather", "No 'forecast' key in daily response");
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
-                    return;
-                  }
-
-                  JsonArray forecast_array = entity_data["forecast"];
-                  int day_count = std::min((int)forecast_array.size(), 10);
-                  ESP_LOGI("weather", "Found %d days of forecast data", day_count);
-                  
-                  // Feed watchdog before processing loop
-                  App.feed_wdt();
-
-                  for (int i = 0; i < day_count; i++) {
-                    JsonObject day = forecast_array[i];
-
-                    // Feed watchdog every 3 days to prevent timeout during processing
-                    if (i > 0 && i % 3 == 0) {
-                      App.feed_wdt();
+                // Read response body first (for both success and error cases)
+                std::string body_str;
+                // Reserve a smaller amount to reduce fragmentation
+                size_t reserve_sz = response->content_length;
+                if (reserve_sz > 12288) reserve_sz = 12288; // cap to 12KB for daily
+                body_str.reserve(reserve_sz);
+                uint8_t buffer[256];  // Smaller buffer
+                while (response->get_bytes_read() < response->content_length) {
+                  int read_len = response->read(buffer, sizeof(buffer));
+                  if (read_len > 0) {
+                    // Cap body accumulation to 24KB for safety
+                    if (body_str.size() + (size_t)read_len > 24576) {
+                      ESP_LOGW("weather", "Daily body truncated at %u bytes", (unsigned)body_str.size());
+                      break;
                     }
-
-                    if (day["temperature"].is<float>()) {
-                      id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
-                    }
-
-                    if (day["templow"].is<float>()) {
-                      id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
-                    }
-
-                    if (day["condition"].is<const char*>()) {
-                      id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
-                    }
-
-                    if (day["precipitation_probability"].is<float>()) {
-                      id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
-                    }
-
-                    if (day["datetime"].is<const char*>()) {
-                      id(weather_forecast_datetime)[i] = day["datetime"].as<std::string>();
-                    }
-
-                    // Extract "current" weather from today's forecast (day 0)
-                    if (i == 0) {
-                      if (day["condition"].is<const char*>()) {
-                        id(weather_current_condition) = day["condition"].as<std::string>();
-                        ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
-                      }
-                    }
+                    body_str.append((char*)buffer, read_len);
                   }
-                  ESP_LOGI("weather", "✓ Daily forecast stored successfully");
+                  // Feed watchdog during long reads
+                  if (body_str.length() % 4096 == 0) {
+                    App.feed_wdt();
+                  }
+                }
+
+                // response is already provided by ESPHome http_request
+                if (response->status_code != 200) {
+                  ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", response->status_code);
+                  ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
+                  return;
+                }
+
+                ESP_LOGI("weather", "✓ Daily forecast HTTP response received (%d bytes)", body_str.length());
+                ESP_LOGI("weather", "Free heap before daily JSON parse: %d bytes", esp_get_free_heap_size());
                   
-                  // Clean up PSRAM-allocated JSON document
+                // Feed watchdog before JSON parsing
+                App.feed_wdt();
+                  
+                // Log memory state before JSON parsing (PSRAM vs Internal RAM)
+                ESP_LOGI("memory", "Before JSON parse - Internal RAM free: %d, PSRAM free: %d", 
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  
+                // CRITICAL: Allocate JsonDocument explicitly from PSRAM to avoid internal RAM pressure
+                // Using heap_caps_malloc with MALLOC_CAP_SPIRAM forces allocation to PSRAM
+                // This keeps the 60KB+ JSON buffer out of limited internal RAM
+                void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                if (json_buffer == nullptr) {
+                  ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
+                  return;
+                }
+                JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
+                  
+                DeserializationError error = deserializeJson(
+                    *doc, body_str, DeserializationOption::NestingLimit(10));
+                  
+                if (error) {
+                  ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
                   doc->~JsonDocument();  // Call destructor
-                  heap_caps_free(json_buffer);  // Free PSRAM buffer
+                  heap_caps_free(json_buffer);  // Free PSRAM
+                  return;
+                }
+
+                // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
+                const char *entity_key = "${weather_entity_id}";
                   
-                  ESP_LOGI("weather", "Free heap after parse - Internal: %d, PSRAM: %d", 
-                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                if (!(*doc)["service_response"].is<JsonObject>()) {
+                  ESP_LOGE("weather", "No 'service_response' key in response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                }
+
+                JsonObject service_response = (*doc)["service_response"];
                   
-                  // Update daily forecast timestamp
-                  id(weather_daily_last_update) = millis();
-                  id(weather_last_update) = millis();  // Keep for backward compatibility
+                if (!service_response[entity_key].is<JsonObject>()) {
+                  ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                }
+
+                JsonObject entity_data = service_response[entity_key];
+                  
+                if (!entity_data["forecast"].is<JsonArray>()) {
+                  ESP_LOGW("weather", "No 'forecast' key in daily response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                }
+
+                JsonArray forecast_array = entity_data["forecast"];
+                int day_count = std::min((int)forecast_array.size(), 10);
+                ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+                  
+                // Feed watchdog before processing loop
+                App.feed_wdt();
+
+                for (int i = 0; i < day_count; i++) {
+                  JsonObject day = forecast_array[i];
+
+                  // Feed watchdog every 3 days to prevent timeout during processing
+                  if (i > 0 && i % 3 == 0) {
+                    App.feed_wdt();
+                  }
+
+                  if (day["temperature"].is<float>()) {
+                    id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                  }
+
+                  if (day["templow"].is<float>()) {
+                    id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                  }
+
+                  if (day["condition"].is<const char*>()) {
+                    id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                  }
+
+                  if (day["precipitation_probability"].is<float>()) {
+                    id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                  }
+
+                  if (day["datetime"].is<const char*>()) {
+                    id(weather_forecast_datetime)[i] = day["datetime"].as<std::string>();
+                  }
+
+                  // Extract "current" weather from today's forecast (day 0)
+                  if (i == 0) {
+                    if (day["condition"].is<const char*>()) {
+                      id(weather_current_condition) = day["condition"].as<std::string>();
+                      ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
+                    }
+                  }
+                }
+                ESP_LOGI("weather", "✓ Daily forecast stored successfully");
+                  
+                // Clean up PSRAM-allocated JSON document
+                doc->~JsonDocument();  // Call destructor
+                heap_caps_free(json_buffer);  // Free PSRAM buffer
+                  
+                ESP_LOGI("weather", "Free heap after parse - Internal: %d, PSRAM: %d", 
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  
+                // Update daily forecast timestamp
+                id(weather_daily_last_update) = millis();
+                id(weather_last_update) = millis();  // Keep for backward compatibility
                   
               # Small delay to allow memory cleanup
               - delay: 100ms
@@ -1477,24 +1477,24 @@ script:
               - script.execute: update_daily_forecast_display
 
       - lambda: |-
-          // Always clear the lock when done (success or failure)
-          id(weather_fetch_lock) = false;
+        // Always clear the lock when done (success or failure)
+        id(weather_fetch_lock) = false;
 
   # Script to fetch HOURLY forecast data via HA REST API
   - id: fetch_hourly_forecast
     mode: single
     then:
       - lambda: |-
-          // Ensure lock is set
-          id(weather_fetch_lock) = true;
+        // Ensure lock is set
+        id(weather_fetch_lock) = true;
 
       - logger.log: "Fetching hourly forecast from Home Assistant via HTTP..."
       
       # Feed watchdog before long operation
       - lambda: |-      
-          App.feed_wdt();
-          ESP_LOGI("weather", "Free heap before fetch: %d bytes", esp_get_free_heap_size());
-          ESP_LOGD("main", "Fetching hourly forecast from Home Assistant via HTTP...");
+        App.feed_wdt();
+        ESP_LOGI("weather", "Free heap before fetch: %d bytes", esp_get_free_heap_size());
+        ESP_LOGD("main", "Fetching hourly forecast from Home Assistant via HTTP...");
 
       # Fetch hourly forecast
       - http_request.post:
@@ -1509,168 +1509,168 @@ script:
           on_response:
             then:
               - lambda: |-
-                  // Feed watchdog at start of processing
-                  App.feed_wdt();
+                // Feed watchdog at start of processing
+                App.feed_wdt();
                   
-                  ESP_LOGI("weather", "Free heap at response: %d bytes", esp_get_free_heap_size());
+                ESP_LOGI("weather", "Free heap at response: %d bytes", esp_get_free_heap_size());
                   
-                  // Read response body first (for both success and error cases)
-                  std::string body_str;
-                  // Reserve a smaller amount to reduce memory pressure
-                  size_t reserve_sz2 = response->content_length;
-                  if (reserve_sz2 > 16384) reserve_sz2 = 16384; // cap to 16KB for hourly
-                  body_str.reserve(reserve_sz2);
-                  uint8_t buffer[256];  // Smaller buffer to reduce stack usage
-                  while (response->get_bytes_read() < response->content_length) {
-                    int read_len = response->read(buffer, sizeof(buffer));
-                    if (read_len > 0) {
-                      body_str.append((char*)buffer, read_len);
-                    }
-                    // Feed watchdog during long reads
-                    if (body_str.length() % 4096 == 0) {
-                      App.feed_wdt();
-                    }
+                // Read response body first (for both success and error cases)
+                std::string body_str;
+                // Reserve a smaller amount to reduce memory pressure
+                size_t reserve_sz2 = response->content_length;
+                if (reserve_sz2 > 16384) reserve_sz2 = 16384; // cap to 16KB for hourly
+                body_str.reserve(reserve_sz2);
+                uint8_t buffer[256];  // Smaller buffer to reduce stack usage
+                while (response->get_bytes_read() < response->content_length) {
+                  int read_len = response->read(buffer, sizeof(buffer));
+                  if (read_len > 0) {
+                    body_str.append((char*)buffer, read_len);
                   }
-
-                  // response is already provided by ESPHome http_request
-                  if (response->status_code != 200) {
-                    ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
-                    ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
-                    return;
+                  // Feed watchdog during long reads
+                  if (body_str.length() % 4096 == 0) {
+                    App.feed_wdt();
                   }
+                }
 
-                  ESP_LOGI("weather", "✓ Hourly forecast HTTP response received (%d bytes)", body_str.length());
+                // response is already provided by ESPHome http_request
+                if (response->status_code != 200) {
+                  ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
+                  ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
+                  return;
+                }
+
+                ESP_LOGI("weather", "✓ Hourly forecast HTTP response received (%d bytes)", body_str.length());
                   
-                  // Feed watchdog before JSON parsing
-                  App.feed_wdt();
+                // Feed watchdog before JSON parsing
+                App.feed_wdt();
                   
-                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
-                  ESP_LOGI("memory", "Before hourly JSON parse - Internal RAM free: %d, PSRAM free: %d", 
-                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                // Log memory state before JSON parsing (PSRAM vs Internal RAM)
+                ESP_LOGI("memory", "Before hourly JSON parse - Internal RAM free: %d, PSRAM free: %d", 
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
                   
-                  // CRITICAL FIX: Allocate JsonDocument explicitly from PSRAM to prevent stack overflow
-                  // The 57KB JSON payload would overflow the stack if allocated there
-                  // Using heap_caps_malloc forces allocation to 8MB PSRAM instead of limited internal RAM
-                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-                  if (json_buffer == nullptr) {
-                    ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
-                    return;
-                  }
-                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
+                // CRITICAL FIX: Allocate JsonDocument explicitly from PSRAM to prevent stack overflow
+                // The 57KB JSON payload would overflow the stack if allocated there
+                // Using heap_caps_malloc forces allocation to 8MB PSRAM instead of limited internal RAM
+                void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                if (json_buffer == nullptr) {
+                  ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
+                  return;
+                }
+                JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
                   
-                  DeserializationError error = deserializeJson(
-                      *doc, body_str, DeserializationOption::NestingLimit(10));
+                DeserializationError error = deserializeJson(
+                    *doc, body_str, DeserializationOption::NestingLimit(10));
                   
-                  if (error) {
-                    ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
-                    doc->~JsonDocument();  // Call destructor
-                    heap_caps_free(json_buffer);  // Free PSRAM
-                    return;
-                  }
-
-                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
-                  const char *entity_key = "${weather_entity_id}";
-                  
-                  if (!(*doc)["service_response"].is<JsonObject>()) {
-                    ESP_LOGE("weather", "No 'service_response' key in response");
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
-                    return;
-                  }
-
-                  JsonObject service_response = (*doc)["service_response"];
-                  
-                  if (!service_response[entity_key].is<JsonObject>()) {
-                    ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
-                    return;
-                  }
-
-                  JsonObject entity_data = service_response[entity_key];
-                  
-                  if (!entity_data["forecast"].is<JsonArray>()) {
-                    ESP_LOGW("weather", "No 'forecast' key in hourly response");
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
-                    return;
-                  }
-
-                  JsonArray forecast_array = entity_data["forecast"];
-                  int hour_count = std::min((int)forecast_array.size(), 24);
-                  ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
-                  
-                  // Feed watchdog before processing loop
-                  App.feed_wdt();
-
-                  for (int i = 0; i < hour_count; i++) {
-                    JsonObject hour = forecast_array[i];
-
-                    // Feed watchdog every 6 hours to prevent timeout during processing
-                    if (i > 0 && i % 6 == 0) {
-                      App.feed_wdt();
-                    }
-
-                    if (hour["temperature"].is<float>()) {
-                      id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
-                    }
-
-                    if (hour["apparent_temperature"].is<float>()) {
-                      id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
-                    }
-
-                    if (hour["condition"].is<const char*>()) {
-                      id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
-                    }
-
-                    if (hour["precipitation_probability"].is<float>()) {
-                      id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
-                    }
-
-                    if (hour["datetime"].is<const char*>()) {
-                      id(weather_hourly_datetime)[i] = hour["datetime"].as<std::string>();
-                    }
-
-                    // Additional hourly data fields
-                    if (hour["humidity"].is<float>()) {
-                      id(weather_hourly_humidity)[i] = hour["humidity"].as<float>();
-                    }
-
-                    if (hour["precipitation"].is<float>()) {
-                      id(weather_hourly_precipitation)[i] = hour["precipitation"].as<float>();
-                    }
-
-                    if (hour["pressure"].is<float>()) {
-                      id(weather_hourly_pressure)[i] = hour["pressure"].as<float>();
-                    }
-
-                    if (hour["uv_index"].is<float>()) {
-                      id(weather_hourly_uv_index)[i] = hour["uv_index"].as<float>();
-                    }
-
-                    if (hour["wind_speed"].is<float>()) {
-                      id(weather_hourly_wind_speed)[i] = hour["wind_speed"].as<float>();
-                    }
-
-                    if (hour["wind_bearing"].is<float>()) {
-                      id(weather_hourly_wind_bearing)[i] = hour["wind_bearing"].as<float>();
-                    }
-                  }
-                  ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
-
-                  // Clean up PSRAM-allocated JSON document to free memory
+                if (error) {
+                  ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
                   doc->~JsonDocument();  // Call destructor
-                  heap_caps_free(json_buffer);  // Free PSRAM buffer
-                  
-                  ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d", 
-                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-                  ESP_LOGI("weather", "✓ JSON document cleaned up");
+                  heap_caps_free(json_buffer);  // Free PSRAM
+                  return;
+                }
 
-                  // Update hourly forecast timestamp
-                  id(weather_hourly_last_update) = millis();
-                  id(weather_last_update) = millis();  // Keep for backward compatibility
+                // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
+                const char *entity_key = "${weather_entity_id}";
+                  
+                if (!(*doc)["service_response"].is<JsonObject>()) {
+                  ESP_LOGE("weather", "No 'service_response' key in response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                }
+
+                JsonObject service_response = (*doc)["service_response"];
+                  
+                if (!service_response[entity_key].is<JsonObject>()) {
+                  ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                }
+
+                JsonObject entity_data = service_response[entity_key];
+                  
+                if (!entity_data["forecast"].is<JsonArray>()) {
+                  ESP_LOGW("weather", "No 'forecast' key in hourly response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                }
+
+                JsonArray forecast_array = entity_data["forecast"];
+                int hour_count = std::min((int)forecast_array.size(), 24);
+                ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+                  
+                // Feed watchdog before processing loop
+                App.feed_wdt();
+
+                for (int i = 0; i < hour_count; i++) {
+                  JsonObject hour = forecast_array[i];
+
+                  // Feed watchdog every 6 hours to prevent timeout during processing
+                  if (i > 0 && i % 6 == 0) {
+                    App.feed_wdt();
+                  }
+
+                  if (hour["temperature"].is<float>()) {
+                    id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                  }
+
+                  if (hour["apparent_temperature"].is<float>()) {
+                    id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                  }
+
+                  if (hour["condition"].is<const char*>()) {
+                    id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                  }
+
+                  if (hour["precipitation_probability"].is<float>()) {
+                    id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                  }
+
+                  if (hour["datetime"].is<const char*>()) {
+                    id(weather_hourly_datetime)[i] = hour["datetime"].as<std::string>();
+                  }
+
+                  // Additional hourly data fields
+                  if (hour["humidity"].is<float>()) {
+                    id(weather_hourly_humidity)[i] = hour["humidity"].as<float>();
+                  }
+
+                  if (hour["precipitation"].is<float>()) {
+                    id(weather_hourly_precipitation)[i] = hour["precipitation"].as<float>();
+                  }
+
+                  if (hour["pressure"].is<float>()) {
+                    id(weather_hourly_pressure)[i] = hour["pressure"].as<float>();
+                  }
+
+                  if (hour["uv_index"].is<float>()) {
+                    id(weather_hourly_uv_index)[i] = hour["uv_index"].as<float>();
+                  }
+
+                  if (hour["wind_speed"].is<float>()) {
+                    id(weather_hourly_wind_speed)[i] = hour["wind_speed"].as<float>();
+                  }
+
+                  if (hour["wind_bearing"].is<float>()) {
+                    id(weather_hourly_wind_bearing)[i] = hour["wind_bearing"].as<float>();
+                  }
+                }
+                ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
+
+                // Clean up PSRAM-allocated JSON document to free memory
+                doc->~JsonDocument();  // Call destructor
+                heap_caps_free(json_buffer);  // Free PSRAM buffer
+                  
+                ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d", 
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                ESP_LOGI("weather", "✓ JSON document cleaned up");
+
+                // Update hourly forecast timestamp
+                id(weather_hourly_last_update) = millis();
+                id(weather_last_update) = millis();  // Keep for backward compatibility
 
               # Small delay to allow memory to be freed before display update
               - delay: 100ms
@@ -1684,8 +1684,8 @@ script:
                     - script.execute: update_hourly_page_1  # Update page 1 if currently viewing
   
       - lambda: |-
-          // Always clear the lock when done (success or failure)
-          id(weather_fetch_lock) = false;
+        // Always clear the lock when done (success or failure)
+        id(weather_fetch_lock) = false;
   # Legacy script for backward compatibility - fetches both
   - id: fetch_weather_data
     mode: single
@@ -1842,40 +1842,40 @@ script:
       # Formula: ((apparent - low) / (high - low)) * 100
       # This replaces the need for a Home Assistant template sensor
       - lambda: |-
-          float apparent = id(weather_current_apparent_temp);
-          float high = id(weather_forecast_temp_high)[0];
-          float low = id(weather_forecast_temp_low)[0];
+        float apparent = id(weather_current_apparent_temp);
+        float high = id(weather_forecast_temp_high)[0];
+        float low = id(weather_forecast_temp_low)[0];
           
-          // Only calculate if we have valid values
-          if (!isnan(apparent) && !isnan(high) && !isnan(low)) {
-            float range = high - low;
+        // Only calculate if we have valid values
+        if (!isnan(apparent) && !isnan(high) && !isnan(low)) {
+          float range = high - low;
             
-            // Prevent division by zero
-            if (range == 0) {
-              range = 1.0;
-            }
-            
-            // Calculate percentage
-            float pct = ((apparent - low) / range) * 100.0;
-            
-            // Clamp between 0 and 100
-            if (pct < 0) pct = 0;
-            if (pct > 100) pct = 100;
-            
-            // Round to nearest integer
-            int gauge_value = (int)(pct + 0.5);
-            
-            // Update the gauge
-            auto call = id(weather_gauge_value).make_call();
-            call.set_value(gauge_value);
-            call.perform();
-            
-            ESP_LOGI("weather", "Gauge calculation: apparent=%.1f, high=%.1f, low=%.1f, pct=%d%%", 
-                     apparent, high, low, gauge_value);
-          } else {
-            ESP_LOGW("weather", "Cannot calculate gauge value - missing data (apparent=%.1f, high=%.1f, low=%.1f)", 
-                     apparent, high, low);
+          // Prevent division by zero
+          if (range == 0) {
+            range = 1.0;
           }
+            
+          // Calculate percentage
+          float pct = ((apparent - low) / range) * 100.0;
+            
+          // Clamp between 0 and 100
+          if (pct < 0) pct = 0;
+          if (pct > 100) pct = 100;
+            
+          // Round to nearest integer
+          int gauge_value = (int)(pct + 0.5);
+            
+          // Update the gauge
+          auto call = id(weather_gauge_value).make_call();
+          call.set_value(gauge_value);
+          call.perform();
+            
+          ESP_LOGI("weather", "Gauge calculation: apparent=%.1f, high=%.1f, low=%.1f, pct=%d%%", 
+                   apparent, high, low, gauge_value);
+        } else {
+          ESP_LOGW("weather", "Cannot calculate gauge value - missing data (apparent=%.1f, high=%.1f, low=%.1f)", 
+                   apparent, high, low);
+        }
 
       - logger.log: "✓ Weather display labels updated (page 3)"
       # NOTE: Hourly and daily forecast updates are now handled by their respective
@@ -5284,11 +5284,11 @@ number:
             lambda: 'return id(current_page_name) == "wifi";'
           then:
             - lambda: |-
-                id(wifi_signal_needs_render) = true;
-                id(wifi_signal_bar_needs_render) = true;
-                id(wifi_ssid_needs_render) = true;
-                id(wifi_ip_needs_render) = true;
-                id(ha_status_needs_render) = true;
+              id(wifi_signal_needs_render) = true;
+              id(wifi_signal_bar_needs_render) = true;
+              id(wifi_ssid_needs_render) = true;
+              id(wifi_ip_needs_render) = true;
+              id(ha_status_needs_render) = true;
 
 binary_sensor:
   - platform: status
@@ -5332,15 +5332,15 @@ sensor:
     on_value:
       then:
         - lambda: |-
-            // Always store the value (needed for calculations)
-            id(weather_current_temp) = x;
-            ESP_LOGD("weather", "Current temp updated: %.1f°F", x);
+          // Always store the value (needed for calculations)
+          id(weather_current_temp) = x;
+          ESP_LOGD("weather", "Current temp updated: %.1f°F", x);
             
-            // Only trigger display update if on weather page (reduces LVGL overhead)
-            if (id(current_page_name) == "weather") {
-              // Trigger weather display update script
-              id(update_weather_display).execute();
-            }
+          // Only trigger display update if on weather page (reduces LVGL overhead)
+          if (id(current_page_name) == "weather") {
+            // Trigger weather display update script
+            id(update_weather_display).execute();
+          }
 
   # Import apparent temperature from Home Assistant weather integration
   - platform: homeassistant
@@ -5350,15 +5350,15 @@ sensor:
     on_value:
       then:
         - lambda: |-
-            // Always store the value (needed for gauge calculations)
-            id(weather_current_apparent_temp) = x;
-            ESP_LOGD("weather", "Apparent temp updated: %.1f°F", x);
+          // Always store the value (needed for gauge calculations)
+          id(weather_current_apparent_temp) = x;
+          ESP_LOGD("weather", "Apparent temp updated: %.1f°F", x);
             
-            // Only trigger display update if on weather page (reduces LVGL overhead)
-            if (id(current_page_name) == "weather") {
-              // Trigger weather display update script
-              id(update_weather_display).execute();
-            }
+          // Only trigger display update if on weather page (reduces LVGL overhead)
+          if (id(current_page_name) == "weather") {
+            // Trigger weather display update script
+            id(update_weather_display).execute();
+          }
 
   - platform: homeassistant
     id: wind_speed_sensor
@@ -5541,21 +5541,21 @@ sensor:
               lambda: 'return id(led_effect_select).state == "AQI Color";'
             then:
               - lambda: |-
-                  float aqi = x;
-                  if (std::isnan(aqi) || aqi <= 50) {
-                    auto call = id(rgb_light).turn_off();
-                    call.perform();
-                  } else {
-                    Color color;
-                    if (aqi <= 100) color = Color(255, 255, 0);       // yellow
-                    else if (aqi <= 150) color = Color(255, 165, 0);  // orange
-                    else if (aqi <= 200) color = Color(255, 0, 0);    // red
-                    else if (aqi <= 300) color = Color(128, 0, 128);  // purple
-                    else color = Color(128, 0, 0);                    // maroon
-                    auto call = id(rgb_light).turn_on();
-                    call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
-                    call.perform();
-                  }
+                float aqi = x;
+                if (std::isnan(aqi) || aqi <= 50) {
+                  auto call = id(rgb_light).turn_off();
+                  call.perform();
+                } else {
+                  Color color;
+                  if (aqi <= 100) color = Color(255, 255, 0);       // yellow
+                  else if (aqi <= 150) color = Color(255, 165, 0);  // orange
+                  else if (aqi <= 200) color = Color(255, 0, 0);    // red
+                  else if (aqi <= 300) color = Color(128, 0, 128);  // purple
+                  else color = Color(128, 0, 0);                    // maroon
+                  auto call = id(rgb_light).turn_on();
+                  call.set_rgb(color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f);
+                  call.perform();
+                }
 
   # TEMPORARILY DISABLED - SCD4x sensor causing boot loop due to I2C NACK errors
   # Check hardware connection before re-enabling
@@ -6805,9 +6805,9 @@ display:
               on_release:
                 - logger.log: "Weather page nav button RELEASED!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -7446,7 +7446,7 @@ display:
           - lambda: 'id(current_page_name) = "hourly_summary_1";'
           - delay: 100ms
           - lambda: |-
-              ESP_LOGI("memory", "Before hourly summary page 1 load - Free heap: %d bytes", esp_get_free_heap_size());
+            ESP_LOGI("memory", "Before hourly summary page 1 load - Free heap: %d bytes", esp_get_free_heap_size());
           - if:
               condition:
                 lambda: |-
@@ -7482,9 +7482,9 @@ display:
               on_release:
                 - logger.log: "Hourly summary page 1 nav button RELEASED!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -8020,9 +8020,9 @@ display:
               on_release:
                 - logger.log: "Hourly Summary page 1 'More' button RELEASED - going to page 2!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.show:
                     id: hourly_summary_page_2
                     animation: OUT_LEFT
@@ -8041,7 +8041,7 @@ display:
           - lambda: 'id(current_page_name) = "hourly_summary_2";'
           - delay: 100ms
           - lambda: |-
-              ESP_LOGI("memory", "Before hourly summary page 2 load - Free heap: %d bytes", esp_get_free_heap_size());
+            ESP_LOGI("memory", "Before hourly summary page 2 load - Free heap: %d bytes", esp_get_free_heap_size());
           - if:
               condition:
                 lambda: |-
@@ -8077,9 +8077,9 @@ display:
               on_release:
                 - logger.log: "Hourly summary page 2 nav button RELEASED!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -8615,9 +8615,9 @@ display:
               on_release:
                 - logger.log: "Hourly Summary page 2 'More' button RELEASED - going to page 1!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.show:
                     id: hourly_summary_page_1
                     animation: OUT_LEFT
@@ -8634,7 +8634,7 @@ display:
           - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
           # Force garbage collection to free up memory before rendering
           - lambda: |-
-              ESP_LOGI("memory", "Before hourly page load - Free heap: %d bytes", esp_get_free_heap_size());
+            ESP_LOGI("memory", "Before hourly page load - Free heap: %d bytes", esp_get_free_heap_size());
           # Check if we have data and if it needs refresh
           - if:
               condition:
@@ -9292,9 +9292,9 @@ display:
               on_release:
                 - logger.log: "Hourly page 1 CENTER button RELEASED - going to page 2!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.show:
                     id: hourly_forecast_page_2
                     animation: OUT_LEFT
@@ -9314,9 +9314,9 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page nav button RELEASED!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -9975,9 +9975,9 @@ display:
               on_release:
                 - logger.log: "Hourly page 2 CENTER button RELEASED - going to page 3!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.show:
                     id: hourly_forecast_page_3
                     animation: OUT_LEFT
@@ -9997,9 +9997,9 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page 2 nav button RELEASED!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -10657,7 +10657,7 @@ display:
               on_release:
                 - logger.log: "Hourly page 3 CENTER button RELEASED - going to page 4!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.show:
                     id: hourly_forecast_page_4
                     animation: OUT_LEFT
@@ -10677,7 +10677,7 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page 3 nav button RELEASED!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -11334,7 +11334,7 @@ display:
               on_release:
                 - logger.log: "Hourly page 4 CENTER button RELEASED - going to page 5!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.show:
                     id: hourly_forecast_page_5
                     animation: OUT_LEFT
@@ -11354,7 +11354,7 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page 4 nav button RELEASED!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -12011,7 +12011,7 @@ display:
               on_release:
                 - logger.log: "Hourly page 5 CENTER button RELEASED - going to page 6!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.show:
                     id: hourly_forecast_page_6
                     animation: OUT_LEFT
@@ -12031,7 +12031,7 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page 5 nav button RELEASED!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -12690,7 +12690,7 @@ display:
               on_release:
                 - logger.log: "Hourly page 6 CENTER button RELEASED - going to page 7!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.show:
                     id: hourly_forecast_page_7
                     animation: OUT_LEFT
@@ -12710,7 +12710,7 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page 6 nav button RELEASED!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -13370,7 +13370,7 @@ display:
               on_release:
                 - logger.log: "Hourly page 7 CENTER button RELEASED - going to page 8!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.show:
                     id: hourly_forecast_page_8
                     animation: OUT_LEFT
@@ -13390,7 +13390,7 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page 7 nav button RELEASED!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -14050,7 +14050,7 @@ display:
               on_release:
                 - logger.log: "Hourly page 8 CENTER button RELEASED - going back to page 1!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.show:
                     id: hourly_forecast_page
                     animation: OUT_RIGHT
@@ -14070,7 +14070,7 @@ display:
               on_release:
                 - logger.log: "Hourly Forecast page 8 nav button RELEASED!"
                 - lambda: |-
-                    id(last_auto_rotation_time) = millis();
+                  id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -14085,7 +14085,7 @@ display:
           - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
           # Force garbage collection to free up memory before rendering
           - lambda: |-
-              ESP_LOGI("memory", "Before daily forecast page load - Free heap: %d bytes", esp_get_free_heap_size());
+            ESP_LOGI("memory", "Before daily forecast page load - Free heap: %d bytes", esp_get_free_heap_size());
           # Check if we have data and if it needs refresh
           - if:
               condition:
@@ -14247,9 +14247,9 @@ display:
               on_release:
                 - logger.log: "3-Day Forecast page nav button RELEASED!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
@@ -14417,9 +14417,9 @@ display:
               on_release:
                 - logger.log: "Extended forecast 'More' button on 4-5 RELEASED! going to 6-7!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.show:
                     id: forecast_days_6_7_page
                     animation: OUT_LEFT
@@ -14588,9 +14588,9 @@ display:
               on_release:
                 - logger.log: "Extended forecast 'More' button on 6-7 RELEASED! going to 8-9!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.show:
                     id: forecast_days_8_9_page
                     animation: OUT_LEFT
@@ -14759,9 +14759,9 @@ display:
               on_release:
                 - logger.log: "Extended forecast 'More' button on 8-9 RELEASED! going to 10!"
                 - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.show:
                     id: forecast_day_10_page
                     animation: OUT_LEFT
@@ -14890,11 +14890,11 @@ button:
     entity_category: config
     on_press:
       - lambda: |-
-          // Clear only the Improv WiFi credentials from NVS (key: 0x9B5A7C21)
-          auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
-          uint8_t dummy = 0;
-          pref.save(&dummy);
-          ESP_LOGI("main", "Cleared Improv WiFi credentials from NVS");
+        // Clear only the Improv WiFi credentials from NVS (key: 0x9B5A7C21)
+        auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
+        uint8_t dummy = 0;
+        pref.save(&dummy);
+        ESP_LOGI("main", "Cleared Improv WiFi credentials from NVS");
       - logger.log: "Improv WiFi credentials cleared. Device will use YAML WiFi config on next boot."
 
   - platform: template
@@ -14999,11 +14999,11 @@ button:
 
       - logger.log: "Step 3: Resetting and re-initializing display controller..."
       - lambda: |-
-          ESP_LOGI("display_reset", "Resetting and re-initializing display hardware...");
-          auto *display = id(lily_display);
-          if (display != nullptr) {
-            display->setup();  // This re-initializes the display controller completely
-          }
+        ESP_LOGI("display_reset", "Resetting and re-initializing display hardware...");
+        auto *display = id(lily_display);
+        if (display != nullptr) {
+          display->setup();  // This re-initializes the display controller completely
+        }
       - delay: 500ms
 
       - logger.log: "Step 4: Resuming LVGL..."
@@ -15016,15 +15016,15 @@ button:
       
       - logger.log: "Step 6: Updating watchdog timestamp and recovery counter..."
       - lambda: |-
-          // Update watchdog timestamp
-          id(last_display_update_time) = millis();
+        // Update watchdog timestamp
+        id(last_display_update_time) = millis();
 
-          // Increment recovery counter
-          static int recoveries = 0;
-          recoveries++;
-          id(display_recovery_count).publish_state(recoveries);
+        // Increment recovery counter
+        static int recoveries = 0;
+        recoveries++;
+        id(display_recovery_count).publish_state(recoveries);
 
-          ESP_LOGI("display_reset", "=== DISPLAY RECOVERY COMPLETE === (Recovery #%d)", recoveries);
+        ESP_LOGI("display_reset", "=== DISPLAY RECOVERY COMPLETE === (Recovery #%d)", recoveries);
 
       - logger.log: "Display recovery complete!"
 
@@ -15042,8 +15042,8 @@ button:
     on_press:
       - logger.log: "Navigating to Clock page"
       - lambda: |-
-          id(current_page_name) = "vertical_clock";
-          id(last_auto_rotation_time) = millis();
+        id(current_page_name) = "vertical_clock";
+        id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: vertical_clock_page
           animation: OUT_LEFT
@@ -15056,8 +15056,8 @@ button:
     on_press:
       - logger.log: "Navigating to Air Quality page"
       - lambda: |-
-          id(current_page_name) = "airq";
-          id(last_auto_rotation_time) = millis();
+        id(current_page_name) = "airq";
+        id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: AirQ_page
           animation: OUT_LEFT
@@ -15070,8 +15070,8 @@ button:
     on_press:
       - logger.log: "Navigating to WiFi page"
       - lambda: |-
-          id(current_page_name) = "wifi";
-          id(last_auto_rotation_time) = millis();
+        id(current_page_name) = "wifi";
+        id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: wifi_page
           animation: OUT_LEFT
@@ -15084,8 +15084,8 @@ button:
     on_press:
       - logger.log: "Navigating to Weather page"
       - lambda: |-
-          id(current_page_name) = "weather";
-          id(last_auto_rotation_time) = millis();
+        id(current_page_name) = "weather";
+        id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: weather_forecast_page
           animation: OUT_LEFT
@@ -15098,8 +15098,8 @@ button:
     on_press:
       - logger.log: "Navigating to Hourly Summary page"
       - lambda: |-
-          id(current_page_name) = "hourly_summary_page_1";
-          id(last_auto_rotation_time) = millis();
+        id(current_page_name) = "hourly_summary_page_1";
+        id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: hourly_summary_page_1
           animation: OUT_LEFT
@@ -15112,8 +15112,8 @@ button:
     on_press:
       - logger.log: "Navigating to Hourly Forecast page"
       - lambda: |-
-          id(current_page_name) = "hourly_forecast";
-          id(last_auto_rotation_time) = millis();
+        id(current_page_name) = "hourly_forecast";
+        id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: hourly_forecast_page
           animation: OUT_LEFT
@@ -15126,8 +15126,8 @@ button:
     on_press:
       - logger.log: "Navigating to Daily Forecast page"
       - lambda: |-
-          id(current_page_name) = "daily_forecast";
-          id(last_auto_rotation_time) = millis();
+        id(current_page_name) = "daily_forecast";
+        id(last_auto_rotation_time) = millis();
       - lvgl.page.show:
           id: daily_forecast_page
           animation: OUT_LEFT
@@ -15152,16 +15152,16 @@ wifi:
   # This allows the rainbow effect to restart when connection is lost
   on_disconnect:
     - lambda: |-
-        id(cycleCounter) = 0;
-        ESP_LOGI("wifi", "WiFi disconnected - resetting startup blink counter");
+      id(cycleCounter) = 0;
+      ESP_LOGI("wifi", "WiFi disconnected - resetting startup blink counter");
 
   # Ensure startup blink stops when WiFi reconnects
   on_connect:
     - lambda: |-
-        if (id(cycleCounter) < 30) {
-          id(cycleCounter) = 30;
-          ESP_LOGI("wifi", "WiFi connected - stopping startup blink");
-        }
+      if (id(cycleCounter) < 30) {
+        id(cycleCounter) = 30;
+        ESP_LOGI("wifi", "WiFi connected - stopping startup blink");
+      }
 
 # ============================================================================
 # WireGuard VPN Configuration
@@ -15283,9 +15283,9 @@ esphome:
       then:
         - delay: 20s  # Allow BLE to fully initialize and stabilize memory
         - lambda: |-
-            ESP_LOGI("wireguard_delayed", "Checking WireGuard enable state after 20s delay...");
-            ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-            ESP_LOGI("wireguard_delayed", "WireGuard switch state: %s", id(wireguard_enabled).state ? "ON" : "OFF");
+          ESP_LOGI("wireguard_delayed", "Checking WireGuard enable state after 20s delay...");
+          ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+          ESP_LOGI("wireguard_delayed", "WireGuard switch state: %s", id(wireguard_enabled).state ? "ON" : "OFF");
         - if:
             condition:
               lambda: 'return id(wireguard_enabled).state;'
@@ -15309,24 +15309,24 @@ esphome:
 
         # Map user's text selection to page index number
         - lambda: |-
-            const std::string &choice = id(default_page_select_boot).state;
-            // Core pages
-            if (choice == "Vertical Clock") {
-              id(default_page_index) = 0;  // vertical_clock_page
-            } else if (choice == "AirQ") {  // Comment out if AirQ disabled
-              id(default_page_index) = 1;  // AirQ_page
-            } else if (choice == "WiFi") {
-              id(default_page_index) = 2;  // wifi_page
-            // Weather page mappings (comment out if weather packages are disabled)
-            } else if (choice == "Weather") {
-              id(default_page_index) = 3;  // weather_forecast_page
-            } else if (choice == "Daily Forecast") {
-              id(default_page_index) = 4;  // daily_forecast_page
-            } else if (choice == "Hourly Forecast") {
-              id(default_page_index) = 5;  // hourly_forecast_page
-            } else {
-              id(default_page_index) = 0;  // Default to vertical clock if unknown
-            }
+          const std::string &choice = id(default_page_select_boot).state;
+          // Core pages
+          if (choice == "Vertical Clock") {
+            id(default_page_index) = 0;  // vertical_clock_page
+          } else if (choice == "AirQ") {  // Comment out if AirQ disabled
+            id(default_page_index) = 1;  // AirQ_page
+          } else if (choice == "WiFi") {
+            id(default_page_index) = 2;  // wifi_page
+          // Weather page mappings (comment out if weather packages are disabled)
+          } else if (choice == "Weather") {
+            id(default_page_index) = 3;  // weather_forecast_page
+          } else if (choice == "Daily Forecast") {
+            id(default_page_index) = 4;  // daily_forecast_page
+          } else if (choice == "Hourly Forecast") {
+            id(default_page_index) = 5;  // hourly_forecast_page
+          } else {
+            id(default_page_index) = 0;  // Default to vertical clock if unknown
+          }
         - logger.log:
             format: "Setting default page (index: %d)"
             args: ['id(default_page_index)']
