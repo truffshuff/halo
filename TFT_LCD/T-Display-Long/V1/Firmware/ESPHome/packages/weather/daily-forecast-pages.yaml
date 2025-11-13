@@ -19,7 +19,7 @@
 # =============================================================================
 
 display:
-  - platform: ax s15231
+  - platform: axs15231
     pages:
       - id: daily_forecast_page
         bg_color: 0x000000
