@@ -1,0 +1,264 @@
+# =============================================================================
+# HALO v1 - Weather LED Effects (Phase 3)
+# =============================================================================
+#
+# This package contains the RGB LED strip configuration with weather-based
+# and AQI-based color effects.
+#
+# Effects included:
+#   - Weather Condition (colors based on current weather)
+#   - Pink Lightning (animated lightning effect)
+#   - Auto Context (AQI priority, then weather)
+#   - Standard effects (rainbow, color wipe, scan, etc.)
+#
+# Dependencies:
+#   - packages/base/globals.yaml (weather_current_condition, current_page_name)
+#   - Computed AQI sensor (computed_halo_aqi)
+#
+# Hardware:
+#   - WS2812 RGB LED strip on GPIO47
+#   - 12 LEDs total
+#
+# =============================================================================
+
+light:
+  # - platform: esp32_rmt_led_strip
+  #   id: rgb_light
+  #   name: "Halo"
+  #   pin: GPIO47
+  #   rgb_order: GRB
+  #   default_transition_length: 2s
+  #   chipset: SK6812
+  #   num_leds: 11
+  #   effects:
+  #     - pulse:
+  #         name: "Slow Pulse"
+  #         transition_length: 500ms
+  #         update_interval: 500ms
+  #         min_brightness: 10%
+  #         max_brightness: 50%
+  #     - addressable_rainbow:
+  #         name: Rainbow Effect With Custom Values
+  #         speed: 10
+  #         width: 50
+
+  - platform: esp32_rmt_led_strip
+    name: Halo
+    id: rgb_light
+    rgb_order: GRB
+    pin: GPIO47
+    num_leds: 12
+    use_dma: true  # Use DMA for better performance
+    chipset: WS2812
+    restore_mode: ALWAYS_OFF
+    effects:
+      - addressable_rainbow:
+          name: Rainbow Effect With Custom Values
+          speed: 10
+          width: 50
+      - addressable_rainbow:
+          name: Addressable Rainbow
+      - addressable_color_wipe:
+          name: Color Wipe
+      - addressable_scan:
+          name: Scan
+      - addressable_twinkle:
+          name: Twinkle
+      - addressable_fireworks:
+          name: Fireworks
+      - strobe:
+          name: Strobe
+      - addressable_random_twinkle:
+          name: Random Twinkle
+      # Weather-based LED effects using addressable_lambda
+      - addressable_lambda:
+          name: "Weather Condition"
+          update_interval: 100ms
+          lambda: |-
+              std::string condition = id(weather_current_condition);
+              std::transform(condition.begin(), condition.end(), condition.begin(), ::tolower);
+
+              Color color = Color::WHITE;
+              if (condition.find("clear-night") != std::string::npos) {
+              color = Color(106, 90, 205);  // Slate Blue
+              } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
+              color = Color(255, 215, 0);  // Gold
+              } else if (condition.find("snowy-rainy") != std::string::npos) {
+              color = Color(175, 238, 238);  // Light Cyan
+              } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
+              // Lightning: constant pink glow with random white flashes on individual LEDs
+              unsigned long now = millis();
+              static std::vector<unsigned long> led_flash_until_weather;
+
+              // Initialize flash timers if needed
+              if (led_flash_until_weather.size() != it.size()) {
+                led_flash_until_weather.resize(it.size(), 0);
+              }
+
+              // Set base pink glow for all LEDs
+              it.all() = Color(255, 20, 147);  // Deep Pink base
+
+              // Each LED has a chance to flash white
+              for (int i = 0; i < it.size(); i++) {
+                if (now < led_flash_until_weather[i]) {
+                  // This LED is currently flashing white
+                  it[i] = Color(255, 255, 255);  // Bright white flash
+                } else {
+                  // Random chance to start a new white flash on this LED
+                  if ((esp_random() % 1000) < 8) {  // ~0.8% chance per LED per update
+                    // Flash for 40-120ms
+                    led_flash_until_weather[i] = now + 40 + (esp_random() % 80);
+                    it[i] = Color(255, 255, 255);
+                  }
+                }
+              }
+              return;
+              } else if (condition.find("partlycloudy") != std::string::npos) {
+              color = Color(135, 206, 250);  // Light Sky Blue
+              } else if (condition.find("cloudy") != std::string::npos) {
+              color = Color(169, 169, 169);  // Dark Gray
+              } else if (condition.find("rainy") != std::string::npos) {
+              color = Color(65, 105, 225);  // Royal Blue
+              } else if (condition.find("snowy") != std::string::npos) {
+              color = Color(220, 220, 220);  // Gainsboro
+              } else if (condition.find("fog") != std::string::npos) {
+              color = Color(176, 196, 222);  // Light Steel Blue
+              } else if (condition.find("windy") != std::string::npos) {
+              color = Color(144, 238, 144);  // Light Green
+              }
+
+              // Set all LEDs to the weather condition color
+              it.all() = color;
+      - addressable_lambda:
+          name: "Pink Lightning"
+          update_interval: 100ms
+          lambda: |-
+              // Constant pink glow with random white lightning strikes on individual LEDs
+              unsigned long now = millis();
+              static std::vector<unsigned long> led_flash_until;
+
+              // Initialize flash timers if needed
+              if (led_flash_until.size() != it.size()) {
+              led_flash_until.resize(it.size(), 0);
+              }
+
+              // Set base pink glow for all LEDs
+              it.all() = Color(255, 20, 147);  // Deep Pink base
+
+              // Each LED has a chance to flash white
+              for (int i = 0; i < it.size(); i++) {
+              if (now < led_flash_until[i]) {
+                // This LED is currently flashing white
+                it[i] = Color(255, 255, 255);  // Bright white flash
+              } else {
+                // Random chance to start a new white flash on this LED
+                if ((esp_random() % 1000) < 8) {  // ~0.8% chance per LED per update
+                  // Flash for 40-120ms
+                  led_flash_until[i] = now + 40 + (esp_random() % 80);
+                  it[i] = Color(255, 255, 255);
+                }
+              }
+              }
+      - addressable_lambda:
+          name: "Auto Context"
+          update_interval: 100ms
+          lambda: |-
+              // Auto Context: Show AQI color if AQI > 50, otherwise show weather condition
+              float aqi = id(computed_halo_aqi).state;
+              Color color = Color::WHITE;
+
+              if (!std::isnan(aqi) && aqi > 50) {
+              // Use AQI color logic (show on all pages)
+              if (aqi <= 100) {
+                color = Color(255, 255, 0);  // Yellow
+              } else if (aqi <= 150) {
+                color = Color(255, 165, 0);  // Orange
+              } else if (aqi <= 200) {
+                color = Color(255, 0, 0);  // Red
+              } else if (aqi <= 300) {
+                color = Color(128, 0, 128);  // Purple
+              } else {
+                color = Color(128, 0, 0);  // Maroon
+              }
+              } else {
+              // Only show weather condition color on the current weather page
+              // Turn off LEDs when on other pages if AQI <= 50
+              if (id(current_page_name) != "weather") {
+                it.all() = Color::BLACK;
+                return;
+              }
+
+              // Use weather condition color logic
+              std::string condition = id(weather_current_condition);
+              std::transform(condition.begin(), condition.end(), condition.begin(), ::tolower);
+
+              if (condition.find("clear-night") != std::string::npos) {
+                color = Color(106, 90, 205);  // Slate Blue
+              } else if (condition.find("sunny") != std::string::npos || condition.find("clear") != std::string::npos) {
+                color = Color(255, 215, 0);  // Gold
+              } else if (condition.find("snowy-rainy") != std::string::npos) {
+                color = Color(175, 238, 238);  // Light Cyan
+              } else if (condition.find("lightning-rainy") != std::string::npos || condition.find("lightning") != std::string::npos) {
+                // Lightning: constant pink glow with random white flashes on individual LEDs
+                unsigned long now = millis();
+                static std::vector<unsigned long> led_flash_until_auto;
+
+                // Initialize flash timers if needed
+                if (led_flash_until_auto.size() != it.size()) {
+                  led_flash_until_auto.resize(it.size(), 0);
+                }
+
+                // Set base pink glow for all LEDs
+                it.all() = Color(255, 20, 147);  // Deep Pink base
+
+                // Each LED has a chance to flash white
+                for (int i = 0; i < it.size(); i++) {
+                  if (now < led_flash_until_auto[i]) {
+                    // This LED is currently flashing white
+                    it[i] = Color(255, 255, 255);  // Bright white flash
+                  } else {
+                    // Random chance to start a new white flash on this LED
+                    if ((esp_random() % 1000) < 8) {  // ~0.8% chance per LED per update
+                      // Flash for 40-120ms
+                      led_flash_until_auto[i] = now + 40 + (esp_random() % 80);
+                      it[i] = Color(255, 255, 255);
+                    }
+                  }
+                }
+                return;
+              } else if (condition.find("partlycloudy") != std::string::npos) {
+                color = Color(135, 206, 250);  // Light Sky Blue
+              } else if (condition.find("cloudy") != std::string::npos) {
+                color = Color(169, 169, 169);  // Dark Gray
+              } else if (condition.find("rainy") != std::string::npos) {
+                color = Color(65, 105, 225);  // Royal Blue
+              } else if (condition.find("snowy") != std::string::npos) {
+                color = Color(220, 220, 220);  // Gainsboro
+              } else if (condition.find("fog") != std::string::npos) {
+                color = Color(176, 196, 222);  // Light Steel Blue
+              } else if (condition.find("windy") != std::string::npos) {
+                color = Color(144, 238, 144);  // Light Green
+              }
+              }
+
+              // Set all LEDs to the determined color
+              it.all() = color;
+
+  - platform: monochromatic
+    output: backlight
+    name: "Display Backlight"
+    id: display_backlight
+    restore_mode: ALWAYS_ON
+    # default_transition_length: 0s  # CRITICAL: No fade - instant on/off to prevent boot loop
+    on_turn_on:
+      - logger.log: "Display backlight turned ON"
+      - lambda: 'id(display_backlight_is_on) = true;'
+      - binary_sensor.template.publish:
+          id: display_backlight_state
+          state: ON
+    on_turn_off:
+      - logger.log: "Display backlight turned OFF"
+      - lambda: 'id(display_backlight_is_on) = false;'
+      - binary_sensor.template.publish:
+          id: display_backlight_state
+          state: OFF
