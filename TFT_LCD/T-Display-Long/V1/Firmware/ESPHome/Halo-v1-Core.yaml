@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.12.2012
+# Version: 25.11.12.2013
 # Last Updated: November 12, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.12.2012"
+  version: "25.11.12.2013"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -6591,7 +6591,8 @@ lvgl:
 # This merges into the existing display component defined in hardware.yaml
 # ============================================================================
 display:
-  - id: lily_display
+  - platform: qspi_dbi
+    id: lily_display
     pages:
       # Weather Forecast Page (Page 3)
       # Main weather display with current conditions
