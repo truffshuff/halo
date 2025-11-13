@@ -18,9 +18,8 @@
 #
 # =============================================================================
 
-display:
-  - platform: axs15231
-    pages:
+lvgl:
+  pages:
       - id: daily_forecast_page
         bg_color: 0x000000
         bg_opa: COVER
