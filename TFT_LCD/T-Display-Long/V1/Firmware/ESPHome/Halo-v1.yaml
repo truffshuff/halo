@@ -86,9 +86,9 @@ wifi:
 # Each package below represents a specific feature or component.
 # Packages are loaded from GitHub for easy updates and sharing.
 #
-# PHASE 1 STATUS: Foundation modules (globals, hardware, esphome_base) extracted
-# PHASE 2 STATUS: Page modules (clock, airq, wifi) extracted
-# REMAINING: Core file still contains weather/forecast pages (will be extracted in Phase 3)
+# PHASE 1 STATUS: ✅ Foundation modules (globals, hardware, esphome_base) extracted
+# PHASE 2 STATUS: ✅ Page modules (clock, airq, wifi) extracted
+# PHASE 3 STATUS: ✅ Weather system (hourly/daily forecast, LED effects) extracted
 # ============================================================================
 
 packages:
@@ -96,16 +96,21 @@ packages:
     url: https://github.com/truffshuff/halo/
     ref: WireGuard  # TODO: Change to 'modular' branch after committing
     files:
-      # Phase 1: Foundation Modules (EXTRACTED)
+      # Phase 1: Foundation Modules
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
 
-      # Phase 2: Page Modules (EXTRACTED)
+      # Phase 2: Page Modules
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/clock-page.yaml
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/airq-page.yaml
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
 
-      # Remaining Configuration (TEMPORARY - will be removed as Phase 3 completes)
+      # Phase 3: Weather System Modules
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/weather-led-effects.yaml
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/hourly-forecast-pages.yaml
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/daily-forecast-pages.yaml
+
+      # Core Configuration (remaining weather page and scripts)
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always

@@ -1,0 +1,819 @@
+# =============================================================================
+# HALO v1 - Daily Forecast Pages (Phase 3)
+# =============================================================================
+#
+# This package contains all 5 daily forecast pages:
+#   - daily_forecast_page (Days 2-3)
+#   - forecast_days_4_5_page
+#   - forecast_days_6_7_page
+#   - forecast_days_8_9_page
+#   - forecast_day_10_page
+#
+# These pages display the 9-day weather forecast with navigation between them.
+#
+# Dependencies:
+#   - packages/base/globals.yaml (weather forecast arrays)
+#   - Weather fetch scripts (for data)
+#   - update_daily_forecast_display script
+#
+# =============================================================================
+
+display:
+  - platform: ax s15231
+    pages:
+      - id: daily_forecast_page
+        bg_color: 0x000000
+        bg_opa: COVER
+        scrollbar_mode: "OFF"
+        on_load:
+          - script.execute: page_transition_cleanup
+          - lambda: 'id(current_page_name) = "daily_forecast";'
+          - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
+          # Force garbage collection to free up memory before rendering
+          - lambda: |-
+              ESP_LOGI("memory", "Before daily forecast page load - Free heap: %d bytes", esp_get_free_heap_size());
+          # Check if we have data and if it needs refresh
+          - if:
+              condition:
+                lambda: |-
+                    // Check if daily forecast needs refresh (stale > 60 minutes)
+                    uint32_t time_since_update = millis() - id(weather_daily_last_update);
+                    bool is_stale = (id(weather_daily_last_update) == 0 || time_since_update > 3600000);
+
+                    if (is_stale) {
+                    ESP_LOGI("weather", "Daily forecast is stale (age: %u minutes), fetching in background...",
+                             id(weather_daily_last_update) == 0 ? 0 : time_since_update / 60000);
+                    return true;
+                    } else {
+                    ESP_LOGD("weather", "Daily forecast is fresh (updated %u minutes ago)", time_since_update / 60000);
+                    return false;
+                    }
+              then:
+                # Fetch will update display when complete (no need to call update_daily_forecast_display here)
+                - script.execute: fetch_daily_forecast
+              else:
+                # Data is fresh, update display with existing data
+                - delay: 50ms  # Additional delay before rendering
+                - script.execute: update_daily_forecast_display
+        widgets:
+          # Page Header
+          - label:
+              text: "9-Day Forecast"
+              align: TOP_MID
+              y: 5
+              text_font: montserrat_18
+              text_color: my_white
+              text_align: CENTER
+
+          # Day 2 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 40
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day2_header
+                    text: "Day +2 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day2_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day2_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day2_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day2_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Day 3 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 340
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day3_header
+                    text: "Day +3 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day3_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day3_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day3_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day3_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Navigation button to access extended forecast (Days 4-10)
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
+
+          - obj:
+              id: nav_button_extended_forecast
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Extended forecast 'More' button RELEASED!"
+                - lvgl.page.show:
+                    id: forecast_days_4_5_page
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          - obj:
+              id: nav_button_forecast
+              align: TOP_RIGHT
+              x: 0
+              y: 0
+              width: 180
+              height: 150
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "3-Day Forecast page nav button RELEASED!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+      - id: forecast_days_4_5_page
+        bg_color: 0x000000
+        bg_opa: COVER
+        scrollbar_mode: "OFF"
+        skip: true
+        on_load:
+          - script.execute: page_transition_cleanup
+        widgets:
+          - label:
+              text: "Extended Forecast"
+              align: TOP_MID
+              y: 5
+              text_font: montserrat_18
+              text_color: my_white
+              text_align: CENTER
+
+          # Day 4 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 40
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day4_header
+                    text: "Day +4 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day4_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day4_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day4_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day4_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Day 5 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 340
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day5_header
+                    text: "Day +5 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day5_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day5_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day5_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day5_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Top-right button for main page navigation
+          - obj:
+              id: nav_button_top_45
+              align: TOP_RIGHT
+              x: 0
+              y: 0
+              width: 180
+              height: 150
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Days 4-5 top-right button RELEASED!"
+                - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
+
+          # # Navigation button (center of screen) - must be LAST to render on top
+          # - obj:
+          #     id: nav_button_forecast_45
+          #     align: CENTER
+          #     x: 0
+          #     y: 0
+          #     width: 150
+          #     height: 150
+          #     bg_opa: 0
+          #     border_width: 0
+          #     clickable: true
+          #     on_release:
+          #       - logger.log: "Days 4-5 CENTER button RELEASED - going to 6-7!"
+          #       - lvgl.page.show:
+          #           id: forecast_days_6_7_page
+          #           animation: OUT_LEFT
+          #           time: 300ms
+
+          # Navigation button (bottom of screen) - must be LAST to render on top
+          - obj:
+              id: nav_button_extended_forecast_45
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Extended forecast 'More' button on 4-5 RELEASED! going to 6-7!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: forecast_days_6_7_page
+                    animation: OUT_LEFT
+                    time: 300ms
+
+      - id: forecast_days_6_7_page
+        bg_color: 0x000000
+        bg_opa: COVER
+        scrollbar_mode: "OFF"
+        skip: true
+        on_load:
+          - script.execute: page_transition_cleanup
+        widgets:
+          - label:
+              text: "Extended Forecast"
+              align: TOP_MID
+              y: 5
+              text_font: montserrat_18
+              text_color: my_white
+              text_align: CENTER
+
+          # Day 6 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 40
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day6_header
+                    text: "Day +6 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day6_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day6_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day6_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day6_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Day 7 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 340
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day7_header
+                    text: "Day +7 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day7_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day7_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day7_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day7_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Top-right button for main page navigation
+          - obj:
+              id: nav_button_top_67
+              align: TOP_RIGHT
+              x: 0
+              y: 0
+              width: 180
+              height: 150
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Days 6-7 top-right button RELEASED!"
+                - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
+
+          # # Navigation button (center of screen) - must be LAST to render on top
+          # - obj:
+          #     id: nav_button_forecast_67
+          #     align: CENTER
+          #     x: 0
+          #     y: 0
+          #     width: 150
+          #     height: 150
+          #     bg_opa: 0
+          #     border_width: 0
+          #     clickable: true
+          #     on_release:
+          #       - logger.log: "Days 6-7 CENTER button RELEASED - going to 8-9!"
+          #       - lvgl.page.show:
+          #           id: forecast_days_8_9_page
+          #           animation: OUT_LEFT
+          #           time: 300ms
+
+          # Navigation button (bottom of screen) - must be LAST to render on top
+          - obj:
+              id: nav_button_extended_forecast_67
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Extended forecast 'More' button on 6-7 RELEASED! going to 8-9!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: forecast_days_8_9_page
+                    animation: OUT_LEFT
+                    time: 300ms
+
+      - id: forecast_days_8_9_page
+        bg_color: 0x000000
+        bg_opa: COVER
+        scrollbar_mode: "OFF"
+        skip: true
+        on_load:
+          - script.execute: page_transition_cleanup
+        widgets:
+          - label:
+              text: "Extended Forecast"
+              align: TOP_MID
+              y: 5
+              text_font: montserrat_18
+              text_color: my_white
+              text_align: CENTER
+
+          # Day 8 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 40
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day8_header
+                    text: "Day +8 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day8_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day8_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day8_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day8_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Day 9 Card
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 340
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day9_header
+                    text: "Day +9 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day9_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day9_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day9_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day9_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+          # Top-right button for main page navigation
+          - obj:
+              id: nav_button_top_89
+              align: TOP_RIGHT
+              x: 0
+              y: 0
+              width: 180
+              height: 150
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Days 8-9 top-right button RELEASED!"
+                - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
+
+          # # Navigation button (center of screen) - must be LAST to render on top
+          # - obj:
+          #     id: nav_button_forecast_89
+          #     align: CENTER
+          #     x: 0
+          #     y: 0
+          #     width: 150
+          #     height: 150
+          #     bg_opa: 0
+          #     border_width: 0
+          #     clickable: true
+          #     on_release:
+          #       - logger.log: "Days 8-9 CENTER button RELEASED - going to Day 10!"
+          #       - lvgl.page.show:
+          #           id: forecast_day_10_page
+          #           animation: OUT_LEFT
+          #           time: 300ms
+
+          # Navigation button (bottom of screen) - must be LAST to render on top
+          - obj:
+              id: nav_button_extended_forecast_89
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Extended forecast 'More' button on 8-9 RELEASED! going to 10!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: forecast_day_10_page
+                    animation: OUT_LEFT
+                    time: 300ms
+
+      - id: forecast_day_10_page
+        bg_color: 0x000000
+        bg_opa: COVER
+        scrollbar_mode: "OFF"
+        skip: true
+        on_load:
+          - script.execute: page_transition_cleanup
+        widgets:
+          - label:
+              text: "Extended Forecast"
+              align: TOP_MID
+              y: 5
+              text_font: montserrat_18
+              text_color: my_white
+              text_align: CENTER
+
+          # Day 10 Card (centered on page)
+          - obj:
+              width: 170
+              height: SIZE_CONTENT
+              align: CENTER
+              y: 0
+              bg_color: 0x101010
+              bg_opa: COVER
+              border_width: 0
+              radius: 12
+              pad_all: 12
+              scrollbar_mode: "OFF"
+              layout:
+                type: flex
+                flex_flow: column
+                pad_row: 6
+              widgets:
+                - label:
+                    id: lbl_forecast_day10_header
+                    text: "Day +10 (--/--)"
+                    text_font: montserrat_18
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day10_icon
+                    text: "\U000F14E4"
+                    text_font: icons_80
+                    text_color: my_white
+                - label:
+                    id: lbl_forecast_day10_condition
+                    text: "---"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    long_mode: SCROLL_CIRCULAR
+                - label:
+                    id: lbl_forecast_day10_temps
+                    text: "H:--° L:--°"
+                    text_font: montserrat_18
+                    text_color: my_white
+                    recolor: true
+                - label:
+                    id: lbl_forecast_day10_precip_prob
+                    text: "Chance: --%"
+                    text_font: montserrat_16
+                    text_color: my_white
+
+
+          - label:
+              text: "Beginning >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
+
+          # Navigation button (center bottom) - goes back to Days 2-3
+          - obj:
+              id: nav_button_forecast_10
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Day 10 BOTTOM button RELEASED - going back to 2/3-day!"
+                - lvgl.page.show:
+                    id: daily_forecast_page
+                    animation: OUT_RIGHT
+                    time: 300ms
+
+          # Top-right button for main page navigation
+          - obj:
+              id: nav_button_top_10
+              align: TOP_RIGHT
+              x: 0
+              y: 0
+              width: 180
+              height: 150
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Day 10 top-right button RELEASED!"
+                - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
