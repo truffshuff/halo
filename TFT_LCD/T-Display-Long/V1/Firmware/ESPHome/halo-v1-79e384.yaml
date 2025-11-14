@@ -136,12 +136,16 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_page.yaml
 
+      # Air Quality Feature (~15KB) - Air quality monitoring (SCD40, SEN55, MICS4514, BME280)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_page.yaml
+
       # ============================================================================
       # LEGACY MODULES (Being replaced in Phase 2)
       # ============================================================================
       # These are being migrated to capability modules above:
       # ✅ Clock capability - DONE (see features/clock/)
-      # 🚧 AirQ capability (airq_base.yaml + airq_page.yaml) - TODO
+      # ✅ AirQ capability - DONE (see features/airq/)
       # 🚧 Weather capability (weather_base.yaml + weather pages) - TODO
       # 🚧 WiFi status page capability - TODO
       # 🚧 WireGuard capability - TODO
@@ -153,7 +157,7 @@ packages:
 
       # Page Modules - being migrated to features/
       # REMOVED: clock-page.yaml (now in features/clock/)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/airq-page.yaml
+      # REMOVED: airq-page.yaml (now in features/airq/)
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
 
       # Weather System Modules (Phase 3)
