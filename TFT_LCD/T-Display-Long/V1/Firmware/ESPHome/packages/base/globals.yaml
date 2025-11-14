@@ -33,24 +33,14 @@ globals:
     restore_value: no
     initial_value: '"vertical_clock"'
 
-  # Page rotation settings - which pages are included
-  - id: page_rotation_vertical_clock_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-
-  # Page rotation order (1-7, 0 means disabled)
-  - id: page_rotation_vertical_clock_order
-    type: int
-    restore_value: yes
-    initial_value: '1'
-
-  # Colon blink state for clock display
-  # Toggles every second to create blinking colon animation (:)
-  - id: colon_blink_state
-    type: bool
-    restore_value: no
-    initial_value: 'true'
+  # Note: Clock globals moved to features/clock/clock_base.yaml (Phase 2)
+  # - page_rotation_vertical_clock_enabled
+  # - page_rotation_vertical_clock_order
+  # - colon_blink_state
+  # - time_update_last_started
+  # - time_update_last_duration
+  # - time_update_last_text
+  # - time_update_needs_render
 
   # Startup light blink cycle counter
   # Tracks how many 1-second intervals have passed during startup LED animation
@@ -138,22 +128,6 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'  # Set to true during OTA or other critical operations
-  - id: time_update_last_started
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: time_update_last_duration
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: time_update_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: time_update_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
 
   # Display backlight state tracking
   # Used to prevent redundant backlight on/off commands
