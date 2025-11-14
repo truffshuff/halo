@@ -25,5 +25,29 @@ http_request:
   buffer_size_rx: 1024  # 1KB RX buffer; smaller to reduce memory pressure
   buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
 
-# Note: Web server, time sources, API, and system buttons are defined in
+# ============================================================================
+# Time Sources
+# ============================================================================
+# MUST be defined early because WireGuard component requires time
+# Dual time sources for reliability:
+#   - Home Assistant (preferred, accurate)
+#   - SNTP fallback (when HA unavailable)
+# Also defined in base/esphome_base.yaml (duplicate is intentional for Phase 1)
+# ============================================================================
+time:
+  - platform: homeassistant
+    id: ha_time
+    on_time_sync:
+      - script.execute: time_update
+  - platform: sntp
+    id: sntp_time
+    timezone: America/New_York
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    on_time_sync:
+      - script.execute: time_update
+
+# Note: Web server, API, and system buttons are defined in
 # base/esphome_base.yaml (legacy). They will be moved here in Phase 2.
