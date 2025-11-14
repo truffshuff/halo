@@ -211,7 +211,7 @@ sensor:
       if (psram_free > 0) {
         return psram_free;
       }
-      return 0;  # No PSRAM available
+      return 0;  // No PSRAM available
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
