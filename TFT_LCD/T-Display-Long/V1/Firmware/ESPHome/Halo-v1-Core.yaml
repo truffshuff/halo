@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.14.1315
+# Version: 25.11.14.1321
 # Last Updated: November 14, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.14.1315"
+  version: "25.11.14.1321"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -4807,25 +4807,7 @@ script:
       - logger.log: "✓ Daily forecast display updated (page 5)"
 
 number:
-  - platform: template
-    name: "Auto Page Rotation Interval"
-    id: page_rotation_interval
-    icon: mdi:timer
-    restore_value: true
-    initial_value: 30
-    min_value: 5
-    max_value: 300
-    entity_category: "config"
-    unit_of_measurement: "s"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(auto_page_rotation_interval) = (int)x;'
-      - logger.log:
-          format: "Page rotation interval changed to %d seconds"
-          args: ['(int)x']
-
+  # Page rotation interval number moved to features/page_rotation/page_rotation.yaml (Phase 2)
   # Page rotation order numbers (1-6, lower numbers show first)
   # Note: "Page Order: Vertical Clock Page" number is defined in vertical-clock-core.yaml
   # Note: "Page Order: AirQ Page" number is defined in airq-core.yaml

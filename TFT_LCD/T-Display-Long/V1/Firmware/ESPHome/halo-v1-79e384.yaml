@@ -150,6 +150,9 @@ packages:
       # Diagnostics Feature (~5KB) - System health monitoring and recovery
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/diagnostics/diagnostics.yaml
 
+      # Page Rotation Feature (~1KB) - Master controls for automatic page cycling
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
+
       # ============================================================================
       # LEGACY MODULES (Being replaced in Phase 2)
       # ============================================================================
@@ -159,8 +162,8 @@ packages:
       # ✅ WiFi Status capability - DONE (see features/wifi_status/)
       # ✅ WireGuard capability - DONE (see features/wireguard/)
       # ✅ Diagnostics capability - DONE (see features/diagnostics/)
+      # ✅ Page Rotation capability - DONE (see features/page_rotation/) - master controls only
       # 🚧 Weather capability (weather_base.yaml + weather pages) - TODO
-      # 🚧 Page rotation capability - TODO
 
       # Globals - will be split by capability in Phase 2
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml

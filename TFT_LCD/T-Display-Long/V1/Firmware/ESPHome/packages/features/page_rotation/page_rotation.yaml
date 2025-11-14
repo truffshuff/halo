@@ -1,0 +1,110 @@
+# ============================================================================
+# Page Rotation Capability Module
+# ============================================================================
+# Provides master controls for automatic page rotation functionality
+#
+# FEATURES:
+#   - Master auto-rotation enable/disable switch
+#   - Rotation interval configuration (5-300 seconds)
+#   - Core rotation globals (enabled state, interval, timing)
+#   - Current page tracking
+#   - Touch event integration (resets rotation timer)
+#
+# ARCHITECTURE NOTE:
+#   This module provides MASTER controls only. Individual page rotation
+#   switches and order numbers remain in their capability modules:
+#   - Clock: features/clock/clock_base.yaml
+#   - AirQ: features/airq/airq_base.yaml
+#   - WiFi: features/wifi_status/wifi_page_base.yaml
+#   - Weather: Halo-v1-Core.yaml (will move to features/weather in Phase 3)
+#
+#   The actual rotation logic (interval that cycles pages) remains in
+#   Halo-v1-Core.yaml as it needs to orchestrate across all pages.
+#
+# HARDWARE REQUIRED:
+#   - Display with LVGL (for page switching)
+#   - Touchscreen (optional, for touch-to-reset-timer)
+#
+# DEPENDENCIES:
+#   - system/esphome_core.yaml (ESP32 config)
+#   - system/display_hardware.yaml (Display, touchscreen)
+#   - All page modules that participate in rotation
+#
+# MEMORY USAGE: ~1KB
+#
+# Created: 2025-11-14 (Phase 2 extraction)
+# ============================================================================
+
+# ============================================================================
+# Globals (Master Page Rotation Controls)
+# ============================================================================
+globals:
+  # Current page tracking using string name
+  # Possible values: "vertical_clock", "airq", "wifi", "weather",
+  #                  "hourly_forecast", "hourly_summary_1", "hourly_summary_2", "daily_forecast"
+  - id: current_page_name
+    type: std::string
+    restore_value: no
+    initial_value: '"vertical_clock"'
+
+  # Auto page rotation master enable/disable
+  # When true, device automatically cycles through enabled pages
+  # Controllable via Home Assistant switch
+  - id: auto_page_rotation_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Auto page rotation interval (seconds)
+  # How long to display each page before rotating to next
+  # Default: 30 seconds. Adjustable via Home Assistant
+  - id: auto_page_rotation_interval
+    type: int
+    restore_value: yes
+    initial_value: '30'
+
+  # Last auto-rotation timestamp
+  # Tracks when last page rotation occurred (in milliseconds)
+  # Used to calculate when next rotation should happen
+  - id: last_auto_rotation_time
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  # Last touch time tracking
+  # Records timestamp (milliseconds) of last touchscreen interaction
+  # Used to reset auto-rotation timer when user touches the display
+  - id: last_touch_time
+    type: int
+    initial_value: '0'
+
+# ============================================================================
+# Number Components
+# ============================================================================
+number:
+  # Auto page rotation interval control
+  # Allows adjusting how long each page displays before rotating
+  - platform: template
+    name: "Auto Page Rotation Interval"
+    id: page_rotation_interval
+    icon: mdi:timer
+    restore_value: true
+    initial_value: 30
+    min_value: 5
+    max_value: 300
+    entity_category: "config"
+    unit_of_measurement: "s"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(auto_page_rotation_interval) = (int)x;'
+      - logger.log:
+          format: "Page rotation interval changed to %d seconds"
+          args: ['(int)x']
+
+# ============================================================================
+# Switch Components
+# ============================================================================
+# Note: Auto Page Rotation switch moved to diagnostics.yaml
+# It was extracted along with other system-wide diagnostic switches
