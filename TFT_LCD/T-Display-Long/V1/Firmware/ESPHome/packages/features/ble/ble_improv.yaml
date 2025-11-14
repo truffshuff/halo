@@ -75,13 +75,9 @@ globals:
     restore_value: no
     initial_value: '0'
 
-# Switch to control startup blink (exposed to HA)
-switch:
-  - platform: template
-    name: "Startup Light Blink"
-    id: startup_light_blink
-    optimistic: true
+# Note: startup_light_blink switch is defined in Halo-v1-Core.yaml (legacy)
+# It will be moved here in Phase 2 when Core is broken down.
 
-# Note: RGB light component and startup blink intervals will be added
-# when weather_led_effects.yaml is created, as they share the same RGB LED hardware.
-# For now, this module provides the BLE stack and cycleCounter global.
+# Note: RGB light component and startup blink intervals are defined in
+# weather/weather-led-effects.yaml as they share the same RGB LED hardware.
+# In Phase 2, these will be reorganized into the BLE module or a separate LED module.
