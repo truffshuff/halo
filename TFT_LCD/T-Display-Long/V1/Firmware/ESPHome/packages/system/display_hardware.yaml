@@ -13,8 +13,8 @@
 #   - Display watchdog system
 # ============================================================================
 
-# Note: External components are defined in base/hardware.yaml (legacy)
-# They will be moved here in Phase 2 when hardware.yaml is deprecated.
+# Note: External components are defined in system/esphome_core.yaml (early loading)
+# and also in base/hardware.yaml (legacy). The duplicate is intentional for Phase 1.
 
 # ============================================================================
 # SPI Bus Configuration
