@@ -32,13 +32,8 @@
 # MEMORY IMPACT: ~40KB (BLE stack)
 # ============================================================================
 
-# ============================================================================
-# NimBLE Base Stack
-# ============================================================================
-# Base NimBLE stack configuration
-# Note: BLE sdkconfig options are defined in system/esphome_core.yaml to avoid conflicts
-# ============================================================================
-nimble_base:
+# Note: nimble_base is defined in base/hardware.yaml (legacy)
+# It will be moved here in Phase 2 when hardware.yaml is deprecated.
 
 # ============================================================================
 # NimBLE Improv WiFi Provisioning

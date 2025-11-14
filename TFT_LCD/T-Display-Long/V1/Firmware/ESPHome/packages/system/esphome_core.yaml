@@ -7,15 +7,11 @@
 # This module configures:
 #   - ESP32-S3 board, PSRAM, CPU frequency
 #   - ESPHome framework configuration
-#   - Logger
 #   - Memory management (PSRAM, stack sizes)
 # ============================================================================
 
-# ============================================================================
-# Logger Configuration
-# ============================================================================
-logger:
-  level: INFO
+# Note: Logger is defined in base/esphome_base.yaml (legacy)
+# It will be moved here in Phase 2 when esphome_base.yaml is deprecated.
 
 # ============================================================================
 # PSRAM Configuration
