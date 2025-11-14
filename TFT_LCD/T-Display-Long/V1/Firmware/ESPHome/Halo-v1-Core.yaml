@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.14.1302
+# Version: 25.11.14.1315
 # Last Updated: November 14, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.14.1302"
+  version: "25.11.14.1315"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -111,54 +111,15 @@ substitutions:
 # ============================================================================
 
 # All hardware and base configuration has been moved to modular packages
+# Diagnostics switches (Auto Page Rotation, Display Watchdog, Startup Light Blink)
+# moved to features/diagnostics/diagnostics.yaml (Phase 2)
+
 switch:
-  - platform: template
-    name: "Auto Page Rotation"
-    id: auto_page_rotation
-    icon: mdi:rotate-3d-variant
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(auto_page_rotation_enabled) = true;'
-      - logger.log: "Auto page rotation enabled"
-    on_turn_off:
-      - lambda: 'id(auto_page_rotation_enabled) = false;'
-      - logger.log: "Auto page rotation disabled"
-
-  - platform: template
-    name: "Display Watchdog (Auto Recovery)"
-    id: display_watchdog_switch
-    icon: mdi:monitor-eye
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: |-
-          id(display_watchdog_enabled) = true;
-          id(last_display_update_time) = millis();  // Reset timer
-      - logger.log: "Display watchdog enabled - will auto-recover from black screens"
-    on_turn_off:
-      - lambda: 'id(display_watchdog_enabled) = false;'
-      - logger.log: "Display watchdog disabled"
-
-  - platform: template
-    name: "Startup Light Blink"
-    id: startup_light_blink
-    icon: mdi:lightbulb
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-
   # Page rotation selection switches
-  # Note: "24h Clock Format" switch is defined in vertical-clock-core.yaml
   # Note: Clock switches moved to features/clock/clock_base.yaml (Phase 2)
-  # - "Page Rotation: Vertical Clock Page" switch
-  # - "24h Clock Format" switch
-  # - "Clock Colon Blink" switch
-
-  # Note: "Page Rotation: AirQ Page" switch is defined in airq-core.yaml
-  # Note: "Page Rotation: WiFi Page" switch is defined in wifi-core.yaml
+  # Note: AirQ switches moved to features/airq/airq_base.yaml (Phase 2)
+  # Note: WiFi switches moved to features/wifi_status/wifi_page_base.yaml (Phase 2)
+  # Note: Diagnostics switches moved to features/diagnostics/diagnostics.yaml (Phase 2)
 
   # Page rotation selection switches
   - platform: template
@@ -393,98 +354,7 @@ interval:
           }
           }
 
-  # Display Watchdog - Automatic Black Screen Recovery
-  # Checks every 30 seconds if display has been updating
-  # If no updates for 60 seconds, performs automatic recovery
-  - interval: 30s
-    then:
-      - if:
-          condition:
-            lambda: |-
-                // Only run watchdog if enabled and boot is complete
-                if (!id(display_watchdog_enabled) || !id(boot_complete)) {
-                ESP_LOGV("display_watchdog", "Watchdog check skipped (enabled=%s, boot_complete=%s)",
-                         id(display_watchdog_enabled) ? "true" : "false",
-                         id(boot_complete) ? "true" : "false");
-                return false;
-                }
-
-                const uint32_t now = millis();
-                const uint32_t time_since_update = now - id(last_display_update_time);
-
-                // Log watchdog check for debugging
-                ESP_LOGD("display_watchdog", "Watchdog check: %u seconds since last display update", time_since_update / 1000);
-
-                // If display hasn't updated in 60 seconds, trigger recovery
-                if (time_since_update > 60000) {
-                ESP_LOGW("display_watchdog", "Display frozen detected! No updates for %u seconds", time_since_update / 1000);
-                return true;
-                }
-                return false;
-          then:
-            - logger.log: "=== WATCHDOG: AUTOMATIC DISPLAY RECOVERY TRIGGERED ==="
-            - output.turn_off: backlight
-            - delay: 500ms
-            - lvgl.pause:
-            - delay: 300ms
-            # Properly reset and re-initialize the display controller
-            - lambda: |-
-                ESP_LOGI("display_watchdog", "Resetting and re-initializing display hardware...");
-                auto *display = id(lily_display);
-                if (display != nullptr) {
-                display->setup();  // This re-initializes the display controller completely
-                }
-            - delay: 500ms
-            - lvgl.resume:
-            - delay: 300ms
-            - output.turn_on: backlight
-            - delay: 200ms
-            - lambda: |-
-                // Update watchdog timestamp
-                id(last_display_update_time) = millis();
-
-                // Increment recovery counter
-                static int recoveries = 0;
-                recoveries++;
-                id(display_recovery_count).publish_state(recoveries);
-
-                ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE === (Recovery #%d)", recoveries);
-
-  # Periodic Display Controller Health Check
-  # The AXS15231 display controller can lose sync even while LVGL continues running
-  # This periodically reinitializes the display to prevent black screen issues
-  # Runs every 10 minutes as a preventive measure
-  - interval: 10min
-    then:
-      - if:
-          condition:
-            lambda: |-
-                // Only run if watchdog is enabled and boot complete
-                if (!id(display_watchdog_enabled) || !id(boot_complete)) return false;
-
-                ESP_LOGI("display_health", "Performing periodic display controller health check");
-                return true;
-          then:
-            - logger.log: "=== PERIODIC DISPLAY HEALTH CHECK ==="
-            - output.turn_off: backlight
-            - delay: 300ms
-            - lvgl.pause:
-            - delay: 200ms
-            # Reinitialize display controller
-            - lambda: |-
-                ESP_LOGI("display_health", "Reinitializing display controller...");
-                auto *display = id(lily_display);
-                if (display != nullptr) {
-                display->setup();
-                }
-            - delay: 300ms
-            - lvgl.resume:
-            - delay: 200ms
-            - output.turn_on: backlight
-            - delay: 100ms
-            - lambda: |-
-                id(last_display_update_time) = millis();
-                ESP_LOGI("display_health", "=== DISPLAY HEALTH CHECK COMPLETE ===");
+  # Display watchdog and periodic health check intervals moved to features/diagnostics/diagnostics.yaml (Phase 2)
 
   # Automatic page rotation - controllable via Home Assistant with custom page selection and order
   - interval: 1s
@@ -5107,32 +4977,20 @@ number:
   # Page rotation order numbers (1-6, lower numbers show first)
   # WiFi page order number (page_order_wifi) has been moved to packages/features/wifi_status/wifi_page_base.yaml
 
-binary_sensor:
-  - platform: status
-    name: Online
-    id: ink_ha_connected
-
-  - platform: template
-    name: "Display Backlight Active"
-    id: display_backlight_state
-    entity_category: "diagnostic"
-    lambda: 'return id(display_backlight_is_on);'
-
-  # WireGuard binary sensors have been moved to packages/features/wireguard/wireguard.yaml
+# Binary sensors (Online, Display Backlight Active) moved to features/diagnostics/diagnostics.yaml (Phase 2)
+# WireGuard binary sensors moved to features/wireguard/wireguard.yaml (Phase 2)
 
 sensor:
-  # Display refresh rate monitor
-  - platform: template
-    name: "Display Refresh Count"
-    id: display_refresh_counter
-    internal: true
-    update_interval: never
-    entity_category: "diagnostic"
-
-  - platform: uptime
-    name: Uptime
-    id: sys_uptime
-    update_interval: 60s
+  # Diagnostics sensors moved to features/diagnostics/diagnostics.yaml (Phase 2):
+  # - Display Refresh Count
+  # - Uptime
+  # - Display Last Update
+  # - Display Recovery Count
+  # - Free Heap, Largest Free Block, Heap Fragmentation
+  # - DMA Capable Heap Free, DMA Capable Largest Block
+  # - PSRAM Free, Total Free Heap (All), Min Free Heap Ever
+  # - RSSI (WiFi Signal)
+  # - Weather Icon Update Duration
 
   # Import current temperature from Home Assistant weather integration
   - platform: homeassistant
@@ -5208,125 +5066,7 @@ sensor:
   # Track timing of UI update operations to identify performance bottlenecks
   # ============================================================================
 
-  - platform: template
-    name: "Weather Icon Update Duration"
-    id: weather_icon_duration_sensor
-    internal: true  # Don't send to Home Assistant - internal diagnostic only
-    unit_of_measurement: "ms"
-    accuracy_decimals: 0
-    icon: "mdi:weather-lightning"
-    entity_category: "diagnostic"
-    update_interval: never
-
-  # Internal heap monitoring
-  - platform: template
-    name: "Free Heap"
-    lambda: return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-    unit_of_measurement: "bytes"
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 5000.0       # Only send if changes by ±5KB
-    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
-
-  - platform: template
-    name: "Largest Free Block"
-    lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
-    unit_of_measurement: "bytes"
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 5000.0       # Only send if changes by ±5KB
-    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
-
-  - platform: template
-    name: "Heap Fragmentation"
-    lambda: |-
-        size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-        size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
-        if (free_heap > 0) {
-        return ((float)(free_heap - largest_block) / free_heap) * 100.0;
-        }
-        return 0.0;
-    unit_of_measurement: "%"
-    accuracy_decimals: 1
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 2.0          # Only send if fragmentation changes by ±2%
-    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
-
-  # DMA-capable memory monitoring
-  - platform: template
-    name: "DMA Capable Heap Free"
-    lambda: return heap_caps_get_free_size(MALLOC_CAP_DMA);
-    unit_of_measurement: "bytes"
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 5000.0       # Only send if changes by ±5KB
-    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
-
-  - platform: template
-    name: "DMA Capable Largest Block"
-    lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
-    unit_of_measurement: "bytes"
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 5000.0       # Only send if changes by ±5KB
-    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
-
-  # PSRAM monitoring (if available)
-  - platform: template
-    name: "PSRAM Free"
-    lambda: |-
-        size_t psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-        if (psram_free > 0) {
-        return psram_free;
-        }
-        return 0;  // No PSRAM available
-    unit_of_measurement: "bytes"
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 50000.0      # Only send if PSRAM changes by ±50KB
-    #   - heartbeat: 120s     # Force update every 2 minutes (reduced from 300s)
-
-  # Total free heap across all memory types
-  - platform: template
-    name: "Total Free Heap (All)"
-    lambda: return heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    unit_of_measurement: "bytes"
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 50000.0      # Only send if total heap changes by ±50KB
-    #   - heartbeat: 120s     # Force update every 2 minutes (reduced from 300s)
-
-  # Minimum free heap since boot (indicates worst-case memory pressure)
-  - platform: template
-    name: "Min Free Heap Ever"
-    lambda: return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
-    unit_of_measurement: "bytes"
-    update_interval: 5s
-    entity_category: "diagnostic"
-    # filters:
-    #   - delta: 100.0       # Only send if min heap changes by ±1KB (important metric)
-    #   - heartbeat: 60s      # Force update every 60s (reduced from 300s)
-
-  # Display Activity Monitor - shows seconds since last display update
-  - platform: template
-    name: "Display Last Update"
-    id: display_last_update_sensor
-    lambda: |-
-        if (id(last_display_update_time) == 0) return 0;
-        return (millis() - id(last_display_update_time)) / 1000.0;
-    unit_of_measurement: "s"
-    accuracy_decimals: 0
-    update_interval: 10s
-    entity_category: "diagnostic"
-    icon: "mdi:monitor-dashboard"
+  # Note: Diagnostics sensors moved to features/diagnostics/diagnostics.yaml (Phase 2)
 
   # AirQ components (Computed AQI template sensor and all air quality sensor platforms) have been moved to packages/features/airq/airq_base.yaml
   # Removed components:
@@ -5336,19 +5076,7 @@ sensor:
   # - BME280 I2C sensor
   # - SEN5x sensor
 
-  - platform: wifi_signal
-    name: RSSI
-    id: wifi_signal_db
-    update_interval: 60s
-    entity_category: "diagnostic"
-
   # WireGuard latest handshake sensor has been moved to packages/features/wireguard/wireguard.yaml
-
-  - platform: template
-    name: "Display Recovery Count"
-    id: display_recovery_count
-    entity_category: diagnostic
-    accuracy_decimals: 0
     
 text_sensor:
   - platform: template
@@ -7564,29 +7292,11 @@ lvgl:
 
 
 button:
-  - platform: restart
-    icon: mdi:power-cycle
-    name: "ESP Reboot"
-    id: esp_reboot_button
-
-  - platform: factory_reset
-    disabled_by_default: True
-    name: "Factory Reset ESP"
-    id: factory_reset_all
-
-  - platform: template
-    name: "Clear Improv WiFi Credentials"
-    id: clear_improv_wifi
-    icon: mdi:wifi-off
-    entity_category: config
-    on_press:
-      - lambda: |-
-          // Clear only the Improv WiFi credentials from NVS (key: 0x9B5A7C21)
-          auto pref = global_preferences->make_preference<uint8_t>(0x9B5A7C21);
-          uint8_t dummy = 0;
-          pref.save(&dummy);
-          ESP_LOGI("main", "Cleared Improv WiFi credentials from NVS");
-      - logger.log: "Improv WiFi credentials cleared. Device will use YAML WiFi config on next boot."
+  # Diagnostics buttons moved to features/diagnostics/diagnostics.yaml (Phase 2):
+  # - ESP Reboot
+  # - Factory Reset ESP
+  # - Clear Improv WiFi Credentials
+  # - Recover Display (Hard Reset)
 
   - platform: template
     name: "Refresh Weather"
@@ -7594,77 +7304,7 @@ button:
     on_press:
       - script.execute: fetch_weather_data
 
-  # SCD40 CO2 Sensor Calibration to Outdoor Air
-  # ⚠️ WARNING: Use ONLY outdoors or in well-ventilated area!
-  #
-  # PROCEDURE:
-  #   1. Take device outside (outdoor CO2 is ~400-420ppm)
-  #   2. Wait 5 minutes for sensor to stabilize
-  #   3. Press this button in Home Assistant
-  #   4. Calibration permanently affects sensor accuracy
-  #
-  # DO NOT use indoors - indoor CO2 is typically 600-1000ppm!
-  # Incorrect calibration will give wrong readings permanently.
-  #
-  # To calibrate to custom value, use esphome.halo_calibrate_co2_value service
-  # - platform: template
-  #   name: "Calibrate SCD40 To 420ppm (OUTDOOR ONLY!)"
-  #   id: set_SCD40_calibrate
-  #   entity_category: config
-  #   on_press:
-  #     - scd4x.perform_forced_calibration:
-  #         value: 420  # Typical outdoor CO2 concentration
-  #         id: scd40
-
   # AirQ components (CO2 calibration buttons and SEN55 cleaning button) have been moved to packages/features/airq/airq_base.yaml
-
-  # Display Recovery Button - AGGRESSIVE RESET
-  # Use this when display goes black but backlight is still on
-  # Performs complete hardware reset of display controller and LVGL
-  - platform: template
-    name: "Recover Display (Hard Reset)"
-    id: recover_display
-    icon: mdi:monitor-refresh
-    on_press:
-      - logger.log: "=== PERFORMING DISPLAY RECOVERY ==="
-      - logger.log: "Step 1: Turning backlight OFF..."
-      - output.turn_off: backlight
-      - delay: 500ms
-      
-      - logger.log: "Step 2: Pausing LVGL..."
-      - lvgl.pause:
-      - delay: 300ms
-
-      - logger.log: "Step 3: Resetting and re-initializing display controller..."
-      - lambda: |-
-          ESP_LOGI("display_reset", "Resetting and re-initializing display hardware...");
-          auto *display = id(lily_display);
-          if (display != nullptr) {
-          display->setup();  // This re-initializes the display controller completely
-          }
-      - delay: 500ms
-
-      - logger.log: "Step 4: Resuming LVGL..."
-      - lvgl.resume:
-      - delay: 300ms
-      
-      - logger.log: "Step 5: Turning backlight ON..."
-      - output.turn_on: backlight
-      - delay: 200ms
-      
-      - logger.log: "Step 6: Updating watchdog timestamp and recovery counter..."
-      - lambda: |-
-          // Update watchdog timestamp
-          id(last_display_update_time) = millis();
-
-          // Increment recovery counter
-          static int recoveries = 0;
-          recoveries++;
-          id(display_recovery_count).publish_state(recoveries);
-
-          ESP_LOGI("display_reset", "=== DISPLAY RECOVERY COMPLETE === (Recovery #%d)", recoveries);
-
-      - logger.log: "Display recovery complete!"
 
   # ============================================================================
   # Go-To Page Buttons
@@ -7856,10 +7496,10 @@ esphome:
     # -------------------------------------------------------------------------
     # Runs before WiFi and sensors to show something on screen immediately
     # 50ms delay allows LVGL to complete basic initialization
+    # Note: Watchdog timer initialization moved to features/diagnostics/diagnostics.yaml (Phase 2)
     - priority: 800
       then:
         - delay: 50ms
-        - lambda: 'id(last_display_update_time) = millis();'  # Initialize watchdog timer
         - lvgl.page.show: vertical_clock_page
         - logger.log: "Set initial page to Vertical Clock"
 
