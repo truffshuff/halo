@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.14.0728
+# Version: 25.11.14.0734
 # Last Updated: November 14, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.14.0728"
+  version: "25.11.14.0734"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -152,43 +152,15 @@ switch:
 
   # Page rotation selection switches
   # Note: "24h Clock Format" switch is defined in vertical-clock-core.yaml
-  # Note: "Clock Colon Blink" switch is defined in vertical-clock-core.yaml
-  # Note: "Page Rotation: Vertical Clock Page" switch is defined in vertical-clock-core.yaml
+  # Note: Clock switches moved to features/clock/clock_base.yaml (Phase 2)
+  # - "Page Rotation: Vertical Clock Page" switch
+  # - "24h Clock Format" switch
+  # - "Clock Colon Blink" switch
+
   # Note: "Page Rotation: AirQ Page" switch is defined in airq-core.yaml
   # Note: "Page Rotation: WiFi Page" switch is defined in wifi-core.yaml
 
   # Page rotation selection switches
-  - platform: template
-    name: "Page Rotation: Vertical Clock Page"
-    id: page_rotation_vertical_clock_switch
-    icon: mdi:clock-outline
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(page_rotation_vertical_clock_enabled) = true;'
-      - logger.log: "Vertical clock page enabled in rotation"
-    on_turn_off:
-      - lambda: 'id(page_rotation_vertical_clock_enabled) = false;'
-      - logger.log: "Vertical clock page disabled in rotation"
-
-  # Clock format and display options
-  - platform: template
-    name: "24h Clock Format"
-    id: time_format
-    icon: mdi:clock-digital
-    restore_mode: RESTORE_DEFAULT_OFF
-    optimistic: true
-    entity_category: "config"
-
-  - platform: template
-    name: "Clock Colon Blink"
-    id: colon_blink_enabled
-    icon: mdi:timer-outline
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-  
   - platform: template
     name: "Page Rotation: Weather Page"
     id: page_rotation_weather_switch
@@ -426,16 +398,9 @@ select:
 # This allows each device to have only the page options that are actually available.
 
 interval:
-  - interval: 2s  # Reduced from 3s for faster UI updates
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_complete);'
-          then:
-            - script.execute: time_update
-            # Note: Watchdog timer is updated inside time_update script only when rendering occurs
-
-  # Note: 1s interval for colon blink is defined in vertical-clock-core.yaml
+  # Note: Clock intervals moved to features/clock/clock_base.yaml (Phase 2)
+  # - 2s interval for time_update
+  # - 1s interval for colon blink
 
   - interval: 1s
     then:
@@ -685,21 +650,7 @@ interval:
                 args: ['id(current_page_name).c_str()']
                 level: DEBUG
 
-  # Colon blink and wind updates - combined interval
-  - interval: 1s
-    then:
-      # Colon blink - runs every second when on vertical clock page
-      - if:
-          condition:
-            lambda: 'return id(boot_complete) && id(current_page_name) == "vertical_clock";'
-          then:
-            - lambda: |-
-                if (id(colon_blink_enabled).state) {
-                id(colon_blink_state) = !id(colon_blink_state);
-                } else if (!id(colon_blink_state)) {
-                id(colon_blink_state) = true;
-                }
-            - script.execute: update_colon_widget
+  # Note: Colon blink interval moved to features/clock/clock_base.yaml (Phase 2)
 
   # NOTE: Wind sensor updates removed - now handled by on_value callbacks in sensor definitions
   # Wind data from Home Assistant updates automatically when values change (passive, not polled)
@@ -1217,124 +1168,9 @@ script:
                 // Force immediate display flush to prevent buffer buildup
                 lv_refr_now(NULL);
 
-  - id: update_colon_widget
-    mode: restart
-    then:
-      - if:
-          condition:
-            lambda: 'return id(colon_blink_state);'
-          then:
-            - lvgl.label.update:
-                id: vclock_colon
-                text: ":"
-          else:
-            - lvgl.label.update:
-                id: vclock_colon
-                text: " "
-
-  - id: time_update
-    mode: restart
-    then:
-      - lambda: |-
-          id(time_update_last_started) = millis();
-          id(time_update_needs_render) = false;
-      - lambda: |-
-          auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-          if (!now.is_valid()) {
-            ESP_LOGW("time_update", "Time source unavailable, skipping label update");
-            return;
-          }
-          bool is_pm = now.hour >= 12;
-          int hour_12 = now.hour % 12;
-          if (hour_12 == 0) {
-            hour_12 = 12;
-          }
-          char time_buf[17];
-          if (id(time_format).state) {
-            snprintf(time_buf, sizeof(time_buf), "%02d:%02d", now.hour, now.minute);
-          } else {
-            snprintf(time_buf, sizeof(time_buf), "%2d:%02d%s", hour_12, now.minute, is_pm ? "PM" : "AM");
-          }
-          std::string new_text(time_buf);
-          if (new_text != id(time_update_last_text)) {
-            id(time_update_last_text) = new_text;
-            id(time_update_needs_render) = true;
-          }
-      - if:
-          condition:
-            lambda: 'return id(time_update_needs_render) && id(current_page_name) == "airq";'
-          then:
-            - lvgl.label.update:
-                id: timeVal
-                text: !lambda 'return id(time_update_last_text);'
-      - if:
-          condition:
-            lambda: 'return id(time_update_needs_render) && id(current_page_name) == "vertical_clock";'
-          then:
-            - lvgl.label.update:
-                id: vclock_hours
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
-                  bool is_pm = now.hour >= 12;
-                  int hour_12 = now.hour % 12;
-                  if (hour_12 == 0) hour_12 = 12;
-                  char buf[3];
-                  if (id(time_format).state) {
-                    snprintf(buf, sizeof(buf), "%02d", now.hour);
-                  } else {
-                    snprintf(buf, sizeof(buf), "%2d", hour_12);
-                  }
-                  return std::string(buf);
-            - lvgl.label.update:
-                id: vclock_minutes
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
-                  char buf[3];
-                  snprintf(buf, sizeof(buf), "%02d", now.minute);
-                  return std::string(buf);
-            - lvgl.label.update:
-                id: vclock_ampm
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("");
-                  if (id(time_format).state) return std::string("");
-                  bool is_pm = now.hour >= 12;
-                  return std::string(is_pm ? "PM" : "AM");
-            - lvgl.label.update:
-                id: vclock_date
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
-                  static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-                  char buf[20];
-                  snprintf(buf, sizeof(buf), "%s %d", months[now.month - 1], now.day_of_month);
-                  return std::string(buf);
-            - lvgl.label.update:
-                id: vclock_day_top
-                text: !lambda |-
-                  auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
-                  if (!now.is_valid()) return std::string("--");
-                  static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-                  return std::string(days[now.day_of_week - 1]);
-      - script.execute: update_colon_widget
-      - lambda: |-
-          const uint32_t now = millis();
-          const uint32_t elapsed = now - id(time_update_last_started);
-          id(time_update_last_duration) = elapsed;
-          const bool rendered = id(time_update_needs_render);
-
-          // Update watchdog timer ONLY if we actually rendered something
-          if (rendered) {
-            id(last_display_update_time) = now;
-            ESP_LOGV("time_update", "Display watchdog updated (rendered)");
-          }
-
-          ESP_LOGV("time_update", "Execution: %ums, rendered=%s, on_page=%s",
-                   elapsed,
-                   rendered ? "yes" : "no",
-                   id(current_page_name).c_str());
+  # Note: Clock scripts moved to features/clock/clock_base.yaml (Phase 2)
+  # - update_colon_widget
+  # - time_update
 
   - id: update_weather_icon_color
     mode: restart
@@ -5196,25 +5032,9 @@ number:
   # Note: "Page Order: WiFi Page" number is defined in wifi-core.yaml
   # Note: SEN55 Temperature/Humidity Offset numbers are defined in airq-core.yaml
 
-  # Page rotation order numbers (1-6, lower numbers show first)
-  - platform: template
-    name: "Page Order: Vertical Clock Page"
-    id: page_order_vertical_clock
-    icon: mdi:numeric
-    restore_value: true
-    initial_value: 1
-    min_value: 1
-    max_value: 7
-    entity_category: "config"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(page_rotation_vertical_clock_order) = (int)x;'
-      - logger.log:
-          format: "Vertical clock page order set to %d"
-          args: ['(int)x']
+  # Note: Clock page order number moved to features/clock/clock_base.yaml (Phase 2)
 
+  # Page rotation order numbers (1-6, lower numbers show first)
   - platform: template
     name: "Page Order: Weather Page"
     id: page_order_weather
@@ -5508,15 +5328,8 @@ sensor:
               - script.execute: update_weather_display
 
 
-  - platform: template
-    name: "Time Update Duration"
-    id: time_update_duration_sensor
-    internal: true  # Don't send to Home Assistant - internal diagnostic only
-    unit_of_measurement: "ms"
-    accuracy_decimals: 0
-    icon: "mdi:timer-outline"
-    entity_category: "diagnostic"
-    update_interval: never
+  # Note: Clock performance sensor moved to features/clock/clock_base.yaml (Phase 2)
+  # - time_update_duration_sensor
 
   # ============================================================================
   # Performance Monitoring Sensors
@@ -8664,20 +8477,8 @@ button:
   # These buttons allow users to directly navigate to any page from Home Assistant
   # without waiting for auto-rotation. Useful for quick access to specific info.
   # ============================================================================
-  
-  - platform: template
-    name: "Go to Clock Page"
-    id: goto_clock_page
-    icon: mdi:clock-outline
-    on_press:
-      - logger.log: "Navigating to Clock page"
-      - lambda: |-
-          id(current_page_name) = "vertical_clock";
-          id(last_auto_rotation_time) = millis();
-      - lvgl.page.show:
-          id: vertical_clock_page
-          animation: OUT_LEFT
-          time: 300ms
+
+  # Note: Clock navigation button moved to features/clock/clock_base.yaml (Phase 2)
 
   - platform: template
     name: "Go to Air Quality Page"
