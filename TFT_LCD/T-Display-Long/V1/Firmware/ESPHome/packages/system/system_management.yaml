@@ -1,0 +1,60 @@
+# ============================================================================
+# System Management Configuration
+# ============================================================================
+# System control, updates, factory reset, time sources
+# Dependencies: system/esphome_core.yaml
+#
+# This module configures:
+#   - Home Assistant API
+#   - Time sources (Home Assistant + SNTP)
+#   - HTTP request component
+#   - Web server
+#   - System buttons (reboot, factory reset)
+#   - System sensors (uptime, online status)
+# ============================================================================
+
+# ============================================================================
+# Web Server
+# ============================================================================
+# Allows web-based access to device status and controls
+# ============================================================================
+web_server:
+  port: 80
+
+# ============================================================================
+# HTTP Request Component
+# ============================================================================
+# HTTP Request component for calling HA REST API
+# Streaming response handling; moderate buffers
+# ============================================================================
+http_request:
+  useragent: esphome/halo
+  timeout: 30s  # Increased timeout for large weather responses
+  buffer_size_rx: 1024  # 1KB RX buffer; smaller to reduce memory pressure
+  buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
+
+# ============================================================================
+# Time Sources
+# ============================================================================
+# Dual time sources for reliability:
+#   - Home Assistant (preferred, accurate)
+#   - SNTP fallback (when HA unavailable)
+# ============================================================================
+time:
+  - platform: homeassistant
+    id: ha_time
+    on_time_sync:
+      - script.execute: time_update
+  - platform: sntp
+    id: sntp_time
+    timezone: America/New_York
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
+    on_time_sync:
+      - script.execute: time_update
+
+# Note: API configuration, system buttons (reboot, factory_reset, clear_improv_wifi),
+# and system sensors (uptime, online_status) will be added in Phase 2
+# when they are extracted from the Core file.

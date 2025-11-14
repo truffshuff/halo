@@ -22,7 +22,7 @@ substitutions:
   ota_password: !secret ota_password
   
   # API Configuration
-  api_reboot_timeout: "15min"
+  api_reboot_timeout: "30min"
 
 esphome:
   name: halo-v1-79e384
@@ -48,9 +48,6 @@ esphome:
     board_build.psram_type: opi
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
-    build_flags:
-      - -DCONFIG_ARDUINO_LOOP_STACK_SIZE=16384
-      - -DCONFIG_ASYNC_TCP_STACK_SIZE=8192
 
   min_version: 2025.10.3
 
@@ -65,7 +62,6 @@ dashboard_import:
 ota:
   - platform: esphome
     id: ota_default
-    safe_mode: false  # Disable safe mode to prevent boot loops
 
 wifi:
   # Reduce WiFi transmission power to prevent brownouts during WiFi connection
@@ -90,18 +86,79 @@ wifi:
 #     nimble_proxy: DEBUG 
 #     nimble_improv: DEBUG
 
+# ============================================================================
+# MODULAR PACKAGE IMPORTS - PHASE 1 REORGANIZATION
+# ============================================================================
+# Each package below represents a specific feature or component.
+# Packages are loaded from GitHub for easy updates and sharing.
+#
+# PHASE 1 STATUS: 🚧 IN PROGRESS - Reorganizing into capability-based structure
+#   ✅ System modules: esphome_core, display_hardware, networking, fonts_colors, system_management
+#   ✅ BLE module: ble_improv
+#   🚧 Still using old: globals, Core (all remaining features)
+#
+# NEXT: Phase 2 will extract features from Core into capability modules
+# ============================================================================
+
 packages:
-  remote_package:
+  remote_packages:
     url: https://github.com/truffshuff/halo/
     ref: modular
     files:
-      # Phase 1: Foundation Modules (EXTRACTED)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/hardware.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/esphome_base.yaml
+      # ============================================================================
+      # SYSTEM MODULES (Required)
+      # ============================================================================
+      # Core hardware & software - these are essential for basic operation
 
-      # Remaining Configuration (TEMPORARY - will be removed as Phases 2-4 complete)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+      # Core ESP32 configuration (PSRAM, board, memory management)
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/esphome_core.yaml
+
+      # Display, touchscreen, I2C/SPI buses, backlight
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/display_hardware.yaml
+
+      # WiFi base configuration (no VPN)
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/networking.yaml
+
+      # Fonts, colors, images (shared resources)
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/fonts_colors.yaml
+
+      # API, time sources, HTTP, system buttons
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/system_management.yaml
+
+      # ============================================================================
+      # FEATURE MODULES (Optional)
+      # ============================================================================
+
+      # BLE WiFi Provisioning (~40KB) - Improv protocol via phone
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
+
+      # ============================================================================
+      # LEGACY MODULES (To be replaced in Phase 2)
+      # ============================================================================
+      # These will be broken down into capability modules:
+      # - Clock capability (clock_base.yaml + clock_page.yaml)
+      # - AirQ capability (airq_base.yaml + airq_page.yaml)
+      # - Weather capability (weather_base.yaml + weather pages)
+      # - WiFi status page capability
+      # - WireGuard capability
+      # - Page rotation capability
+      # - Diagnostics capability
+
+      # Globals - will be split by capability in Phase 2
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+
+      # Page Modules (Phase 2 extractions)
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/clock-page.yaml
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/airq-page.yaml
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
+
+      # Weather System Modules (Phase 3)
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/weather-led-effects.yaml
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/hourly-forecast-pages.yaml
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/daily-forecast-pages.yaml
+
+      # Core Configuration - contains all remaining scripts, sensors, and LVGL pages
+      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always
 
 # ============================================================================
