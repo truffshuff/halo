@@ -43,12 +43,13 @@ weather_helpers:
 #   - Home Assistant (preferred, accurate)
 #   - SNTP fallback (when HA unavailable)
 # Also defined in base/esphome_base.yaml (duplicate is intentional for Phase 1)
+#
+# Note: on_time_sync callbacks are in features/clock/clock_base.yaml
+#       (time_update script is part of clock feature)
 # ============================================================================
 time:
   - platform: homeassistant
     id: ha_time
-    on_time_sync:
-      - script.execute: time_update
   - platform: sntp
     id: sntp_time
     timezone: America/New_York
@@ -56,8 +57,6 @@ time:
       - 0.pool.ntp.org
       - 1.pool.ntp.org
       - 2.pool.ntp.org
-    on_time_sync:
-      - script.execute: time_update
 
 # Note: Web server, API, and system buttons are defined in
 # base/esphome_base.yaml (legacy). They will be moved here in Phase 2.

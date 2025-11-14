@@ -25,6 +25,10 @@
 # MEMORY IMPACT: ~5KB
 # ============================================================================
 
+# Note: Time source on_time_sync callbacks have been removed from
+# system/system_management.yaml. The clock intervals (2s) handle time updates
+# instead of relying on time sync events.
+
 # ============================================================================
 # Clock Globals
 # ============================================================================
