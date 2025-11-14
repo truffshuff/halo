@@ -139,13 +139,8 @@ globals:
     restore_value: no
     initial_value: 'true'
 
-# Binary sensor to track backlight active state
-binary_sensor:
-  - platform: template
-    name: "Display Backlight Active"
-    id: display_backlight_active
-    lambda: |-
-      return id(display_backlight_is_on);
+# Note: display_backlight_active binary sensor is defined in Halo-v1-Core.yaml (legacy)
+# It will be moved here in Phase 2 when Core is broken down.
 
 # Note: Display watchdog interval and recover button will be added
-# in later phases when extracted from Core file
+# in Phase 2 when extracted from Core file.
