@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.14.0850
+# Version: 25.11.14.1251
 # Last Updated: November 14, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.14.0850"
+  version: "25.11.14.1251"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -255,31 +255,7 @@ switch:
       - lambda: 'id(page_rotation_AirQ_enabled) = false;'
       - logger.log: "AirQ page disabled in rotation"
 
-  - platform: template
-    name: "Page Rotation: WiFi Page"
-    id: page_rotation_wifi_switch
-    icon: mdi:wifi
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(page_rotation_wifi_enabled) = true;'
-      - logger.log: "WiFi page enabled in rotation"
-      # Force immediate display update when page rotation is enabled
-      # Note: WireGuard-specific flags removed - they're handled by wireguard-display.yaml
-      - if:
-          condition:
-            lambda: 'return id(current_page_name) == "wifi";'
-          then:
-            - lambda: |-
-                id(wifi_signal_needs_render) = true;
-                id(wifi_signal_bar_needs_render) = true;
-                id(wifi_ssid_needs_render) = true;
-                id(wifi_ip_needs_render) = true;
-                id(ha_status_needs_render) = true;
-    on_turn_off:
-      - lambda: 'id(page_rotation_wifi_enabled) = false;'
-      - logger.log: "WiFi page disabled in rotation"
+  # WiFi page rotation switch (page_rotation_wifi_switch) has been moved to packages/features/wifi_status/wifi_page_base.yaml
 
   - platform: template
     name: "Enable WireGuard"
@@ -5141,34 +5117,7 @@ number:
   # AirQ components (SEN55 Temperature Offset and SEN55 Humidity Offset number components) have been moved to packages/features/airq/airq_base.yaml
 
   # Page rotation order numbers (1-6, lower numbers show first)
-  - platform: template
-    name: "Page Order: WiFi Page"
-    id: page_order_wifi
-    icon: mdi:numeric
-    restore_value: true
-    initial_value: 2
-    min_value: 1
-    max_value: 7
-    entity_category: "config"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(page_rotation_wifi_order) = (int)x;'
-      - logger.log:
-          format: "WiFi page order set to %d"
-          args: ['(int)x']
-      # Force immediate display update when page order changes
-      - if:
-          condition:
-            lambda: 'return id(current_page_name) == "wifi";'
-          then:
-            - lambda: |-
-                id(wifi_signal_needs_render) = true;
-                id(wifi_signal_bar_needs_render) = true;
-                id(wifi_ssid_needs_render) = true;
-                id(wifi_ip_needs_render) = true;
-                id(ha_status_needs_render) = true;
+  # WiFi page order number (page_order_wifi) has been moved to packages/features/wifi_status/wifi_page_base.yaml
 
 binary_sensor:
   - platform: status
@@ -7754,19 +7703,7 @@ button:
   # Note: Clock navigation button moved to features/clock/clock_base.yaml (Phase 2)
   # AirQ navigation button moved to packages/features/airq/airq_base.yaml
 
-  - platform: template
-    name: "Go to WiFi Page"
-    id: goto_wifi_page
-    icon: mdi:wifi
-    on_press:
-      - logger.log: "Navigating to WiFi page"
-      - lambda: |-
-          id(current_page_name) = "wifi";
-          id(last_auto_rotation_time) = millis();
-      - lvgl.page.show:
-          id: wifi_page
-          animation: OUT_LEFT
-          time: 300ms
+  # WiFi page navigation button (goto_wifi_page) has been moved to packages/features/wifi_status/wifi_page_base.yaml
 
   - platform: template
     name: "Go to Weather Page"

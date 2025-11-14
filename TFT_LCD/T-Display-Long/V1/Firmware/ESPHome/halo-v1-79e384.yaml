@@ -140,14 +140,18 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_page.yaml
 
+      # WiFi Status Feature (~3KB) - WiFi signal, IP, connection status
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wifi_status/wifi_page_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wifi_status/wifi_page.yaml
+
       # ============================================================================
       # LEGACY MODULES (Being replaced in Phase 2)
       # ============================================================================
       # These are being migrated to capability modules above:
       # ✅ Clock capability - DONE (see features/clock/)
       # ✅ AirQ capability - DONE (see features/airq/)
+      # ✅ WiFi Status capability - DONE (see features/wifi_status/)
       # 🚧 Weather capability (weather_base.yaml + weather pages) - TODO
-      # 🚧 WiFi status page capability - TODO
       # 🚧 WireGuard capability - TODO
       # 🚧 Page rotation capability - TODO
       # 🚧 Diagnostics capability - TODO
@@ -158,7 +162,7 @@ packages:
       # Page Modules - being migrated to features/
       # REMOVED: clock-page.yaml (now in features/clock/)
       # REMOVED: airq-page.yaml (now in features/airq/)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
+      # REMOVED: wifi-page.yaml (now in features/wifi_status/)
 
       # Weather System Modules (Phase 3)
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/weather-led-effects.yaml
