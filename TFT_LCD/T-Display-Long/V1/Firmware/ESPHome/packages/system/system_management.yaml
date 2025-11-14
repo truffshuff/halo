@@ -11,9 +11,19 @@
 #   - Web server
 #   - System buttons (reboot, factory reset)
 #   - System sensors (uptime, online status)
-#
-# Currently: All components are defined in base/esphome_base.yaml (legacy)
-# They will be moved here in Phase 2 when esphome_base.yaml is deprecated.
 # ============================================================================
 
-# Placeholder file for Phase 2 extraction
+# ============================================================================
+# HTTP Request Component
+# ============================================================================
+# MUST be defined early because Core scripts use http_request.post action
+# Also defined in base/esphome_base.yaml (duplicate is intentional for Phase 1)
+# ============================================================================
+http_request:
+  useragent: esphome/halo
+  timeout: 30s  # Increased timeout for large weather responses
+  buffer_size_rx: 1024  # 1KB RX buffer; smaller to reduce memory pressure
+  buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
+
+# Note: Web server, time sources, API, and system buttons are defined in
+# base/esphome_base.yaml (legacy). They will be moved here in Phase 2.
