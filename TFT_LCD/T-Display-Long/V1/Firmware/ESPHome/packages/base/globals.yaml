@@ -50,17 +50,10 @@ globals:
     restore_value: no
     initial_value: '0'
 
-  # Display watchdog - tracks last LVGL update to detect black screen
-  - id: last_display_update_time
-    type: uint32_t
-    restore_value: no
-    initial_value: '0'
-
-  # Display watchdog enabled flag
-  - id: display_watchdog_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
+  # Diagnostics globals moved to features/diagnostics/diagnostics.yaml (Phase 2):
+  # - last_display_update_time (uint32_t)
+  # - display_watchdog_enabled (bool)
+  # - boot_complete (bool)
 
   - id: weather_fetch_lock
     type: bool
@@ -116,10 +109,7 @@ globals:
     initial_value: '0'
   # current_page_index replaced with current_page_name (defined at top of globals)
   # Using string page IDs instead of numeric indices for flexibility
-  - id: boot_complete
-    type: bool
-    restore_value: no
-    initial_value: 'false'
+  # Note: boot_complete moved to features/diagnostics/diagnostics.yaml (Phase 2)
   - id: ota_in_progress
     type: bool
     restore_value: no
