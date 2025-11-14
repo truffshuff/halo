@@ -14,6 +14,17 @@
 # It will be moved here in Phase 2 when esphome_base.yaml is deprecated.
 
 # ============================================================================
+# External Components
+# ============================================================================
+# Custom hardware drivers and BLE components
+# MUST be defined early so other modules can use these components
+# ============================================================================
+external_components:
+  - source: github://truffshuff/esphome-components@main
+    components: [axs15231, sy6970, nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv, weather_helpers]
+    refresh: Always
+
+# ============================================================================
 # PSRAM Configuration
 # ============================================================================
 # ESP32-S3 has 8MB external PSRAM (Pseudo Static RAM) for expanded memory.

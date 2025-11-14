@@ -32,8 +32,13 @@
 # MEMORY IMPACT: ~40KB (BLE stack)
 # ============================================================================
 
-# Note: nimble_base is defined in base/hardware.yaml (legacy)
-# It will be moved here in Phase 2 when hardware.yaml is deprecated.
+# ============================================================================
+# NimBLE Base Stack
+# ============================================================================
+# Base NimBLE stack - required before nimble_improv can be used
+# Also defined in base/hardware.yaml (duplicate is intentional for Phase 1)
+# ============================================================================
+nimble_base:
 
 # ============================================================================
 # NimBLE Improv WiFi Provisioning
