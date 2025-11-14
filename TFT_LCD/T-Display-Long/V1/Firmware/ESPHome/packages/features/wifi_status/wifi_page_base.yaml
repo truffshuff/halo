@@ -1,0 +1,111 @@
+# ============================================================================
+# WiFi Status Page Capability Module
+# ============================================================================
+# Provides WiFi network status monitoring and display controls
+#
+# FEATURES:
+#   - WiFi signal strength monitoring
+#   - SSID and IP address display
+#   - Home Assistant connection status
+#   - Page rotation controls for WiFi status page
+#   - Navigation to WiFi status page
+#
+# HARDWARE REQUIRED:
+#   - ESP32 WiFi (built-in)
+#   - Display for status visualization
+#
+# DEPENDENCIES:
+#   - system/esphome_core.yaml (ESP32 config)
+#   - system/networking.yaml (WiFi configuration)
+#   - system/fonts_colors.yaml (UI colors)
+#
+# MEMORY USAGE: ~3KB
+#
+# NOTE: WiFi signal sensor is defined in system/networking.yaml
+#       This module only provides the page controls and navigation
+#
+# Created: 2025-11-14 (Phase 2 extraction)
+# ============================================================================
+
+# ============================================================================
+# Switch Components
+# ============================================================================
+switch:
+  # Page rotation enable/disable for WiFi page
+  - platform: template
+    name: "Page Rotation: WiFi Page"
+    id: page_rotation_wifi_switch
+    icon: mdi:wifi
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_wifi_enabled) = true;'
+      - logger.log: "WiFi page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "wifi";'
+          then:
+            - lambda: |-
+                id(wifi_signal_needs_render) = true;
+                id(wifi_signal_bar_needs_render) = true;
+                id(wifi_ssid_needs_render) = true;
+                id(wifi_ip_needs_render) = true;
+                id(ha_status_needs_render) = true;
+    on_turn_off:
+      - lambda: 'id(page_rotation_wifi_enabled) = false;'
+      - logger.log: "WiFi page disabled in rotation"
+
+# ============================================================================
+# Number Components
+# ============================================================================
+number:
+  # WiFi page order in rotation sequence (1-7)
+  - platform: template
+    name: "Page Order: WiFi Page"
+    id: page_order_wifi
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 2
+    min_value: 1
+    max_value: 7
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_wifi_order) = (int)x;'
+      - logger.log:
+          format: "WiFi page order set to %d"
+          args: ['(int)x']
+      # Force immediate display update when page order changes
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "wifi";'
+          then:
+            - lambda: |-
+                id(wifi_signal_needs_render) = true;
+                id(wifi_signal_bar_needs_render) = true;
+                id(wifi_ssid_needs_render) = true;
+                id(wifi_ip_needs_render) = true;
+                id(ha_status_needs_render) = true;
+
+# ============================================================================
+# Button Components
+# ============================================================================
+button:
+  # Navigation button to WiFi status page
+  - platform: template
+    name: "Go to WiFi Page"
+    id: goto_wifi_page
+    icon: mdi:wifi
+    on_press:
+      - logger.log: "Navigating to WiFi page"
+      - lambda: |-
+          id(current_page_name) = "wifi";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: wifi_page
+          animation: OUT_LEFT
+          time: 300ms
