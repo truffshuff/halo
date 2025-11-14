@@ -12,10 +12,10 @@
 | Phase | Status | Progress | Details |
 |-------|--------|----------|---------|
 | **Phase 1** | ✅ Complete | 100% | System modules created, 11 errors fixed, compilation successful! |
-| **Phase 2** | 🚧 In Progress | 30% | Clock & AirQ extraction complete! Core reduced by 940 lines. Remaining: Weather, WiFi, WireGuard, Page Rotation, Diagnostics |
+| **Phase 2** | 🚧 In Progress | 86% | 6 of 7 capabilities extracted! Core reduced by 1,440 lines. Remaining: Weather (largest, most complex) |
 | **Phase 3** | ⏳ Not Started | 0% | Documentation and cleanup |
 
-**Latest Update:** Phase 2 at 30%! Clock and Air Quality capabilities fully extracted (2/7 done). Core file reduced from 8,971 to 8,031 lines (-10.5%). Created features/clock/ and features/airq/ with complete self-contained modules. All sensors, calibration, and UI working. Next: WiFi Status extraction (quick win). See [PHASE_2_PROGRESS.md](PHASE_2_PROGRESS.md) for details.
+**Latest Update:** Phase 2 at 86%! Extracted: Clock, AirQ, WiFi Status, WireGuard, Diagnostics, and Page Rotation (6/7 done). Core file reduced from 8,971 to 7,531 lines (-16% reduction). All capabilities are self-contained modules with clear dependencies. Only Weather capability remains (most complex: ~10,500 lines across 5 files). See [PHASE_2_PROGRESS.md](PHASE_2_PROGRESS.md) for details.
 
 ---
 
