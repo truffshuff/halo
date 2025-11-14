@@ -27,11 +27,8 @@
 # ============================================================================
 
 globals:
-  # Current page tracking using string name
-  - id: current_page_name
-    type: std::string
-    restore_value: no
-    initial_value: '"vertical_clock"'
+  # Note: Page rotation master globals moved to features/page_rotation/page_rotation.yaml (Phase 2)
+  # - current_page_name
 
   # Note: Clock globals moved to features/clock/clock_base.yaml (Phase 2)
   # - page_rotation_vertical_clock_enabled
@@ -62,36 +59,12 @@ globals:
   # Temperature unit change flag
   # REMOVED: temp_unit_changed - moved to packages/features/airq/airq_base.yaml
 
-  # Last touch time tracking
-  # Records timestamp (milliseconds) of last touchscreen interaction
-  # Used to reset auto-rotation timer when user touches the display
-  - id: last_touch_time
-    type: int
-    initial_value: '0'
-
-  # Auto page rotation master enable/disable
-  # When true, device automatically cycles through enabled pages
-  # Controllable via Home Assistant switch
-  - id: auto_page_rotation_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-
-  # Auto page rotation interval (seconds)
-  # How long to display each page before rotating to next
-  # Default: 30 seconds. Adjustable via Home Assistant
-  - id: auto_page_rotation_interval
-    type: int
-    restore_value: yes
-    initial_value: '30'
-
-  # Last auto-rotation timestamp
-  # Tracks when last page rotation occurred (in milliseconds)
-  # Used to calculate when next rotation should happen
-  - id: last_auto_rotation_time
-    type: unsigned long
-    restore_value: no
-    initial_value: '0'
+  # Page rotation globals moved to features/page_rotation/page_rotation.yaml (Phase 2):
+  # - current_page_name (std::string)
+  # - last_touch_time (int)
+  # - auto_page_rotation_enabled (bool)
+  # - auto_page_rotation_interval (int)
+  # - last_auto_rotation_time (unsigned long)
 
   # ============================================================================
   # Page Rotation Configuration Globals
