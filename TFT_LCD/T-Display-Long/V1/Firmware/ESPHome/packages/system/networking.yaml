@@ -1,0 +1,51 @@
+# ============================================================================
+# Networking Configuration
+# ============================================================================
+# WiFi base configuration (without WireGuard)
+# Dependencies: system/esphome_core.yaml
+#
+# This module configures:
+#   - WiFi connection
+#   - Captive portal (AP fallback)
+#   - WiFi signal sensor
+#
+# CREDENTIALS: Stored in device YAML as substitutions or secrets.yaml
+#   wifi_ssid: "YourNetworkName"
+#   wifi_password: "YourNetworkPassword"
+#
+# SECURITY: WiFi credentials are stored in plaintext in compiled firmware
+#           Use WPA2/WPA3 encryption on your access point
+#           Consider using secrets file for sensitive deployments
+# ============================================================================
+
+# ============================================================================
+# WiFi Configuration
+# ============================================================================
+wifi:
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
+
+  # Reset startup light blink when WiFi disconnects
+  # This allows the rainbow effect to restart when connection is lost
+  on_disconnect:
+    - lambda: |-
+        id(cycleCounter) = 0;
+        ESP_LOGI("wifi", "WiFi disconnected - resetting startup blink counter");
+
+  # Ensure startup blink stops when WiFi reconnects
+  on_connect:
+    - lambda: |-
+        if (id(cycleCounter) < 30) {
+          id(cycleCounter) = 30;
+          ESP_LOGI("wifi", "WiFi connected - stopping startup blink");
+        }
+
+# ============================================================================
+# Captive Portal
+# ============================================================================
+# Fallback WiFi configuration portal
+# ============================================================================
+captive_portal:
+
+# Note: WiFi signal sensor and IP address sensor will be added
+# in Phase 2 when they are extracted from the Core file.

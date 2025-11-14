@@ -1,0 +1,87 @@
+# ============================================================================
+# BLE WiFi Provisioning Capability
+# ============================================================================
+# NimBLE stack + Improv WiFi provisioning
+# Dependencies:
+#   - system/esphome_core.yaml (PSRAM needed for BLE)
+#   - system/networking.yaml (provisions WiFi)
+#
+# This module configures:
+#   - NimBLE Bluetooth stack
+#   - Improv WiFi provisioning service
+#   - Bluetooth proxy for Home Assistant
+#   - Startup RGB LED blink animation
+#
+# Features:
+#   - Complete GATT service with all 5 Improv characteristics
+#   - BLE advertising as "Halo Improv" with Improv service UUID
+#   - WiFi provisioning flow (receive credentials → connect → send IP)
+#   - Auto-authorization on connection (no button press required)
+#   - Device info response (firmware, version, hardware, name)
+#   - State management and error handling
+#
+# Usage:
+#   1. Open https://www.improv-wifi.com/ in Chrome browser
+#   2. Click "Connect device via Improv"
+#   3. Select "Halo Improv" from BLE devices
+#   4. Enter WiFi credentials and provision
+#
+# Compatible with standard Improv protocol clients
+# Protocol spec: https://www.improv-wifi.com/
+#
+# MEMORY IMPACT: ~40KB (BLE stack)
+# ============================================================================
+
+# ============================================================================
+# NimBLE Base Stack
+# ============================================================================
+# Base NimBLE stack configuration
+# Note: BLE sdkconfig options are defined in system/esphome_core.yaml to avoid conflicts
+# ============================================================================
+nimble_base:
+
+# ============================================================================
+# NimBLE Improv WiFi Provisioning
+# ============================================================================
+# Allows WiFi reconfiguration via BLE using the Improv protocol
+# Uses ESP-IDF native NimBLE stack for compatibility with nimble_proxy
+# ============================================================================
+nimble_improv:
+  authorized_duration: 2min  # How long authorization lasts
+  wifi_timeout: 1min         # Timeout for WiFi connection attempts
+
+# ============================================================================
+# Bluetooth Proxy for Home Assistant
+# ============================================================================
+# Allows Home Assistant to use this device as a Bluetooth proxy
+# ============================================================================
+bluetooth_proxy:
+
+nimble_proxy:
+
+# ============================================================================
+# Startup Light Blink Animation
+# ============================================================================
+# Rainbow effect for 30 seconds on startup/WiFi disconnect
+# ============================================================================
+
+# Global for tracking startup blink cycle count
+globals:
+  # Startup light blink cycle counter
+  # Tracks how many 1-second intervals have passed during startup LED animation
+  # Used to stop rainbow effect after 30 seconds and turn off light
+  - id: cycleCounter
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+# Switch to control startup blink (exposed to HA)
+switch:
+  - platform: template
+    name: "Startup Light Blink"
+    id: startup_light_blink
+    optimistic: true
+
+# Note: RGB light component and startup blink intervals will be added
+# when weather_led_effects.yaml is created, as they share the same RGB LED hardware.
+# For now, this module provides the BLE stack and cycleCounter global.

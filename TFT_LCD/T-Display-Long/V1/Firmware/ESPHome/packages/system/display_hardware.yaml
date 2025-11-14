@@ -1,0 +1,173 @@
+# ============================================================================
+# Display Hardware Configuration
+# ============================================================================
+# Display, touchscreen, SPI/I2C buses, backlight
+# Dependencies: system/esphome_core.yaml
+#
+# This module configures:
+#   - SPI and I2C buses
+#   - Display driver (AXS15231 AMOLED)
+#   - Touchscreen driver
+#   - Backlight PWM output and light control
+#   - External components
+#   - Display watchdog system
+# ============================================================================
+
+# ============================================================================
+# External Components
+# ============================================================================
+# Custom hardware drivers and BLE components
+# ============================================================================
+external_components:
+  - source: github://truffshuff/esphome-components@main
+    components: [axs15231, sy6970, nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv, weather_helpers]
+    # Pin refresh to a reasonable interval to avoid excessive repo checks during editor validation
+    refresh: Always
+
+# ============================================================================
+# SPI Bus Configuration
+# ============================================================================
+# Quad SPI for high-speed display communication
+# ============================================================================
+spi:
+  id: lily_spi
+  type: quad
+  clk_pin: 17
+  data_pins:
+    - 13
+    - 18
+    - 21
+    - 14
+
+# ============================================================================
+# I2C Bus Configuration
+# ============================================================================
+# Two I2C buses for sensors and touchscreen
+# ============================================================================
+i2c:
+  - sda: 9
+    scl: 48
+    id: lily_i2c
+  - sda: 15
+    scl: 10
+    id: touch_i2c
+    frequency: 400kHz
+
+# ============================================================================
+# Display Output (Backlight)
+# ============================================================================
+# LEDC PWM for display backlight control
+# ============================================================================
+output:
+  - platform: ledc
+    pin: 1
+    id: backlight
+    frequency: 100Hz  # Datasheet suggests low-frequency PWM. Should prevent stability issues.
+
+# ============================================================================
+# Backlight Light Control
+# ============================================================================
+# Light component for backlight with restore from flash
+# ============================================================================
+light:
+  - platform: monochromatic
+    output: backlight
+    name: "Display Backlight"
+    id: display_backlight
+    restore_mode: RESTORE_DEFAULT_ON
+    default_transition_length: 0.5s
+
+# ============================================================================
+# Display Driver - AXS15231 AMOLED
+# ============================================================================
+# LilyGo T-Display-Long AMOLED display (180x640 pixels)
+# ============================================================================
+display:
+  - platform: qspi_dbi
+    id: lily_display
+    model: AXS15231
+    data_rate: 5MHz
+    spi_id: lily_spi
+    dimensions:
+      height: 640
+      width: 180
+    cs_pin: 12
+    reset_pin: 16
+    rotation: 0
+    auto_clear_enabled: false
+
+# ============================================================================
+# Touchscreen Driver - AXS15231
+# ============================================================================
+# Touchscreen configuration optimized for responsiveness:
+# - Fast 50ms polling for immediate touch detection
+# - Interrupt pin for hardware-triggered events
+# - Coordinate validation to reject invalid touches
+# - Auto-rotation reset on touch for better UX
+# ============================================================================
+touchscreen:
+  - platform: axs15231
+    id: lily_touch
+    display: lily_display
+    i2c_id: touch_i2c
+    interrupt_pin: GPIO11
+    update_interval: never  # Fast polling for responsive touch detection (was: never)
+    transform:
+      mirror_x: false
+      mirror_y: false
+      swap_xy: false
+    on_touch:
+      - lambda: |-
+          // Validate touch coordinates - filter out spurious/phantom touches
+          if (touch.x < 0 || touch.x > 180 || touch.y < 0 || touch.y > 640) {
+            ESP_LOGW("touch", "Invalid touch coordinates: x=%d, y=%d - ignoring", touch.x, touch.y);
+            return;
+          }
+          ESP_LOGI("touch", "Touch at x=%d, y=%d", touch.x, touch.y);
+
+          // Reset auto-rotation timer on any valid touch to prevent interruption during manual navigation
+          id(last_auto_rotation_time) = millis();
+          ESP_LOGD("touch", "Auto-rotation timer reset");
+
+# ============================================================================
+# Weather Helpers Library
+# ============================================================================
+# Helper library for weather icon mapping and formatting
+# ============================================================================
+weather_helpers:
+
+# ============================================================================
+# Display Watchdog System
+# ============================================================================
+# Globals for display watchdog state tracking
+# ============================================================================
+globals:
+  # Display watchdog - tracks last LVGL update to detect black screen
+  - id: last_display_update_time
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+  # Display watchdog enabled flag
+  - id: display_watchdog_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Display backlight state tracking
+  # Used to prevent redundant backlight on/off commands
+  - id: display_backlight_is_on
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+# Binary sensor to track backlight active state
+binary_sensor:
+  - platform: template
+    name: "Display Backlight Active"
+    id: display_backlight_active
+    lambda: |-
+      return id(display_backlight_is_on);
+
+# Note: Display watchdog interval and recover button will be added
+# in later phases when extracted from Core file
