@@ -65,15 +65,8 @@ nimble_proxy:
 # Rainbow effect for 30 seconds on startup/WiFi disconnect
 # ============================================================================
 
-# Global for tracking startup blink cycle count
-globals:
-  # Startup light blink cycle counter
-  # Tracks how many 1-second intervals have passed during startup LED animation
-  # Used to stop rainbow effect after 30 seconds and turn off light
-  - id: cycleCounter
-    type: int
-    restore_value: no
-    initial_value: '0'
+# Note: cycleCounter global is still defined in base/globals.yaml (legacy)
+# It will be moved here in Phase 2 when globals.yaml is deprecated.
 
 # Note: startup_light_blink switch is defined in Halo-v1-Core.yaml (legacy)
 # It will be moved here in Phase 2 when Core is broken down.
