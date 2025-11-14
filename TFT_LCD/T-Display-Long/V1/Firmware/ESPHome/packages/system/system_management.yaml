@@ -26,6 +26,16 @@ http_request:
   buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
 
 # ============================================================================
+# Weather Helpers Component
+# ============================================================================
+# MUST be defined early because Core uses weather_helpers namespace in lambdas
+# Provides C++ helper functions for weather icon color calculations
+# Also defined in base/hardware.yaml (duplicate is intentional for Phase 1)
+# Will move to features/weather/weather_base.yaml in Phase 2
+# ============================================================================
+weather_helpers:
+
+# ============================================================================
 # Time Sources
 # ============================================================================
 # MUST be defined early because WireGuard component requires time
