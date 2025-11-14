@@ -111,30 +111,30 @@ packages:
       # Core hardware & software - these are essential for basic operation
 
       # Core ESP32 configuration (PSRAM, board, memory management)
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/esphome_core.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/esphome_core.yaml
 
       # Display, touchscreen, I2C/SPI buses, backlight
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/display_hardware.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/display_hardware.yaml
 
       # WiFi base configuration (no VPN)
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/networking.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/networking.yaml
 
       # Fonts, colors, images (shared resources)
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/fonts_colors.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/fonts_colors.yaml
 
       # API, time sources, HTTP, system buttons
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/system_management.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/system_management.yaml
 
       # ============================================================================
       # FEATURE MODULES (Optional - Phase 2)
       # ============================================================================
 
       # BLE WiFi Provisioning (~40KB) - Improv protocol via phone
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
 
       # Clock Feature (~5KB) - Time display and clock page
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_base.yaml
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_page.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_page.yaml
 
       # ============================================================================
       # LEGACY MODULES (Being replaced in Phase 2)
@@ -149,20 +149,20 @@ packages:
       # 🚧 Diagnostics capability - TODO
 
       # Globals - will be split by capability in Phase 2
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
 
       # Page Modules - being migrated to features/
       # REMOVED: clock-page.yaml (now in features/clock/)
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/airq-page.yaml
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/airq-page.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
 
       # Weather System Modules (Phase 3)
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/weather-led-effects.yaml
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/hourly-forecast-pages.yaml
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/daily-forecast-pages.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/weather-led-effects.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/hourly-forecast-pages.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/daily-forecast-pages.yaml
 
       # Core Configuration - contains all remaining scripts, sensors, and LVGL pages
-      - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always
 
 # ============================================================================
