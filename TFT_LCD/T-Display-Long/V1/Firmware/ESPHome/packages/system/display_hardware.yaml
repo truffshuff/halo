@@ -114,30 +114,9 @@ touchscreen:
 # Note: weather_helpers is defined in base/hardware.yaml (legacy)
 # It will be moved here in Phase 2 when hardware.yaml is deprecated.
 
-# ============================================================================
-# Display Watchdog System
-# ============================================================================
-# Globals for display watchdog state tracking
-# ============================================================================
-globals:
-  # Display watchdog - tracks last LVGL update to detect black screen
-  - id: last_display_update_time
-    type: uint32_t
-    restore_value: no
-    initial_value: '0'
-
-  # Display watchdog enabled flag
-  - id: display_watchdog_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-
-  # Display backlight state tracking
-  # Used to prevent redundant backlight on/off commands
-  - id: display_backlight_is_on
-    type: bool
-    restore_value: no
-    initial_value: 'true'
+# Note: Display watchdog globals (last_display_update_time, display_watchdog_enabled,
+# display_backlight_is_on) are defined in base/globals.yaml (legacy).
+# They will be moved here in Phase 2 when globals.yaml is deprecated.
 
 # Note: display_backlight_active binary sensor is defined in Halo-v1-Core.yaml (legacy)
 # It will be moved here in Phase 2 when Core is broken down.
