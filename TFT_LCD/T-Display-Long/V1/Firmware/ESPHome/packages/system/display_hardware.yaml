@@ -13,16 +13,8 @@
 #   - Display watchdog system
 # ============================================================================
 
-# ============================================================================
-# External Components
-# ============================================================================
-# Custom hardware drivers and BLE components
-# ============================================================================
-external_components:
-  - source: github://truffshuff/esphome-components@main
-    components: [axs15231, sy6970, nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv, weather_helpers]
-    # Pin refresh to a reasonable interval to avoid excessive repo checks during editor validation
-    refresh: Always
+# Note: External components are defined in base/hardware.yaml (legacy)
+# They will be moved here in Phase 2 when hardware.yaml is deprecated.
 
 # ============================================================================
 # SPI Bus Configuration
@@ -64,18 +56,8 @@ output:
     id: backlight
     frequency: 100Hz  # Datasheet suggests low-frequency PWM. Should prevent stability issues.
 
-# ============================================================================
-# Backlight Light Control
-# ============================================================================
-# Light component for backlight with restore from flash
-# ============================================================================
-light:
-  - platform: monochromatic
-    output: backlight
-    name: "Display Backlight"
-    id: display_backlight
-    restore_mode: RESTORE_DEFAULT_ON
-    default_transition_length: 0.5s
+# Note: The backlight light component is defined in weather/weather-led-effects.yaml
+# since it also controls the RGB LED on the same output pin.
 
 # ============================================================================
 # Display Driver - AXS15231 AMOLED
@@ -129,12 +111,8 @@ touchscreen:
           id(last_auto_rotation_time) = millis();
           ESP_LOGD("touch", "Auto-rotation timer reset");
 
-# ============================================================================
-# Weather Helpers Library
-# ============================================================================
-# Helper library for weather icon mapping and formatting
-# ============================================================================
-weather_helpers:
+# Note: weather_helpers is defined in base/hardware.yaml (legacy)
+# It will be moved here in Phase 2 when hardware.yaml is deprecated.
 
 # ============================================================================
 # Display Watchdog System

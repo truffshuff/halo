@@ -40,12 +40,8 @@ wifi:
           ESP_LOGI("wifi", "WiFi connected - stopping startup blink");
         }
 
-# ============================================================================
-# Captive Portal
-# ============================================================================
-# Fallback WiFi configuration portal
-# ============================================================================
-captive_portal:
+# Note: Captive portal is defined in base/hardware.yaml (legacy)
+# It will be moved here in Phase 2 when hardware.yaml is deprecated.
 
 # Note: WiFi signal sensor and IP address sensor will be added
 # in Phase 2 when they are extracted from the Core file.
