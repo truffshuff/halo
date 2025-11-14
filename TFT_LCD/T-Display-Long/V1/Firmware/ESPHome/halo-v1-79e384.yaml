@@ -144,6 +144,9 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wifi_status/wifi_page_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wifi_status/wifi_page.yaml
 
+      # WireGuard VPN Feature (~8KB) - Encrypted VPN tunnel (optional)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wireguard/wireguard.yaml
+
       # ============================================================================
       # LEGACY MODULES (Being replaced in Phase 2)
       # ============================================================================
@@ -151,8 +154,8 @@ packages:
       # ✅ Clock capability - DONE (see features/clock/)
       # ✅ AirQ capability - DONE (see features/airq/)
       # ✅ WiFi Status capability - DONE (see features/wifi_status/)
+      # ✅ WireGuard capability - DONE (see features/wireguard/)
       # 🚧 Weather capability (weather_base.yaml + weather pages) - TODO
-      # 🚧 WireGuard capability - TODO
       # 🚧 Page rotation capability - TODO
       # 🚧 Diagnostics capability - TODO
 

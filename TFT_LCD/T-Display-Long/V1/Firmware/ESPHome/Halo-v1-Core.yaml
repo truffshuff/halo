@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.14.1251
+# Version: 25.11.14.1257
 # Last Updated: November 14, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.14.1251"
+  version: "25.11.14.1257"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -257,24 +257,7 @@ switch:
 
   # WiFi page rotation switch (page_rotation_wifi_switch) has been moved to packages/features/wifi_status/wifi_page_base.yaml
 
-  - platform: template
-    name: "Enable WireGuard"
-    id: wireguard_enabled
-    icon: mdi:vpn
-    restore_mode: RESTORE_DEFAULT_OFF
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - logger.log: "WireGuard switch turned ON - enabling WireGuard"
-      - delay: 500ms
-      - wireguard.enable:
-          id: wg0
-      - logger.log: "✓ WireGuard enabled"
-    on_turn_off:
-      - logger.log: "WireGuard switch turned OFF - disabling WireGuard"
-      - wireguard.disable:
-          id: wg0
-      - logger.log: "✓ WireGuard disabled"
+  # WireGuard switch component has been moved to packages/features/wireguard/wireguard.yaml
 
 select:
   # AirQ components (Display Temperature Unit select) have been moved to packages/features/airq/airq_base.yaml
@@ -5130,14 +5113,7 @@ binary_sensor:
     entity_category: "diagnostic"
     lambda: 'return id(display_backlight_is_on);'
 
-  - platform: wireguard
-    wireguard_id: wg0
-    status:
-      name: "WireGuard Status"
-      id: wireguard_status
-    enabled:
-      name: "WireGuard Enabled"
-      id: wireguard_enabled_sensor
+  # WireGuard binary sensors have been moved to packages/features/wireguard/wireguard.yaml
 
 sensor:
   # Display refresh rate monitor
@@ -5361,11 +5337,7 @@ sensor:
     update_interval: 60s
     entity_category: "diagnostic"
 
-  - platform: wireguard
-    wireguard_id: wg0
-    latest_handshake:
-      name: "WireGuard Latest Handshake"
-      id: wireguard_handshake
+  # WireGuard latest handshake sensor has been moved to packages/features/wireguard/wireguard.yaml
 
   - platform: template
     name: "Display Recovery Count"
@@ -5380,11 +5352,7 @@ text_sensor:
     internal: true
     update_interval: never
 
-  - platform: wireguard
-    wireguard_id: wg0
-    address:
-      name: "WireGuard Address"
-      id: wireguard_address_text
+  # WireGuard address text sensor has been moved to packages/features/wireguard/wireguard.yaml
 
 # ============================================================================
 # RGB LED Configuration
@@ -7816,18 +7784,7 @@ wifi:
 # KEEPALIVE: 25s - Maintains NAT mappings for reliable connection
 # require_connection_to_proceed: false - Device boots even if VPN fails
 # ============================================================================
-wireguard:
-  id: wg0
-  address: !secret wg_address
-  netmask: !secret wg_netmask
-  private_key: !secret wg_prikey
-  peer_port: !secret wg_peerport
-  peer_endpoint: !secret wg_peerendpt
-  peer_public_key: !secret wg_pubkey
-  peer_preshared_key: !secret wg_shrdkey
-  peer_allowed_ips: !secret wg_allowed_ips
-  peer_persistent_keepalive: 25s
-  require_connection_to_proceed: false  # Non-blocking boot
+# WireGuard configuration has been moved to packages/features/wireguard/wireguard.yaml
 
 # ============================================================================
 # ESPHome Boot Sequence Configuration
@@ -7904,28 +7861,7 @@ esphome:
     # -------------------------------------------------------------------------
     # Boot Stage 2: WireGuard Delayed Start (Priority 50)
     # -------------------------------------------------------------------------
-    # DELAY RATIONALE: BLE initialization consumes significant memory
-    #   - Without delay: WireGuard + BLE can cause OOM crash
-    #   - With 20s delay: BLE stabilizes, memory usage predictable
-    #   - Timing chosen empirically through testing
-    #
-    # Runs after sensors (priority 100) but before late init
-    - priority: 50
-      then:
-        - delay: 20s  # Allow BLE to fully initialize and stabilize memory
-        - lambda: |-
-            ESP_LOGI("wireguard_delayed", "Checking WireGuard enable state after 20s delay...");
-            ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-            ESP_LOGI("wireguard_delayed", "WireGuard switch state: %s", id(wireguard_enabled).state ? "ON" : "OFF");
-        - if:
-            condition:
-              lambda: 'return id(wireguard_enabled).state;'
-            then:
-              - wireguard.enable:
-                  id: wg0
-              - logger.log: "✓ WireGuard enabled successfully"
-            else:
-              - logger.log: "WireGuard switch is OFF, not enabling at boot"
+    # WireGuard boot hook has been moved to packages/features/wireguard/wireguard.yaml
 
     # -------------------------------------------------------------------------
     # Boot Stage 3: Default Page Selection (Priority -100)
