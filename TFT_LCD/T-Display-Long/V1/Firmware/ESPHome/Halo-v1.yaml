@@ -55,7 +55,7 @@ esphome:
     version: "${version}"
 
 dashboard_import:
-  package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@main
+  package_import_url: github://truffshuff/halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1.yaml@modular
   import_full_config: true
 
 ota:
@@ -94,7 +94,7 @@ wifi:
 packages:
   remote_packages:
     url: https://github.com/truffshuff/halo/
-    ref: WireGuard  # TODO: Change to 'modular' branch after committing
+    ref: modular
     files:
       # Phase 1: Foundation Modules
       - halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
