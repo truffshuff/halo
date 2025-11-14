@@ -85,6 +85,15 @@ binary_sensor:
     status:
       name: "WireGuard Status"
       id: wireguard_status
+      on_state:
+        then:
+          - lambda: |-
+              std::string status_text = "Status: ";
+              status_text += x ? "Connected" : "Disconnected";
+              if (status_text != id(wg_status_last_text)) {
+                id(wg_status_last_text) = status_text;
+                id(wg_status_needs_render) = true;
+              }
     enabled:
       name: "WireGuard Enabled"
       id: wireguard_enabled_sensor
@@ -99,6 +108,33 @@ sensor:
     latest_handshake:
       name: "WireGuard Latest Handshake"
       id: wireguard_handshake
+      on_value:
+        then:
+          - lambda: |-
+              char time_str[64];
+              if (std::isnan(x) || x <= 0) {
+                snprintf(time_str, sizeof(time_str), "Handshake: \nUnavailable");
+              } else {
+                int seconds = (int)x;
+                int minutes = seconds / 60;
+                int hours = minutes / 60;
+                int days = hours / 24;
+
+                if (days > 0) {
+                  snprintf(time_str, sizeof(time_str), "Handshake: \n%dd %dh ago", days, hours % 24);
+                } else if (hours > 0) {
+                  snprintf(time_str, sizeof(time_str), "Handshake: \n%dh %dm ago", hours, minutes % 60);
+                } else if (minutes > 0) {
+                  snprintf(time_str, sizeof(time_str), "Handshake: \n%dm %ds ago", minutes, seconds % 60);
+                } else {
+                  snprintf(time_str, sizeof(time_str), "Handshake: \n%ds ago", seconds);
+                }
+              }
+              std::string handshake_text(time_str);
+              if (handshake_text != id(wg_handshake_last_text)) {
+                id(wg_handshake_last_text) = handshake_text;
+                id(wg_handshake_needs_render) = true;
+              }
 
 # ============================================================================
 # Text Sensor Components
@@ -110,6 +146,15 @@ text_sensor:
     address:
       name: "WireGuard Address"
       id: wireguard_address_text
+      on_value:
+        then:
+          - lambda: |-
+              std::string addr_text = "VPN IP: ";
+              addr_text += x.empty() ? "Not assigned" : x;
+              if (addr_text != id(wg_address_last_text)) {
+                id(wg_address_last_text) = addr_text;
+                id(wg_address_needs_render) = true;
+              }
 
 # ============================================================================
 # Boot Sequence Integration
