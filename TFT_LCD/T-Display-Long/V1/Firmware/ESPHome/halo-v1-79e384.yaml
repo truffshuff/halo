@@ -163,7 +163,7 @@ packages:
       # ✅ WireGuard capability - DONE (see features/wireguard/)
       # ✅ Diagnostics capability - DONE (see features/diagnostics/)
       # ✅ Page Rotation capability - DONE (see features/page_rotation/) - master controls only
-      # 🚧 Weather capability (weather_base.yaml + weather pages) - TODO
+      # ✅ Weather capability - DONE (Phase 2)
 
       # Globals - will be split by capability in Phase 2
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
@@ -173,10 +173,15 @@ packages:
       # REMOVED: airq-page.yaml (now in features/airq/)
       # REMOVED: wifi-page.yaml (now in features/wifi_status/)
 
-      # Weather System Modules (Phase 3)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/weather-led-effects.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/hourly-forecast-pages.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/daily-forecast-pages.yaml
+      # Weather Feature (~80KB) - Weather display with current conditions, daily & hourly forecasts
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_page.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_hourly_summary.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_hourly.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_daily.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather-led-effects.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/hourly-forecast-pages.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/daily-forecast-pages.yaml
 
       # Core Configuration - contains all remaining scripts, sensors, and LVGL pages
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml

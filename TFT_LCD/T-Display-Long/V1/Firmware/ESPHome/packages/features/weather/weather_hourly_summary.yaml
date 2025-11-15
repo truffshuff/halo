@@ -1,0 +1,1746 @@
+# ============================================================================
+# Weather Hourly Summary - 24-Hour Summary Pages
+# ============================================================================
+# Part of Phase 2 modular refactoring
+#
+# This module provides the hourly summary pages showing 24 hours of forecast:
+#   - Hourly Summary Page 1 (hours 1-12)
+#   - Hourly Summary Page 2 (hours 13-24)
+#   - Update scripts for both pages
+#
+# Dependencies:
+#   - packages/features/weather/weather_base.yaml (for globals and data)
+#   - packages/base/hardware.yaml (for LVGL display)
+#   - packages/features/page_rotation/page_rotation.yaml (for page rotation)
+#
+# Required IDs from other modules:
+#   - current_page_name (from page_rotation)
+#   - weather_hourly_* globals (from weather_base)
+#   - sntp_time (from esphome_base)
+#
+# Notes:
+#   - Each page shows 12 hours in a compact column format
+#   - Displays temperature, precipitation chance, condition icons
+#   - Automatically updates on page load
+# ============================================================================
+
+script:
+  - id: update_hourly_summary_page_1
+    mode: single
+    then:
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "Updating hourly summary page 1 (hours 1-12)..."
+
+      # Hour 1 (index 0)
+      - lvgl.label.update:
+          id: lbl_sum1_hour1_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[0],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour1_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[0]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[0]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour1_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[0]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour1_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[0]);'
+
+      # Hour 2 (index 1)
+      - lvgl.label.update:
+          id: lbl_sum1_hour2_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[1],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour2_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[1]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[1]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour2_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[1]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour2_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[1]);'
+
+      # Hour 3 (index 2)
+      - lvgl.label.update:
+          id: lbl_sum1_hour3_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[2],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour3_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[2]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[2]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour3_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[2]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour3_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[2]);'
+
+      # Hour 4 (index 3)
+      - lvgl.label.update:
+          id: lbl_sum1_hour4_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[3],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour4_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[3]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[3]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour4_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[3]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour4_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[3]);'
+
+      # Hour 5 (index 4)
+      - lvgl.label.update:
+          id: lbl_sum1_hour5_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[4],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour5_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[4]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[4]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour5_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[4]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour5_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[4]);'
+
+      # Hour 6 (index 5)
+      - lvgl.label.update:
+          id: lbl_sum1_hour6_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[5],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour6_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[5]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[5]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour6_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[5]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour6_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[5]);'
+
+      # Hour 7 (index 6)
+      - lvgl.label.update:
+          id: lbl_sum1_hour7_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[6],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour7_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[6]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[6]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour7_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[6]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour7_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[6]);'
+
+      # Hour 8 (index 7)
+      - lvgl.label.update:
+          id: lbl_sum1_hour8_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[7],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour8_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[7]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[7]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour8_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[7]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour8_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[7]);'
+
+      # Hour 9 (index 8)
+      - lvgl.label.update:
+          id: lbl_sum1_hour9_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[8],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour9_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[8]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[8]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour9_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[8]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour9_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[8]);'
+
+      # Hour 10 (index 9)
+      - lvgl.label.update:
+          id: lbl_sum1_hour10_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[9],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour10_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[9]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[9]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour10_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[9]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour10_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[9]);'
+
+      # Hour 11 (index 10)
+      - lvgl.label.update:
+          id: lbl_sum1_hour11_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[10],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour11_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[10]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[10]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour11_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[10]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour11_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[10]);'
+
+      # Hour 12 (index 11)
+      - lvgl.label.update:
+          id: lbl_sum1_hour12_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[11],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum1_hour12_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[11]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[11]));
+      - lvgl.label.update:
+          id: lbl_sum1_hour12_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[11]);'
+      - lvgl.label.update:
+          id: lbl_sum1_hour12_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[11]);'
+
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "✓ Hourly summary page 1 (hours 1-12) updated successfully"
+
+  # Update script for Hourly Summary Page 2 (Hours 13-24)
+  - id: update_hourly_summary_page_2
+    mode: single
+    then:
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "Updating hourly summary page 2 (hours 13-24)..."
+
+      # Hour 13 (index 12)
+      - lvgl.label.update:
+          id: lbl_sum2_hour13_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[12],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour13_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[12]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[12]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour13_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[12]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour13_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[12]);'
+
+      # Hour 14 (index 13)
+      - lvgl.label.update:
+          id: lbl_sum2_hour14_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[13],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour14_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[13]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[13]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour14_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[13]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour14_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[13]);'
+
+      # Hour 15 (index 14)
+      - lvgl.label.update:
+          id: lbl_sum2_hour15_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[14],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour15_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[14]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[14]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour15_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[14]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour15_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[14]);'
+
+      # Hour 16 (index 15)
+      - lvgl.label.update:
+          id: lbl_sum2_hour16_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[15],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour16_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[15]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[15]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour16_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[15]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour16_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[15]);'
+
+      # Hour 17 (index 16)
+      - lvgl.label.update:
+          id: lbl_sum2_hour17_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[16],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour17_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[16]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[16]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour17_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[16]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour17_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[16]);'
+
+      # Hour 18 (index 17)
+      - lvgl.label.update:
+          id: lbl_sum2_hour18_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[17],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour18_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[17]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[17]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour18_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[17]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour18_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[17]);'
+
+      # Hour 19 (index 18)
+      - lvgl.label.update:
+          id: lbl_sum2_hour19_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[18],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour19_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[18]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[18]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour19_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[18]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour19_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[18]);'
+
+      # Hour 20 (index 19)
+      - lvgl.label.update:
+          id: lbl_sum2_hour20_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[19],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour20_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[19]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[19]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour20_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[19]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour20_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[19]);'
+
+      # Hour 21 (index 20)
+      - lvgl.label.update:
+          id: lbl_sum2_hour21_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[20],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour21_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[20]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[20]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour21_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[20]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour21_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[20]);'
+
+      # Hour 22 (index 21)
+      - lvgl.label.update:
+          id: lbl_sum2_hour22_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[21],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour22_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[21]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[21]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour22_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[21]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour22_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[21]);'
+
+      # Hour 23 (index 22)
+      - lvgl.label.update:
+          id: lbl_sum2_hour23_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[22],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour23_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[22]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[22]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour23_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[22]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour23_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[22]);'
+
+      # Hour 24 (index 23)
+      - lvgl.label.update:
+          id: lbl_sum2_hour24_time
+          text: !lambda |-
+            using namespace weather_helpers;
+            auto now = id(sntp_time).now();
+            return format_hourly_summary_time(id(weather_hourly_datetime)[23],
+                                             now.is_valid() ? now.timezone_offset() : 0);
+      - lvgl.label.update:
+          id: lbl_sum2_hour24_icon
+          text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[23]);'
+          text_color: !lambda |-
+            using namespace weather_helpers;
+            return lv_color_hex(get_weather_icon_color(id(weather_hourly_condition)[23]));
+      - lvgl.label.update:
+          id: lbl_sum2_hour24_temp
+          text: !lambda 'return weather_helpers::format_hourly_summary_temp(id(weather_hourly_temp)[23]);'
+      - lvgl.label.update:
+          id: lbl_sum2_hour24_precip
+          text: !lambda 'return weather_helpers::format_hourly_summary_precip(id(weather_hourly_precip_prob)[23]);'
+
+      - delay: 50ms
+      - lambda: 'App.feed_wdt();'
+      - logger.log: "✓ Hourly summary page 2 (hours 13-24) updated successfully"
+
+
+# ============================================================================
+# Hourly Summary LVGL Pages
+# ============================================================================
+
+lvgl:
+  pages:
+      - id: hourly_summary_page_1
+        bg_color: 0x000000
+        bg_opa: COVER
+        scrollbar_mode: "OFF"
+        on_load:
+          - script.execute: page_transition_cleanup
+          - lambda: 'id(current_page_name) = "hourly_summary_1";'
+          - delay: 100ms
+          - lambda: |-
+              ESP_LOGI("memory", "Before hourly summary page 1 load - Free heap: %d bytes", esp_get_free_heap_size());
+          - if:
+              condition:
+                lambda: |-
+                    uint32_t time_since_update = millis() - id(weather_hourly_last_update);
+                    bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
+                    return is_stale;
+              then:
+                - script.execute: fetch_hourly_forecast
+              else:
+                - delay: 50ms
+                - script.execute: update_hourly_summary_page_1
+        widgets:
+          # Page title at the top
+          - label:
+              text: "12-Hour Summary (1-12)"
+              align: TOP_MID
+              y: 2
+              text_font: montserrat_14
+              text_color: my_white
+              text_align: CENTER
+
+          # Top navigation area - clickable to go to next page in rotation
+          - obj:
+              id: nav_button_hourly_sum_page_1
+              width: 100%
+              height: 25
+              align: TOP_MID
+              y: 0
+              x: 0
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly summary page 1 nav button RELEASED!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          # Container for 12 rows (non-clickable)
+          - obj:
+              id: hourly_sum_page1_container
+              width: 100%
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 22
+              bg_opa: 0
+              border_width: 0
+              pad_all: 1
+              layout:
+                type: flex
+                flex_flow: column
+                flex_align_main: START
+                flex_align_cross: CENTER
+              widgets:
+                # Hour 1 Row
+                - obj:
+                    id: hourly_sum1_row_1
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour1_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour1_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour1_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour1_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 2 Row
+                - obj:
+                    id: hourly_sum1_row_2
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour2_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour2_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour2_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour2_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 3 Row
+                - obj:
+                    id: hourly_sum1_row_3
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour3_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour3_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour3_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour3_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 4 Row
+                - obj:
+                    id: hourly_sum1_row_4
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour4_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour4_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour4_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour4_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 5 Row
+                - obj:
+                    id: hourly_sum1_row_5
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour5_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour5_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour5_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour5_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 6 Row
+                - obj:
+                    id: hourly_sum1_row_6
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour6_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour6_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour6_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour6_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 7 Row
+                - obj:
+                    id: hourly_sum1_row_7
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour7_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour7_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour7_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour7_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 8 Row
+                - obj:
+                    id: hourly_sum1_row_8
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour8_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour8_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour8_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour8_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 9 Row
+                - obj:
+                    id: hourly_sum1_row_9
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour9_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour9_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour9_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour9_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 10 Row
+                - obj:
+                    id: hourly_sum1_row_10
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour10_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour10_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour10_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour10_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 11 Row
+                - obj:
+                    id: hourly_sum1_row_11
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour11_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour11_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour11_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour11_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 12 Row
+                - obj:
+                    id: hourly_sum1_row_12
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum1_hour12_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour12_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum1_hour12_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum1_hour12_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+          # Navigation label "More >" at the bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
+
+          # Navigation button to access hours 13-24
+          - obj:
+              id: nav_button_hourly_sum_page1_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly Summary page 1 'More' button RELEASED - going to page 2!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_summary_page_2
+                    animation: OUT_LEFT
+                    time: 300ms
+
+      # ========================================================================
+      # Hourly Summary Page 2 (Hours 13-24) - 12 horizontal rows
+      # ========================================================================
+      - id: hourly_summary_page_2
+        skip: true
+        bg_color: 0x000000
+        bg_opa: COVER
+        scrollbar_mode: "OFF"
+        on_load:
+          - script.execute: page_transition_cleanup
+          - lambda: 'id(current_page_name) = "hourly_summary_2";'
+          - delay: 100ms
+          - lambda: |-
+              ESP_LOGI("memory", "Before hourly summary page 2 load - Free heap: %d bytes", esp_get_free_heap_size());
+          - if:
+              condition:
+                lambda: |-
+                    uint32_t time_since_update = millis() - id(weather_hourly_last_update);
+                    bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
+                    return is_stale;
+              then:
+                - script.execute: fetch_hourly_forecast
+              else:
+                - delay: 50ms
+                - script.execute: update_hourly_summary_page_2
+        widgets:
+          # Page title at the top
+          - label:
+              text: "12-Hour Summary (13-24)"
+              align: TOP_MID
+              y: 2
+              text_font: montserrat_14
+              text_color: my_white
+              text_align: CENTER
+
+          # Top navigation area - clickable to go to next page in rotation
+          - obj:
+              id: nav_button_hourly_sum_page_2
+              width: 100%
+              height: 25
+              align: TOP_MID
+              y: 0
+              x: 0
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly summary page 2 nav button RELEASED!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          # Container for 12 rows (non-clickable)
+          - obj:
+              id: hourly_sum_page2_container
+              width: 100%
+              height: SIZE_CONTENT
+              align: TOP_MID
+              y: 22
+              bg_opa: 0
+              border_width: 0
+              pad_all: 1
+              layout:
+                type: flex
+                flex_flow: column
+                flex_align_main: START
+                flex_align_cross: CENTER
+              widgets:
+                # Hour 13 Row (index 12)
+                - obj:
+                    id: hourly_sum2_row_13
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour13_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour13_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour13_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour13_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 14 Row (index 13)
+                - obj:
+                    id: hourly_sum2_row_14
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour14_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour14_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour14_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour14_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 15 Row (index 14)
+                - obj:
+                    id: hourly_sum2_row_15
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour15_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour15_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour15_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour15_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 16 Row (index 15)
+                - obj:
+                    id: hourly_sum2_row_16
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour16_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour16_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour16_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour16_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 17 Row (index 16)
+                - obj:
+                    id: hourly_sum2_row_17
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour17_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour17_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour17_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour17_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 18 Row (index 17)
+                - obj:
+                    id: hourly_sum2_row_18
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour18_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour18_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour18_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour18_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 19 Row (index 18)
+                - obj:
+                    id: hourly_sum2_row_19
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour19_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour19_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour19_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour19_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 20 Row (index 19)
+                - obj:
+                    id: hourly_sum2_row_20
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour20_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour20_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour20_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour20_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 21 Row (index 20)
+                - obj:
+                    id: hourly_sum2_row_21
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour21_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour21_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour21_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour21_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 22 Row (index 21)
+                - obj:
+                    id: hourly_sum2_row_22
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour22_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour22_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour22_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour22_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 23 Row (index 22)
+                - obj:
+                    id: hourly_sum2_row_23
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour23_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour23_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour23_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour23_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+                # Hour 24 Row (index 23)
+                - obj:
+                    id: hourly_sum2_row_24
+                    width: 170
+                    height: 41
+                    bg_color: 0x101010
+                    bg_opa: COVER
+                    border_width: 0
+                    radius: 3
+                    pad_all: 2
+                    layout:
+                      type: flex
+                      flex_flow: row
+                      flex_align_main: SPACE_BETWEEN
+                      flex_align_cross: CENTER
+                    widgets:
+                      - label:
+                          id: lbl_sum2_hour24_time
+                          text: "--:--"
+                          text_font: montserrat_12
+                          text_color: my_gray
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour24_icon
+                          text: "\U000F14E4"
+                          text_font: icons_24
+                          text_color: my_white
+                          width: 30
+                      - label:
+                          id: lbl_sum2_hour24_temp
+                          text: "--°"
+                          text_font: montserrat_16
+                          text_color: my_white
+                          width: 40
+                      - label:
+                          id: lbl_sum2_hour24_precip
+                          text: "--%"
+                          text_font: montserrat_12
+                          text_color: my_teal
+                          width: 40
+
+          # Navigation label "More >" at the bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
+
+          # Navigation button to go back to hours 1-12
+          - obj:
+              id: nav_button_hourly_sum_page2_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly Summary page 2 'More' button RELEASED - going to page 1!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_summary_page_1
+                    animation: OUT_LEFT
+                    time: 300ms
+
+
