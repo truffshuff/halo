@@ -25,9 +25,9 @@ substitutions:
   # API
   api_reboot_timeout: "30min"
 
-  # # WireGuard configuration (if enabled below)
-  # wg_peerendpt: !secret wg_peerendpt  # WireGuard server endpoint (hostname or IP)
-  # wg_peerport: !secret wg_peerport    # WireGuard server port
+  # WireGuard configuration (if enabled below)
+  wg_peerendpt: !secret wg_peerendpt  # WireGuard server endpoint (hostname or IP)
+  wg_peerport: !secret wg_peerport    # WireGuard server port
 
 esphome:
   friendly_name: Halo Air Quality Sensor Dev
