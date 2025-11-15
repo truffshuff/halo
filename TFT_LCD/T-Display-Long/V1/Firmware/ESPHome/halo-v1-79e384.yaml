@@ -306,32 +306,3 @@ packages:
 # 6. Weather entirely (saves 10-19KB) - if not needed
 #
 # ============================================================================
-    
-
-# ============================================================================
-# MEMORY OPTIMIZATION OVERRIDES
-# ============================================================================
-# Problem: Min free heap is 2KB (critical!) due to excessive stack/buffer allocation
-# Core config allocates 128KB for stacks + 32KB+ for TCP buffers
-# Solution: Reduce stack sizes and TCP buffers while maintaining functionality
-# ============================================================================
-
-esp32:
-  framework:
-    sdkconfig_options:
-      # Reduce stack sizes from 64KB to 24KB each (saves 80KB RAM!)
-      # 24KB is still plenty for LVGL operations without hourly forecast deep nesting
-      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "24576"    # Was 65536
-      CONFIG_ARDUINO_LOOP_STACK_SIZE: "24576"     # Was 65536
-
-      # Reduce TCP buffers (saves ~16KB RAM)
-      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "8192"     # Was 16384
-      CONFIG_LWIP_TCP_WND_DEFAULT: "8192"         # Was 16384
-      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "8"          # Was 12
-      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "32"       # Was 64
-
-      # Keep PSRAM allocations internal for small objects (helps heap fragmentation)
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "8192" # Was 16384 (saves 8KB)
-
-      # Target: Recover ~100KB of internal RAM
-      # Expected min free heap after changes: 30-40KB (was 2KB)
