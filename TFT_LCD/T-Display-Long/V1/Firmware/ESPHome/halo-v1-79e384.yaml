@@ -107,6 +107,13 @@ packages:
     ref: modular
     files:
       # ============================================================================
+      # GLOBAL VARIABLES (Must load FIRST)
+      # ============================================================================
+      # Global state variables used across all modules
+      # IMPORTANT: Must be loaded before any module that references these globals
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
+
+      # ============================================================================
       # SYSTEM MODULES (Required)
       # ============================================================================
       # Core hardware & software - these are essential for basic operation
@@ -165,9 +172,6 @@ packages:
       # ✅ Diagnostics capability - DONE (see features/diagnostics/)
       # ✅ Page Rotation capability - DONE (see features/page_rotation/) - master controls only
       # ✅ Weather capability - DONE (Phase 2)
-
-      # Globals - will be split by capability in Phase 2
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
 
       # Page Modules - being migrated to features/
       # REMOVED: clock-page.yaml (now in features/clock/)
