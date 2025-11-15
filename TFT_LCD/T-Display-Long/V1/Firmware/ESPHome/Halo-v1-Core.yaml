@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.14.2100
+# Version: 25.11.14.2104
 # Last Updated: November 14, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.14.2100"
+  version: "25.11.14.2104"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -1557,25 +1557,6 @@ lvgl:
     #                     text_font: montserrat_12
     #                     text_color: my_teal
     #                     text_align: CENTER
-
-    # New Hourly Summary Pages - 12 rows per page
-# Page 1: Hours 1-12, Page 2: Hours 13-24
-
-    # ========================================================================
-    # Hourly Summary Page 1 (Hours 1-12) - 12 horizontal rows
-    # ========================================================================
-                    id: hourly_summary_page_2
-                    animation: OUT_LEFT
-                    time: 300ms
-
-      # ========================================================================
-      # Hourly Summary Page 2 (Hours 13-24) - 12 horizontal rows
-      # ========================================================================
-                - lvgl.page.show:
-                    id: hourly_summary_page_1
-                    animation: OUT_LEFT
-                    time: 300ms
-
 
 button:
   # Diagnostics buttons moved to features/diagnostics/diagnostics.yaml (Phase 2):
