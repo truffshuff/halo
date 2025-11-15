@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.15.0936
+# Version: 25.11.15.1016
 # Last Updated: November 15, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.15.0936"
+  version: "25.11.15.1016"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -701,6 +701,14 @@ interval:
                             id: wg_handshake_label
                             text: !lambda 'return id(wg_handshake_last_text);'
                         - lambda: 'id(wg_handshake_needs_render) = false;'
+                  - if:
+                      condition:
+                        lambda: 'return id(wg_endpoint_needs_render) && id(current_page_name) == "wifi";'
+                      then:
+                        - lvgl.label.update:
+                            id: wg_endpoint_label
+                            text: !lambda 'return id(wg_endpoint_last_text);'
+                        - lambda: 'id(wg_endpoint_needs_render) = false;'
 
   # Optional: API watchdog for automatic recovery
   # Monitors Home Assistant API connection and reboots if disconnected for 30+ minutes
