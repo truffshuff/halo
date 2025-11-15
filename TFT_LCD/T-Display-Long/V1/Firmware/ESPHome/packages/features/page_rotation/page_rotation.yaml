@@ -103,6 +103,32 @@ number:
           format: "Page rotation interval changed to %d seconds"
           args: ['(int)x']
 
+  # AirQ page rotation order
+  # Controls the position of AirQ page in the rotation sequence (1-7)
+  - platform: template
+    name: "Page Order: AirQ Page"
+    id: page_order_AirQ
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 1
+    min_value: 1
+    max_value: 7
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_AirQ_order) = (int)x;'
+      - logger.log:
+          format: "AirQ page order set to %d"
+          args: ['(int)x']
+      # Force immediate display refresh when on AirQ page (simple version - just execute time_update)
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "airq";'
+          then:
+            - script.execute: time_update
+
 # ============================================================================
 # Switch Components
 # ============================================================================

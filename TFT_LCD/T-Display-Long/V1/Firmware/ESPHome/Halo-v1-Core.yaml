@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.15.1335
+# Version: 25.11.15.1352
 # Last Updated: November 15, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.15.1335"
+  version: "25.11.15.1352"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -764,48 +764,13 @@ api:
 # - Daily forecast scripts → features/weather/weather_daily.yaml
 # - Hourly summary scripts → features/weather/weather_hourly_summary.yaml
 
-number:
-  # Page rotation interval number moved to features/page_rotation/page_rotation.yaml (Phase 2)
-  # Page rotation order numbers (1-6, lower numbers show first)
-  # Note: Clock page order numbers moved to features/clock/clock_base.yaml (Phase 2)
-  # Note: AirQ page order numbers moved to features/airq/airq_base.yaml (Phase 2)
-  # Note: WiFi page order numbers moved to features/wifi_status/wifi_page_base.yaml (Phase 2)
-  # Note: Weather page order numbers moved to features/weather/weather_base.yaml (Phase 2)
-  # Note: "Page Order: WiFi Page" number is defined in wifi-core.yaml
-  # Note: SEN55 Temperature/Humidity Offset numbers are defined in airq-core.yaml
-
-  # Note: Clock page order number moved to features/clock/clock_base.yaml (Phase 2)
-
-  # Page rotation order numbers (1-6, lower numbers show first)
-
-  - platform: template
-    name: "Page Order: AirQ Page"
-    id: page_order_AirQ
-    icon: mdi:numeric
-    restore_value: true
-    initial_value: 1
-    min_value: 1
-    max_value: 7
-    entity_category: "config"
-    optimistic: true
-    step: 1
-    mode: box
-    on_value:
-      - lambda: 'id(page_rotation_AirQ_order) = (int)x;'
-      - logger.log:
-          format: "AirQ page order set to %d"
-          args: ['(int)x']
-      # Force immediate display refresh when on AirQ page (simple version - just execute time_update)
-      - if:
-          condition:
-            lambda: 'return id(current_page_name) == "airq";'
-          then:
-            - script.execute: time_update
-
-  # AirQ components (SEN55 Temperature Offset and SEN55 Humidity Offset number components) have been moved to packages/features/airq/airq_base.yaml
-
-  # Page rotation order numbers (1-6, lower numbers show first)
-  # WiFi page order number (page_order_wifi) has been moved to packages/features/wifi_status/wifi_page_base.yaml
+# ============================================================================
+# Number Components
+# ============================================================================
+# Note: All number components have been moved to their capability modules (Phase 2-3):
+# - Auto page rotation interval → features/page_rotation/page_rotation.yaml
+# - Page order numbers (Clock, AirQ, WiFi, Weather) → features/page_rotation/page_rotation.yaml
+# - SEN55 Temperature/Humidity Offset numbers → features/airq/airq_base.yaml
 
 # Binary sensors (Online, Display Backlight Active) moved to features/diagnostics/diagnostics.yaml (Phase 2)
 # WireGuard binary sensors moved to features/wireguard/wireguard.yaml (Phase 2)
