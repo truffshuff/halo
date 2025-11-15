@@ -39,8 +39,15 @@ globals:
   # - time_update_last_text
   # - time_update_needs_render
 
-  # BLE/startup globals moved to features/ble/ble_improv.yaml (Phase 2):
-  # - cycleCounter (int)
+  # Startup light blink cycle counter
+  # Tracks how many 1-second intervals have passed during startup LED animation
+  # Used to stop rainbow effect after 30 seconds and turn off light
+  # NOTE: Shared between networking.yaml (WiFi events) and ble_improv.yaml (LED effects)
+  # Cannot be moved to BLE module due to load order dependency with networking module
+  - id: cycleCounter
+    type: int
+    restore_value: no
+    initial_value: '0'
 
   # Diagnostics globals moved to features/diagnostics/diagnostics.yaml (Phase 2):
   # - last_display_update_time (uint32_t)
