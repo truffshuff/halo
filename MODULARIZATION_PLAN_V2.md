@@ -13,9 +13,17 @@
 |-------|--------|----------|---------|
 | **Phase 1** | ✅ Complete | 100% | System modules created, 11 errors fixed, compilation successful! |
 | **Phase 2** | ✅ Complete | 100% | ALL 7 capabilities extracted! Core reduced from 8,971 to 1,805 lines (80% reduction) |
-| **Phase 3** | ⏳ Ready to Start | 0% | Verification, testing, documentation, and final cleanup |
+| **Phase 3** | 🚧 In Progress | 15% | Extracted 6 more components (90 lines), Core now 1,715 lines. Build verified ✅ |
 
-**Latest Update (2025-11-15):** Phase 2 COMPLETE! All 7 capabilities successfully extracted:
+**Latest Update (2025-11-15 PM):** Phase 3 IN PROGRESS! Extracted 6 additional components from Core:
+- ✅ page_rotation_AirQ_switch → page_rotation.yaml
+- ✅ default_page_select_boot → page_rotation.yaml
+- ✅ Startup blink intervals (2x) → networking.yaml
+- ✅ page_transition_cleanup script → page_rotation.yaml
+- ✅ timeVal_stub text sensor removed (unused)
+- ✅ Build verification successful
+
+**Phase 2 Complete (2025-11-15 AM):** All 7 capabilities successfully extracted:
 - ✅ Clock (clock_base.yaml, clock_page.yaml)
 - ✅ AirQ (airq_base.yaml, airq_page.yaml)
 - ✅ Weather (weather_base.yaml, weather_page.yaml, weather_daily.yaml, weather_hourly.yaml, weather_hourly_summary.yaml, weather_led_effects.yaml)
@@ -25,7 +33,13 @@
 - ✅ Diagnostics (diagnostics.yaml)
 - ✅ Page Rotation (page_rotation.yaml)
 
-**Core file reduced:** 8,971 → 1,805 lines (80% reduction so far, target: 94-97% reduction to ~300-500 lines in Phase 3)
+**Core file reduced:** 8,971 → 1,715 lines (80.9% reduction so far, target: 94-97% reduction to ~300-500 lines)
+
+**Phase 3 Progress:**
+- Components extracted: 6 (90 lines removed)
+- Current size: 1,715 lines
+- Build status: ✅ Compiles successfully
+- Remaining to target: ~1,315 lines (to reach 400-line target)
 
 **Next Steps:** Phase 3 verification and final extraction to reduce Core to minimal size (~300-500 lines), comprehensive testing, and documentation creation.
 
@@ -1218,54 +1232,53 @@ Test: Verify weather fetches, pages update, LED effects work
 
 ---
 
-#### Step 3.2: Extract Remaining Components from Core (2-3 hours)
+#### Step 3.2: Extract Remaining Components from Core (2-3 hours) ⏳ IN PROGRESS
 
 **Based on Step 3.1 audit, extract any remaining components:**
 
-1. **Create extraction checklist:**
-   - Document each component to extract
-   - Identify target capability module
-   - Note any dependencies or risks
+1. **Create extraction checklist:** ✅ DONE
+   - ✅ Documented each component to extract (6 components identified)
+   - ✅ Identified target capability modules
+   - ✅ Noted dependencies
 
-2. **Extract remaining switches:**
-   - Move to appropriate capability modules
-   - Update capability documentation
-   - Test after each extraction
+2. **Extract remaining switches:** ✅ DONE
+   - ✅ page_rotation_AirQ_switch → page_rotation.yaml
+   - ✅ Updated capability documentation
+   - ✅ Build tested successfully
 
-3. **Extract remaining selects:**
-   - LED effects select → weather_led_effects.yaml
-   - Temperature unit select → airq_base.yaml (if not already there)
-   - Default page select → page_rotation.yaml (if exists)
+3. **Extract remaining selects:** ✅ DONE
+   - ✅ LED effects select → Kept in Core (cross-capability decision)
+   - ✅ Temperature unit select → Already in airq_base.yaml
+   - ✅ Default page select → page_rotation.yaml
 
-4. **Extract remaining intervals:**
-   - Check for any capability-specific intervals
-   - Move to appropriate modules
-   - Verify timing dependencies
+4. **Extract remaining intervals:** ✅ DONE
+   - ✅ Startup blink intervals (2x 1s) → networking.yaml
+   - ✅ Verified timing dependencies (HA connection check)
 
-5. **Extract remaining scripts:**
-   - Navigation scripts may need to stay (cross-capability)
-   - Weather/clock/airq specific scripts should move
-   - Document which scripts must remain in Core and why
+5. **Extract remaining scripts:** ✅ DONE
+   - ✅ page_transition_cleanup → page_rotation.yaml
+   - ✅ Navigation scripts remain in Core (cross-capability)
+   - ✅ Documented which scripts must remain
 
-6. **Extract remaining sensors:**
-   - System sensors (uptime, heap) → diagnostics.yaml
-   - WiFi sensor → networking.yaml (if not already there)
-   - Capability-specific sensors → appropriate modules
+6. **Extract remaining sensors:** ✅ DONE (Phase 2)
+   - ✅ System sensors (uptime, heap) → diagnostics.yaml
+   - ✅ WiFi sensor → networking.yaml
+   - ✅ Capability-specific sensors → appropriate modules
 
-7. **Extract remaining buttons:**
-   - Feature navigation buttons → capability modules
-   - System buttons (reboot, factory reset) → system_management.yaml
+7. **Extract remaining buttons:** ✅ DONE (Phase 2)
+   - ✅ Feature navigation buttons → capability modules
+   - ✅ System buttons (reboot, factory reset) → system_management.yaml
 
-8. **Clean up legacy packages:**
+8. **Clean up legacy packages:** ⏳ TODO
    - [ ] Remove old packages/base/globals.yaml (globals now in capabilities)
    - [ ] Remove old packages/base/esphome_base.yaml (split into system modules)
    - [ ] Remove old packages/base/hardware.yaml (split into system modules)
    - [ ] Remove any other deprecated package files
 
 **Validation:**
-- Compile successfully after each extraction
-- Core file reduced to target size (~300-500 lines)
-- All capability modules are self-contained
+- ✅ Compile successfully after each extraction
+- ⏳ Core file reduced to target size (~300-500 lines) - Currently 1,715 lines
+- ✅ All capability modules are self-contained
 
 ---
 
