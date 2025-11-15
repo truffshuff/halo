@@ -28,6 +28,75 @@
 # ============================================================================
 
 # ============================================================================
+# Global Variables
+# ============================================================================
+globals:
+  # Page rotation configuration
+  - id: page_rotation_wifi_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: page_rotation_wifi_order
+    type: int
+    restore_value: yes
+    initial_value: '3'
+
+  # WiFi logo visibility state
+  - id: wifi_logo_visible
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # WiFi signal strength display tracking
+  - id: wifi_signal_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_signal_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_signal_bar_last_value
+    type: float
+    restore_value: no
+    initial_value: '-200.0'
+  - id: wifi_signal_bar_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # WiFi SSID display tracking
+  - id: wifi_ssid_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ssid_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # WiFi IP address display tracking
+  - id: wifi_ip_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wifi_ip_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # Home Assistant connection status tracking
+  - id: ha_status_last_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ha_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+# ============================================================================
 # Switch Components
 # ============================================================================
 switch:
