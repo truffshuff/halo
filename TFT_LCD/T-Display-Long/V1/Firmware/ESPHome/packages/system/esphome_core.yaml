@@ -45,7 +45,6 @@ psram:
 # ESP32 Board Configuration
 # ============================================================================
 api:
-  send_buffer_size: 16384
   batch_delay: 200ms  # Reduce latency for real-time applications
   listen_backlog: 8  # Allow 2 pending connections in queue
   max_connections: 10  # Allow up to 6 simultaneous connections
