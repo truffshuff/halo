@@ -8,127 +8,26 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.15.1352
+# Version: 25.11.15.1402
 # Last Updated: November 15, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.15.1352"
+  version: "25.11.15.1402"
   device_description: ${name} - v${version}.
   
 # ============================================================================
-# Configuration Architecture - MODULAR (Phase 1 Complete)
+# MODULAR ARCHITECTURE (Phases 1-2 Complete)
 # ============================================================================
-# This file now works with the modular package system.
-#
-# EXTRACTED TO PACKAGES (Phase 1):
-#   ✅ globals → packages/base/globals.yaml
-#   ✅ hardware (ESP32, PSRAM, SPI, I2C, display, touchscreen) → packages/base/hardware.yaml
-#   ✅ base config (fonts, colors, images, HTTP, time, logger) → packages/base/esphome_base.yaml
-#
-# REMAINING IN THIS FILE (to be extracted in Phases 2-4):
-#   ⏳ Switches (feature toggles)
-#   ⏳ Selects (LED effects, temperature units, default page)
-#   ⏳ Intervals (watchdog, sensor updates, LED animations)
-#   ⏳ API (Home Assistant integration)
-#   ⏳ Scripts (weather fetch, page navigation, clock updates)
-#   ⏳ Sensors (weather, system, air quality)
-#   ⏳ Light (RGB LED effects)
-#   ⏳ LVGL (all display pages)
-#   ⏳ Buttons (virtual HA buttons)
-#   ⏳ WiFi (connection configuration)
-#   ⏳ WireGuard (VPN configuration)
-#
-# This file must be imported alongside the base packages for full functionality.
+# Most components have been extracted to capability modules in packages/.
+# This Core file contains cross-capability components and LVGL display config.
+# See MODULARIZATION_PLAN_V2.md for details.
 # ============================================================================
 
-# ============================================================================
-# Feature Components - All Defined in This File
-# ============================================================================
-# This monolithic file includes ALL features enabled by default:
-#
-# INCLUDED FEATURES:
-#   ✓ Air Quality Monitoring (SCD40, SEN55, AGS10 sensors)
-#   ✓ Weather Display (current conditions + 10-day forecast + 24-hour forecast)
-#   ✓ WiFi Status Page (signal strength, IP, Home Assistant connection)
-#   ✓ WireGuard VPN (encrypted tunnel to home network)
-#   ✓ BLE (Bluetooth Low Energy scanning)
-#   ✓ LVGL UI (all pages: vertical clock, AirQ, WiFi, weather)
-#   ✓ RGB LED effects (AQI-based color, weather-based, manual effects)
-#
-# To disable a feature, you would need to comment out the relevant sections
-# throughout this file (sensors, globals, LVGL pages, etc.)
-#
-# DEPENDENCIES:
-#   - secrets.yaml: WiFi credentials, HA token, WireGuard keys
-#   - fonts/materialdesignicons-webfont.ttf: Weather icons
-# ============================================================================
-
-# ============================================================================
-# GLOBALS SECTION MOVED TO packages/base/globals.yaml
-# ============================================================================
-# This section has been extracted to the modular architecture (447 lines).
-# The globals.yaml package must be imported for the configuration to work.
-# DO NOT uncomment this section - it will cause duplicate definition errors.
-# ============================================================================
-
-# All global variables have been moved to packages/base/globals.yaml
-# including:
-#   - Page tracking and rotation settings
-#   - Weather data storage (current, daily, hourly)
-#   - Display state management (watchdog, backlight, rendering flags)
-#   - WiFi and system status tracking
-#   - Performance monitoring variables
-
-# ============================================================================
-# FONTS, PSRAM, ESP32, HARDWARE MOVED TO packages/base/
-# ============================================================================
-# The following sections have been extracted to modular packages:
-#   - font: → packages/base/esphome_base.yaml
-#   - psram: → packages/base/hardware.yaml
-#   - esp32: → packages/base/hardware.yaml
-#   - external_components: → packages/base/hardware.yaml
-#   - spi: → packages/base/hardware.yaml
-#   - i2c: → packages/base/hardware.yaml
-#   - captive_portal: → packages/base/hardware.yaml
-#   - nimble_base: → packages/base/hardware.yaml
-#   - nimble_improv: → packages/base/hardware.yaml
-#   - weather_helpers: → packages/base/hardware.yaml
-#   - logger: → packages/base/esphome_base.yaml
-#   - web_server: → packages/base/esphome_base.yaml
-#   - image: → packages/base/esphome_base.yaml
-#   - color: → packages/base/esphome_base.yaml
-#   - http_request: → packages/base/esphome_base.yaml
-#   - time: → packages/base/esphome_base.yaml
-#   - output (backlight): → packages/base/hardware.yaml
-#   - display: → packages/base/hardware.yaml
-#   - touchscreen: → packages/base/hardware.yaml
-#   - bluetooth_proxy: → packages/base/hardware.yaml
-#   - nimble_proxy: → packages/base/hardware.yaml
-#
-# DO NOT uncomment these sections - import the packages instead.
-# ============================================================================
-
-# All hardware and base configuration has been moved to modular packages
-# Diagnostics switches (Auto Page Rotation, Display Watchdog, Startup Light Blink)
-# moved to features/diagnostics/diagnostics.yaml (Phase 2)
-
-# ============================================================================
-# Switch Components
-# ============================================================================
-# Note: All switches have been moved to their capability modules (Phase 2-3):
-# - Clock switches → features/clock/clock_base.yaml
-# - AirQ switches → features/airq/airq_base.yaml
-# - WiFi switches → features/wifi_status/wifi_page_base.yaml
-# - Weather switches → features/weather/weather_base.yaml
-# - WireGuard switch → features/wireguard/wireguard.yaml
-# - Diagnostics switches → features/diagnostics/diagnostics.yaml
-# - Page rotation switches → features/page_rotation/page_rotation.yaml
+# Note: All switches moved to capability modules (see packages/features/)
 
 select:
-  # AirQ components (Display Temperature Unit select) have been moved to packages/features/airq/airq_base.yaml
-
   - platform: template
     name: LED Effect
     id: led_effect_select
@@ -188,16 +87,6 @@ select:
             call.set_effect(effect);
             call.perform();
           }
-
-# Note: Default page selector moved to features/page_rotation/page_rotation.yaml (Phase 3)
-
-# ============================================================================
-# Interval Components
-# ============================================================================
-# Note: Component intervals have been moved to their capability modules (Phase 2-3):
-# - Clock intervals (2s time_update, 1s colon blink) → features/clock/clock_base.yaml
-# - Startup blink intervals (2x 1s) → system/networking.yaml
-# - Display watchdog intervals → features/diagnostics/diagnostics.yaml
 
 interval:
 
@@ -750,87 +639,10 @@ api:
       - logger.log: "Home Assistant disconnected"
   
   services:
-    # AirQ components (calibrate_co2_value and sen55_clean services) have been moved to packages/features/airq/airq_base.yaml
 
-# ============================================================================
-# Script Components
-# ============================================================================
-# Note: All scripts have been moved to their capability modules (Phase 2-3):
-# - page_transition_cleanup → features/page_rotation/page_rotation.yaml
-# - Clock scripts (update_colon_widget, time_update) → features/clock/clock_base.yaml
-# - Weather fetch scripts → features/weather/weather_base.yaml
-# - Weather display update scripts → features/weather/weather_page.yaml
-# - Hourly forecast scripts → features/weather/weather_hourly.yaml
-# - Daily forecast scripts → features/weather/weather_daily.yaml
-# - Hourly summary scripts → features/weather/weather_hourly_summary.yaml
+# Note: Scripts, numbers, and most sensors moved to capability modules (see packages/features/)
 
-# ============================================================================
-# Number Components
-# ============================================================================
-# Note: All number components have been moved to their capability modules (Phase 2-3):
-# - Auto page rotation interval → features/page_rotation/page_rotation.yaml
-# - Page order numbers (Clock, AirQ, WiFi, Weather) → features/page_rotation/page_rotation.yaml
-# - SEN55 Temperature/Humidity Offset numbers → features/airq/airq_base.yaml
-
-# Binary sensors (Online, Display Backlight Active) moved to features/diagnostics/diagnostics.yaml (Phase 2)
-# WireGuard binary sensors moved to features/wireguard/wireguard.yaml (Phase 2)
-
-sensor:
-  # Diagnostics sensors moved to features/diagnostics/diagnostics.yaml (Phase 2):
-  # - Display Refresh Count
-  # - Uptime
-  # - Display Last Update
-  # - Display Recovery Count
-  # - Free Heap, Largest Free Block, Heap Fragmentation
-  # - DMA Capable Heap Free, DMA Capable Largest Block
-  # - PSRAM Free, Total Free Heap (All), Min Free Heap Ever
-  # - RSSI (WiFi Signal)
-  # - Weather Icon Update Duration
-
-  # Weather sensors moved to features/weather/weather_base.yaml (Phase 2):
-  # - current_temp_sensor
-  # - apparent_temp_sensor
-  # - current_humidity_sensor
-
-  # Import current temperature from Home Assistant weather integration
-
-
-  # Note: Clock performance sensor moved to features/clock/clock_base.yaml (Phase 2)
-  # - time_update_duration_sensor
-
-  # ============================================================================
-  # Performance Monitoring Sensors
-  # ============================================================================
-  # Track timing of UI update operations to identify performance bottlenecks
-  # ============================================================================
-
-  # Note: Diagnostics sensors moved to features/diagnostics/diagnostics.yaml (Phase 2)
-
-  # AirQ components (Computed AQI template sensor and all air quality sensor platforms) have been moved to packages/features/airq/airq_base.yaml
-  # Removed components:
-  # - Computed AQI (template sensor)
-  # - SCD4x CO2 Sensor (Sensirion SCD40/SCD41)
-  # - MICS-4514 sensor
-  # - BME280 I2C sensor
-  # - SEN5x sensor
-
-  # WireGuard latest handshake sensor has been moved to packages/features/wireguard/wireguard.yaml
-
-# ============================================================================
-# Text Sensor Components
-# ============================================================================
-# Note: All text sensors have been moved to their capability modules (Phase 2):
-# - Weather condition text sensor → features/weather/weather_base.yaml
-# - WireGuard address text sensors → features/wireguard/wireguard.yaml
-
-# ============================================================================
-# RGB LED Configuration
-# ============================================================================
-# MOVED TO: packages/weather/weather-led-effects.yaml (Phase 3)
-#
-# The RGB LED strip and all weather/AQI-based effects have been extracted
-# to the weather package for better organization.
-# ============================================================================
+# Note: Sensors moved to capability modules (see packages/features/)
 
 lvgl:
   id: lvgl_main
