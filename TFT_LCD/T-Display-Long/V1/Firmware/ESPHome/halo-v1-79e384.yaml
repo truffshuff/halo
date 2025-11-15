@@ -215,10 +215,14 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_page.yaml
 
       # 10-day daily forecast (Optional) - ~2KB
+      # IMPORTANT: daily-forecast-pages.yaml must be loaded BEFORE weather_daily.yaml (defines LVGL UI)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/daily-forecast-pages.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_daily.yaml
 
       # 24-hour detailed forecast - 8 pages (Optional - LARGEST weather component!) - ~7KB
       # Comment out to save 7KB! Use hourly_summary instead for compact view.
+      # IMPORTANT: hourly-forecast-pages.yaml must be loaded BEFORE weather_hourly.yaml (defines LVGL UI)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/hourly-forecast-pages.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_hourly.yaml
 
       # 24-hour summary - 2 pages (Optional) - ~1.5KB
