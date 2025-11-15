@@ -66,10 +66,6 @@ bluetooth_proxy:
 nimble_proxy:
   active: true
   max_connections: 2  # Reduced from 3 to lower traffic
-  # Scan settings to reduce advertisement traffic
-  scan_interval: 1280ms  # How often to start scanning (default: 320ms)
-  scan_window: 320ms     # How long each scan lasts (default: 320ms)
-  # This gives BLE a 25% duty cycle instead of 100%, reducing TCP traffic by ~75%
 
 # ============================================================================
 # Startup Light Blink Animation
