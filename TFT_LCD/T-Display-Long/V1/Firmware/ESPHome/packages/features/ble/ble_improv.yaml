@@ -58,10 +58,15 @@ nimble_improv:
 # Bluetooth Proxy for Home Assistant
 # ============================================================================
 # Allows Home Assistant to use this device as a Bluetooth proxy
+# NOTE: BLE advertisements are sent over the API connection in bursts
+# TCP buffer optimizations in esphome_core.yaml help prevent buffer overflow
 # ============================================================================
 bluetooth_proxy:
+  active: true
 
 nimble_proxy:
+  active: true
+  max_connections: 3
 
 # ============================================================================
 # Startup Light Blink Animation

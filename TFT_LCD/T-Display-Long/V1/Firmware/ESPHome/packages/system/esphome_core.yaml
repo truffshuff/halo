@@ -112,10 +112,14 @@ esp32:
       # ============================================================================
       # TCP/IP Configuration for better API throughput
       # Increase buffers to handle BLE advertisement bursts during concurrent operations
-      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "16384"  # TCP send buffer (default: 5744)
-      CONFIG_LWIP_TCP_WND_DEFAULT: "16384"      # TCP receive window (default: 5744)
-      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "12"       # TCP mailbox size (default: 6)
-      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "64"     # TCPIP task mailbox (default: 32)
+      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "32768"  # TCP send buffer (increased to handle BLE bursts)
+      CONFIG_LWIP_TCP_WND_DEFAULT: "32768"      # TCP receive window (increased for throughput)
+      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "16"       # TCP mailbox size (increased from 12)
+      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "128"    # TCPIP task mailbox (doubled to handle bursts)
+
+      # Additional TCP optimizations for BLE proxy traffic
+      CONFIG_LWIP_TCP_MSS: "1436"               # Maximum Segment Size (default: 1436)
+      CONFIG_LWIP_TCP_OVERSIZE_MSS: "y"         # Allow TCP to send full MSS segments
 
       # Watchdog timeout for HTTP operations and JSON parsing
       # Increased from 20s to 30s to accommodate large weather JSON parsing
