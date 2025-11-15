@@ -73,9 +73,7 @@ nimble_proxy:
 # Rainbow effect for 30 seconds on startup/WiFi disconnect
 # ============================================================================
 
-# Note: startup_light_blink switch is defined in Halo-v1-Core.yaml (legacy)
-# It will be moved here in Phase 2 when Core is broken down.
-
-# Note: RGB light component and startup blink intervals are defined in
-# weather/weather-led-effects.yaml as they share the same RGB LED hardware.
-# In Phase 2, these will be reorganized into the BLE module or a separate LED module.
+# Note: startup_light_blink switch is in features/diagnostics/diagnostics.yaml
+# Note: Startup blink animation intervals are in system/networking.yaml (HA connection check)
+# Note: RGB light component is in features/weather/weather_led_effects.yaml
+# Note: cycleCounter global is in base/globals.yaml (load order dependency)

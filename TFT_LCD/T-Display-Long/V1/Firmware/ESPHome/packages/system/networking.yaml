@@ -45,3 +45,41 @@ wifi:
 
 # Note: WiFi signal sensor and IP address sensor will be added
 # in Phase 2 when they are extracted from the Core file.
+
+# ============================================================================
+# Startup Light Blink Animation
+# ============================================================================
+# Rainbow effect for 30 seconds when not connected to Home Assistant
+# Uses cycleCounter global (from base/globals.yaml) and startup_light_blink switch (from diagnostics.yaml)
+# Controlled by WiFi connection state and HA connection state
+# ============================================================================
+interval:
+  # First interval: Turn on rainbow effect for first 30 seconds
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            - binary_sensor.is_off: ink_ha_connected
+            - lambda: 'return id(cycleCounter) < 30;'
+            - switch.is_on: startup_light_blink
+
+          then:
+            - light.turn_on:
+                id: rgb_light
+                effect: "Addressable Rainbow"
+            - lambda: 'id(cycleCounter) += 1;'
+
+  # Second interval: Turn off light after 30 seconds
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            - binary_sensor.is_off: ink_ha_connected
+            - lambda: 'return id(cycleCounter) > 30;'
+            - lambda: 'return id(cycleCounter) < 31;'
+            - switch.is_on: startup_light_blink
+
+          then:
+            - light.turn_off:
+                id: rgb_light
+            - lambda: 'id(cycleCounter) += 1;'
