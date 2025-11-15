@@ -1,0 +1,555 @@
+# ============================================================================
+# Weather Page - Main Weather Display
+# ============================================================================
+# Part of Phase 2 modular refactoring
+#
+# This module provides the main current weather page including:
+#   - LVGL weather forecast page with gauge and wind compass
+#   - Weather display update script
+#   - Page show/hide logic integration
+#
+# Dependencies:
+#   - packages/features/weather/weather_base.yaml (for globals and fetch scripts)
+#   - packages/base/hardware.yaml (for LVGL display)
+#   - packages/features/page_rotation/page_rotation.yaml (for page rotation)
+#
+# Required IDs from other modules:
+#   - current_page_name (from page_rotation)
+#   - weather_* globals (from weather_base)
+#   - wind_speed_sensor, wind_direction_sensor (from sensors)
+#   - sntp_time (from esphome_base)
+#
+# Notes:
+#   - Page automatically refreshes data if stale on load
+#   - Includes temperature gauge with color gradient
+#   - Displays wind compass with direction indicator
+#   - Shows high/low temps, precipitation chance, current conditions
+# ============================================================================
+
+script:
+  # ============================================================================
+  # Weather Display Update Script
+  # ============================================================================
+  - id: update_weather_display
+    mode: single
+    then:
+      # Skip if not on weather page to reduce SPI traffic
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) != "weather";'
+          then:
+            - logger.log: "Skipping weather display update (not on page 3)"
+            - script.stop: update_weather_display
+      # Update main weather page labels
+      - lvgl.label.update:
+          id: lbl_weather_today_header
+          text: !lambda |-
+            if (id(weather_forecast_datetime)[0].empty()) return std::string("Today");
+            std::string dt = id(weather_forecast_datetime)[0];
+            if (dt.length() >= 19) {
+                    int year = std::stoi(dt.substr(0, 4));
+                    int month = std::stoi(dt.substr(5, 2));
+                    int day = std::stoi(dt.substr(8, 2));
+                    int hour = std::stoi(dt.substr(11, 2));
+                    
+                    if (dt.length() >= 25 && (dt[19] == '+' || dt[19] == '-')) {
+                      int offset_hours = std::stoi(dt.substr(20, 2));
+                      if (dt[19] == '-') offset_hours = -offset_hours;
+                      
+                      // Get local time to calculate timezone offset
+                      auto now = id(sntp_time).now();
+                      if (now.is_valid()) {
+                        // Calculate local offset by comparing UTC hour with local hour
+                        time_t utc_time = now.timestamp;
+                        struct tm *utc_tm = gmtime(&utc_time);
+                        struct tm *local_tm = localtime(&utc_time);
+                        
+                        int utc_hour = utc_tm->tm_hour;
+                        int local_hour = local_tm->tm_hour;
+                        int local_offset = local_hour - utc_hour;
+                        
+                        // Handle day boundary crossing in offset calculation
+                        if (local_offset > 12) local_offset -= 24;
+                        if (local_offset < -12) local_offset += 24;
+                        
+                        hour += (local_offset - offset_hours);
+                        
+                        if (hour < 0) {
+                          day--;
+                          if (day < 1) {
+                            month--;
+                            if (month < 1) {
+                              month = 12;
+                              year--;
+                            }
+                            int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                            if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                              day = 29;
+                            } else {
+                              day = days_in_month[month-1];
+                            }
+                          }
+                        } else if (hour >= 24) {
+                          day++;
+                          int days_in_month[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+                          int max_days = days_in_month[month-1];
+                          if (month == 2 && (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))) {
+                            max_days = 29;
+                          }
+                          if (day > max_days) {
+                            day = 1;
+                            month++;
+                            if (month > 12) {
+                              month = 1;
+                              year++;
+                            }
+                          }
+                        }
+                      }
+                    }
+                    
+                    char buf[32];
+                    snprintf(buf, sizeof(buf), "Today (%02d/%02d)", month, day);
+                    return std::string(buf);
+                  }
+                  return std::string("Today");
+      - lvgl.label.update:
+          id: lbl_weather_forecast_condition_name
+          text: !lambda |-
+            using namespace weather_helpers;
+            if (id(weather_current_condition).empty()) {
+              return std::string("Unknown");
+            }
+            return format_condition_text(id(weather_current_condition));
+
+      - lvgl.label.update:
+          id: lbl_weather_today_outdoor_temp
+          text: !lambda |-
+            using namespace weather_helpers;
+            return format_temp_precise(id(weather_current_temp)) + " °F";
+
+      - lvgl.label.update:
+          id: lbl_weather_today_tempap
+          text: !lambda |-
+            using namespace weather_helpers;
+            return format_temp(id(weather_current_apparent_temp));
+
+      - lvgl.label.update:
+          id: lbl_weather_forecast_temphi
+          text: !lambda |-
+            using namespace weather_helpers;
+            return "H: " + format_temp(id(weather_forecast_temp_high)[0]);
+
+      - lvgl.label.update:
+          id: lbl_weather_forecast_templo
+          text: !lambda |-
+            using namespace weather_helpers;
+            return "L: " + format_temp(id(weather_forecast_temp_low)[0]);
+
+      - lvgl.label.update:
+          id: lbl_weather_today_dailyprecipprob
+          text: !lambda |-
+            using namespace weather_helpers;
+            return "Chance: " + format_percent(id(weather_forecast_precip_prob)[0]);
+
+      - lvgl.label.update:
+          id: lbl_wind_speed
+          text: !lambda |-
+            if (std::isnan(id(wind_speed_sensor).state)) return std::string("-- mph");
+            char buf_ws[24];
+            snprintf(buf_ws, sizeof(buf_ws), "%.0f mph", id(wind_speed_sensor).state);
+            return std::string(buf_ws);
+      - lvgl.label.update:
+          id: lbl_wind_direction_text
+          text: !lambda |-
+            using namespace weather_helpers;
+            return bearing_to_direction(id(wind_direction_sensor).state);
+      - lvgl.indicator.update:
+          id: wind_compass_needle
+          value: !lambda |-
+            float b = id(wind_direction_sensor).state;
+            if (std::isnan(b)) return 0;
+            return (int)b;
+
+      # Calculate and update weather gauge percentage locally
+      # Formula: ((apparent - low) / (high - low)) * 100
+      # This replaces the need for a Home Assistant template sensor
+      - lambda: |-
+          float apparent = id(weather_current_apparent_temp);
+          float high = id(weather_forecast_temp_high)[0];
+          float low = id(weather_forecast_temp_low)[0];
+          
+          // Only calculate if we have valid values
+          if (!isnan(apparent) && !isnan(high) && !isnan(low)) {
+          float range = high - low;
+            
+          // Prevent division by zero
+          if (range == 0) {
+            range = 1.0;
+          }
+            
+          // Calculate percentage
+          float pct = ((apparent - low) / range) * 100.0;
+            
+          // Clamp between 0 and 100
+          if (pct < 0) pct = 0;
+          if (pct > 100) pct = 100;
+            
+          // Round to nearest integer
+          int gauge_value = (int)(pct + 0.5);
+            
+          // Update the gauge
+          auto call = id(weather_gauge).make_call();
+          call.set_value(gauge_value);
+          call.perform();
+            
+          ESP_LOGI("weather", "Gauge calculation: apparent=%.1f, high=%.1f, low=%.1f, pct=%d%%", 
+                   apparent, high, low, gauge_value);
+          } else {
+          ESP_LOGW("weather", "Cannot calculate gauge value - missing data (apparent=%.1f, high=%.1f, low=%.1f)", 
+                   apparent, high, low);
+          }
+
+      - logger.log: "✓ Weather display labels updated (page 3)"
+
+# ============================================================================
+# Main Weather LVGL Page
+# ============================================================================
+
+lvgl:
+  pages:
+    - id: weather_forecast_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: |-
+            id(current_page_name) = "weather";
+            id(weather_last_condition).clear();
+            id(weather_on_weather_page) = true;
+        - delay: 10ms  # Yield to prevent blocking warning
+        # Always update display first with existing data (even if stale)
+        - script.execute: update_weather_display
+        - delay: 10ms  # Yield before icon color update
+        - script.execute: update_weather_icon_color
+        - delay: 10ms  # Yield to prevent blocking warning
+        # Then check if we need to fetch fresh data
+        - if:
+            condition:
+              lambda: |-
+                  // Check if daily forecast needs refresh (stale > 60 minutes)
+                  uint32_t time_since_update = millis() - id(weather_daily_last_update);
+                  bool is_stale = (id(weather_daily_last_update) == 0 || time_since_update > 3600000);
+              
+                  if (is_stale) {
+                  ESP_LOGI("weather", "Daily forecast is stale (age: %u minutes), fetching in background...",
+                           id(weather_daily_last_update) == 0 ? 0 : time_since_update / 60000);
+                  return true;
+                  } else {
+                  ESP_LOGD("weather", "Daily forecast is fresh (updated %u minutes ago)", time_since_update / 60000);
+                  return false;
+                  }
+            then:
+              # Fetch will update display when complete
+              - script.execute: fetch_daily_forecast
+      on_unload:
+        - lambda: 'id(weather_on_weather_page) = false;'
+      widgets:
+        # Page Header
+        - label:
+            id: lbl_weather_today_header
+            text: "Today"
+            align: TOP_MID
+            y: 5
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+      
+        # Large weather condition icon at top
+        - label:
+            text: "\U000F14E4"
+            id: lbl_weather_forecast_condition_icon
+            text_font: icons_100
+            text_align: CENTER
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 30
+
+        # Condition name below icon
+        - label:
+            id: lbl_weather_forecast_condition_name
+            text: !lambda |-
+              if (id(weather_current_condition).empty()) {
+                return std::string("Unknown");
+              }
+              // Format condition text to be more readable
+              std::string condition = id(weather_current_condition);
+              if (condition == "clear-night") return std::string("Clear Night");
+              if (condition == "cloudy") return std::string("Cloudy");
+              if (condition == "exceptional") return std::string("Exceptional");
+              if (condition == "fog") return std::string("Fog");
+              if (condition == "hail") return std::string("Hail");
+              if (condition == "lightning") return std::string("Lightning");
+              if (condition == "lightning-rainy") return std::string("Lightning & Rain");
+              if (condition == "partlycloudy") return std::string("Partly Cloudy");
+              if (condition == "pouring") return std::string("Pouring");
+              if (condition == "rainy") return std::string("Rainy");
+              if (condition == "snowy") return std::string("Snowy");
+              if (condition == "snowy-rainy") return std::string("Sleet");
+              if (condition == "sunny") return std::string("Sunny");
+              if (condition == "windy") return std::string("Windy");
+              if (condition == "windy-variant") return std::string("Windy");
+              // Return capitalized version if not matched
+              if (!condition.empty()) {
+                condition[0] = toupper(condition[0]);
+              }
+              return condition;
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: TOP_MID
+            x: 0
+            y: 130
+
+        # Semicircle meter gauge for apparent temperature
+        - obj:
+            align: CENTER
+            x: 0
+            y: 100
+            width: 180
+            height: 180
+            bg_color: 0x000000
+            border_width: 0
+            pad_all: 10
+            widgets:
+              - meter:
+                  id: weather_temp_gauge
+                  height: 100%
+                  width: 100%
+                  border_width: 0
+                  align: CENTER
+                  bg_opa: TRANSP
+                  scales:
+                    - range_from: 0
+                      range_to: 100
+                      angle_range: 180
+                      rotation: 180
+                      ticks:
+                        count: 51
+                        width: 2
+                        length: 10
+                        color: 0x404040
+                      indicators:
+                        - tick_style:
+                            start_value: 0
+                            end_value: 100
+                            color_start: 0x00FFFF
+                            color_end: 0xFF0000
+                    - range_from: 0
+                      range_to: 100
+                      angle_range: 180
+                      rotation: 180
+                      ticks:
+                        count: 0
+                      indicators:
+                        - line:
+                            id: weather_temp_needle
+                            width: 8
+                            r_mod: 2
+                            value: 50
+                            color: 0xFF0000
+              - obj:
+                  height: 100
+                  width: 100
+                  radius: 50
+                  align: CENTER
+                  border_width: 0
+                  bg_color: 0x000000
+
+        # Current apparent temperature in center of gauge
+        - label:
+            id: lbl_weather_today_tempap
+            text: !lambda |-
+              if (isnan(id(weather_current_apparent_temp))) {
+                return std::string("--°");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%.0f°", id(weather_current_apparent_temp));
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_white
+            align: CENTER
+            x: 0
+            y: 120
+
+        # "Feels Like" label above temp
+        - label:
+            text: "Feels Like"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: CENTER
+            x: 0
+            y: 95
+
+        # Low temp stacked above gauge
+        - label:
+            id: lbl_weather_forecast_templo
+            text: !lambda |-
+              if (isnan(id(weather_forecast_temp_low)[0])) {
+                return std::string("L: --°");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "L: %.0f°", id(weather_forecast_temp_low)[0]);
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_teal
+            align: CENTER
+            x: 0
+            y: -35
+
+        # High temp stacked above low temp
+        - label:
+            id: lbl_weather_forecast_temphi
+            text: !lambda |-
+              if (isnan(id(weather_forecast_temp_high)[0])) {
+                return std::string("H: --°");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "H: %.0f°", id(weather_forecast_temp_high)[0]);
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_28
+            text_color: my_red
+            align: CENTER
+            x: 0
+            y: -70
+
+        # Precipitation Chance
+        - label:
+            id: lbl_weather_today_dailyprecipprob
+            text: !lambda |-
+              if (isnan(id(weather_forecast_precip_prob)[0])) {
+                return std::string("Chance: --%");
+              }
+              char buf[32];
+              snprintf(buf, sizeof(buf), "Chance: %.0f%%", id(weather_forecast_precip_prob)[0]);
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_18
+            text_color: my_teal
+            align: BOTTOM_MID
+            x: 0
+            y: -55
+
+        - obj:
+            align: BOTTOM_MID
+            x: 0
+            y: -90    # moved higher so the compass is above the precip probability label
+            width: 160
+            height: 64
+            bg_opa: 0
+            border_width: 0
+            widgets:
+              - meter:
+                  id: wind_compass_meter
+                  align: LEFT_MID
+                  width: 56
+                  height: 56
+                  border_width: 0
+                  bg_opa: TRANSP
+                  scales:
+                    - range_from: 0
+                      range_to: 360
+                      angle_range: 360
+                      rotation: 270
+                      ticks:
+                        count: 0
+                      indicators:
+                        - line:
+                            id: wind_compass_needle
+                            width: 3
+                            r_mod: 2
+                            value: 0
+                            color: 0x00DFFF
+              - label:
+                  id: lbl_wind_speed
+                  text: !lambda |-
+                    if (std::isnan(id(wind_speed_sensor).state)) return std::string("-- mph");
+                    char buf[24];
+                    snprintf(buf, sizeof(buf), "%.0f mph", id(wind_speed_sensor).state);
+                    return std::string(buf);
+                  text_font: montserrat_16
+                  text_color: my_white
+                  align: RIGHT_MID
+                  x: -6
+                  y: -6
+              - label:
+                  id: lbl_wind_direction_text
+                  text: !lambda |-
+                    float b = id(wind_direction_sensor).state;
+                    if (std::isnan(b)) return std::string("--");
+                    const char* dir;
+                    if (b >= 337.5 || b < 22.5) dir = "N";
+                    else if (b >= 22.5 && b < 67.5) dir = "NE";
+                    else if (b >= 67.5 && b < 112.5) dir = "E";
+                    else if (b >= 112.5 && b < 157.5) dir = "SE";
+                    else if (b >= 157.5 && b < 202.5) dir = "S";
+                    else if (b >= 202.5 && b < 247.5) dir = "SW";
+                    else if (b >= 247.5 && b < 292.5) dir = "W";
+                    else dir = "NW";
+                    return std::string(dir);
+                  text_font: montserrat_14
+                  text_color: my_gray
+                  align: RIGHT_MID
+                  x: -6
+                  y: 12
+
+        # Current temperature at bottom
+        - label:
+            text: "Now:"
+            text_align: CENTER
+            text_font: montserrat_14
+            text_color: my_gray
+            align: BOTTOM_MID
+            x: 0
+            y: -30
+
+        - label:
+            id: lbl_weather_today_outdoor_temp
+            text: !lambda |-
+              if (isnan(id(weather_current_temp))) {
+                return std::string("--.- °F");
+              }
+              char buf[16];
+              snprintf(buf, sizeof(buf), "%.1f °F", id(weather_current_temp));
+              return std::string(buf);
+            text_align: CENTER
+            text_font: montserrat_20
+            text_color: my_white
+            align: BOTTOM_MID
+            x: 0
+            y: -5
+        - obj:
+            id: nav_button_weather
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 180
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_release:
+              - logger.log: "Weather page nav button RELEASED!"
+              - lambda: |-
+                  ESP_LOGI("touch", "Navigation button touched");
+                  id(last_auto_rotation_time) = millis();
+                  ESP_LOGD("touch", "Auto-rotation timer reset");
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms

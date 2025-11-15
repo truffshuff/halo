@@ -52,10 +52,6 @@ globals:
   # - display_watchdog_enabled (bool)
   # - boot_complete (bool)
 
-  - id: weather_fetch_lock
-    type: bool
-    initial_value: 'false'
-
   # Temperature unit change flag
   # REMOVED: temp_unit_changed - moved to packages/features/airq/airq_base.yaml
 
@@ -65,6 +61,18 @@ globals:
   # - auto_page_rotation_enabled (bool)
   # - auto_page_rotation_interval (int)
   # - last_auto_rotation_time (unsigned long)
+
+  # Weather globals moved to features/weather/weather_base.yaml (Phase 2):
+  # - weather_fetch_lock
+  # - weather_last_started, weather_last_duration, weather_last_condition, weather_needs_render
+  # - weather_current_temp, weather_current_apparent_temp, weather_current_condition, weather_current_humidity
+  # - weather_forecast_temp_high, weather_forecast_temp_low, weather_forecast_condition, weather_forecast_precip_prob, weather_forecast_datetime
+  # - weather_hourly_temp, weather_hourly_apparent_temp, weather_hourly_condition, weather_hourly_precip_prob, weather_hourly_datetime
+  # - weather_hourly_humidity, weather_hourly_precipitation, weather_hourly_pressure, weather_hourly_uv_index
+  # - weather_hourly_wind_speed, weather_hourly_wind_bearing
+  # - weather_last_update, weather_daily_last_update, weather_hourly_last_update, weather_on_weather_page
+  # - page_rotation_weather_enabled, page_rotation_daily_forecast_enabled, page_rotation_hourly_forecast_enabled, page_rotation_hourly_summary_enabled
+  # - page_rotation_weather_order, page_rotation_daily_forecast_order, page_rotation_hourly_forecast_order, page_rotation_hourly_summary_order
 
   # ============================================================================
   # Page Rotation Configuration Globals
@@ -113,181 +121,6 @@ globals:
     type: uint32_t
     restore_value: no
     initial_value: '0'
-
-  # ============================================================================
-  # Weather Page Rotation Settings
-  # ============================================================================
-  # Weather feature includes 3 pages: Current, Daily Forecast, Hourly Forecast
-  # Each can be independently enabled/disabled and ordered in rotation
-  # ============================================================================
-
-  # Weather page rotation enabled flags
-  - id: page_rotation_weather_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-  - id: page_rotation_daily_forecast_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-  - id: page_rotation_hourly_forecast_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-  # Hourly summary page rotation flag (two pages: 1-12, 13-24)
-  - id: page_rotation_hourly_summary_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-
-  - id: page_rotation_hourly_summary_order
-    type: int
-    restore_value: yes
-    initial_value: '7'
-
-  # Weather page rotation order (1-7, lower numbers show first)
-  - id: page_rotation_weather_order
-    type: int
-    restore_value: yes
-    initial_value: '4'
-  - id: page_rotation_daily_forecast_order
-    type: int
-    restore_value: yes
-    initial_value: '5'
-  - id: page_rotation_hourly_forecast_order
-    type: int
-    restore_value: yes
-    initial_value: '6'
-
-  # ============================================================================
-  # Weather Data Storage
-  # ============================================================================
-
-  # --- Performance Tracking ---
-  # Used to measure and log weather update operation timing
-  - id: weather_last_started
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: weather_last_duration
-    type: int
-    restore_value: no
-    initial_value: '0'
-  - id: weather_last_condition
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: weather_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  # --- Current Weather State ---
-  # Real-time weather conditions from Home Assistant
-  - id: weather_current_temp
-    type: float
-    restore_value: no
-    initial_value: 'NAN'
-  - id: weather_current_apparent_temp
-    type: float
-    restore_value: no
-    initial_value: 'NAN'
-  - id: weather_current_condition
-    type: std::string
-    restore_value: no
-    initial_value: '""'
-  - id: weather_current_humidity
-    type: float
-    restore_value: no
-    initial_value: 'NAN'
-
-  # --- Daily Forecast Data (10 days) ---
-  # Arrays store forecast data fetched from Home Assistant weather.get_forecasts API
-  # Index 0 = today, Index 1 = tomorrow, etc.
-  - id: weather_forecast_temp_high
-    type: float[10]
-    restore_value: no
-  - id: weather_forecast_temp_low
-    type: float[10]
-    restore_value: no
-  - id: weather_forecast_condition
-    type: std::string[10]
-    restore_value: no
-  - id: weather_forecast_precip_prob
-    type: float[10]
-    restore_value: no
-  - id: weather_forecast_datetime
-    type: std::string[10]
-    restore_value: no
-
-  # --- Hourly Forecast Data (24 hours) ---
-  # Arrays store hourly forecast from Home Assistant
-  # Index 0 = current hour, Index 1 = next hour, etc.
-  - id: weather_hourly_temp
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_apparent_temp
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_condition
-    type: std::string[24]
-    restore_value: no
-
-  - id: weather_hourly_precip_prob
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_datetime
-    type: std::string[24]
-    restore_value: no
-
-  - id: weather_hourly_humidity
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_precipitation
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_pressure
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_uv_index
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_wind_speed
-    type: float[24]
-    restore_value: no
-
-  - id: weather_hourly_wind_bearing
-    type: float[24]
-    restore_value: no
-
-  # Tracking
-  - id: weather_last_update
-    type: unsigned long
-    restore_value: no
-    initial_value: '0'
-
-  # Separate tracking for daily vs hourly forecasts
-  - id: weather_daily_last_update
-    type: unsigned long
-    restore_value: no
-    initial_value: '0'
-
-  - id: weather_hourly_last_update
-    type: unsigned long
-    restore_value: no
-    initial_value: '0'
-
-  - id: weather_on_weather_page
-    type: bool
-    restore_value: no
-    initial_value: 'false'
 
   # Page rotation settings - which pages are included
   - id: page_rotation_AirQ_enabled

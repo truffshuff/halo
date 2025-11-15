@@ -1,0 +1,1007 @@
+# ============================================================================
+# Weather Base - Core Weather Infrastructure
+# ============================================================================
+# Part of Phase 2 modular refactoring
+#
+# This module provides the core weather capability infrastructure including:
+#   - Global weather data storage (current conditions, daily/hourly forecasts)
+#   - Weather fetch scripts (HTTP-based Home Assistant integration)
+#   - Weather page rotation switches and configuration
+#   - Weather refresh intervals and automation
+#   - Weather navigation buttons
+#   - Weather icon color management
+#
+# Dependencies:
+#   - packages/base/globals.yaml (for page rotation globals like current_page_name)
+#   - packages/base/esphome_base.yaml (for http_request, time components)
+#   - packages/base/hardware.yaml (for LVGL display)
+#   - packages/features/page_rotation/page_rotation.yaml (for page rotation system)
+#
+# Required Substitutions:
+#   - weather_entity_id: Home Assistant weather entity (e.g., weather.hhut)
+#   - ha_url: Home Assistant URL (e.g., http://homeassistant.local:8123)
+#   - ha_token: Long-lived access token for Home Assistant
+#   - weather_daily_refresh_interval: Daily forecast refresh interval in seconds (e.g., 3600)
+#   - weather_hourly_refresh_interval: Hourly forecast refresh interval in seconds (e.g., 900)
+#
+# Notes:
+#   - Uses HTTP-based weather fetch due to ESPHome 2025.10.3 incompatibility
+#     with HA 2025.10.x's weather.get_forecasts action format
+#   - JSON documents are allocated in PSRAM to prevent internal RAM pressure
+#   - Separate fetch scripts for daily and hourly forecasts for better efficiency
+#   - Weather data is cached and only refreshed when stale
+# ============================================================================
+
+globals:
+  # ============================================================================
+  # Weather Data Storage Globals
+  # ============================================================================
+
+  # --- Lock and State Management ---
+  - id: weather_fetch_lock
+    type: bool
+    initial_value: 'false'
+
+  # --- Performance Tracking ---
+  # Used to measure and log weather update operation timing
+  - id: weather_last_started
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_duration
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: weather_last_condition
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: weather_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # --- Current Weather State ---
+  # Real-time weather conditions from Home Assistant
+  - id: weather_current_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+  - id: weather_current_apparent_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+  - id: weather_current_condition
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: weather_current_humidity
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+
+  # --- Daily Forecast Data (10 days) ---
+  # Arrays store forecast data fetched from Home Assistant weather.get_forecasts API
+  # Index 0 = today, Index 1 = tomorrow, etc.
+  - id: weather_forecast_temp_high
+    type: float[10]
+    restore_value: no
+  - id: weather_forecast_temp_low
+    type: float[10]
+    restore_value: no
+  - id: weather_forecast_condition
+    type: std::string[10]
+    restore_value: no
+  - id: weather_forecast_precip_prob
+    type: float[10]
+    restore_value: no
+  - id: weather_forecast_datetime
+    type: std::string[10]
+    restore_value: no
+
+  # --- Hourly Forecast Data (24 hours) ---
+  # Arrays store hourly forecast from Home Assistant
+  # Index 0 = current hour, Index 1 = next hour, etc.
+  - id: weather_hourly_temp
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_apparent_temp
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_condition
+    type: std::string[24]
+    restore_value: no
+
+  - id: weather_hourly_precip_prob
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_datetime
+    type: std::string[24]
+    restore_value: no
+
+  - id: weather_hourly_humidity
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_precipitation
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_pressure
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_uv_index
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_wind_speed
+    type: float[24]
+    restore_value: no
+
+  - id: weather_hourly_wind_bearing
+    type: float[24]
+    restore_value: no
+
+  # --- Timestamp Tracking ---
+  - id: weather_last_update
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  # Separate tracking for daily vs hourly forecasts
+  - id: weather_daily_last_update
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: weather_hourly_last_update
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
+  - id: weather_on_weather_page
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # ============================================================================
+  # Weather Page Rotation Settings
+  # ============================================================================
+  # Weather feature includes 4 page types: Current, Daily Forecast, Hourly Forecast, Hourly Summary
+  # Each can be independently enabled/disabled and ordered in rotation
+  # ============================================================================
+
+  # Weather page rotation enabled flags
+  - id: page_rotation_weather_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_daily_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: page_rotation_hourly_forecast_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  # Hourly summary page rotation flag (two pages: 1-12, 13-24)
+  - id: page_rotation_hourly_summary_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  # Weather page rotation order (1-7, lower numbers show first)
+  - id: page_rotation_weather_order
+    type: int
+    restore_value: yes
+    initial_value: '4'
+  - id: page_rotation_daily_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '5'
+  - id: page_rotation_hourly_forecast_order
+    type: int
+    restore_value: yes
+    initial_value: '6'
+  - id: page_rotation_hourly_summary_order
+    type: int
+    restore_value: yes
+    initial_value: '7'
+
+# ============================================================================
+# Page Rotation Switches
+# ============================================================================
+
+switch:
+  # Page rotation selection switches
+  - platform: template
+    name: "Page Rotation: Weather Page"
+    id: page_rotation_weather_switch
+    icon: mdi:weather-partly-cloudy
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_weather_enabled) = true;'
+      - logger.log: "Weather page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "weather";'
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_weather_enabled) = false;'
+      - logger.log: "Weather page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Daily Forecast Page"
+    id: page_rotation_daily_forecast_switch
+    icon: mdi:calendar-today
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_daily_forecast_enabled) = true;'
+      - logger.log: "Daily forecast page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "daily_forecast";'
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_daily_forecast_enabled) = false;'
+      - logger.log: "Daily forecast page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Hourly Forecast Page"
+    id: page_rotation_hourly_forecast_switch
+    icon: mdi:clock-time-eight-outline
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_hourly_forecast_enabled) = true;'
+      - logger.log: "Hourly forecast page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "hourly_forecast";'
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_hourly_forecast_enabled) = false;'
+      - logger.log: "Hourly forecast page disabled in rotation"
+
+  - platform: template
+    name: "Page Rotation: Hourly Summary Page"
+    id: page_rotation_hourly_summary_switch
+    icon: mdi:clock-fast
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_hourly_summary_enabled) = true;'
+      - logger.log: "Hourly summary page enabled in rotation"
+      # Force immediate display update when page rotation is enabled
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "hourly_summary_1";'
+          then:
+            - script.execute: update_weather_icon_color
+    on_turn_off:
+      - lambda: 'id(page_rotation_hourly_summary_enabled) = false;'
+      - logger.log: "Hourly summary page disabled in rotation"
+
+# ============================================================================
+# Page Rotation Order Numbers
+# ============================================================================
+
+number:
+  # Weather page rotation order
+  - platform: template
+    name: "Page Rotation Order: Weather Page"
+    id: page_rotation_weather_order_number
+    icon: mdi:sort-numeric-variant
+    entity_category: "config"
+    optimistic: true
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 4
+    restore_value: true
+    on_value:
+      then:
+        - lambda: |-
+            id(page_rotation_weather_order) = (int)x;
+            ESP_LOGI("page_rotation", "Weather page order set to %d", (int)x);
+
+  - platform: template
+    name: "Page Rotation Order: Daily Forecast Page"
+    id: page_rotation_daily_forecast_order_number
+    icon: mdi:sort-numeric-variant
+    entity_category: "config"
+    optimistic: true
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 5
+    restore_value: true
+    on_value:
+      then:
+        - lambda: |-
+            id(page_rotation_daily_forecast_order) = (int)x;
+            ESP_LOGI("page_rotation", "Daily forecast page order set to %d", (int)x);
+
+  - platform: template
+    name: "Page Rotation Order: Hourly Forecast Page"
+    id: page_rotation_hourly_forecast_order_number
+    icon: mdi:sort-numeric-variant
+    entity_category: "config"
+    optimistic: true
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 6
+    restore_value: true
+    on_value:
+      then:
+        - lambda: |-
+            id(page_rotation_hourly_forecast_order) = (int)x;
+            ESP_LOGI("page_rotation", "Hourly forecast page order set to %d", (int)x);
+
+  - platform: template
+    name: "Page Rotation Order: Hourly Summary Page"
+    id: page_rotation_hourly_summary_order_number
+    icon: mdi:sort-numeric-variant
+    entity_category: "config"
+    optimistic: true
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 7
+    restore_value: true
+    on_value:
+      then:
+        - lambda: |-
+            id(page_rotation_hourly_summary_order) = (int)x;
+            ESP_LOGI("page_rotation", "Hourly summary page order set to %d", (int)x);
+
+  # Weather gauge number for LED effects
+  - platform: template
+    name: "Weather Gauge"
+    id: weather_gauge
+    icon: mdi:gauge
+    entity_category: "diagnostic"
+    optimistic: true
+    min_value: 0
+    max_value: 100
+    step: 1
+    mode: box
+
+# ============================================================================
+# Weather Sensors from Home Assistant
+# ============================================================================
+
+sensor:
+  # Current weather sensors from Home Assistant
+  - platform: homeassistant
+    id: current_temp_sensor
+    entity_id: ${weather_entity_id}
+    attribute: temperature
+    on_value:
+      then:
+        - lambda: |-
+            id(weather_current_temp) = x;
+            // Only update display if on weather page
+            if (id(current_page_name) == "weather") {
+              id(sensor_ui_dirty) = true;
+            }
+
+  - platform: homeassistant
+    id: apparent_temp_sensor
+    entity_id: ${weather_entity_id}
+    attribute: apparent_temperature
+    on_value:
+      then:
+        - lambda: |-
+            id(weather_current_apparent_temp) = x;
+            // Only update display if on weather page
+            if (id(current_page_name) == "weather") {
+              id(sensor_ui_dirty) = true;
+            }
+
+  - platform: homeassistant
+    id: current_humidity_sensor
+    entity_id: ${weather_entity_id}
+    attribute: humidity
+    on_value:
+      then:
+        - lambda: |-
+            id(weather_current_humidity) = x;
+            // Only update display if on weather page
+            if (id(current_page_name) == "weather") {
+              id(sensor_ui_dirty) = true;
+            }
+
+text_sensor:
+  # Weather condition from Home Assistant
+  - platform: homeassistant
+    id: current_condition_sensor
+    entity_id: ${weather_entity_id}
+    on_value:
+      then:
+        - lambda: |-
+            id(weather_current_condition) = x;
+            ESP_LOGI("weather", "Weather condition updated: %s", x.c_str());
+            // Update weather icon color when condition changes
+            if (id(current_page_name) == "weather") {
+              id(script_update_weather_icon_color).execute();
+            }
+
+# ============================================================================
+# Weather Refresh Intervals
+# ============================================================================
+
+interval:
+  # Auto-refresh DAILY forecast periodically (independent of which page is displayed)
+  # Checks every hour if data is stale (>60 min) and refreshes if needed
+  - interval: ${weather_daily_refresh_interval}s
+    then:
+      - if:
+          condition:
+            lambda: |-
+                // Check if fetch is already in progress
+                if (id(weather_fetch_lock)) {
+                ESP_LOGW("weather", "Daily forecast fetch already in progress, skipping");
+                return false;
+                }
+
+                // Calculate time since last daily forecast update
+                unsigned long current_time = millis();
+                unsigned long time_since_last_update = (current_time - id(weather_daily_last_update)) / 1000;
+
+                // Only fetch if data is stale (older than refresh interval)
+                if (time_since_last_update > ${weather_daily_refresh_interval}) {
+                ESP_LOGI("weather", "Background daily forecast refresh triggered (data age: %d minutes)",
+                        time_since_last_update / 60);
+                return true;
+                }
+                return false;
+          then:
+            - lambda: 'id(weather_fetch_lock) = true;'
+            - script.execute: fetch_daily_forecast
+
+  # Auto-refresh HOURLY forecast periodically (independent of which page is displayed)
+  # Checks every 15 minutes if data is stale (>15 min) and refreshes if needed
+  - interval: ${weather_hourly_refresh_interval}s
+    then:
+      - if:
+          condition:
+            lambda: |-
+                // Check if fetch is already in progress
+                if (id(weather_fetch_lock)) {
+                ESP_LOGW("weather", "Hourly forecast fetch already in progress, skipping");
+                return false;
+                }
+
+                // Calculate time since last hourly forecast update
+                unsigned long current_time = millis();
+                unsigned long time_since_last_update = (current_time - id(weather_hourly_last_update)) / 1000;
+
+                // Only fetch if data is stale (older than refresh interval)
+                if (time_since_last_update > ${weather_hourly_refresh_interval}) {
+                ESP_LOGI("weather", "Background hourly forecast refresh triggered (data age: %d minutes)",
+                        time_since_last_update / 60);
+                return true;
+                }
+                return false;
+          then:
+            - lambda: 'id(weather_fetch_lock) = true;'
+            - script.execute: fetch_hourly_forecast
+
+# ============================================================================
+# Weather Scripts
+# ============================================================================
+
+script:
+  # ============================================================================
+  # Weather Icon Color Update Script
+  # ============================================================================
+  - id: update_weather_icon_color
+    mode: restart
+    then:
+      - lambda: |-
+          id(weather_last_started) = millis();
+          id(weather_needs_render) = false;
+      - lambda: |-
+          std::string condition = id(weather_current_condition);
+          ESP_LOGD("weather_color", "Current condition: '%s'", condition.c_str());
+          if (condition.empty()) {
+          return;
+          }
+          std::string normalized = condition;
+          std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+          if (normalized != id(weather_last_condition)) {
+          id(weather_last_condition) = normalized;
+          id(weather_needs_render) = true;
+          }
+      - if:
+          condition:
+            lambda: 'return id(weather_needs_render);'
+          then:
+            - lvgl.label.update:
+                id: lbl_weather_forecast_condition_icon
+                text: !lambda |-
+                  using namespace weather_helpers;
+                  return get_weather_icon(id(weather_last_condition));
+                text_color: !lambda |-
+                  using namespace weather_helpers;
+                  ESP_LOGD("weather_color", "Applying color for condition: '%s'", id(weather_last_condition).c_str());
+                  return lv_color_hex(get_weather_icon_color(id(weather_last_condition)));
+      - lambda: |-
+          const uint32_t elapsed = millis() - id(weather_last_started);
+          id(weather_last_duration) = elapsed;
+          const bool rendered = id(weather_needs_render);
+          if (elapsed > 80) {
+          ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          } else {
+          ESP_LOGD("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          }
+          id(weather_needs_render) = false;
+
+  # ============================================================================
+  # WORKAROUND: HTTP-based weather fetch for HA 2025.10.x compatibility
+  # ============================================================================
+  # ESPHome 2025.10.3's homeassistant.action with capture_response doesn't work
+  # with HA 2025.10.x's new weather.get_forecasts action format.
+  # GitHub Issue: https://github.com/esphome/issues/issues/XXXXX (to be filed)
+  #
+  # This uses direct HTTP calls to HA's REST API instead.
+  # Requires: ha_url and ha_token in substitutions
+  #
+  # OPTIMIZATION: Split into two scripts for better efficiency
+  # - fetch_daily_forecast: Daily forecast (60 min refresh recommended)
+  # - fetch_hourly_forecast: Hourly forecast (15 min refresh recommended)
+  # ============================================================================
+
+  # Script to fetch DAILY forecast data via HA REST API
+  - id: fetch_daily_forecast
+    mode: single
+    then:
+      - lambda: |-
+          // Ensure lock is set
+          id(weather_fetch_lock) = true;
+
+      - logger.log: "Fetching daily forecast from Home Assistant via HTTP..."
+
+      # Feed watchdog before long operation
+      - lambda: |-
+          App.feed_wdt();
+          ESP_LOGI("weather", "Free heap before daily fetch: %d bytes", esp_get_free_heap_size());
+          ESP_LOGD("main", "Fetching daily forecast from Home Assistant via HTTP...");
+      # Fetch daily forecast
+      - http_request.post:
+          url: !lambda |-
+            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
+          request_headers:
+            Content-Type: application/json
+            Authorization: !lambda |-
+              return "Bearer ${ha_token}";
+          body: !lambda |-
+            return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"daily\"}";
+          on_response:
+            then:
+              - lambda: |-
+                  // Feed watchdog at start of processing
+                  App.feed_wdt();
+
+                  ESP_LOGI("weather", "Free heap at daily response: %d bytes", esp_get_free_heap_size());
+
+                  // Guard against unexpectedly large payloads (>32KB)
+                  if (response->content_length > 32768) {
+                  ESP_LOGE("weather", "Daily forecast too large: %d bytes", (int)response->content_length);
+                  // Drain the body without storing to keep connection sane
+                  uint8_t drain_buf[256];
+                  while (response->get_bytes_read() < response->content_length) {
+                    int r = response->read(drain_buf, sizeof(drain_buf));
+                    if (r <= 0) break;
+                    App.feed_wdt();
+                  }
+                  return;
+                  }
+
+                  // Read response body first (for both success and error cases)
+                  std::string body_str;
+                  // Reserve a smaller amount to reduce fragmentation
+                  size_t reserve_sz = response->content_length;
+                  if (reserve_sz > 12288) reserve_sz = 12288; // cap to 12KB for daily
+                  body_str.reserve(reserve_sz);
+                  uint8_t buffer[256];  // Smaller buffer
+                  while (response->get_bytes_read() < response->content_length) {
+                  int read_len = response->read(buffer, sizeof(buffer));
+                  if (read_len > 0) {
+                    // Cap body accumulation to 24KB for safety
+                    if (body_str.size() + (size_t)read_len > 24576) {
+                      ESP_LOGW("weather", "Daily body truncated at %u bytes", (unsigned)body_str.size());
+                      break;
+                    }
+                    body_str.append((char*)buffer, read_len);
+                  }
+                  // Feed watchdog during long reads
+                  if (body_str.length() % 4096 == 0) {
+                    App.feed_wdt();
+                  }
+                  }
+
+                  // response is already provided by ESPHome http_request
+                  if (response->status_code != 200) {
+                  ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", response->status_code);
+                  ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
+                  return;
+                  }
+
+                  ESP_LOGI("weather", "✓ Daily forecast HTTP response received (%d bytes)", body_str.length());
+                  ESP_LOGI("weather", "Free heap before daily JSON parse: %d bytes", esp_get_free_heap_size());
+
+                  // Feed watchdog before JSON parsing
+                  App.feed_wdt();
+
+                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
+                  ESP_LOGI("memory", "Before JSON parse - Internal RAM free: %d, PSRAM free: %d",
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+                  // CRITICAL: Allocate JsonDocument explicitly from PSRAM to avoid internal RAM pressure
+                  // Using heap_caps_malloc with MALLOC_CAP_SPIRAM forces allocation to PSRAM
+                  // This keeps the 60KB+ JSON buffer out of limited internal RAM
+                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                  if (json_buffer == nullptr) {
+                  ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
+                  return;
+                  }
+                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
+
+                  DeserializationError error = deserializeJson(
+                    *doc, body_str, DeserializationOption::NestingLimit(10));
+
+                  if (error) {
+                  ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM
+                  return;
+                  }
+
+                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
+                  const char *entity_key = "${weather_entity_id}";
+
+                  if (!(*doc)["service_response"].is<JsonObject>()) {
+                  ESP_LOGE("weather", "No 'service_response' key in response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
+
+                  JsonObject service_response = (*doc)["service_response"];
+
+                  if (!service_response[entity_key].is<JsonObject>()) {
+                  ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
+
+                  JsonObject entity_data = service_response[entity_key];
+
+                  if (!entity_data["forecast"].is<JsonArray>()) {
+                  ESP_LOGW("weather", "No 'forecast' key in daily response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
+
+                  JsonArray forecast_array = entity_data["forecast"];
+                  int day_count = std::min((int)forecast_array.size(), 10);
+                  ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+
+                  // Feed watchdog before processing loop
+                  App.feed_wdt();
+
+                  for (int i = 0; i < day_count; i++) {
+                  JsonObject day = forecast_array[i];
+
+                  // Feed watchdog every 3 days to prevent timeout during processing
+                  if (i > 0 && i % 3 == 0) {
+                    App.feed_wdt();
+                  }
+
+                  if (day["temperature"].is<float>()) {
+                    id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                  }
+
+                  if (day["templow"].is<float>()) {
+                    id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                  }
+
+                  if (day["condition"].is<const char*>()) {
+                    id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                  }
+
+                  if (day["precipitation_probability"].is<float>()) {
+                    id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                  }
+
+                  if (day["datetime"].is<const char*>()) {
+                    id(weather_forecast_datetime)[i] = day["datetime"].as<std::string>();
+                  }
+
+                  // Extract "current" weather from today's forecast (day 0)
+                  if (i == 0) {
+                    if (day["condition"].is<const char*>()) {
+                      id(weather_current_condition) = day["condition"].as<std::string>();
+                      ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
+                    }
+                  }
+                  }
+                  ESP_LOGI("weather", "✓ Daily forecast stored successfully");
+
+                  // Clean up PSRAM-allocated JSON document
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM buffer
+
+                  ESP_LOGI("weather", "Free heap after parse - Internal: %d, PSRAM: %d",
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+                  // Update daily forecast timestamp
+                  id(weather_daily_last_update) = millis();
+                  id(weather_last_update) = millis();  // Keep for backward compatibility
+
+              # Small delay to allow memory cleanup
+              - delay: 100ms
+
+              # Update display after fetching (with delays to prevent SPI contention)
+              - script.execute: update_weather_display
+              - delay: 50ms
+              - script.execute: update_weather_icon_color
+              - delay: 50ms
+              - script.execute: update_daily_forecast_display
+
+      - lambda: |-
+          // Always clear the lock when done (success or failure)
+          id(weather_fetch_lock) = false;
+
+  # Script to fetch HOURLY forecast data via HA REST API
+  - id: fetch_hourly_forecast
+    mode: single
+    then:
+      - lambda: |-
+          // Ensure lock is set
+          id(weather_fetch_lock) = true;
+
+      - logger.log: "Fetching hourly forecast from Home Assistant via HTTP..."
+
+      # Feed watchdog before long operation
+      - lambda: |-
+          App.feed_wdt();
+          ESP_LOGI("weather", "Free heap before fetch: %d bytes", esp_get_free_heap_size());
+          ESP_LOGD("main", "Fetching hourly forecast from Home Assistant via HTTP...");
+
+      # Fetch hourly forecast
+      - http_request.post:
+          url: !lambda |-
+            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
+          request_headers:
+            Content-Type: application/json
+            Authorization: !lambda |-
+              return "Bearer ${ha_token}";
+          body: !lambda |-
+            return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"hourly\"}";
+          on_response:
+            then:
+              - lambda: |-
+                  // Feed watchdog at start of processing
+                  App.feed_wdt();
+
+                  ESP_LOGI("weather", "Free heap at response: %d bytes", esp_get_free_heap_size());
+
+                  // Read response body first (for both success and error cases)
+                  std::string body_str;
+                  // Reserve a smaller amount to reduce memory pressure
+                  size_t reserve_sz2 = response->content_length;
+                  if (reserve_sz2 > 16384) reserve_sz2 = 16384; // cap to 16KB for hourly
+                  body_str.reserve(reserve_sz2);
+                  uint8_t buffer[256];  // Smaller buffer to reduce stack usage
+                  while (response->get_bytes_read() < response->content_length) {
+                  int read_len = response->read(buffer, sizeof(buffer));
+                  if (read_len > 0) {
+                    body_str.append((char*)buffer, read_len);
+                  }
+                  // Feed watchdog during long reads
+                  if (body_str.length() % 4096 == 0) {
+                    App.feed_wdt();
+                  }
+                  }
+
+                  // response is already provided by ESPHome http_request
+                  if (response->status_code != 200) {
+                  ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
+                  ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
+                  return;
+                  }
+
+                  ESP_LOGI("weather", "✓ Hourly forecast HTTP response received (%d bytes)", body_str.length());
+
+                  // Feed watchdog before JSON parsing
+                  App.feed_wdt();
+
+                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
+                  ESP_LOGI("memory", "Before hourly JSON parse - Internal RAM free: %d, PSRAM free: %d",
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+                  // CRITICAL FIX: Allocate JsonDocument explicitly from PSRAM to prevent stack overflow
+                  // The 57KB JSON payload would overflow the stack if allocated there
+                  // Using heap_caps_malloc forces allocation to 8MB PSRAM instead of limited internal RAM
+                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                  if (json_buffer == nullptr) {
+                  ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
+                  return;
+                  }
+                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
+
+                  DeserializationError error = deserializeJson(
+                    *doc, body_str, DeserializationOption::NestingLimit(10));
+
+                  if (error) {
+                  ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM
+                  return;
+                  }
+
+                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
+                  const char *entity_key = "${weather_entity_id}";
+
+                  if (!(*doc)["service_response"].is<JsonObject>()) {
+                  ESP_LOGE("weather", "No 'service_response' key in response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
+
+                  JsonObject service_response = (*doc)["service_response"];
+
+                  if (!service_response[entity_key].is<JsonObject>()) {
+                  ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
+
+                  JsonObject entity_data = service_response[entity_key];
+
+                  if (!entity_data["forecast"].is<JsonArray>()) {
+                  ESP_LOGW("weather", "No 'forecast' key in hourly response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
+
+                  JsonArray forecast_array = entity_data["forecast"];
+                  int hour_count = std::min((int)forecast_array.size(), 24);
+                  ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+
+                  // Feed watchdog before processing loop
+                  App.feed_wdt();
+
+                  for (int i = 0; i < hour_count; i++) {
+                  JsonObject hour = forecast_array[i];
+
+                  // Feed watchdog every 6 hours to prevent timeout during processing
+                  if (i > 0 && i % 6 == 0) {
+                    App.feed_wdt();
+                  }
+
+                  if (hour["temperature"].is<float>()) {
+                    id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                  }
+
+                  if (hour["apparent_temperature"].is<float>()) {
+                    id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                  }
+
+                  if (hour["condition"].is<const char*>()) {
+                    id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                  }
+
+                  if (hour["precipitation_probability"].is<float>()) {
+                    id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                  }
+
+                  if (hour["datetime"].is<const char*>()) {
+                    id(weather_hourly_datetime)[i] = hour["datetime"].as<std::string>();
+                  }
+
+                  // Additional hourly data fields
+                  if (hour["humidity"].is<float>()) {
+                    id(weather_hourly_humidity)[i] = hour["humidity"].as<float>();
+                  }
+
+                  if (hour["precipitation"].is<float>()) {
+                    id(weather_hourly_precipitation)[i] = hour["precipitation"].as<float>();
+                  }
+
+                  if (hour["pressure"].is<float>()) {
+                    id(weather_hourly_pressure)[i] = hour["pressure"].as<float>();
+                  }
+
+                  if (hour["uv_index"].is<float>()) {
+                    id(weather_hourly_uv_index)[i] = hour["uv_index"].as<float>();
+                  }
+
+                  if (hour["wind_speed"].is<float>()) {
+                    id(weather_hourly_wind_speed)[i] = hour["wind_speed"].as<float>();
+                  }
+
+                  if (hour["wind_bearing"].is<float>()) {
+                    id(weather_hourly_wind_bearing)[i] = hour["wind_bearing"].as<float>();
+                  }
+                  }
+                  ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
+
+                  // Clean up PSRAM-allocated JSON document to free memory
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM buffer
+
+                  ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d",
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  ESP_LOGI("weather", "✓ JSON document cleaned up");
+
+                  // Update hourly forecast timestamp
+                  id(weather_hourly_last_update) = millis();
+                  id(weather_last_update) = millis();  // Keep for backward compatibility
+
+              # Small delay to allow memory to be freed before display update
+              - delay: 100ms
+
+              # Update display after fetching (only if on hourly forecast page)
+              # With lazy loading, page-specific on_load handlers will update when navigated to
+              - if:
+                  condition:
+                    lambda: 'return id(current_page_name) == "hourly_forecast";'
+                  then:
+                    - script.execute: update_hourly_page_1  # Update page 1 if currently viewing
+
+      - lambda: |-
+          // Always clear the lock when done (success or failure)
+          id(weather_fetch_lock) = false;
+
+  # Legacy script for backward compatibility - fetches both
+  - id: fetch_weather_data
+    mode: single
+    then:
+      - logger.log: "Fetching both daily and hourly forecasts..."
+      - script.execute: fetch_daily_forecast
+      - script.wait: fetch_daily_forecast
+      - delay: 500ms  # Brief pause between fetches
+      - script.execute: fetch_hourly_forecast
+
+# ============================================================================
+# Weather Navigation Buttons
+# ============================================================================
+
+button:
+  # Weather refresh button
+  - platform: template
+    name: "Refresh Weather Data"
+    id: weather_refresh_button
+    icon: mdi:refresh
+    on_press:
+      - script.execute: fetch_weather_data
