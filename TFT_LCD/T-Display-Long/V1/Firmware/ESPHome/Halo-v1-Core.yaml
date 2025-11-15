@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.15.1308
+# Version: 25.11.15.1335
 # Last Updated: November 15, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.15.1308"
+  version: "25.11.15.1335"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -114,31 +114,17 @@ substitutions:
 # Diagnostics switches (Auto Page Rotation, Display Watchdog, Startup Light Blink)
 # moved to features/diagnostics/diagnostics.yaml (Phase 2)
 
-switch:
-  # Page rotation selection switches
-  # Note: Clock switches moved to features/clock/clock_base.yaml (Phase 2)
-  # Note: AirQ switches moved to features/airq/airq_base.yaml (Phase 2)
-  # Note: WiFi switches moved to features/wifi_status/wifi_page_base.yaml (Phase 2)
-  # Note: Weather switches moved to features/weather/weather_base.yaml (Phase 2)
-  # Note: Diagnostics switches moved to features/diagnostics/diagnostics.yaml (Phase 2)
-
-  - platform: template
-    name: "Page Rotation: AirQ Page"
-    id: page_rotation_AirQ_switch
-    icon: mdi:view-dashboard
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
-    on_turn_on:
-      - lambda: 'id(page_rotation_AirQ_enabled) = true;'
-      - logger.log: "AirQ page enabled in rotation"
-    on_turn_off:
-      - lambda: 'id(page_rotation_AirQ_enabled) = false;'
-      - logger.log: "AirQ page disabled in rotation"
-
-  # WiFi page rotation switch (page_rotation_wifi_switch) has been moved to packages/features/wifi_status/wifi_page_base.yaml
-
-  # WireGuard switch component has been moved to packages/features/wireguard/wireguard.yaml
+# ============================================================================
+# Switch Components
+# ============================================================================
+# Note: All switches have been moved to their capability modules (Phase 2-3):
+# - Clock switches → features/clock/clock_base.yaml
+# - AirQ switches → features/airq/airq_base.yaml
+# - WiFi switches → features/wifi_status/wifi_page_base.yaml
+# - Weather switches → features/weather/weather_base.yaml
+# - WireGuard switch → features/wireguard/wireguard.yaml
+# - Diagnostics switches → features/diagnostics/diagnostics.yaml
+# - Page rotation switches → features/page_rotation/page_rotation.yaml
 
 select:
   # AirQ components (Display Temperature Unit select) have been moved to packages/features/airq/airq_base.yaml
@@ -203,58 +189,17 @@ select:
             call.perform();
           }
 
-  - platform: template
-    name: "Default Page at Boot"
-    id: default_page_select_boot
-    optimistic: true
-    options:
-      - "Vertical Clock"
-      # Uncomment based on enabled features:
-      # - "AirQ"          # if airq_enabled
-      # - "WiFi"          # if wifi_enabled
-      - "Weather"       # if weather_enabled
-    initial_option: "Vertical Clock"
-    restore_value: true
+# Note: Default page selector moved to features/page_rotation/page_rotation.yaml (Phase 3)
 
 # ============================================================================
-# DEFAULT PAGE SELECTOR
+# Interval Components
 # ============================================================================
-# Note: The default page selector must be defined in device-specific files
-# (e.g., halo-v1-79e384.yaml) to match the enabled LVGL pages for that device.
-# This allows each device to have only the page options that are actually available.
+# Note: Component intervals have been moved to their capability modules (Phase 2-3):
+# - Clock intervals (2s time_update, 1s colon blink) → features/clock/clock_base.yaml
+# - Startup blink intervals (2x 1s) → system/networking.yaml
+# - Display watchdog intervals → features/diagnostics/diagnostics.yaml
 
 interval:
-  # Note: Clock intervals moved to features/clock/clock_base.yaml (Phase 2)
-  # - 2s interval for time_update
-  # - 1s interval for colon blink
-
-  - interval: 1s
-    then:
-      - if:
-          condition:
-            - binary_sensor.is_off: ink_ha_connected
-            - lambda: 'return id(cycleCounter) < 30;'
-            - switch.is_on: startup_light_blink
-
-          then:
-            - light.turn_on:
-                id: rgb_light
-                effect: "Addressable Rainbow"
-            - lambda: 'id(cycleCounter) += 1;'
-
-  - interval: 1s
-    then:
-      - if:
-          condition:
-            - binary_sensor.is_off: ink_ha_connected
-            - lambda: 'return id(cycleCounter) > 30;'
-            - lambda: 'return id(cycleCounter) < 31;'
-            - switch.is_on: startup_light_blink
-
-          then:
-            - light.turn_off:
-                id: rgb_light
-            - lambda: 'id(cycleCounter) += 1;'
 
   # Batched sensor UI update - prevents LVGL cascade rendering
   # NOTE: This is legacy code - sensor_ui_dirty is never set in current config
@@ -807,47 +752,17 @@ api:
   services:
     # AirQ components (calibrate_co2_value and sen55_clean services) have been moved to packages/features/airq/airq_base.yaml
 
-script:
-  - id: page_transition_cleanup
-    mode: queued  # Queue executions instead of warning about duplicates
-    max_runs: 2   # Allow up to 2 queued runs
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_complete) && !id(ota_in_progress);'
-          then:
-            - delay: 50ms  # Small delay to prevent rapid successive calls
-            - lambda: |-
-                // Safety check: Only run if LVGL is fully initialized
-                lv_obj_t *scr = lv_scr_act();
-                if (scr == NULL) {
-                return;  // Silently skip if not initialized
-                }
-
-                // Log current memory state before cleanup
-                ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %d", esp_get_free_heap_size());
-
-                // Clear all cached strings to free memory
-                id(time_update_last_text).clear();
-                id(weather_last_condition).clear();
-
-                // Force LVGL to invalidate current screen and redraw
-                lv_obj_invalidate(scr);
-
-                // Force immediate display flush to prevent buffer buildup
-                lv_refr_now(NULL);
-
-  # Note: Clock scripts moved to features/clock/clock_base.yaml (Phase 2)
-  # - update_colon_widget
-  # - time_update
-
-
-  # ============================================================================
-  # Note: Weather fetch scripts moved to features/weather/weather_base.yaml (Phase 2)
-  # Note: Weather display update scripts moved to features/weather/weather_page.yaml (Phase 2)
-  # Note: Hourly forecast scripts moved to features/weather/weather_hourly.yaml (Phase 2)
-  # Note: Daily forecast scripts moved to features/weather/weather_daily.yaml (Phase 2)
-  # Note: Hourly summary scripts moved to features/weather/weather_hourly_summary.yaml (Phase 2)
+# ============================================================================
+# Script Components
+# ============================================================================
+# Note: All scripts have been moved to their capability modules (Phase 2-3):
+# - page_transition_cleanup → features/page_rotation/page_rotation.yaml
+# - Clock scripts (update_colon_widget, time_update) → features/clock/clock_base.yaml
+# - Weather fetch scripts → features/weather/weather_base.yaml
+# - Weather display update scripts → features/weather/weather_page.yaml
+# - Hourly forecast scripts → features/weather/weather_hourly.yaml
+# - Daily forecast scripts → features/weather/weather_daily.yaml
+# - Hourly summary scripts → features/weather/weather_hourly_summary.yaml
 
 number:
   # Page rotation interval number moved to features/page_rotation/page_rotation.yaml (Phase 2)
@@ -936,17 +851,12 @@ sensor:
 
   # WireGuard latest handshake sensor has been moved to packages/features/wireguard/wireguard.yaml
 
-text_sensor:
-  # Weather condition text sensor moved to features/weather/weather_base.yaml (Phase 2):
-  # - current_condition_sensor
-
-  - platform: template
-    name: "Time Value (Stub)"
-    id: timeVal_stub
-    internal: true
-    update_interval: never
-
-  # WireGuard address text sensor has been moved to packages/features/wireguard/wireguard.yaml
+# ============================================================================
+# Text Sensor Components
+# ============================================================================
+# Note: All text sensors have been moved to their capability modules (Phase 2):
+# - Weather condition text sensor → features/weather/weather_base.yaml
+# - WireGuard address text sensors → features/wireguard/wireguard.yaml
 
 # ============================================================================
 # RGB LED Configuration

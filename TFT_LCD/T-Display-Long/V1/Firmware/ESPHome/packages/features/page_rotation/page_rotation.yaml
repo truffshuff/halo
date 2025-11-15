@@ -106,5 +106,78 @@ number:
 # ============================================================================
 # Switch Components
 # ============================================================================
-# Note: Auto Page Rotation switch moved to diagnostics.yaml
-# It was extracted along with other system-wide diagnostic switches
+switch:
+  # Individual page enable/disable switches for rotation
+  # These control which pages are included in the automatic rotation cycle
+
+  # AirQ page rotation control
+  - platform: template
+    name: "Page Rotation: AirQ Page"
+    id: page_rotation_AirQ_switch
+    icon: mdi:view-dashboard
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_AirQ_enabled) = true;'
+      - logger.log: "AirQ page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_AirQ_enabled) = false;'
+      - logger.log: "AirQ page disabled in rotation"
+
+# Note: Auto Page Rotation master switch is in diagnostics.yaml
+# Note: Individual page switches for Clock, WiFi, Weather are in their respective capability modules
+
+# ============================================================================
+# Select Components
+# ============================================================================
+select:
+  # Default page to display at boot
+  # Allows user to choose which page appears when device starts
+  - platform: template
+    name: "Default Page at Boot"
+    id: default_page_select_boot
+    optimistic: true
+    options:
+      - "Vertical Clock"
+      # Uncomment based on enabled features:
+      # - "AirQ"          # if airq_enabled
+      # - "WiFi"          # if wifi_enabled
+      - "Weather"       # if weather_enabled
+    initial_option: "Vertical Clock"
+    restore_value: true
+
+# ============================================================================
+# Script Components
+# ============================================================================
+script:
+  # Page transition cleanup script
+  # Frees memory and refreshes display when transitioning between pages
+  - id: page_transition_cleanup
+    mode: queued  # Queue executions instead of warning about duplicates
+    max_runs: 2   # Allow up to 2 queued runs
+    then:
+      - if:
+          condition:
+            lambda: 'return id(boot_complete) && !id(ota_in_progress);'
+          then:
+            - delay: 50ms  # Small delay to prevent rapid successive calls
+            - lambda: |-
+                // Safety check: Only run if LVGL is fully initialized
+                lv_obj_t *scr = lv_scr_act();
+                if (scr == NULL) {
+                return;  // Silently skip if not initialized
+                }
+
+                // Log current memory state before cleanup
+                ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %d", esp_get_free_heap_size());
+
+                // Clear all cached strings to free memory
+                id(time_update_last_text).clear();
+                id(weather_last_condition).clear();
+
+                // Force LVGL to invalidate current screen and redraw
+                lv_obj_invalidate(scr);
+
+                // Force immediate display flush to prevent buffer buildup
+                lv_refr_now(NULL);
