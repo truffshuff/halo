@@ -429,6 +429,30 @@ sensor:
               id(sensor_ui_dirty) = true;
             }
 
+  # Wind speed sensor from Home Assistant
+  - platform: homeassistant
+    id: wind_speed_sensor
+    entity_id: ${wind_speed_sensor}
+    on_value:
+      then:
+        - lambda: |-
+            // Update display if on weather page
+            if (id(current_page_name) == "weather") {
+              id(sensor_ui_dirty) = true;
+            }
+
+  # Wind direction sensor from Home Assistant
+  - platform: homeassistant
+    id: wind_direction_sensor
+    entity_id: ${wind_direction_sensor}
+    on_value:
+      then:
+        - lambda: |-
+            // Update display if on weather page
+            if (id(current_page_name) == "weather") {
+              id(sensor_ui_dirty) = true;
+            }
+
 text_sensor:
   # Weather condition from Home Assistant
   - platform: homeassistant
