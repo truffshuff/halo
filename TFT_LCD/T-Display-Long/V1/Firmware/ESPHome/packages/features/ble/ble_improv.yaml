@@ -62,7 +62,6 @@ nimble_improv:
 # TCP buffer optimizations in esphome_core.yaml help prevent buffer overflow
 # ============================================================================
 bluetooth_proxy:
-  active: true
 
 nimble_proxy:
   active: true
