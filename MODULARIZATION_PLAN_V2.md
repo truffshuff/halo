@@ -1,9 +1,9 @@
 # Halo v1 Modularization Plan V2 - Capability-Based Organization
 **Created:** 2025-11-13
-**Updated:** 2025-11-14
+**Updated:** 2025-11-15
 **Branch:** modular
 **Strategy:** Feature-complete capability modules
-**Current Status:** 🚧 Phase 1 In Progress - System module structure created, testing compilation
+**Current Status:** ✅ Phase 2 Complete - All 7 capabilities extracted! Ready for Phase 3 verification and documentation.
 
 ---
 
@@ -12,10 +12,22 @@
 | Phase | Status | Progress | Details |
 |-------|--------|----------|---------|
 | **Phase 1** | ✅ Complete | 100% | System modules created, 11 errors fixed, compilation successful! |
-| **Phase 2** | 🚧 In Progress | 86% | 6 of 7 capabilities extracted! Core reduced by 1,440 lines. Remaining: Weather (largest, most complex) |
-| **Phase 3** | ⏳ Not Started | 0% | Documentation and cleanup |
+| **Phase 2** | ✅ Complete | 100% | ALL 7 capabilities extracted! Core reduced from 8,971 to 1,805 lines (80% reduction) |
+| **Phase 3** | ⏳ Ready to Start | 0% | Verification, testing, documentation, and final cleanup |
 
-**Latest Update:** Phase 2 at 86%! Extracted: Clock, AirQ, WiFi Status, WireGuard, Diagnostics, and Page Rotation (6/7 done). Core file reduced from 8,971 to 7,531 lines (-16% reduction). All capabilities are self-contained modules with clear dependencies. Only Weather capability remains (most complex: ~10,500 lines across 5 files). See [PHASE_2_PROGRESS.md](PHASE_2_PROGRESS.md) for details.
+**Latest Update (2025-11-15):** Phase 2 COMPLETE! All 7 capabilities successfully extracted:
+- ✅ Clock (clock_base.yaml, clock_page.yaml)
+- ✅ AirQ (airq_base.yaml, airq_page.yaml)
+- ✅ Weather (weather_base.yaml, weather_page.yaml, weather_daily.yaml, weather_hourly.yaml, weather_hourly_summary.yaml, weather_led_effects.yaml)
+- ✅ WiFi Status (wifi_page_base.yaml, wifi_page.yaml)
+- ✅ WireGuard (wireguard.yaml)
+- ✅ BLE (ble_improv.yaml)
+- ✅ Diagnostics (diagnostics.yaml)
+- ✅ Page Rotation (page_rotation.yaml)
+
+**Core file reduced:** 8,971 → 1,805 lines (80% reduction so far, target: 94-97% reduction to ~300-500 lines in Phase 3)
+
+**Next Steps:** Phase 3 verification and final extraction to reduce Core to minimal size (~300-500 lines), comprehensive testing, and documentation creation.
 
 ---
 
@@ -1150,23 +1162,520 @@ Test: Verify weather fetches, pages update, LED effects work
 
 ---
 
-### Phase 3: Update Documentation (1 hour)
+### Phase 3: Verification, Testing & Documentation (STATUS: ⏳ NOT STARTED)
 
-1. Update Core file with:
-   - Feature descriptions
-   - Memory usage per feature
-   - Hardware requirements
-   - Comment out optional features by default
+**Goal:** Verify Phase 2 extraction completeness, reduce Core file to minimal size, test all capabilities, and create comprehensive documentation.
 
-2. Create README in each capability folder:
-   - What the capability does
-   - Hardware requirements
-   - Dependencies
-   - Configuration options
+**Estimated Time:** 4-6 hours
 
-3. Update main device YAML files:
-   - Update import paths
-   - Add comments explaining features
+---
+
+#### Step 3.1: Phase 2 Completion Verification (1 hour)
+
+**Verify all components were extracted from Core:**
+
+1. **Audit Core file contents** (1,805 lines currently - target: ~300 lines)
+   ```bash
+   # Check what major components remain
+   grep -E "^(switch:|select:|sensor:|button:|interval:|script:|lvgl:|api:|wifi:|wireguard:)" Halo-v1-Core.yaml
+   ```
+
+2. **Verify each capability is complete:**
+   - [ ] Clock: All time-related scripts, intervals, switches extracted?
+   - [ ] AirQ: All sensor platforms, calibration scripts extracted?
+   - [ ] Weather: All 45+ globals, fetch scripts, update scripts extracted?
+   - [ ] WiFi Status: Page controls and navigation extracted?
+   - [ ] WireGuard: VPN config and sensors extracted?
+   - [ ] BLE: Improv and startup blink extracted?
+   - [ ] Page Rotation: Auto-rotation interval and state machine extracted?
+   - [ ] Diagnostics: All heap and performance sensors extracted?
+
+3. **Check for remaining extractable components:**
+   - [ ] Any switches still in Core that belong to capabilities?
+   - [ ] Any selects still in Core that belong to capabilities?
+   - [ ] Any intervals still in Core that belong to capabilities?
+   - [ ] Any scripts still in Core that belong to capabilities?
+   - [ ] Any sensors still in Core that belong to capabilities?
+   - [ ] Any buttons still in Core that belong to capabilities?
+
+4. **Identify what MUST stay in Core:**
+   - [ ] LVGL display initialization (large, complex, shared resource)
+   - [ ] Navigation coordination scripts (cross-capability)
+   - [ ] API service definitions (if cross-capability)
+   - [ ] Device-specific overrides
+   - [ ] Integration glue code
+
+5. **Expected Core file final size:** ~300-500 lines
+   - LVGL display config: ~200-300 lines
+   - API services: ~50 lines
+   - Navigation glue: ~50 lines
+   - Comments/headers: ~100 lines
+
+**Validation:**
+- Core file is under 500 lines (currently 1,805)
+- No capability-specific code remains in Core
+- All extractable components identified and moved
+
+---
+
+#### Step 3.2: Extract Remaining Components from Core (2-3 hours)
+
+**Based on Step 3.1 audit, extract any remaining components:**
+
+1. **Create extraction checklist:**
+   - Document each component to extract
+   - Identify target capability module
+   - Note any dependencies or risks
+
+2. **Extract remaining switches:**
+   - Move to appropriate capability modules
+   - Update capability documentation
+   - Test after each extraction
+
+3. **Extract remaining selects:**
+   - LED effects select → weather_led_effects.yaml
+   - Temperature unit select → airq_base.yaml (if not already there)
+   - Default page select → page_rotation.yaml (if exists)
+
+4. **Extract remaining intervals:**
+   - Check for any capability-specific intervals
+   - Move to appropriate modules
+   - Verify timing dependencies
+
+5. **Extract remaining scripts:**
+   - Navigation scripts may need to stay (cross-capability)
+   - Weather/clock/airq specific scripts should move
+   - Document which scripts must remain in Core and why
+
+6. **Extract remaining sensors:**
+   - System sensors (uptime, heap) → diagnostics.yaml
+   - WiFi sensor → networking.yaml (if not already there)
+   - Capability-specific sensors → appropriate modules
+
+7. **Extract remaining buttons:**
+   - Feature navigation buttons → capability modules
+   - System buttons (reboot, factory reset) → system_management.yaml
+
+8. **Clean up legacy packages:**
+   - [ ] Remove old packages/base/globals.yaml (globals now in capabilities)
+   - [ ] Remove old packages/base/esphome_base.yaml (split into system modules)
+   - [ ] Remove old packages/base/hardware.yaml (split into system modules)
+   - [ ] Remove any other deprecated package files
+
+**Validation:**
+- Compile successfully after each extraction
+- Core file reduced to target size (~300-500 lines)
+- All capability modules are self-contained
+
+---
+
+#### Step 3.3: Comprehensive Testing (1 hour)
+
+**Test each capability module independently:**
+
+1. **Create test configuration:**
+   - Minimal device YAML with only system modules
+   - Test adding capabilities one at a time
+
+2. **Test each capability:**
+
+   **Clock Capability:**
+   - [ ] Compiles with only clock + system modules
+   - [ ] Time displays and updates every 2 seconds
+   - [ ] Colon blinks every 1 second (if enabled)
+   - [ ] 12h/24h format switch works
+   - [ ] Navigation button works
+   - [ ] Page rotation toggle works
+
+   **AirQ Capability:**
+   - [ ] Compiles with only airq + system modules
+   - [ ] All sensors initialize (SCD40, SEN55, MICS4514, BME280)
+   - [ ] AQI calculation works
+   - [ ] Temperature unit switching works (F/C/K)
+   - [ ] CO2 calibration buttons work
+   - [ ] SEN55 cleaning button works
+   - [ ] Temperature offsets apply correctly
+
+   **Weather Capability:**
+   - [ ] Compiles with only weather_base + weather_page + system
+   - [ ] Weather data fetches from Home Assistant
+   - [ ] Current conditions display updates
+   - [ ] Daily forecast compiles and displays (if enabled)
+   - [ ] Hourly forecast compiles and displays (if enabled)
+   - [ ] Hourly summary displays (if enabled)
+   - [ ] LED effects activate based on weather (if enabled)
+   - [ ] Manual refresh button works
+
+   **WiFi Status Capability:**
+   - [ ] Compiles with only wifi_status + system
+   - [ ] WiFi signal strength displays
+   - [ ] IP address displays
+   - [ ] SSID displays
+   - [ ] HA connection status shows
+
+   **WireGuard Capability:**
+   - [ ] Compiles with only wireguard + networking + system
+   - [ ] VPN connects (if configured)
+   - [ ] Status sensors update
+   - [ ] Enable/disable switch works
+
+   **BLE Capability:**
+   - [ ] Compiles with only ble + system
+   - [ ] Improv WiFi provisioning advertises
+   - [ ] Startup blink animation works
+   - [ ] Bluetooth proxy works (if HA configured)
+
+   **Page Rotation Capability:**
+   - [ ] Compiles with page_rotation + multiple pages + system
+   - [ ] Auto-rotation cycles through enabled pages
+   - [ ] Interval setting works (change rotation speed)
+   - [ ] Manual navigation still works
+   - [ ] Only enabled pages are included in rotation
+
+   **Diagnostics Capability:**
+   - [ ] Compiles with only diagnostics + system
+   - [ ] Heap sensors update
+   - [ ] PSRAM sensors update
+   - [ ] Performance metrics update
+   - [ ] Sensors visible in Home Assistant
+
+3. **Test full configuration:**
+   - [ ] All capabilities enabled compiles successfully
+   - [ ] Memory usage acceptable (check min free heap > 30KB)
+   - [ ] All pages accessible
+   - [ ] All features work together
+   - [ ] No duplicate component errors
+   - [ ] No dependency errors
+
+4. **Test memory optimization:**
+   - [ ] Disable BLE → saves ~40KB
+   - [ ] Disable weather_hourly → saves ~7KB
+   - [ ] Disable diagnostics → saves ~5-10KB
+   - [ ] Verify heap increases with each disabled feature
+
+**Validation:**
+- All capabilities work independently
+- All capabilities work together
+- Memory scaling works as documented
+- No regressions from Phase 2 extraction
+
+---
+
+#### Step 3.4: Create Capability Documentation (1-2 hours)
+
+**Create README.md for each capability module:**
+
+1. **System Module READMEs:**
+
+   **packages/system/README.md** (Overview)
+   ```markdown
+   # System Modules
+
+   Core system functionality required for basic operation.
+   DO NOT disable these modules unless you know what you're doing.
+
+   ## Modules
+   - esphome_core.yaml - ESP32 configuration, PSRAM, logger
+   - display_hardware.yaml - Display, touchscreen, I2C/SPI buses
+   - networking.yaml - WiFi configuration, captive portal
+   - fonts_colors.yaml - Shared UI resources (fonts, colors, images)
+   - system_management.yaml - API, OTA, time, system buttons
+
+   ## Total Memory
+   ~238KB (required)
+
+   ## Dependencies
+   None (these are the foundation)
+   ```
+
+   **Individual system module READMEs** (5 files):
+   - Document what each module provides
+   - List all components defined
+   - Note dependencies
+   - Explain why it's required
+
+2. **Feature Module READMEs:**
+
+   **packages/features/clock/README.md:**
+   ```markdown
+   # Clock Capability
+
+   Large vertical time display with blinking colon animation.
+
+   ## Features
+   - Large vertical time display (hours:minutes)
+   - 12h/24h format switching
+   - Optional blinking colon animation
+   - AM/PM indicator (in 12h mode)
+   - Date and day of week display
+   - Page rotation integration
+
+   ## Files
+   - clock_base.yaml - Scripts, intervals, switches, globals
+   - clock_page.yaml - LVGL clock page display
+
+   ## Memory Usage
+   ~5KB total
+
+   ## Hardware Requirements
+   None (uses system time from Home Assistant + NTP)
+
+   ## Dependencies
+   - system/esphome_core.yaml
+   - system/fonts_colors.yaml
+   - system/system_management.yaml (time sources)
+
+   ## Configuration Options
+   - time_format switch: Toggle 12h/24h mode
+   - clock_colon_blink switch: Enable/disable blinking colon
+   - vertical_clock_enabled switch: Include in page rotation
+   - vertical_clock_order number: Set page order in rotation
+
+   ## Home Assistant Entities
+   - switch.{device}_time_format
+   - switch.{device}_clock_colon_blink
+   - switch.{device}_vertical_clock_enabled
+   - number.{device}_vertical_clock_order
+   - button.{device}_go_to_clock
+
+   ## Disabling This Capability
+   Comment out these lines in your device YAML:
+   ```yaml
+   # - packages/features/clock/clock_base.yaml
+   # - packages/features/clock/clock_page.yaml
+   ```
+
+   Memory saved: ~5KB
+   ```
+
+   **Create similar READMEs for:**
+   - [ ] airq/ (air quality monitoring)
+   - [ ] weather/ (weather display and forecasts)
+   - [ ] wifi_status/ (WiFi status page)
+   - [ ] wireguard/ (VPN functionality)
+   - [ ] ble/ (Bluetooth provisioning)
+   - [ ] page_rotation/ (auto-rotation)
+   - [ ] diagnostics/ (performance monitoring)
+
+3. **Weather sub-module documentation:**
+
+   Since weather has 6 files, document each:
+   - weather_base.yaml (required for weather)
+   - weather_page.yaml (current conditions)
+   - weather_daily.yaml (10-day forecast)
+   - weather_hourly.yaml (24-hour detailed)
+   - weather_hourly_summary.yaml (24-hour compact)
+   - weather_led_effects.yaml (LED animations)
+
+4. **Template for capability READMEs:**
+   ```markdown
+   # {Capability Name}
+
+   {One-line description}
+
+   ## Features
+   - {Feature 1}
+   - {Feature 2}
+
+   ## Files
+   - {file1.yaml} - {description}
+   - {file2.yaml} - {description}
+
+   ## Memory Usage
+   ~{X}KB total
+
+   ## Hardware Requirements
+   {List required hardware, or "None"}
+
+   ## Dependencies
+   - {dependency 1}
+   - {dependency 2}
+
+   ## Configuration Options
+   {List all switches, numbers, selects}
+
+   ## Home Assistant Entities
+   {List all exposed entities}
+
+   ## Disabling This Capability
+   {Instructions to comment out in device YAML}
+   Memory saved: ~{X}KB
+
+   ## Troubleshooting
+   {Common issues and solutions}
+   ```
+
+**Validation:**
+- Each capability has complete README
+- READMEs include all necessary information
+- Disable instructions are accurate
+- Memory usage is documented
+
+---
+
+#### Step 3.5: Update Core File Documentation (30 min)
+
+1. **Reduce Core file to minimal size:**
+   - Remove all extracted components
+   - Keep only LVGL display config and essential glue
+   - Update header comments to reflect new minimal role
+
+2. **Update Core file header:**
+   ```yaml
+   # ============================================================================
+   # HALO v1 - Minimal Core Configuration
+   # ============================================================================
+   # This file contains only essential components that must remain centralized:
+   #   - LVGL display initialization and pages (shared resource)
+   #   - Cross-capability navigation coordination
+   #   - API service definitions (if cross-capability)
+   #
+   # All feature-specific code has been extracted to capability modules.
+   # See packages/features/ for individual capabilities.
+   #
+   # File size: ~300-500 lines (reduced from 8,971 lines in Phase 1)
+   # Reduction: 94-97% smaller
+   # ============================================================================
+   ```
+
+3. **Add comments explaining what remains:**
+   - Document why LVGL stays in Core
+   - Document why navigation glue stays in Core
+   - Document what was extracted and where
+
+4. **Update version and date:**
+   - Update version to reflect Phase 3 completion
+   - Update "Last Updated" date
+   - Add Phase 3 completion note
+
+**Validation:**
+- Core file is minimal and well-documented
+- Clear explanations for remaining components
+- Easy to understand for new developers
+
+---
+
+#### Step 3.6: Update Main Documentation (30 min)
+
+1. **Update MODULARIZATION_PLAN_V2.md:**
+   - [ ] Update "Current Progress" table (all phases complete)
+   - [ ] Update "Latest Update" summary
+   - [ ] Update "Current Status" to reflect completion
+   - [ ] Add Phase 3 completion notes
+   - [ ] Document final Core file size
+   - [ ] Document total lines of code reduction
+
+2. **Update device YAML files:**
+   - [ ] Verify all import paths are correct
+   - [ ] Ensure comments explain each capability
+   - [ ] Document memory costs inline
+   - [ ] Provide clear disable instructions
+
+3. **Create main README (if needed):**
+   - Overview of modular architecture
+   - Link to capability READMEs
+   - Quick start guide
+   - Memory optimization guide
+
+**Validation:**
+- All documentation is up-to-date
+- Documentation matches actual implementation
+- Clear user guidance for customization
+
+---
+
+#### Step 3.7: Final Cleanup (30 min)
+
+1. **Remove deprecated files:**
+   ```bash
+   # Check for old package files that are no longer needed
+   find packages/ -name "*.yaml.bak" -o -name "*.old"
+
+   # Remove old base packages if fully replaced
+   # packages/base/globals.yaml
+   # packages/base/esphome_base.yaml
+   # packages/base/hardware.yaml
+   ```
+
+2. **Verify import order in device YAML:**
+   - [ ] globals.yaml loads first
+   - [ ] System modules load second
+   - [ ] Feature modules load third
+   - [ ] Pages load after their base modules
+   - [ ] Page rotation loads last
+
+3. **Clean up comments:**
+   - Remove "TODO" comments
+   - Remove "Phase 1/2" status comments
+   - Remove debugging comments
+   - Keep architectural comments
+
+4. **Git commit structure:**
+   - Commit Phase 3 changes with clear message
+   - Tag release as v2.0 (modular architecture complete)
+   - Update GitHub README
+
+**Validation:**
+- No deprecated files remain
+- Clean, professional codebase
+- Ready for production use
+
+---
+
+#### Step 3.8: Create Migration Guide for Users (1 hour)
+
+**Create MIGRATION_GUIDE.md:**
+
+1. **For existing Halo users upgrading to modular:**
+   - Backup current configuration
+   - How to adopt new package structure
+   - How to customize enabled features
+   - How to migrate custom changes
+
+2. **For new users:**
+   - Quick start guide
+   - How to select features
+   - Memory optimization guide
+   - Troubleshooting common issues
+
+3. **Include examples:**
+   - Minimal configuration (clock + system only)
+   - Standard configuration (all features)
+   - Low-memory configuration (BLE disabled)
+   - Weather-only configuration
+
+**Validation:**
+- Migration guide is complete
+- Examples are tested
+- User can easily customize their setup
+
+---
+
+## Phase 3 Completion Checklist
+
+- [ ] **Step 3.1:** Phase 2 verification complete
+- [ ] **Step 3.2:** All remaining components extracted from Core
+- [ ] **Step 3.3:** All capabilities tested independently and together
+- [ ] **Step 3.4:** All capability READMEs created
+- [ ] **Step 3.5:** Core file documentation updated
+- [ ] **Step 3.6:** Main documentation updated
+- [ ] **Step 3.7:** Cleanup complete
+- [ ] **Step 3.8:** Migration guide created
+
+**Final Validation:**
+- ✅ Core file is under 500 lines
+- ✅ All capabilities have complete documentation
+- ✅ All tests pass
+- ✅ Memory optimization validated
+- ✅ No deprecated files remain
+- ✅ Ready for v2.0 release
+
+**Success Metrics:**
+- Core file reduction: 94-97% (8,971 → 300-500 lines)
+- Modular organization: 8 independent capabilities
+- Easy customization: Comment out 1 line to disable a feature
+- Clear memory costs: Each capability documents its overhead
+- Production ready: Fully tested and documented
 
 ---
 
