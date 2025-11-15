@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.14.2104
+# Version: 25.11.14.2107
 # Last Updated: November 14, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.14.2104"
+  version: "25.11.14.2107"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -440,16 +440,15 @@ interval:
                                   animation: OUT_LEFT
                                   time: 300ms
                             else:
-                                                          else:
-                                                            # Unknown page - fall back to vertical clock
-                                                            - logger.log:
-                                                                format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
-                                                                args: ['id(current_page_name).c_str()']
-                                                                level: WARN
-                                                            - lvgl.page.show:
-                                                                      id: vertical_clock_page
-                                                                      animation: OUT_LEFT
-                                                                      time: 300ms
+                              # Unknown page - fall back to vertical clock
+                              - logger.log:
+                                  format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
+                                  args: ['id(current_page_name).c_str()']
+                                  level: WARN
+                              - lvgl.page.show:
+                                  id: vertical_clock_page
+                                  animation: OUT_LEFT
+                                  time: 300ms
 
 
   - interval: 1s  # Reduced from 5s for faster WiFi stats updates
