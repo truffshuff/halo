@@ -105,6 +105,7 @@ packages:
     url: https://github.com/truffshuff/halo/
     ref: modular
     files:
+
       # ============================================================================
       # GLOBAL VARIABLES (Must load FIRST)
       # ============================================================================
@@ -113,58 +114,148 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
 
       # ============================================================================
-      # SYSTEM MODULES (Required)
+      # SYSTEM MODULES (Required - ~238KB total)
       # ============================================================================
-      # Core hardware & software - these are essential for basic operation
+      # Core hardware & software - these are essential for basic operation.
+      # DO NOT disable unless you know what you're doing.
 
-      # Core ESP32 configuration (PSRAM, board, memory management)
+      # Core ESP32 configuration (~5KB)
+      # - ESP32-S3 board, PSRAM, external components, logger
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/esphome_core.yaml
 
-      # Display, touchscreen, I2C/SPI buses, backlight
+      # Display hardware (~15KB)
+      # - Display driver, touchscreen, I2C/SPI buses, backlight, watchdog
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/display_hardware.yaml
 
-      # WiFi base configuration (no VPN)
+      # Networking (~8KB)
+      # - WiFi configuration, captive portal, WiFi signal sensor
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/networking.yaml
 
-      # Fonts, colors, images (shared resources)
+      # Fonts, colors, images (~200KB - fonts are the largest memory consumer)
+      # - 9 Montserrat fonts, 6 Material Design Icon fonts, color palette
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/fonts_colors.yaml
 
-      # API, time sources, HTTP, system buttons
+      # System management (~10KB)
+      # - API, OTA, time sources, HTTP requests, system buttons
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/system_management.yaml
 
       # ============================================================================
-      # FEATURE MODULES (Optional - Phase 2)
+      # FEATURE MODULES (Optional - Pick what you need!)
       # ============================================================================
+      # Each feature is self-contained. Comment out lines to disable features.
+      # Memory savings are cumulative - disable multiple features to save more!
 
-      # BLE WiFi Provisioning (~40KB) - Improv protocol via phone
+      # -------------------------
+      # BLE WiFi Provisioning (~40KB - LARGEST optional feature)
+      # -------------------------
+      # Provides: Improv WiFi setup via phone app, Bluetooth proxy for HA
+      # Memory: ~40KB (BLE stack)
+      # Hardware: Built-in ESP32-S3 Bluetooth
+      # Disable to: Save 40KB memory (biggest savings!)
+      # Keep if: You need easy WiFi setup or Bluetooth proxy
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
 
-      # Clock Feature (~5KB) - Time display and clock page
+      # -------------------------
+      # Clock Feature (~5KB)
+      # -------------------------
+      # Provides: Large vertical time display, 12h/24h format, blinking colon
+      # Memory: ~5KB
+      # Hardware: None (uses system time)
+      # Disable to: Save 5KB if you don't need clock display
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/clock/clock_page.yaml
 
+      # -------------------------
+      # Air Quality Monitoring (~15KB)
+      # -------------------------
+      # Provides: CO2, PM2.5, VOC, Temperature, Humidity, AQI calculation
+      # Memory: ~15KB
+      # Hardware: SCD40, SEN55, MICS4514, BME280 sensors (ALL required)
+      # Disable to: Save 15KB if sensors not present
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_page.yaml
+
+      # -------------------------
+      # Weather Information (10-19KB depending on enabled pages)
+      # -------------------------
+      # Provides: Current conditions, forecasts, LED effects
+      # Memory: Base ~8KB, +2KB per forecast module
+      # Hardware: RGB LED optional (GPIO47), Home Assistant weather entity required
+      # Disable to: Save memory (biggest savings: disable weather_hourly = 7KB!)
+
+      # Weather base (REQUIRED for any weather features) - ~8KB
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_base.yaml
+
+      # Current conditions page (Recommended) - ~2KB
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_page.yaml
+
+      # 10-day daily forecast (Optional) - ~2KB
+      # IMPORTANT: daily-forecast-pages.yaml must be loaded BEFORE weather_daily.yaml (defines LVGL UI)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/daily-forecast-pages.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_daily.yaml
+
+      # 24-hour detailed forecast - 8 pages (Optional - LARGEST weather component!) - ~7KB
+      # Comment out to save 7KB! Use hourly_summary instead for compact view.
+      # IMPORTANT: hourly-forecast-pages.yaml must be loaded BEFORE weather_hourly.yaml (defines LVGL UI)
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/hourly-forecast-pages.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_hourly.yaml
+
+      # 24-hour summary - 2 pages (Optional) - ~1.5KB
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_hourly_summary.yaml
+
+      # Weather-based LED effects (Optional) - ~0.5KB
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_led_effects.yaml
+
+      # -------------------------
+      # WiFi Status Page (~3KB)
+      # -------------------------
+      # Provides: WiFi signal, IP address, SSID, HA connection status
+      # Memory: ~3KB
+      # Hardware: None (uses built-in WiFi)
+      # Disable to: Save 3KB if you don't need WiFi info page
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wifi_status/wifi_page_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wifi_status/wifi_page.yaml
+
+      # -------------------------
+      # WireGuard VPN (Optional - ~8KB)
+      # -------------------------
+      # Provides: Encrypted VPN tunnel to home network
+      # Memory: ~8KB
+      # Hardware: None
+      # Requirements: WireGuard server configured
+      # Disable to: Save 8KB if you don't use VPN
+      # IMPORTANT: Edit wireguard.yaml with your server details before enabling!
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wireguard/wireguard.yaml
+
+      # -------------------------
+      # Page Rotation (~2KB)
+      # -------------------------
+      # Provides: Automatic page rotation through enabled pages
+      # Memory: ~2KB
+      # Hardware: None
+      # Disable to: Save 2KB, but lose auto-rotation (manual navigation still works)
+      # IMPORTANT: Must be loaded AFTER all page modules!
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
+
+      # -------------------------
+      # Diagnostics (Optional - ~5-10KB)
+      # -------------------------
+      # Provides: Heap monitoring, PSRAM tracking, display health, performance metrics
+      # Memory: ~5-10KB
+      # Hardware: None
+      # Useful for: Debugging, development, monitoring device health
+      # Disable to: Save 5-10KB in production deployments
+      # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/diagnostics/diagnostics.yaml
+
       # ============================================================================
-      # LEGACY MODULES (Being replaced in Phase 2)
+      # CORE CONFIGURATION (1,761 lines - reduced from 8,971!)
       # ============================================================================
-      # These are being migrated to capability modules above:
-      # ✅ Clock capability - DONE (see features/clock/)
-      # 🚧 AirQ capability (airq_base.yaml + airq_page.yaml) - TODO
-      # 🚧 Weather capability (weather_base.yaml + weather pages) - TODO
-      # 🚧 WiFi status page capability - TODO
-      # 🚧 WireGuard capability - TODO
-      # 🚧 Page rotation capability - TODO
-      # 🚧 Diagnostics capability - TODO
-
-      # Page Modules - being migrated to features/
-      # REMOVED: clock-page.yaml (now in features/clock/)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/airq-page.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/pages/wifi-page.yaml
-
-      # Weather System Modules (Phase 3)
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/weather-led-effects.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/hourly-forecast-pages.yaml
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/weather/daily-forecast-pages.yaml
-
-      # Core Configuration - contains all remaining scripts, sensors, and LVGL pages
+      # Minimal core file now contains only:
+      # - LVGL display initialization
+      # - Remaining integration glue
+      # - Navigation coordination
+      # - Legacy components being phased out
+      #
+      # Most functionality has been extracted to capability modules above.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always
