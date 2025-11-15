@@ -253,12 +253,6 @@ light:
     on_turn_on:
       - logger.log: "Display backlight turned ON"
       - lambda: 'id(display_backlight_is_on) = true;'
-      - binary_sensor.template.publish:
-          id: display_backlight_state
-          state: ON
     on_turn_off:
       - logger.log: "Display backlight turned OFF"
       - lambda: 'id(display_backlight_is_on) = false;'
-      - binary_sensor.template.publish:
-          id: display_backlight_state
-          state: OFF
