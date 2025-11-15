@@ -428,6 +428,11 @@ interval:
 
   # Periodic Display Controller Health Check
   # The AXS15231 display controller can lose sync even while LVGL continues running
+  # This performs a display refresh cycle to keep the controller in sync
+  # NOTE: We don't call display->setup() here because it tries to re-register the SPI device
+  # which causes "[E][spi:021]: Device already registered" errors. The backlight cycle
+  # and LVGL pause/resume is sufficient for periodic maintenance. For actual problems,
+  # the watchdog and manual recovery button perform full hardware resets.
   - interval: 5min
     then:
       - if:
@@ -436,22 +441,22 @@ interval:
               // Only run if watchdog is enabled and boot complete
               if (!id(display_watchdog_enabled) || !id(boot_complete)) return false;
 
-              ESP_LOGI("display_health", "Performing periodic display controller health check");
+              ESP_LOGD("display_health", "Performing periodic display refresh cycle");
               return true;
           then:
             - logger.log: "=== PERIODIC DISPLAY HEALTH CHECK ==="
             - output.turn_off: backlight
-            - delay: 100ms
+            - delay: 200ms
             - lvgl.pause:
-            - delay: 100ms
+            - delay: 300ms
+            # Force a display update to refresh the controller state
             - lambda: |-
-                auto *display = id(lily_display);
-                if (display != nullptr) {
-                  display->setup();  // Re-initialize display controller
-                }
-            - delay: 100ms
+                ESP_LOGD("display_health", "Refreshing display controller state...");
+                // Trigger a display update without calling setup()
+                id(lily_display)->update();
+            - delay: 300ms
             - lvgl.resume:
-            - delay: 100ms
+            - delay: 200ms
             - output.turn_on: backlight
             - delay: 100ms
             - lambda: |-
