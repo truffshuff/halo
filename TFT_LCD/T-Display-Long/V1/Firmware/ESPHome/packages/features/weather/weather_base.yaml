@@ -392,8 +392,7 @@ sensor:
   # Current weather sensors from Home Assistant
   - platform: homeassistant
     id: current_temp_sensor
-    entity_id: ${weather_entity_id}
-    attribute: temperature
+    entity_id: ${current_temp_sensor}
     on_value:
       then:
         - lambda: |-
@@ -405,8 +404,7 @@ sensor:
 
   - platform: homeassistant
     id: apparent_temp_sensor
-    entity_id: ${weather_entity_id}
-    attribute: apparent_temperature
+    entity_id: ${apparent_temp_sensor}
     on_value:
       then:
         - lambda: |-
