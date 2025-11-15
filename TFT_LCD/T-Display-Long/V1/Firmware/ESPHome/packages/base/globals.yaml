@@ -195,42 +195,11 @@ globals:
     restore_value: no
     initial_value: 'false'
 
-  - id: wg_status_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wg_status_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_status_connected_state
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_status_color_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_address_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wg_address_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_handshake_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wg_handshake_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wg_endpoint_initialized
-    type: bool
-    restore_value: no
-    initial_value: 'false'
+  # WireGuard globals moved to features/wireguard/wireguard.yaml (Phase 2):
+  # - wg_status_last_text, wg_status_needs_render, wg_status_connected_state, wg_status_color_needs_render
+  # - wg_address_last_text, wg_address_needs_render
+  # - wg_handshake_last_text, wg_handshake_needs_render
+  # - wg_endpoint_last_text, wg_endpoint_needs_render
 
   # REMOVED: CO2 calibration globals - moved to packages/features/airq/airq_base.yaml
   # (calibration_pending, calibration_confirm_time)

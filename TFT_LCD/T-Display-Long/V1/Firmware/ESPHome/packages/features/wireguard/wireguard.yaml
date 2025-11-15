@@ -36,6 +36,58 @@
 # ============================================================================
 
 # ============================================================================
+# Global Variables
+# ============================================================================
+globals:
+  # WireGuard status tracking
+  - id: wg_status_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wg_status_color_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # WireGuard VPN IP address tracking
+  - id: wg_address_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_address_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # WireGuard handshake tracking
+  - id: wg_handshake_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_handshake_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # WireGuard endpoint tracking
+  - id: wg_endpoint_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: wg_endpoint_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+# ============================================================================
 # WireGuard VPN Configuration
 # ============================================================================
 wireguard:
@@ -156,6 +208,23 @@ text_sensor:
                 id(wg_address_needs_render) = true;
               }
 
+  # WireGuard endpoint (peer server) - initialized once at boot
+  - platform: template
+    name: "WireGuard Endpoint"
+    id: wireguard_endpoint_text
+    lambda: |-
+      return {"${wg_peerendpt}:${wg_peerport}"};
+    update_interval: never
+    on_value:
+      then:
+        - lambda: |-
+            std::string endpoint_text = "Endpoint:\n";
+            endpoint_text += x;
+            if (endpoint_text != id(wg_endpoint_last_text)) {
+              id(wg_endpoint_last_text) = endpoint_text;
+              id(wg_endpoint_needs_render) = true;
+            }
+
 # ============================================================================
 # Boot Sequence Integration
 # ============================================================================
@@ -178,6 +247,11 @@ esphome:
             ESP_LOGI("wireguard_delayed", "Checking WireGuard enable state after 20s delay...");
             ESP_LOGI("wireguard_delayed", "Free internal heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
             ESP_LOGI("wireguard_delayed", "WireGuard switch state: %s", id(wireguard_enabled).state ? "ON" : "OFF");
+        # Initialize endpoint text sensor (one-time update)
+        - text_sensor.template.publish:
+            id: wireguard_endpoint_text
+            state: !lambda |-
+              return "${wg_peerendpt}:${wg_peerport}";
         - if:
             condition:
               lambda: 'return id(wireguard_enabled).state;'
