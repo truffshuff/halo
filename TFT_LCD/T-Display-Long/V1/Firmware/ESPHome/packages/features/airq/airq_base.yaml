@@ -39,6 +39,23 @@
 # Globals
 # ============================================================================
 globals:
+  # Page rotation configuration
+  - id: page_rotation_AirQ_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: page_rotation_AirQ_order
+    type: int
+    restore_value: yes
+    initial_value: '2'
+
+  # WiFi status indicator state for AirQ page
+  - id: airq_wifi_stat_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   # Temperature unit conversion flag
   # Triggers UI refresh when temperature unit is changed
   - id: temp_unit_changed

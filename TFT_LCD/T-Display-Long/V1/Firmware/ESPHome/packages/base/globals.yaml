@@ -1,43 +1,35 @@
 # ============================================================================
-# Global Variables - State Management
+# Global Variables - Shared System State
 # ============================================================================
-# All global state variables used across HALO v1
-# Dependencies: None
+# System-level global variables shared across multiple modules
+# Dependencies: None (loaded first)
 #
-# ⚠️ KNOWN ISSUE: This file contains 100+ globals, many of which could be
-# refactored to use better patterns (sensors, local variables, LVGL state).
-# The current implementation works but is not optimal.
+# This file contains ONLY globals that are truly shared across multiple modules
+# or are fundamental to system operation. Feature-specific globals have been
+# moved to their respective feature files.
 #
-# FUTURE REFACTORING OPPORTUNITIES (Phase 5+):
-#   - Weather data arrays (~45 vars) → Could use text sensors with JSON storage
-#   - UI render flags (~25 vars) → Could use sensor on_value triggers
-#   - Performance tracking (~6 vars) → Could be local to lambda functions
+# CONTENTS:
+#   - Startup/boot state (cycleCounter for LED animation)
+#   - OTA operation state (ota_in_progress)
+#   - Display backlight state (display_backlight_is_on)
+#   - Sensor UI batching (sensor_ui_dirty, last_sensor_ui_update)
+#   - Default page configuration (default_page_index)
 #
-# LEGITIMATE GLOBALS (~30 vars):
-#   - User preferences with restore_value: yes (persist across reboots)
-#   - Cross-script shared state (locks, timestamps, current page)
-#   - State that must survive deep sleep or span multiple script executions
-#
-# This module contains 100+ global variables used for:
-#   - Page tracking and rotation
-#   - Weather data storage (current, daily forecast, hourly forecast)
-#   - Display state management (watchdog, backlight, rendering flags)
-#   - WiFi and system status tracking
-#   - Performance monitoring
+# MIGRATED GLOBALS (Phase 2 Complete):
+#   - Clock → features/clock/clock_base.yaml
+#   - Page Rotation → features/page_rotation/page_rotation.yaml
+#   - Weather → features/weather/weather_base.yaml
+#   - WireGuard → features/wireguard/wireguard.yaml
+#   - AirQ → features/airq/airq_base.yaml
+#   - WiFi Status → features/wifi_status/wifi_page_base.yaml
+#   - Diagnostics → features/diagnostics/diagnostics.yaml
 # ============================================================================
 
 globals:
-  # Note: Page rotation master globals moved to features/page_rotation/page_rotation.yaml (Phase 2)
-  # - current_page_name
 
-  # Note: Clock globals moved to features/clock/clock_base.yaml (Phase 2)
-  # - page_rotation_vertical_clock_enabled
-  # - page_rotation_vertical_clock_order
-  # - colon_blink_state
-  # - time_update_last_started
-  # - time_update_last_duration
-  # - time_update_last_text
-  # - time_update_needs_render
+  # ============================================================================
+  # Startup/Boot State
+  # ============================================================================
 
   # Startup light blink cycle counter
   # Tracks how many 1-second intervals have passed during startup LED animation
@@ -49,54 +41,30 @@ globals:
     restore_value: no
     initial_value: '0'
 
-  # Diagnostics globals moved to features/diagnostics/diagnostics.yaml (Phase 2):
-  # - last_display_update_time (uint32_t)
-  # - display_watchdog_enabled (bool)
-  # - boot_complete (bool)
-
-  # Temperature unit change flag
-  # REMOVED: temp_unit_changed - moved to packages/features/airq/airq_base.yaml
-
-  # Page rotation globals moved to features/page_rotation/page_rotation.yaml (Phase 2):
-  # - current_page_name (std::string)
-  # - last_touch_time (int)
-  # - auto_page_rotation_enabled (bool)
-  # - auto_page_rotation_interval (int)
-  # - last_auto_rotation_time (unsigned long)
-
-  # Weather globals moved to features/weather/weather_base.yaml (Phase 2):
-  # - weather_fetch_lock
-  # - weather_last_started, weather_last_duration, weather_last_condition, weather_needs_render
-  # - weather_current_temp, weather_current_apparent_temp, weather_current_condition, weather_current_humidity
-  # - weather_forecast_temp_high, weather_forecast_temp_low, weather_forecast_condition, weather_forecast_precip_prob, weather_forecast_datetime
-  # - weather_hourly_temp, weather_hourly_apparent_temp, weather_hourly_condition, weather_hourly_precip_prob, weather_hourly_datetime
-  # - weather_hourly_humidity, weather_hourly_precipitation, weather_hourly_pressure, weather_hourly_uv_index
-  # - weather_hourly_wind_speed, weather_hourly_wind_bearing
-  # - weather_last_update, weather_daily_last_update, weather_hourly_last_update, weather_on_weather_page
-  # - page_rotation_weather_enabled, page_rotation_daily_forecast_enabled, page_rotation_hourly_forecast_enabled, page_rotation_hourly_summary_enabled
-  # - page_rotation_weather_order, page_rotation_daily_forecast_order, page_rotation_hourly_forecast_order, page_rotation_hourly_summary_order
-
   # ============================================================================
-  # Page Rotation Configuration Globals
+  # Page Configuration
   # ============================================================================
-  # These globals control which pages appear in the rotation and their order.
-  # - *_enabled: Set to true/false to include/exclude page from rotation
-  # - *_order: Numeric order (1-6, lower numbers appear first)
-  #
-  # All page rotation settings are defined in this file.
-  # Adjust values here or via Home Assistant switches at runtime.
-  # ============================================================================
+
+  # Default page to show on startup
   - id: default_page_index
     type: int
     restore_value: yes
     initial_value: '0'
-  # current_page_index replaced with current_page_name (defined at top of globals)
-  # Using string page IDs instead of numeric indices for flexibility
-  # Note: boot_complete moved to features/diagnostics/diagnostics.yaml (Phase 2)
+
+  # ============================================================================
+  # OTA Operations
+  # ============================================================================
+
+  # Flag to indicate OTA firmware update in progress
+  # Prevents page rotation and other operations during critical updates
   - id: ota_in_progress
     type: bool
     restore_value: no
-    initial_value: 'false'  # Set to true during OTA or other critical operations
+    initial_value: 'false'
+
+  # ============================================================================
+  # Display State Management
+  # ============================================================================
 
   # Display backlight state tracking
   # Used to prevent redundant backlight on/off commands
@@ -112,96 +80,17 @@ globals:
   # sensor value updates are batched and refreshed at 2-second intervals
   # instead of updating the display on every sensor change.
   #
+  # These globals are shared across multiple sensor modules and Core
   # - sensor_ui_dirty: Set when any sensor value changes
   # - last_sensor_ui_update: Timestamp of last batch UI refresh (in milliseconds)
   # ============================================================================
+
   - id: sensor_ui_dirty
     type: bool
     restore_value: no
     initial_value: 'false'
+
   - id: last_sensor_ui_update
     type: uint32_t
     restore_value: no
     initial_value: '0'
-
-  # Page rotation settings - which pages are included
-  - id: page_rotation_AirQ_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-
-  - id: page_rotation_AirQ_order
-    type: int
-    restore_value: yes
-    initial_value: '2'
-
-  # WiFi status indicator state for AirQ page
-  - id: airq_wifi_stat_connected_state
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  - id: page_rotation_wifi_enabled
-    type: bool
-    restore_value: yes
-    initial_value: 'true'
-
-  # Page rotation order (1-7, lower numbers show first)
-  - id: page_rotation_wifi_order
-    type: int
-    restore_value: yes
-    initial_value: '3'
-
-  - id: wifi_logo_visible
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wifi_signal_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wifi_signal_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wifi_signal_bar_last_value
-    type: float
-    restore_value: no
-    initial_value: '-200.0'
-  - id: wifi_signal_bar_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wifi_ssid_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wifi_ssid_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: wifi_ip_last_text
-    type: std::string
-    restore_value: no
-    initial_value: ""
-  - id: wifi_ip_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: ha_status_last_state
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: ha_status_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-  # WireGuard globals moved to features/wireguard/wireguard.yaml (Phase 2):
-  # - wg_status_last_text, wg_status_needs_render, wg_status_connected_state, wg_status_color_needs_render
-  # - wg_address_last_text, wg_address_needs_render
-  # - wg_handshake_last_text, wg_handshake_needs_render
-  # - wg_endpoint_last_text, wg_endpoint_needs_render
-
-  # REMOVED: CO2 calibration globals - moved to packages/features/airq/airq_base.yaml
-  # (calibration_pending, calibration_confirm_time)

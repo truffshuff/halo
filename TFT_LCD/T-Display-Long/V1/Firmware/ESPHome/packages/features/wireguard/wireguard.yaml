@@ -36,6 +36,15 @@
 # ============================================================================
 
 # ============================================================================
+# Substitutions
+# ============================================================================
+# WireGuard endpoint configuration pulled from secrets
+# Device files only need to define secrets, not substitutions
+substitutions:
+  wg_peerendpt: !secret wg_peerendpt  # WireGuard server endpoint (hostname or IP)
+  wg_peerport: !secret wg_peerport    # WireGuard server port
+
+# ============================================================================
 # Global Variables
 # ============================================================================
 globals:
