@@ -465,7 +465,7 @@ text_sensor:
             ESP_LOGI("weather", "Weather condition updated: %s", x.c_str());
             // Update weather icon color when condition changes
             if (id(current_page_name) == "weather") {
-              id(script_update_weather_icon_color).execute();
+              id(update_weather_icon_color).execute();
             }
 
 # ============================================================================
