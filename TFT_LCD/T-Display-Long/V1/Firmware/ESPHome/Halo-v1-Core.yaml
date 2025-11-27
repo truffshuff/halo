@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.11.27.1549
+# Version: 25.11.27.1554
 # Last Updated: November 27, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.11.27.1549"
+  version: "25.11.27.1554"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -852,7 +852,7 @@ esphome:
 
         # Map user's text selection to page index number
         - lambda: |-
-            const std::string &choice = id(default_page_select_boot).state;
+            const std::string &choice = id(default_page_select_boot).current_option();
             // Core pages
             if (choice == "Vertical Clock") {
             id(default_page_index) = 0;  // vertical_clock_page
