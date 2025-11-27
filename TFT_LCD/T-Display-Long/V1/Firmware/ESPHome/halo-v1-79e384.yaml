@@ -280,29 +280,3 @@ packages:
       # Most functionality has been extracted to capability modules above.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always
-
-# ============================================================================
-# MEMORY OPTIMIZATION GUIDE
-# ============================================================================
-# Current configuration memory usage:
-#   System modules: ~238KB (required)
-#   BLE: ~40KB (optional - BIGGEST savings if disabled!)
-#   Clock: ~5KB
-#   AirQ: ~15KB
-#   Weather: ~10-19KB (depends on enabled forecast pages)
-#   WiFi Status: ~3KB
-#   WireGuard: ~8KB
-#   Page Rotation: ~2KB
-#   Diagnostics: ~5-10KB (if enabled)
-#
-# TOTAL (all features): ~326-335KB
-#
-# To save memory, disable features in this order:
-# 1. BLE (saves 40KB) - if you don't need WiFi provisioning
-# 2. Weather hourly (saves 7KB) - use hourly_summary instead
-# 3. WireGuard (saves 8KB) - if you don't use VPN
-# 4. Diagnostics (saves 5-10KB) - disable in production
-# 5. AirQ (saves 15KB) - if sensors not present
-# 6. Weather entirely (saves 10-19KB) - if not needed
-#
-# ============================================================================
