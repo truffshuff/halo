@@ -608,7 +608,7 @@ sensor:
       name: "SEN55 Temperature"
       accuracy_decimals: 1
       filters:
-        - offset: !lambda return -1.0 * id(sen55_temperature_offset).current_option();
+        - offset: !lambda return -1.0 * id(sen55_temperature_offset).state;
         - throttle_average: 2s
       on_value:
         then:
@@ -668,7 +668,7 @@ sensor:
     humidity:
       name: "SEN55 Humidity"
       filters:
-        - lambda: return x - id(sen55_humidity_offset).current_option();
+        - lambda: return x - id(sen55_humidity_offset).state;
       accuracy_decimals: 0
       on_value:
         then:
