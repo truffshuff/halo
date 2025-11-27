@@ -266,7 +266,7 @@ packages:
       # Hardware: None
       # Useful for: Debugging, development, monitoring device health
       # Disable to: Save 5-10KB in production deployments
-      # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/diagnostics/diagnostics.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/diagnostics/diagnostics.yaml
 
       # ============================================================================
       # CORE CONFIGURATION (1,761 lines - reduced from 8,971!)
