@@ -40,6 +40,7 @@ external_components:
 psram:
   mode: octal
   speed: 80MHz
+  ignore_not_found: false  # Enable larger WiFi buffers
 
 # ============================================================================
 # ESP32 Board Configuration
