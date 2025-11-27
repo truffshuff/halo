@@ -142,7 +142,7 @@ sensor:
         # Update LED effect when AQI changes if "AQI Color" effect is selected
         - if:
             condition:
-              lambda: 'return id(led_effect_select).state == "AQI Color";'
+              lambda: 'return id(led_effect_select).current_option() == "AQI Color";'
             then:
               - lambda: |-
                   float aqi = x;
@@ -619,9 +619,9 @@ sensor:
                 - lvgl.label.update:
                     id: temperature_units
                     text: !lambda |-
-                      if(id(display_temperature_unit).state == "Fahrenheit")
+                      if(id(display_temperature_unit).current_option() == "Fahrenheit")
                         return "\u00B0F";
-                      else if(id(display_temperature_unit).state == "Kelvin")
+                      else if(id(display_temperature_unit).current_option() == "Kelvin")
                         return "K";
                       return "\u00B0C";
                 - globals.set:
@@ -631,9 +631,9 @@ sensor:
               id: temperature_value
               text: !lambda |-
                 static char buffer[10];
-                if(id(display_temperature_unit).state == "Fahrenheit")
+                if(id(display_temperature_unit).current_option() == "Fahrenheit")
                   snprintf(buffer, sizeof(buffer), "%.01f", (x * 9.0 / 5.0) + 32.0);
-                else if(id(display_temperature_unit).state == "Kelvin")
+                else if(id(display_temperature_unit).current_option() == "Kelvin")
                   snprintf(buffer, sizeof(buffer), "%.01f", x + 273.15);
                 else
                   snprintf(buffer, sizeof(buffer), "%.01f", x);

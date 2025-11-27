@@ -218,7 +218,7 @@ interval:
     then:
       - if:
           condition:
-            lambda: 'return id(boot_complete) && id(colon_blink_enabled).current_option();'
+            lambda: 'return id(boot_complete) && id(colon_blink_enabled).state;'
           then:
             - lambda: 'id(colon_blink_state) = !id(colon_blink_state);'
             - script.execute: update_colon_widget
