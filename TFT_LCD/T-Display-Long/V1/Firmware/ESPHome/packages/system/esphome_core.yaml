@@ -61,7 +61,8 @@ esp32:
   framework:
     type: esp-idf
     advanced:
-      main_loop_stack_size: 24576
+      loop_task_stack_size: 24576
+      execute_from_psram: true
     # Use ESPHome-supported framework channels. Options: recommended (default), latest, dev
     # Switch to 'dev' to pick up the very latest ESP-IDF/NimBLE fixes sooner.
     version: recommended
