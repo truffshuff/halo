@@ -263,7 +263,7 @@ esphome:
               return "${wg_peerendpt}:${wg_peerport}";
         - if:
             condition:
-              lambda: 'return id(wireguard_enabled).state;'
+              lambda: 'return id(wireguard_enabled).current_option();'
             then:
               - wireguard.enable:
                   id: wg0

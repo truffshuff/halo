@@ -72,7 +72,7 @@ lvgl:
               - lvgl.label.update:
                   id: co2_value
                   text_color: !lambda |-
-                    float co2_val = id(co2).state;
+                    float co2_val = id(co2).current_option();
                     if (co2_val <= 600) return id(my_green);
                     else if (co2_val <= 1000) return id(my_yellow);
                     else if (co2_val <= 1500) return id(my_orange);
@@ -90,7 +90,7 @@ lvgl:
               - lvgl.label.update:
                   id: no2_value
                   text_color: !lambda |-
-                    float no2_val = id(no2).state;
+                    float no2_val = id(no2).current_option();
                     if (no2_val <= 0.03) return id(my_green);
                     else if (no2_val <= 0.06) return id(my_yellow);
                     else if (no2_val <= 0.1) return id(my_orange);
@@ -108,7 +108,7 @@ lvgl:
               - lvgl.label.update:
                   id: co_value
                   text_color: !lambda |-
-                    float co_val = id(co).state;
+                    float co_val = id(co).current_option();
                     if (co_val <= 15) return id(my_green);
                     else if (co_val <= 30) return id(my_yellow);
                     else if (co_val <= 36) return id(my_orange);
@@ -126,7 +126,7 @@ lvgl:
               - lvgl.label.update:
                   id: h2_value
                   text_color: !lambda |-
-                    float h2_val = id(h2).state;
+                    float h2_val = id(h2).current_option();
                     if (h2_val <= 0.4) return id(my_green);
                     else if (h2_val <= 1.0) return id(my_yellow);
                     else if (h2_val <= 2.0) return id(my_orange);
@@ -144,7 +144,7 @@ lvgl:
               - lvgl.label.update:
                   id: ch4_value
                   text_color: !lambda |-
-                    float ch4_val = id(ch4).state;
+                    float ch4_val = id(ch4).current_option();
                     if (ch4_val <= 2.0) return id(my_green);
                     else if (ch4_val <= 10.0) return id(my_yellow);
                     else return id(my_red);
@@ -161,7 +161,7 @@ lvgl:
               - lvgl.label.update:
                   id: ethanol_value
                   text_color: !lambda |-
-                    float ethanol_val = id(ethanol).state;
+                    float ethanol_val = id(ethanol).current_option();
                     if (ethanol_val <= 0.5) return id(my_green);
                     else if (ethanol_val <= 1.5) return id(my_yellow);
                     else if (ethanol_val <= 3.0) return id(my_orange);
@@ -179,7 +179,7 @@ lvgl:
               - lvgl.label.update:
                   id: nh3_value
                   text_color: !lambda |-
-                    float nh3_val = id(nh3).state;
+                    float nh3_val = id(nh3).current_option();
                     if (nh3_val <= 0.5) return id(my_green);
                     else if (nh3_val <= 1.0) return id(my_yellow);
                     else if (nh3_val <= 2.0) return id(my_orange);
@@ -237,7 +237,7 @@ lvgl:
               - lvgl.widget.update:
                   id: aqi_widget
                   bg_color: !lambda |-
-                    float aqi = id(computed_halo_aqi).state;
+                    float aqi = id(computed_halo_aqi).current_option();
                     if (aqi <= 50) return id(my_green);
                     else if (aqi <= 100) return id(my_yellow);
                     else if (aqi <= 150) return id(my_orange);
