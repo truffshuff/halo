@@ -164,7 +164,7 @@ light:
           update_interval: 100ms
           lambda: |-
               // Auto Context: Show AQI color if AQI > 50, otherwise show weather condition
-              float aqi = id(computed_halo_aqi).state;
+              float aqi = id(computed_halo_aqi).current_option();
               Color color = Color::WHITE;
 
               if (!std::isnan(aqi) && aqi > 50) {

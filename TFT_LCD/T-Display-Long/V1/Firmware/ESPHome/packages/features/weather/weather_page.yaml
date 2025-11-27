@@ -167,7 +167,7 @@ script:
       - lvgl.indicator.update:
           id: wind_compass_needle
           value: !lambda |-
-            float b = id(wind_direction_sensor).state;
+            float b = id(wind_direction_sensor).current_option();
             if (std::isnan(b)) return 0;
             return (int)b;
 
@@ -491,7 +491,7 @@ lvgl:
               - label:
                   id: lbl_wind_direction_text
                   text: !lambda |-
-                    float b = id(wind_direction_sensor).state;
+                    float b = id(wind_direction_sensor).current_option();
                     if (std::isnan(b)) return std::string("--");
                     const char* dir;
                     if (b >= 337.5 || b < 22.5) dir = "N";
