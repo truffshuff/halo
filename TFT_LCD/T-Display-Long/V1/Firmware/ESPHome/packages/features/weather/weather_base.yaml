@@ -605,12 +605,10 @@ script:
       - homeassistant.action:
           action: weather.get_forecasts
           data:
-            type: daily
-          data_template:
             entity_id: ${weather_entity_id}
+            type: daily
           capture_response: true
-          response_variable: forecast_response
-          on_response:
+          on_success:
             then:
               - lambda: |-
                   // Feed watchdog at start of processing
@@ -624,84 +622,68 @@ script:
                          heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
                          heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
-                  // CRITICAL: Allocate JsonDocument explicitly from PSRAM
-                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-                  if (json_buffer == nullptr) {
-                    ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
-                    return;
-                  }
-                  JsonDocument *doc = new (json_buffer) JsonDocument;
-
-                  // Parse the response - ESPHome should provide this as JSON
-                  // Response format should be: {"weather.hhut": {"forecast": [...]}}
-                  *doc = forecast_response;
-
+                  // response is provided by ESPHome as JsonObjectConst
+                  // Response format: {"weather.hhut": {"forecast": [...]}}
                   const char *entity_key = "${weather_entity_id}";
 
-                  if (!(*doc)[entity_key].is<JsonObject>()) {
+                  if (!response.containsKey(entity_key)) {
                     ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
                     return;
                   }
 
-                  JsonObject entity_data = (*doc)[entity_key];
+                  JsonObjectConst entity_data = response[entity_key];
 
-                  if (!entity_data["forecast"].is<JsonArray>()) {
+                  if (!entity_data.containsKey("forecast")) {
                     ESP_LOGW("weather", "No 'forecast' key in daily response");
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
                     return;
                   }
 
-                  JsonArray forecast_array = entity_data["forecast"];
+                  JsonArrayConst forecast_array = entity_data["forecast"];
                   int day_count = std::min((int)forecast_array.size(), 10);
                   ESP_LOGI("weather", "Found %d days of forecast data", day_count);
 
                   // Feed watchdog before processing loop
                   App.feed_wdt();
 
-                  for (int i = 0; i < day_count; i++) {
-                    JsonObject day = forecast_array[i];
+                  int idx = 0;
+                  for (JsonObjectConst day : forecast_array) {
+                    if (idx >= 10) break;
 
                     // Feed watchdog every 3 days
-                    if (i > 0 && i % 3 == 0) {
+                    if (idx > 0 && idx % 3 == 0) {
                       App.feed_wdt();
                     }
 
-                    if (day["temperature"].is<float>()) {
-                      id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
+                    if (day.containsKey("temperature")) {
+                      id(weather_forecast_temp_high)[idx] = day["temperature"].as<float>();
                     }
 
-                    if (day["templow"].is<float>()) {
-                      id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
+                    if (day.containsKey("templow")) {
+                      id(weather_forecast_temp_low)[idx] = day["templow"].as<float>();
                     }
 
-                    if (day["condition"].is<const char*>()) {
-                      id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
+                    if (day.containsKey("condition")) {
+                      id(weather_forecast_condition)[idx] = day["condition"].as<std::string>();
                     }
 
-                    if (day["precipitation_probability"].is<float>()) {
-                      id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
+                    if (day.containsKey("precipitation_probability")) {
+                      id(weather_forecast_precip_prob)[idx] = day["precipitation_probability"].as<float>();
                     }
 
-                    if (day["datetime"].is<const char*>()) {
-                      id(weather_forecast_datetime)[i] = day["datetime"].as<std::string>();
+                    if (day.containsKey("datetime")) {
+                      id(weather_forecast_datetime)[idx] = day["datetime"].as<std::string>();
                     }
 
                     // Extract "current" weather from today's forecast (day 0)
-                    if (i == 0) {
-                      if (day["condition"].is<const char*>()) {
+                    if (idx == 0) {
+                      if (day.containsKey("condition")) {
                         id(weather_current_condition) = day["condition"].as<std::string>();
                         ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
                       }
                     }
+                    idx++;
                   }
                   ESP_LOGI("weather", "✓ Daily forecast stored successfully");
-
-                  // Clean up PSRAM-allocated JSON document
-                  doc->~JsonDocument();
-                  heap_caps_free(json_buffer);
 
                   ESP_LOGI("weather", "Free heap after parse - Internal: %d, PSRAM: %d",
                          heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
@@ -720,6 +702,11 @@ script:
               - script.execute: update_weather_icon_color
               - delay: 50ms
               - script.execute: update_daily_forecast_display
+          on_error:
+            then:
+              - logger.log:
+                  format: "✗ Daily forecast fetch failed via native action"
+                  level: ERROR
 
       - lambda: |-
           // Always clear the lock when done
@@ -953,12 +940,10 @@ script:
       - homeassistant.action:
           action: weather.get_forecasts
           data:
-            type: hourly
-          data_template:
             entity_id: ${weather_entity_id}
+            type: hourly
           capture_response: true
-          response_variable: forecast_response
-          on_response:
+          on_success:
             then:
               - lambda: |-
                   // Feed watchdog at start of processing
@@ -972,101 +957,85 @@ script:
                          heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
                          heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
-                  // CRITICAL: Allocate JsonDocument explicitly from PSRAM
-                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-                  if (json_buffer == nullptr) {
-                    ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
-                    return;
-                  }
-                  JsonDocument *doc = new (json_buffer) JsonDocument;
-
-                  // Parse the response - ESPHome should provide this as JSON
-                  // Response format should be: {"weather.hhut": {"forecast": [...]}}
-                  *doc = forecast_response;
-
+                  // response is provided by ESPHome as JsonObjectConst
+                  // Response format: {"weather.hhut": {"forecast": [...]}}
                   const char *entity_key = "${weather_entity_id}";
 
-                  if (!(*doc)[entity_key].is<JsonObject>()) {
+                  if (!response.containsKey(entity_key)) {
                     ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
                     return;
                   }
 
-                  JsonObject entity_data = (*doc)[entity_key];
+                  JsonObjectConst entity_data = response[entity_key];
 
-                  if (!entity_data["forecast"].is<JsonArray>()) {
+                  if (!entity_data.containsKey("forecast")) {
                     ESP_LOGW("weather", "No 'forecast' key in hourly response");
-                    doc->~JsonDocument();
-                    heap_caps_free(json_buffer);
                     return;
                   }
 
-                  JsonArray forecast_array = entity_data["forecast"];
+                  JsonArrayConst forecast_array = entity_data["forecast"];
                   int hour_count = std::min((int)forecast_array.size(), 24);
                   ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
 
                   // Feed watchdog before processing loop
                   App.feed_wdt();
 
-                  for (int i = 0; i < hour_count; i++) {
-                    JsonObject hour = forecast_array[i];
+                  int idx = 0;
+                  for (JsonObjectConst hour : forecast_array) {
+                    if (idx >= 24) break;
 
                     // Feed watchdog every 6 hours
-                    if (i > 0 && i % 6 == 0) {
+                    if (idx > 0 && idx % 6 == 0) {
                       App.feed_wdt();
                     }
 
-                    if (hour["temperature"].is<float>()) {
-                      id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                    if (hour.containsKey("temperature")) {
+                      id(weather_hourly_temp)[idx] = hour["temperature"].as<float>();
                     }
 
-                    if (hour["apparent_temperature"].is<float>()) {
-                      id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                    if (hour.containsKey("apparent_temperature")) {
+                      id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"].as<float>();
                     }
 
-                    if (hour["condition"].is<const char*>()) {
-                      id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                    if (hour.containsKey("condition")) {
+                      id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
                     }
 
-                    if (hour["precipitation_probability"].is<float>()) {
-                      id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                    if (hour.containsKey("precipitation_probability")) {
+                      id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"].as<float>();
                     }
 
-                    if (hour["datetime"].is<const char*>()) {
-                      id(weather_hourly_datetime)[i] = hour["datetime"].as<std::string>();
+                    if (hour.containsKey("datetime")) {
+                      id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
                     }
 
                     // Additional hourly data fields
-                    if (hour["humidity"].is<float>()) {
-                      id(weather_hourly_humidity)[i] = hour["humidity"].as<float>();
+                    if (hour.containsKey("humidity")) {
+                      id(weather_hourly_humidity)[idx] = hour["humidity"].as<float>();
                     }
 
-                    if (hour["precipitation"].is<float>()) {
-                      id(weather_hourly_precipitation)[i] = hour["precipitation"].as<float>();
+                    if (hour.containsKey("precipitation")) {
+                      id(weather_hourly_precipitation)[idx] = hour["precipitation"].as<float>();
                     }
 
-                    if (hour["pressure"].is<float>()) {
-                      id(weather_hourly_pressure)[i] = hour["pressure"].as<float>();
+                    if (hour.containsKey("pressure")) {
+                      id(weather_hourly_pressure)[idx] = hour["pressure"].as<float>();
                     }
 
-                    if (hour["uv_index"].is<float>()) {
-                      id(weather_hourly_uv_index)[i] = hour["uv_index"].as<float>();
+                    if (hour.containsKey("uv_index")) {
+                      id(weather_hourly_uv_index)[idx] = hour["uv_index"].as<float>();
                     }
 
-                    if (hour["wind_speed"].is<float>()) {
-                      id(weather_hourly_wind_speed)[i] = hour["wind_speed"].as<float>();
+                    if (hour.containsKey("wind_speed")) {
+                      id(weather_hourly_wind_speed)[idx] = hour["wind_speed"].as<float>();
                     }
 
-                    if (hour["wind_bearing"].is<float>()) {
-                      id(weather_hourly_wind_bearing)[i] = hour["wind_bearing"].as<float>();
+                    if (hour.containsKey("wind_bearing")) {
+                      id(weather_hourly_wind_bearing)[idx] = hour["wind_bearing"].as<float>();
                     }
+                    idx++;
                   }
                   ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
-
-                  // Clean up PSRAM-allocated JSON document
-                  doc->~JsonDocument();
-                  heap_caps_free(json_buffer);
 
                   ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d",
                          heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
@@ -1085,6 +1054,11 @@ script:
                     lambda: 'return id(current_page_name) == "hourly_forecast";'
                   then:
                     - script.execute: update_hourly_page_1
+          on_error:
+            then:
+              - logger.log:
+                  format: "✗ Hourly forecast fetch failed via native action"
+                  level: ERROR
 
       - lambda: |-
           // Always clear the lock when done
