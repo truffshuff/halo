@@ -594,12 +594,15 @@ script:
           // Ensure lock is set
           id(weather_fetch_lock) = true;
 
-      - logger.log: "Fetching daily forecast using native weather.get_forecasts action..."
+      - logger.log:
+          format: "→ Fetching daily forecast using native weather.get_forecasts action..."
+          level: INFO
 
       # Feed watchdog before long operation
       - lambda: |-
           App.feed_wdt();
           ESP_LOGI("weather", "Free heap before daily fetch: %d bytes", esp_get_free_heap_size());
+          ESP_LOGI("weather", "About to call homeassistant.action: weather.get_forecasts");
 
       # Fetch daily forecast using native action
       - homeassistant.action:
@@ -704,8 +707,12 @@ script:
               - script.execute: update_daily_forecast_display
           on_error:
             then:
+              - lambda: |-
+                  ESP_LOGE("weather", "✗ Daily forecast fetch FAILED via native action");
+                  ESP_LOGE("weather", "This likely means homeassistant.action with capture_response is not working");
+                  ESP_LOGE("weather", "You may need to revert to HTTP-based fetch");
               - logger.log:
-                  format: "✗ Daily forecast fetch failed via native action"
+                  format: "ERROR: Native action failed - see logs above"
                   level: ERROR
 
       - lambda: |-
@@ -929,12 +936,15 @@ script:
           // Ensure lock is set
           id(weather_fetch_lock) = true;
 
-      - logger.log: "Fetching hourly forecast using native weather.get_forecasts action..."
+      - logger.log:
+          format: "→ Fetching hourly forecast using native weather.get_forecasts action..."
+          level: INFO
 
       # Feed watchdog before long operation
       - lambda: |-
           App.feed_wdt();
           ESP_LOGI("weather", "Free heap before hourly fetch: %d bytes", esp_get_free_heap_size());
+          ESP_LOGI("weather", "About to call homeassistant.action: weather.get_forecasts (hourly)");
 
       # Fetch hourly forecast using native action
       - homeassistant.action:
@@ -1056,8 +1066,12 @@ script:
                     - script.execute: update_hourly_page_1
           on_error:
             then:
+              - lambda: |-
+                  ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED via native action");
+                  ESP_LOGE("weather", "This likely means homeassistant.action with capture_response is not working");
+                  ESP_LOGE("weather", "You may need to revert to HTTP-based fetch");
               - logger.log:
-                  format: "✗ Hourly forecast fetch failed via native action"
+                  format: "ERROR: Native action failed - see logs above"
                   level: ERROR
 
       - lambda: |-
