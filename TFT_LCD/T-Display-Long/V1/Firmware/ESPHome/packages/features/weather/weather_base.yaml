@@ -626,14 +626,14 @@ script:
                   // Response format: {"weather.hhut": {"forecast": [...]}}
                   const char *entity_key = "${weather_entity_id}";
 
-                  if (!response.containsKey(entity_key)) {
+                  if (!response[entity_key].is<JsonObjectConst>()) {
                     ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
                     return;
                   }
 
                   JsonObjectConst entity_data = response[entity_key];
 
-                  if (!entity_data.containsKey("forecast")) {
+                  if (!entity_data["forecast"].is<JsonArrayConst>()) {
                     ESP_LOGW("weather", "No 'forecast' key in daily response");
                     return;
                   }
@@ -654,29 +654,29 @@ script:
                       App.feed_wdt();
                     }
 
-                    if (day.containsKey("temperature")) {
+                    if (day["temperature"].is<float>()) {
                       id(weather_forecast_temp_high)[idx] = day["temperature"].as<float>();
                     }
 
-                    if (day.containsKey("templow")) {
+                    if (day["templow"].is<float>()) {
                       id(weather_forecast_temp_low)[idx] = day["templow"].as<float>();
                     }
 
-                    if (day.containsKey("condition")) {
+                    if (day["condition"].is<const char*>()) {
                       id(weather_forecast_condition)[idx] = day["condition"].as<std::string>();
                     }
 
-                    if (day.containsKey("precipitation_probability")) {
+                    if (day["precipitation_probability"].is<float>()) {
                       id(weather_forecast_precip_prob)[idx] = day["precipitation_probability"].as<float>();
                     }
 
-                    if (day.containsKey("datetime")) {
+                    if (day["datetime"].is<const char*>()) {
                       id(weather_forecast_datetime)[idx] = day["datetime"].as<std::string>();
                     }
 
                     // Extract "current" weather from today's forecast (day 0)
                     if (idx == 0) {
-                      if (day.containsKey("condition")) {
+                      if (day["condition"].is<const char*>()) {
                         id(weather_current_condition) = day["condition"].as<std::string>();
                         ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
                       }
@@ -961,14 +961,14 @@ script:
                   // Response format: {"weather.hhut": {"forecast": [...]}}
                   const char *entity_key = "${weather_entity_id}";
 
-                  if (!response.containsKey(entity_key)) {
+                  if (!response[entity_key].is<JsonObjectConst>()) {
                     ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
                     return;
                   }
 
                   JsonObjectConst entity_data = response[entity_key];
 
-                  if (!entity_data.containsKey("forecast")) {
+                  if (!entity_data["forecast"].is<JsonArrayConst>()) {
                     ESP_LOGW("weather", "No 'forecast' key in hourly response");
                     return;
                   }
@@ -989,48 +989,48 @@ script:
                       App.feed_wdt();
                     }
 
-                    if (hour.containsKey("temperature")) {
+                    if (hour["temperature"].is<float>()) {
                       id(weather_hourly_temp)[idx] = hour["temperature"].as<float>();
                     }
 
-                    if (hour.containsKey("apparent_temperature")) {
+                    if (hour["apparent_temperature"].is<float>()) {
                       id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"].as<float>();
                     }
 
-                    if (hour.containsKey("condition")) {
+                    if (hour["condition"].is<const char*>()) {
                       id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
                     }
 
-                    if (hour.containsKey("precipitation_probability")) {
+                    if (hour["precipitation_probability"].is<float>()) {
                       id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"].as<float>();
                     }
 
-                    if (hour.containsKey("datetime")) {
+                    if (hour["datetime"].is<const char*>()) {
                       id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
                     }
 
                     // Additional hourly data fields
-                    if (hour.containsKey("humidity")) {
+                    if (hour["humidity"].is<float>()) {
                       id(weather_hourly_humidity)[idx] = hour["humidity"].as<float>();
                     }
 
-                    if (hour.containsKey("precipitation")) {
+                    if (hour["precipitation"].is<float>()) {
                       id(weather_hourly_precipitation)[idx] = hour["precipitation"].as<float>();
                     }
 
-                    if (hour.containsKey("pressure")) {
+                    if (hour["pressure"].is<float>()) {
                       id(weather_hourly_pressure)[idx] = hour["pressure"].as<float>();
                     }
 
-                    if (hour.containsKey("uv_index")) {
+                    if (hour["uv_index"].is<float>()) {
                       id(weather_hourly_uv_index)[idx] = hour["uv_index"].as<float>();
                     }
 
-                    if (hour.containsKey("wind_speed")) {
+                    if (hour["wind_speed"].is<float>()) {
                       id(weather_hourly_wind_speed)[idx] = hour["wind_speed"].as<float>();
                     }
 
-                    if (hour.containsKey("wind_bearing")) {
+                    if (hour["wind_bearing"].is<float>()) {
                       id(weather_hourly_wind_bearing)[idx] = hour["wind_bearing"].as<float>();
                     }
                     idx++;
