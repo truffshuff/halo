@@ -1111,194 +1111,194 @@ script:
   #
   #     # Fetch hourly forecast
   #     - http_request.post:
-#          url: !lambda |-
-#            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
-#          request_headers:
-#            Content-Type: application/json
-#            Authorization: !lambda |-
-#              return "Bearer ${ha_token}";
-#          body: !lambda |-
-#            return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"hourly\"}";
-#          on_response:
-#            then:
-#              - lambda: |-
-#                  // Feed watchdog at start of processing
-#                  App.feed_wdt();
+          url: !lambda |-
+            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
+          request_headers:
+            Content-Type: application/json
+            Authorization: !lambda |-
+              return "Bearer ${ha_token}";
+          body: !lambda |-
+            return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"hourly\"}";
+          on_response:
+            then:
+              - lambda: |-
+                  // Feed watchdog at start of processing
+                  App.feed_wdt();
 
-#                  ESP_LOGI("weather", "Free heap at response: %d bytes", esp_get_free_heap_size());
+                  ESP_LOGI("weather", "Free heap at response: %d bytes", esp_get_free_heap_size());
 
-#                  // Read response body first (for both success and error cases)
-#                  std::string body_str;
-#                  // Reserve a smaller amount to reduce memory pressure
-#                  size_t reserve_sz2 = response->content_length;
-#                  if (reserve_sz2 > 16384) reserve_sz2 = 16384; // cap to 16KB for hourly
-#                  body_str.reserve(reserve_sz2);
-#                  uint8_t buffer[256];  // Smaller buffer to reduce stack usage
-#                  while (response->get_bytes_read() < response->content_length) {
-#                  int read_len = response->read(buffer, sizeof(buffer));
-#                  if (read_len > 0) {
-#                    body_str.append((char*)buffer, read_len);
-#                  }
-#                  // Feed watchdog during long reads
-#                  if (body_str.length() % 4096 == 0) {
-#                    App.feed_wdt();
-#                  }
-#                  }
+                  // Read response body first (for both success and error cases)
+                  std::string body_str;
+                  // Reserve a smaller amount to reduce memory pressure
+                  size_t reserve_sz2 = response->content_length;
+                  if (reserve_sz2 > 16384) reserve_sz2 = 16384; // cap to 16KB for hourly
+                  body_str.reserve(reserve_sz2);
+                  uint8_t buffer[256];  // Smaller buffer to reduce stack usage
+                  while (response->get_bytes_read() < response->content_length) {
+                  int read_len = response->read(buffer, sizeof(buffer));
+                  if (read_len > 0) {
+                    body_str.append((char*)buffer, read_len);
+                  }
+                  // Feed watchdog during long reads
+                  if (body_str.length() % 4096 == 0) {
+                    App.feed_wdt();
+                  }
+                  }
 
-#                  // response is already provided by ESPHome http_request
-#                  if (response->status_code != 200) {
-#                  ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
-#                  ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
-#                  return;
-#                  }
+                  // response is already provided by ESPHome http_request
+                  if (response->status_code != 200) {
+                  ESP_LOGE("weather", "✗ Hourly forecast HTTP failed: %d", response->status_code);
+                  ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
+                  return;
+                  }
 
-#                  ESP_LOGI("weather", "✓ Hourly forecast HTTP response received (%d bytes)", body_str.length());
+                  ESP_LOGI("weather", "✓ Hourly forecast HTTP response received (%d bytes)", body_str.length());
 
-#                  // Feed watchdog before JSON parsing
-#                  App.feed_wdt();
+                  // Feed watchdog before JSON parsing
+                  App.feed_wdt();
 
-#                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
-#                  ESP_LOGI("memory", "Before hourly JSON parse - Internal RAM free: %d, PSRAM free: %d",
-#                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-#                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
+                  ESP_LOGI("memory", "Before hourly JSON parse - Internal RAM free: %d, PSRAM free: %d",
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
-#                  // CRITICAL FIX: Allocate JsonDocument explicitly from PSRAM to prevent stack overflow
-#                  // The 57KB JSON payload would overflow the stack if allocated there
-#                  // Using heap_caps_malloc forces allocation to 8MB PSRAM instead of limited internal RAM
-#                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-#                  if (json_buffer == nullptr) {
-#                  ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
-#                  return;
-#                  }
-#                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
+                  // CRITICAL FIX: Allocate JsonDocument explicitly from PSRAM to prevent stack overflow
+                  // The 57KB JSON payload would overflow the stack if allocated there
+                  // Using heap_caps_malloc forces allocation to 8MB PSRAM instead of limited internal RAM
+                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+                  if (json_buffer == nullptr) {
+                  ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
+                  return;
+                  }
+                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
 
-#                  DeserializationError error = deserializeJson(
-#                    *doc, body_str, DeserializationOption::NestingLimit(10));
+                  DeserializationError error = deserializeJson(
+                    *doc, body_str, DeserializationOption::NestingLimit(10));
 
-#                  if (error) {
-#                  ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
-#                  doc->~JsonDocument();  // Call destructor
-#                  heap_caps_free(json_buffer);  // Free PSRAM
-#                  return;
-#                  }
+                  if (error) {
+                  ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM
+                  return;
+                  }
 
-#                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
-#                  const char *entity_key = "${weather_entity_id}";
+                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
+                  const char *entity_key = "${weather_entity_id}";
 
-#                  if (!(*doc)["service_response"].is<JsonObject>()) {
-#                  ESP_LOGE("weather", "No 'service_response' key in response");
-#                  doc->~JsonDocument();
-#                  heap_caps_free(json_buffer);
-#                  return;
-#                  }
+                  if (!(*doc)["service_response"].is<JsonObject>()) {
+                  ESP_LOGE("weather", "No 'service_response' key in response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
 
-#                  JsonObject service_response = (*doc)["service_response"];
+                  JsonObject service_response = (*doc)["service_response"];
 
-#                  if (!service_response[entity_key].is<JsonObject>()) {
-#                  ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
-#                  doc->~JsonDocument();
-#                  heap_caps_free(json_buffer);
-#                  return;
-#                  }
+                  if (!service_response[entity_key].is<JsonObject>()) {
+                  ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
 
-#                  JsonObject entity_data = service_response[entity_key];
+                  JsonObject entity_data = service_response[entity_key];
 
-#                  if (!entity_data["forecast"].is<JsonArray>()) {
-#                  ESP_LOGW("weather", "No 'forecast' key in hourly response");
-#                  doc->~JsonDocument();
-#                  heap_caps_free(json_buffer);
-#                  return;
-#                  }
+                  if (!entity_data["forecast"].is<JsonArray>()) {
+                  ESP_LOGW("weather", "No 'forecast' key in hourly response");
+                  doc->~JsonDocument();
+                  heap_caps_free(json_buffer);
+                  return;
+                  }
 
-#                  JsonArray forecast_array = entity_data["forecast"];
-#                  int hour_count = std::min((int)forecast_array.size(), 24);
-#                  ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+                  JsonArray forecast_array = entity_data["forecast"];
+                  int hour_count = std::min((int)forecast_array.size(), 24);
+                  ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
 
-#                  // Feed watchdog before processing loop
-#                  App.feed_wdt();
+                  // Feed watchdog before processing loop
+                  App.feed_wdt();
 
-#                  for (int i = 0; i < hour_count; i++) {
-#                  JsonObject hour = forecast_array[i];
+                  for (int i = 0; i < hour_count; i++) {
+                  JsonObject hour = forecast_array[i];
 
-#                  // Feed watchdog every 6 hours to prevent timeout during processing
-#                  if (i > 0 && i % 6 == 0) {
-#                    App.feed_wdt();
-#                  }
+                  // Feed watchdog every 6 hours to prevent timeout during processing
+                  if (i > 0 && i % 6 == 0) {
+                    App.feed_wdt();
+                  }
 
-#                  if (hour["temperature"].is<float>()) {
-#                    id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
-#                  }
+                  if (hour["temperature"].is<float>()) {
+                    id(weather_hourly_temp)[i] = hour["temperature"].as<float>();
+                  }
 
-#                  if (hour["apparent_temperature"].is<float>()) {
-#                    id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
-#                  }
+                  if (hour["apparent_temperature"].is<float>()) {
+                    id(weather_hourly_apparent_temp)[i] = hour["apparent_temperature"].as<float>();
+                  }
 
-#                  if (hour["condition"].is<const char*>()) {
-#                    id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
-#                  }
+                  if (hour["condition"].is<const char*>()) {
+                    id(weather_hourly_condition)[i] = hour["condition"].as<std::string>();
+                  }
 
-#                  if (hour["precipitation_probability"].is<float>()) {
-#                    id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
-#                  }
+                  if (hour["precipitation_probability"].is<float>()) {
+                    id(weather_hourly_precip_prob)[i] = hour["precipitation_probability"].as<float>();
+                  }
 
-#                  if (hour["datetime"].is<const char*>()) {
-#                    id(weather_hourly_datetime)[i] = hour["datetime"].as<std::string>();
-#                  }
+                  if (hour["datetime"].is<const char*>()) {
+                    id(weather_hourly_datetime)[i] = hour["datetime"].as<std::string>();
+                  }
 
-#                  // Additional hourly data fields
-#                  if (hour["humidity"].is<float>()) {
-#                    id(weather_hourly_humidity)[i] = hour["humidity"].as<float>();
-#                  }
+                  // Additional hourly data fields
+                  if (hour["humidity"].is<float>()) {
+                    id(weather_hourly_humidity)[i] = hour["humidity"].as<float>();
+                  }
 
-#                  if (hour["precipitation"].is<float>()) {
-#                    id(weather_hourly_precipitation)[i] = hour["precipitation"].as<float>();
-#                  }
+                  if (hour["precipitation"].is<float>()) {
+                    id(weather_hourly_precipitation)[i] = hour["precipitation"].as<float>();
+                  }
 
-#                  if (hour["pressure"].is<float>()) {
-#                    id(weather_hourly_pressure)[i] = hour["pressure"].as<float>();
-#                  }
+                  if (hour["pressure"].is<float>()) {
+                    id(weather_hourly_pressure)[i] = hour["pressure"].as<float>();
+                  }
 
-#                  if (hour["uv_index"].is<float>()) {
-#                    id(weather_hourly_uv_index)[i] = hour["uv_index"].as<float>();
-#                  }
+                  if (hour["uv_index"].is<float>()) {
+                    id(weather_hourly_uv_index)[i] = hour["uv_index"].as<float>();
+                  }
 
-#                  if (hour["wind_speed"].is<float>()) {
-#                    id(weather_hourly_wind_speed)[i] = hour["wind_speed"].as<float>();
-#                  }
+                  if (hour["wind_speed"].is<float>()) {
+                    id(weather_hourly_wind_speed)[i] = hour["wind_speed"].as<float>();
+                  }
 
-#                  if (hour["wind_bearing"].is<float>()) {
-#                    id(weather_hourly_wind_bearing)[i] = hour["wind_bearing"].as<float>();
-#                  }
-#                  }
-#                  ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
+                  if (hour["wind_bearing"].is<float>()) {
+                    id(weather_hourly_wind_bearing)[i] = hour["wind_bearing"].as<float>();
+                  }
+                  }
+                  ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
 
-#                  // Clean up PSRAM-allocated JSON document to free memory
-#                  doc->~JsonDocument();  // Call destructor
-#                  heap_caps_free(json_buffer);  // Free PSRAM buffer
+                  // Clean up PSRAM-allocated JSON document to free memory
+                  doc->~JsonDocument();  // Call destructor
+                  heap_caps_free(json_buffer);  // Free PSRAM buffer
 
-#                  ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d",
-#                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-#                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-#                  ESP_LOGI("weather", "✓ JSON document cleaned up");
+                  ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d",
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+                  ESP_LOGI("weather", "✓ JSON document cleaned up");
 
-#                  // Update hourly forecast timestamp
-#                  id(weather_hourly_last_update) = millis();
-#                  id(weather_last_update) = millis();  // Keep for backward compatibility
+                  // Update hourly forecast timestamp
+                  id(weather_hourly_last_update) = millis();
+                  id(weather_last_update) = millis();  // Keep for backward compatibility
 
-#              # Small delay to allow memory to be freed before display update
-#              - delay: 100ms
+              # Small delay to allow memory to be freed before display update
+              - delay: 100ms
 
-#              # Update display after fetching (only if on hourly forecast page)
-#              # With lazy loading, page-specific on_load handlers will update when navigated to
-#              - if:
-#                  condition:
-#                    lambda: 'return id(current_page_name) == "hourly_forecast";'
-#                  then:
-#                    - script.execute: update_hourly_page_1  # Update page 1 if currently viewing
+              # Update display after fetching (only if on hourly forecast page)
+              # With lazy loading, page-specific on_load handlers will update when navigated to
+              - if:
+                  condition:
+                    lambda: 'return id(current_page_name) == "hourly_forecast";'
+                  then:
+                    - script.execute: update_hourly_page_1  # Update page 1 if currently viewing
 
-#      - lambda: |-
-#          // Always clear the lock when done (success or failure)
-#          id(weather_fetch_lock) = false;
+      - lambda: |-
+          // Always clear the lock when done (success or failure)
+          id(weather_fetch_lock) = false;
 
   # Legacy script for backward compatibility - fetches both
   - id: fetch_weather_data
