@@ -115,7 +115,7 @@ esp32:
       # More aggressive PSRAM usage
       CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"  # Reduce from 8192 to 4096 (only tiny allocations stay in internal RAM)
       CONFIG_SPIRAM_USE_CAPS_ALLOC: "y"  # Use capability allocator
-      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"  # Move WiFi/LWIP buffers to PSRAM
+      #CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"  # Move WiFi/LWIP buffers to PSRAM
       CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"  # Allow BSS segment in PSRAM
 
       # More aggressive malloc strategy
@@ -134,9 +134,9 @@ esp32:
       # CONFIG_ARDUINO_LOOP_STACK_SIZE: "24576"   # Arduino loop task stack (8x from 8192) was 65536
 
       # WiFi buffers to PSRAM (this addresses your wifi_config 7.6KB and wifi_stack 3.6KB)
-      CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"  # Increase WiFi RX buffers
-      CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "32"  # Increase dynamic RX buffers
-      CONFIG_ESP32_WIFI_DYNAMIC_TX_BUFFER_NUM: "32"  # Increase dynamic TX buffers
+      #CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"  # Increase WiFi RX buffers
+      #CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "32"  # Increase dynamic RX buffers
+      #CONFIG_ESP32_WIFI_DYNAMIC_TX_BUFFER_NUM: "32"  # Increase dynamic TX buffers
       CONFIG_ESP32_WIFI_RX_BA_WIN: "16"  # Block ACK RX window
       CONFIG_ESP32_WIFI_CACHE_TX_BUFFER_NUM: "32"  # Cache TX buffers
 
@@ -146,8 +146,8 @@ esp32:
       # ============================================================================
       # TCP/IP Configuration for better API throughput
       # Increase buffers to handle BLE advertisement bursts during concurrent operations
-      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "32768"  # TCP send buffer (increased to handle BLE bursts)
-      CONFIG_LWIP_TCP_WND_DEFAULT: "32768"      # TCP receive window (increased for throughput)
+      #CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "32768"  # TCP send buffer (increased to handle BLE bursts)
+      #CONFIG_LWIP_TCP_WND_DEFAULT: "32768"      # TCP receive window (increased for throughput)
       CONFIG_LWIP_TCP_RECVMBOX_SIZE: "16"       # TCP mailbox size (increased from 12)
       CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "128"    # TCPIP task mailbox (doubled to handle bursts)
 
@@ -157,8 +157,8 @@ esp32:
 
       # Move TCP/IP stack to PSRAM
       CONFIG_LWIP_TCPIP_TASK_STACK_SIZE: "4096"  # TCPIP task stack
-      CONFIG_LWIP_MEM_USE_POOLS: "y"  # Use memory pools
-      CONFIG_LWIP_MEMP_USE_CUSTOM_POOLS: "y"  # Custom memory pools
+      #CONFIG_LWIP_MEM_USE_POOLS: "y"  # Use memory pools
+      #CONFIG_LWIP_MEMP_USE_CUSTOM_POOLS: "y"  # Custom memory pools
 
       # Watchdog timeout for HTTP operations and JSON parsing
       # Increased from 20s to 30s to accommodate large weather JSON parsing
