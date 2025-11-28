@@ -626,11 +626,78 @@ script:
                          heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
                   // response is provided by ESPHome as JsonObjectConst
-                  // Response format: {"weather.hhut": {"forecast": [...]}}
+                  // The response format from homeassistant.action is simpler than HTTP REST API
+                  // It returns: {"forecast": [...]} directly, NOT wrapped in entity_id
+
+                  ESP_LOGI("weather", "DEBUG: Checking response structure...");
+
+                  // Try direct forecast access first (native action format)
+                  if (response["forecast"].is<JsonArrayConst>()) {
+                    ESP_LOGI("weather", "DEBUG: Using direct 'forecast' access (native action format)");
+                    JsonArrayConst forecast_array = response["forecast"];
+                    int day_count = std::min((int)forecast_array.size(), 10);
+                    ESP_LOGI("weather", "Found %d days of forecast data", day_count);
+
+                    // Feed watchdog before processing loop
+                    App.feed_wdt();
+
+                    int idx = 0;
+                    for (JsonObjectConst day : forecast_array) {
+                      if (idx >= 10) break;
+
+                      // Feed watchdog every 3 days
+                      if (idx > 0 && idx % 3 == 0) {
+                        App.feed_wdt();
+                      }
+
+                      if (day["temperature"].is<float>()) {
+                        id(weather_forecast_temp_high)[idx] = day["temperature"].as<float>();
+                      }
+
+                      if (day["templow"].is<float>()) {
+                        id(weather_forecast_temp_low)[idx] = day["templow"].as<float>();
+                      }
+
+                      if (day["condition"].is<const char*>()) {
+                        id(weather_forecast_condition)[idx] = day["condition"].as<std::string>();
+                      }
+
+                      if (day["precipitation_probability"].is<float>()) {
+                        id(weather_forecast_precip_prob)[idx] = day["precipitation_probability"].as<float>();
+                      }
+
+                      if (day["datetime"].is<const char*>()) {
+                        id(weather_forecast_datetime)[idx] = day["datetime"].as<std::string>();
+                      }
+
+                      // Extract "current" weather from today's forecast (day 0)
+                      if (idx == 0) {
+                        if (day["condition"].is<const char*>()) {
+                          id(weather_current_condition) = day["condition"].as<std::string>();
+                          ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
+                        }
+                      }
+                      idx++;
+                    }
+                    ESP_LOGI("weather", "✓ Daily forecast stored successfully");
+
+                    ESP_LOGI("weather", "Free heap after parse - Internal: %d, PSRAM: %d",
+                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+                    // Update daily forecast timestamp
+                    id(weather_daily_last_update) = millis();
+                    id(weather_last_update) = millis();
+                    return;  // Success, exit early
+                  }
+
+                  // Fall back to entity_id wrapper format (shouldn't happen with native action)
                   const char *entity_key = "${weather_entity_id}";
+                  ESP_LOGW("weather", "DEBUG: Trying entity_id wrapper format (legacy HTTP format)");
 
                   if (!response[entity_key].is<JsonObjectConst>()) {
                     ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
+                    ESP_LOGE("weather", "DEBUG: Response has unexpected structure");
                     return;
                   }
 
@@ -968,11 +1035,95 @@ script:
                          heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
                   // response is provided by ESPHome as JsonObjectConst
-                  // Response format: {"weather.hhut": {"forecast": [...]}}
+                  // The response format from homeassistant.action is simpler than HTTP REST API
+                  // It returns: {"forecast": [...]} directly, NOT wrapped in entity_id
+
+                  ESP_LOGI("weather", "DEBUG: Checking hourly response structure...");
+
+                  // Try direct forecast access first (native action format)
+                  if (response["forecast"].is<JsonArrayConst>()) {
+                    ESP_LOGI("weather", "DEBUG: Using direct 'forecast' access (native action format)");
+                    JsonArrayConst forecast_array = response["forecast"];
+                    int hour_count = std::min((int)forecast_array.size(), 24);
+                    ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+
+                    // Feed watchdog before processing loop
+                    App.feed_wdt();
+
+                    int idx = 0;
+                    for (JsonObjectConst hour : forecast_array) {
+                      if (idx >= 24) break;
+
+                      // Feed watchdog every 6 hours
+                      if (idx > 0 && idx % 6 == 0) {
+                        App.feed_wdt();
+                      }
+
+                      if (hour["temperature"].is<float>()) {
+                        id(weather_hourly_temp)[idx] = hour["temperature"].as<float>();
+                      }
+
+                      if (hour["apparent_temperature"].is<float>()) {
+                        id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"].as<float>();
+                      }
+
+                      if (hour["condition"].is<const char*>()) {
+                        id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
+                      }
+
+                      if (hour["precipitation_probability"].is<float>()) {
+                        id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"].as<float>();
+                      }
+
+                      if (hour["datetime"].is<const char*>()) {
+                        id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
+                      }
+
+                      // Additional hourly data fields
+                      if (hour["humidity"].is<float>()) {
+                        id(weather_hourly_humidity)[idx] = hour["humidity"].as<float>();
+                      }
+
+                      if (hour["precipitation"].is<float>()) {
+                        id(weather_hourly_precipitation)[idx] = hour["precipitation"].as<float>();
+                      }
+
+                      if (hour["pressure"].is<float>()) {
+                        id(weather_hourly_pressure)[idx] = hour["pressure"].as<float>();
+                      }
+
+                      if (hour["uv_index"].is<float>()) {
+                        id(weather_hourly_uv_index)[idx] = hour["uv_index"].as<float>();
+                      }
+
+                      if (hour["wind_speed"].is<float>()) {
+                        id(weather_hourly_wind_speed)[idx] = hour["wind_speed"].as<float>();
+                      }
+
+                      if (hour["wind_bearing"].is<float>()) {
+                        id(weather_hourly_wind_bearing)[idx] = hour["wind_bearing"].as<float>();
+                      }
+                      idx++;
+                    }
+                    ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
+
+                    ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d",
+                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+                    // Update hourly forecast timestamp
+                    id(weather_hourly_last_update) = millis();
+                    id(weather_last_update) = millis();
+                    return;  // Success, exit early
+                  }
+
+                  // Fall back to entity_id wrapper format (shouldn't happen with native action)
                   const char *entity_key = "${weather_entity_id}";
+                  ESP_LOGW("weather", "DEBUG: Trying entity_id wrapper format (legacy HTTP format)");
 
                   if (!response[entity_key].is<JsonObjectConst>()) {
                     ESP_LOGE("weather", "Entity '%s' not found in response", entity_key);
+                    ESP_LOGE("weather", "DEBUG: Response has unexpected structure");
                     return;
                   }
 
