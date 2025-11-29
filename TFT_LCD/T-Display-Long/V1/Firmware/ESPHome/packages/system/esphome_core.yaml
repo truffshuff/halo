@@ -20,8 +20,10 @@
 # MUST be defined early so other modules can use these components
 # ============================================================================
 external_components:
-  # Use local nimble_proxy with metadevice fix
-  - source: custom_components
+  # Use local nimble_proxy with metadevice fix (relative to config directory)
+  - source:
+      type: local
+      path: custom_components
     components: [nimble_proxy]
   # Use GitHub for other components
   - source: github://truffshuff/esphome-components@main
