@@ -22,7 +22,7 @@
 external_components:
   - source: github://truffshuff/esphome-components@main
     components: [axs15231, sy6970, nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv, weather_helpers]
-    refresh: Always
+    refresh: always
 
 # ============================================================================
 # PSRAM Configuration
