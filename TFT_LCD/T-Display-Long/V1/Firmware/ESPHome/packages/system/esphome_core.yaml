@@ -46,10 +46,9 @@ psram:
 # ESP32 Board Configuration
 # ============================================================================
 api:
-  batch_delay: 200ms  # Reduce latency for real-time applications
-  listen_backlog: 8  # Allow 2 pending connections in queue
-  max_connections: 10  # Allow up to 6 simultaneous connections
-  max_send_queue: 32  # Maximum queued messages per connection before disconnect
+  # Reduced values to prevent protocol buffer encoding assertion failures
+  # With 125+ weather entities + BLE proxy + LVGL, the queue can overflow
+  reboot_timeout: 0s  # Disable automatic reboot on API disconnect
   encryption:
     key: !secret api_encryption_key
 
