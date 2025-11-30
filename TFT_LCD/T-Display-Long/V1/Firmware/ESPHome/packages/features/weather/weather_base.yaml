@@ -646,8 +646,25 @@ script:
                   JsonArrayConst forecast_array;
                   bool found_forecast = false;
 
-                  // Try format 1: {"weather.hhut": {"forecast": [...]}}
-                  if (response[entity_key].is<JsonObjectConst>()) {
+                  // Try format 1: {"response": {"weather.hhut": {"forecast": [...]}}}
+                  if (response["response"].is<JsonObjectConst>()) {
+                    JsonObjectConst response_data = response["response"];
+                    ESP_LOGI("weather", "DEBUG: Found 'response' wrapper object");
+
+                    if (response_data[entity_key].is<JsonObjectConst>()) {
+                      ESP_LOGI("weather", "DEBUG: Found entity '%s' inside response wrapper", entity_key);
+                      JsonObjectConst entity_data = response_data[entity_key];
+
+                      if (entity_data["forecast"].is<JsonArrayConst>()) {
+                        forecast_array = entity_data["forecast"];
+                        found_forecast = true;
+                        ESP_LOGI("weather", "DEBUG: Using forecast from response['%s']['forecast']", entity_key);
+                      }
+                    }
+                  }
+
+                  // Try format 2: {"weather.hhut": {"forecast": [...]}}
+                  if (!found_forecast && response[entity_key].is<JsonObjectConst>()) {
                     ESP_LOGI("weather", "DEBUG: Found entity '%s' at top level (native action format)", entity_key);
                     JsonObjectConst entity_data = response[entity_key];
 
@@ -658,7 +675,7 @@ script:
                     }
                   }
 
-                  // Try format 2: {"forecast": [...]} (direct format)
+                  // Try format 3: {"forecast": [...]} (direct format)
                   if (!found_forecast && response["forecast"].is<JsonArrayConst>()) {
                     forecast_array = response["forecast"];
                     found_forecast = true;
@@ -1014,8 +1031,25 @@ script:
                   JsonArrayConst forecast_array;
                   bool found_forecast = false;
 
-                  // Try format 1: {"weather.hhut": {"forecast": [...]}}
-                  if (response[entity_key].is<JsonObjectConst>()) {
+                  // Try format 1: {"response": {"weather.hhut": {"forecast": [...]}}}
+                  if (response["response"].is<JsonObjectConst>()) {
+                    JsonObjectConst response_data = response["response"];
+                    ESP_LOGI("weather", "DEBUG: Found 'response' wrapper object");
+
+                    if (response_data[entity_key].is<JsonObjectConst>()) {
+                      ESP_LOGI("weather", "DEBUG: Found entity '%s' inside response wrapper", entity_key);
+                      JsonObjectConst entity_data = response_data[entity_key];
+
+                      if (entity_data["forecast"].is<JsonArrayConst>()) {
+                        forecast_array = entity_data["forecast"];
+                        found_forecast = true;
+                        ESP_LOGI("weather", "DEBUG: Using hourly forecast from response['%s']['forecast']", entity_key);
+                      }
+                    }
+                  }
+
+                  // Try format 2: {"weather.hhut": {"forecast": [...]}}
+                  if (!found_forecast && response[entity_key].is<JsonObjectConst>()) {
                     ESP_LOGI("weather", "DEBUG: Found entity '%s' at top level (native action format)", entity_key);
                     JsonObjectConst entity_data = response[entity_key];
 
@@ -1026,7 +1060,7 @@ script:
                     }
                   }
 
-                  // Try format 2: {"forecast": [...]} (direct format)
+                  // Try format 3: {"forecast": [...]} (direct format)
                   if (!found_forecast && response["forecast"].is<JsonArrayConst>()) {
                     forecast_array = response["forecast"];
                     found_forecast = true;
