@@ -58,14 +58,19 @@ nimble_improv:
 # Bluetooth Proxy for Home Assistant
 # ============================================================================
 # Allows Home Assistant to use this device as a Bluetooth proxy
-# NOTE: BLE advertisements are sent over the API connection in bursts
-# TCP buffer optimizations in esphome_core.yaml help prevent buffer overflow
+# CRITICAL: Advertisement throttling prevents TCP buffer overflow and crashes
+# Without these limits, BLE bursts cause "Cannot send message" errors
+# and protocol buffer assertion failures (proto.h:820)
 # ============================================================================
 bluetooth_proxy:
+  # Rate limiting to prevent TCP buffer overflow
+  # Logs showed bursts of 5 advertisements overwhelming the API connection
+  active_connections: 2  # Limit simultaneous BLE device connections
 
 nimble_proxy:
   active: true
-  max_connections: 2  # Reduced from 3 to lower traffic
+  max_connections: 1  # Reduced from 2 - each connection adds traffic
+  # Advertisement throttling built into nimble_proxy component
 
 # ============================================================================
 # Startup Light Blink Animation
