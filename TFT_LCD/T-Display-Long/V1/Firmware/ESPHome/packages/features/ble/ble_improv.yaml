@@ -69,7 +69,8 @@ bluetooth_proxy:
 
 nimble_proxy:
   active: true
-  max_connections: 1  # Reduced from 2 - limits BLE traffic to prevent TCP overflow
+  connection_slots: 1  # Reduced from 2 - limits BLE traffic to prevent TCP overflow
+  cache_services: true  # Placeholder for future GATT service caching support
   # Each BLE connection can send bursts of 5+ advertisements simultaneously
 
 # ============================================================================
