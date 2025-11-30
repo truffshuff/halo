@@ -144,11 +144,13 @@ esp32:
       # Network Configuration
       # ============================================================================
       # TCP/IP Configuration for better API throughput
-      # Increase buffers to handle BLE advertisement bursts during concurrent operations
-      #CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "32768"  # TCP send buffer (increased to handle BLE bursts)
-      #CONFIG_LWIP_TCP_WND_DEFAULT: "32768"      # TCP receive window (increased for throughput)
-      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "16"       # TCP mailbox size (increased from 12)
-      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "128"    # TCPIP task mailbox (doubled to handle bursts)
+      # CRITICAL: Large buffers needed for BLE proxy advertisement bursts
+      # Without these, "Cannot send message because of TCP buffer space" errors occur
+      # causing protocol buffer assertion failures and crashes
+      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "65535"  # TCP send buffer (max for BLE bursts)
+      CONFIG_LWIP_TCP_WND_DEFAULT: "65535"      # TCP receive window (max for throughput)
+      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "32"       # TCP mailbox size (doubled from 16)
+      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "256"    # TCPIP task mailbox (doubled to handle bursts)
 
       # Additional TCP optimizations for BLE proxy traffic
       CONFIG_LWIP_TCP_MSS: "1436"               # Maximum Segment Size (default: 1436)
