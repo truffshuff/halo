@@ -69,9 +69,15 @@ bluetooth_proxy:
 
 nimble_proxy:
   active: true
-  connection_slots: 1  # Reduced from 2 - limits BLE traffic to prevent TCP overflow
-  cache_services: true  # Placeholder for future GATT service caching support
-  # Each BLE connection can send bursts of 5+ advertisements simultaneously
+  connection_slots: 3  # Phase 2 complete: supports active GATT connections
+  cache_services: true  # Phase 2.5: NVS service caching implemented
+  # Now supports:
+  # - Active GATT connections (connect/disconnect)
+  # - Service/characteristic/descriptor discovery
+  # - GATT read/write operations
+  # - Notification/indication subscriptions
+  # - Pairing/bonding (Phase 2.6)
+  # - Service caching in NVS flash
 
 # ============================================================================
 # Startup Light Blink Animation
