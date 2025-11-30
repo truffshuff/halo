@@ -61,16 +61,17 @@ nimble_improv:
 # CRITICAL: Advertisement throttling prevents TCP buffer overflow and crashes
 # Without these limits, BLE bursts cause "Cannot send message" errors
 # and protocol buffer assertion failures (proto.h:820)
+#
+# Rate limiting is controlled via nimble_proxy max_connections below
+# The increased TCP buffers in esphome_core.yaml handle advertisement bursts
 # ============================================================================
 bluetooth_proxy:
-  # Rate limiting to prevent TCP buffer overflow
-  # Logs showed bursts of 5 advertisements overwhelming the API connection
-  active_connections: 2  # Limit simultaneous BLE device connections
+  active: true
 
 nimble_proxy:
   active: true
-  max_connections: 1  # Reduced from 2 - each connection adds traffic
-  # Advertisement throttling built into nimble_proxy component
+  max_connections: 1  # Reduced from 2 - limits BLE traffic to prevent TCP overflow
+  # Each BLE connection can send bursts of 5+ advertisements simultaneously
 
 # ============================================================================
 # Startup Light Blink Animation
