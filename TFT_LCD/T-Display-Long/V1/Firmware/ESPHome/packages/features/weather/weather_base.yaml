@@ -594,6 +594,9 @@ script:
           // Ensure lock is set
           id(weather_fetch_lock) = true;
 
+      # Pause BLE scanning to reduce API traffic during weather fetch
+      - switch.turn_off: ble_scanner_switch
+
       - logger.log:
           format: "→ Fetching daily forecast using native weather.get_forecasts action..."
           level: INFO
@@ -761,6 +764,9 @@ script:
               - logger.log:
                   format: "ERROR: Native action failed - see logs above"
                   level: ERROR
+
+      # Resume BLE scanning after weather fetch (whether success or failure)
+      - switch.turn_on: ble_scanner_switch
 
       - lambda: |-
           // Always clear the lock when done
@@ -983,6 +989,9 @@ script:
           // Ensure lock is set
           id(weather_fetch_lock) = true;
 
+      # Pause BLE scanning to reduce API traffic during large response
+      - switch.turn_off: ble_scanner_switch
+
       - logger.log:
           format: "→ Fetching hourly forecast using native weather.get_forecasts action..."
           level: INFO
@@ -1158,11 +1167,16 @@ script:
             then:
               - lambda: |-
                   ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED via native action");
-                  ESP_LOGE("weather", "This likely means homeassistant.action with capture_response is not working");
-                  ESP_LOGE("weather", "You may need to revert to HTTP-based fetch");
+                  ESP_LOGE("weather", "Error: Response too large or API connection failed");
+                  ESP_LOGE("weather", "Hourly forecasts contain too much data for ESPHome API buffer");
+                  // Mark as updated anyway to prevent repeated failures
+                  id(weather_hourly_last_update) = millis();
               - logger.log:
-                  format: "ERROR: Native action failed - see logs above"
+                  format: "ERROR: Hourly forecast disabled due to response size - using stale data"
                   level: ERROR
+
+      # Resume BLE scanning after weather fetch (whether success or failure)
+      - switch.turn_on: ble_scanner_switch
 
       - lambda: |-
           // Always clear the lock when done

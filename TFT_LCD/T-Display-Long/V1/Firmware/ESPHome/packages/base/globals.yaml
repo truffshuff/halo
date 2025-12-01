@@ -94,3 +94,29 @@ globals:
     type: uint32_t
     restore_value: no
     initial_value: '0'
+
+# ============================================================================
+# BLE Scanner Control
+# ============================================================================
+# System-wide switch to control BLE scanning. Pausing BLE scanning reduces
+# API traffic and prevents buffer overflow during operations that require
+# clean API communication.
+#
+# Automatically paused during:
+#   - Weather forecast fetches (daily and hourly)
+#   - OTA firmware updates
+#
+# Can also be manually controlled from Home Assistant or used in custom automations.
+#
+# Usage:
+#   Pause: - switch.turn_off: ble_scanner_switch
+#   Resume: - switch.turn_on: ble_scanner_switch
+# ============================================================================
+
+switch:
+  - platform: nimble_proxy
+    id: ble_scanner_switch
+    name: "BLE Scanner"
+    icon: mdi:bluetooth-audio
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: "config"
