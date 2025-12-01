@@ -1005,7 +1005,7 @@ script:
 
       # Step 3: Fetch with optimized buffers
       - logger.log:
-          format: "→ Fetching hourly forecast (buffers: TCP: 64KB)"
+          format: "→ Fetching hourly forecast (buffers: RX=32KB)"
           level: INFO
 
       - lambda: |-
