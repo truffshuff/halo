@@ -115,8 +115,8 @@ globals:
 
 switch:
   - platform: nimble_proxy
-    nimble_proxy_id: nimble_proxy_component
     id: ble_scanner_switch
+    nimble_proxy: nimble_proxy_component
     name: "BLE Scanner"
     icon: mdi:bluetooth-audio
     restore_mode: RESTORE_DEFAULT_ON
