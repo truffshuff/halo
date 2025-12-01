@@ -20,7 +20,7 @@
 # MUST be defined early so other modules can use these components
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@5a50b04c48620e7cc40c5ad452fea9930e5dfd60  # Scanner switch component
+  - source: github://truffshuff/esphome-components@04833464bbf6dc89170b46955f223da41dd60edf  # Scanner switch fix
     components: [axs15231, sy6970, nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv, weather_helpers]
     refresh: always
 
