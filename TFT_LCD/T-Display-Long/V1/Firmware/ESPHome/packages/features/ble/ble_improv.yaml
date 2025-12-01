@@ -68,6 +68,7 @@ nimble_improv:
 bluetooth_proxy:
 
 nimble_proxy:
+  id: nimble_proxy_component
   active: true
   connection_slots: 3  # Phase 2 complete: supports active GATT connections
   cache_services: true  # Phase 2.5: NVS service caching implemented
