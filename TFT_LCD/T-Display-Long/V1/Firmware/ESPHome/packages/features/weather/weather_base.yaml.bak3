@@ -1015,7 +1015,178 @@ script:
   #           entity_id: ${weather_entity_id}
   #           type: hourly
   #         capture_response: true
-  # (rest of old code omitted for brevity)
+          on_success:
+            then:
+              - lambda: |-
+                  // Feed watchdog at start of processing
+                  App.feed_wdt();
+
+                  ESP_LOGI("weather", "✓ Hourly forecast response received via native action");
+                  ESP_LOGI("weather", "Free heap at response: %d bytes", esp_get_free_heap_size());
+
+                  // Log memory state before JSON parsing
+                  ESP_LOGI("memory", "Before hourly JSON parse - Internal RAM free: %d, PSRAM free: %d",
+                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+                  // response is provided by ESPHome as JsonObjectConst
+                  // Native action returns: {"weather.hhut": {"forecast": [...]}}
+                  // The entity_id is at the top level, NOT wrapped in "service_response"
+
+                  ESP_LOGI("weather", "DEBUG: Checking hourly response structure...");
+
+                  // Debug: Print what keys are in the response
+                  ESP_LOGI("weather", "DEBUG: Hourly response keys:");
+                  for (JsonPairConst kv : response) {
+                    ESP_LOGI("weather", "  Key: '%s'", kv.key().c_str());
+                  }
+
+                  const char *entity_key = "${weather_entity_id}";
+
+                  JsonArrayConst forecast_array;
+                  bool found_forecast = false;
+
+                  // Try format 1: {"response": {"weather.hhut": {"forecast": [...]}}}
+                  if (response["response"].is<JsonObjectConst>()) {
+                    JsonObjectConst response_data = response["response"];
+                    ESP_LOGI("weather", "DEBUG: Found 'response' wrapper object");
+
+                    if (response_data[entity_key].is<JsonObjectConst>()) {
+                      ESP_LOGI("weather", "DEBUG: Found entity '%s' inside response wrapper", entity_key);
+                      JsonObjectConst entity_data = response_data[entity_key];
+
+                      if (entity_data["forecast"].is<JsonArrayConst>()) {
+                        forecast_array = entity_data["forecast"];
+                        found_forecast = true;
+                        ESP_LOGI("weather", "DEBUG: Using hourly forecast from response['%s']['forecast']", entity_key);
+                      }
+                    }
+                  }
+
+                  // Try format 2: {"weather.hhut": {"forecast": [...]}}
+                  if (!found_forecast && response[entity_key].is<JsonObjectConst>()) {
+                    ESP_LOGI("weather", "DEBUG: Found entity '%s' at top level (native action format)", entity_key);
+                    JsonObjectConst entity_data = response[entity_key];
+
+                    if (entity_data["forecast"].is<JsonArrayConst>()) {
+                      forecast_array = entity_data["forecast"];
+                      found_forecast = true;
+                      ESP_LOGI("weather", "DEBUG: Using hourly forecast from entity_data['forecast']");
+                    }
+                  }
+
+                  // Try format 3: {"forecast": [...]} (direct format)
+                  if (!found_forecast && response["forecast"].is<JsonArrayConst>()) {
+                    forecast_array = response["forecast"];
+                    found_forecast = true;
+                    ESP_LOGI("weather", "DEBUG: Using hourly forecast from response['forecast'] (direct format)");
+                  }
+
+                  if (!found_forecast) {
+                    ESP_LOGE("weather", "No hourly forecast array found in response");
+                    return;
+                  }
+
+                  if (true) {  // Keep existing block structure
+                    int hour_count = std::min((int)forecast_array.size(), 24);
+                    ESP_LOGI("weather", "Found %d hours of forecast data", hour_count);
+
+                    // Feed watchdog before processing loop
+                    App.feed_wdt();
+
+                    int idx = 0;
+                    for (JsonObjectConst hour : forecast_array) {
+                      if (idx >= 24) break;
+
+                      // Feed watchdog every 6 hours
+                      if (idx > 0 && idx % 6 == 0) {
+                        App.feed_wdt();
+                      }
+
+                      if (hour["temperature"].is<float>()) {
+                        id(weather_hourly_temp)[idx] = hour["temperature"].as<float>();
+                      }
+
+                      if (hour["apparent_temperature"].is<float>()) {
+                        id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"].as<float>();
+                      }
+
+                      if (hour["condition"].is<const char*>()) {
+                        id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
+                      }
+
+                      if (hour["precipitation_probability"].is<float>()) {
+                        id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"].as<float>();
+                      }
+
+                      if (hour["datetime"].is<const char*>()) {
+                        id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
+                      }
+
+                      // Additional hourly data fields
+                      if (hour["humidity"].is<float>()) {
+                        id(weather_hourly_humidity)[idx] = hour["humidity"].as<float>();
+                      }
+
+                      if (hour["precipitation"].is<float>()) {
+                        id(weather_hourly_precipitation)[idx] = hour["precipitation"].as<float>();
+                      }
+
+                      if (hour["pressure"].is<float>()) {
+                        id(weather_hourly_pressure)[idx] = hour["pressure"].as<float>();
+                      }
+
+                      if (hour["uv_index"].is<float>()) {
+                        id(weather_hourly_uv_index)[idx] = hour["uv_index"].as<float>();
+                      }
+
+                      if (hour["wind_speed"].is<float>()) {
+                        id(weather_hourly_wind_speed)[idx] = hour["wind_speed"].as<float>();
+                      }
+
+                      if (hour["wind_bearing"].is<float>()) {
+                        id(weather_hourly_wind_bearing)[idx] = hour["wind_bearing"].as<float>();
+                      }
+                      idx++;
+                    }
+                    ESP_LOGI("weather", "✓ Hourly forecast stored successfully");
+
+                    ESP_LOGI("memory", "After hourly parse - Internal RAM: %d, PSRAM: %d",
+                           heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+
+                    // Update hourly forecast timestamp
+                    id(weather_hourly_last_update) = millis();
+                    id(weather_last_update) = millis();
+                  }
+
+              # Small delay to allow memory cleanup
+              - delay: 100ms
+
+              # Update display after fetching (only if on hourly forecast page)
+              - if:
+                  condition:
+                    lambda: 'return id(current_page_name) == "hourly_forecast";'
+                  then:
+                    - script.execute: update_hourly_page_1
+          on_error:
+            then:
+              - lambda: |-
+                  ESP_LOGE("weather", "✗ Hourly forecast fetch FAILED via native action");
+                  ESP_LOGE("weather", "Error: Response too large or API connection failed");
+                  ESP_LOGE("weather", "Hourly forecasts contain too much data for ESPHome API buffer");
+                  // Mark as updated anyway to prevent repeated failures
+                  id(weather_hourly_last_update) = millis();
+              - logger.log:
+                  format: "ERROR: Hourly forecast disabled due to response size - using stale data"
+                  level: ERROR
+
+      # Resume BLE scanning after weather fetch (whether success or failure)
+      - switch.turn_on: ble_scanner_switch
+
+      - lambda: |-
+          // Always clear the lock when done
+          id(weather_fetch_lock) = false;
 
   # ============================================================================
   # COMMENTED OUT: HTTP-based hourly forecast workaround (kept for rollback)
