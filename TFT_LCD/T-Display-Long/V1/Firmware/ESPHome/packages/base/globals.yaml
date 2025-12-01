@@ -111,13 +111,7 @@ globals:
 # Usage:
 #   Pause: - switch.turn_off: ble_scanner_switch
 #   Resume: - switch.turn_on: ble_scanner_switch
+#
+# NOTE: The actual switch definition is in ble_improv.yaml (must be defined
+# after nimble_proxy component due to package load order)
 # ============================================================================
-
-switch:
-  - platform: nimble_proxy
-    id: ble_scanner_switch
-    nimble_proxy: nimble_proxy_component
-    name: "BLE Scanner"
-    icon: mdi:bluetooth-audio
-    restore_mode: RESTORE_DEFAULT_ON
-    entity_category: "config"

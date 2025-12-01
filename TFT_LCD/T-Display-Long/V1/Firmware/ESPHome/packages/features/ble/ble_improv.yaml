@@ -81,6 +81,22 @@ nimble_proxy:
   # - Service caching in NVS flash
 
 # ============================================================================
+# BLE Scanner Control Switch
+# ============================================================================
+# System-wide switch to pause/resume BLE scanning
+# Used to reduce API traffic during weather fetches and OTA updates
+# See globals.yaml for usage documentation
+# ============================================================================
+
+switch:
+  - platform: nimble_proxy
+    id: ble_scanner_switch
+    name: "BLE Scanner"
+    icon: mdi:bluetooth-audio
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: "config"
+
+# ============================================================================
 # Startup Light Blink Animation
 # ============================================================================
 # Rainbow effect for 30 seconds on startup/WiFi disconnect
