@@ -982,23 +982,119 @@ script:
 #          id(weather_fetch_lock) = false;
 
   # Script to fetch HOURLY forecast data
-  # NOTE: Hourly forecast is DISABLED because homeassistant.action with
-  # capture_response cannot handle the large response size (causes API buffer overflow).
-  # Even with BLE scanning paused, the ~48 hours of hourly data with all fields
-  # is too large for ESPHome's API mechanism.
-  #
-  # TODO: Implement using Home Assistant template sensors that split the data
-  # into smaller chunks, or use direct sensor pulls without capture_response.
+  # OPTIMIZED for large responses with:
+  # - Increased API buffers (32KB RX, 4KB TX in esphome_core.yaml)
+  # - BLE scanning pause
+  # - 2s delay for queue flush
+  # - Reduced data extraction (only essential fields)
   - id: fetch_hourly_forecast
     mode: single
     then:
-      - logger.log:
-          format: "⚠ Hourly forecast fetch DISABLED (response too large for API)"
-          level: WARN
       - lambda: |-
-          // Mark as "updated" to prevent repeated attempts
-          id(weather_hourly_last_update) = millis();
+          id(weather_fetch_lock) = true;
+          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH START ===");
+
+      # Step 1: Pause BLE to free up API bandwidth
+      - switch.turn_off: ble_scanner_switch
+      - logger.log: "BLE scanning paused"
+
+      # Step 2: CRITICAL - Wait for API queue to flush
+      # Gives time for any pending BLE advertisements to clear
+      - delay: 2s
+      - logger.log: "Queue flush delay complete"
+
+      # Step 3: Fetch with optimized buffers
+      - logger.log:
+          format: "→ Fetching hourly forecast (buffers: RX=32KB)"
+          level: INFO
+
+      - lambda: |-
+          App.feed_wdt();
+          ESP_LOGI("weather", "Free heap: %d bytes", esp_get_free_heap_size());
+
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            entity_id: ${weather_entity_id}
+            type: hourly
+          capture_response: true
+          on_success:
+            then:
+              - lambda: |-
+                  App.feed_wdt();
+                  ESP_LOGI("weather", "✓ Response received! Parsing...");
+
+                  // Find forecast array (try multiple formats)
+                  JsonArrayConst forecast_array;
+                  bool found = false;
+
+                  if (response["response"].is<JsonObjectConst>()) {
+                    auto r = response["response"]["${weather_entity_id}"];
+                    if (r["forecast"].is<JsonArrayConst>()) {
+                      forecast_array = r["forecast"];
+                      found = true;
+                    }
+                  }
+
+                  if (!found && response["${weather_entity_id}"]["forecast"].is<JsonArrayConst>()) {
+                    forecast_array = response["${weather_entity_id}"]["forecast"];
+                    found = true;
+                  }
+
+                  if (!found) {
+                    ESP_LOGE("weather", "No forecast array in response");
+                    return;
+                  }
+
+                  // Only process first 24 hours to reduce memory/time
+                  int count = std::min((int)forecast_array.size(), 24);
+                  ESP_LOGI("weather", "Processing %d hours...", count);
+
+                  int idx = 0;
+                  for (JsonObjectConst hour : forecast_array) {
+                    if (idx >= 24) break;
+
+                    // Extract only essential fields
+                    if (hour["temperature"].is<float>())
+                      id(weather_hourly_temp)[idx] = hour["temperature"];
+                    if (hour["condition"].is<const char*>())
+                      id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
+                    if (hour["precipitation_probability"].is<float>())
+                      id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"];
+                    if (hour["datetime"].is<const char*>())
+                      id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
+
+                    idx++;
+                    if (idx % 6 == 0) App.feed_wdt();
+                  }
+
+                  id(weather_hourly_last_update) = millis();
+                  id(weather_last_update) = millis();
+                  ESP_LOGI("weather", "✓ Hourly forecast complete!");
+
+              - delay: 100ms
+              - if:
+                  condition:
+                    lambda: 'return id(current_page_name) == "hourly_forecast";'
+                  then:
+                    - script.execute: update_hourly_page_1
+
+          on_error:
+            then:
+              - logger.log:
+                  format: "✗ Hourly fetch failed - will retry next time"
+                  level: ERROR
+              - lambda: |-
+                  // Don't mark as updated on error - allow retry
+                  ESP_LOGE("weather", "Error likely due to: buffer overflow, timeout, or connection drop");
+
+      # Step 4: Resume BLE (always, even on error)
+      - switch.turn_on: ble_scanner_switch
+      - logger.log: "BLE scanning resumed"
+
+      - lambda: |-
           id(weather_fetch_lock) = false;
+          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH END ===");
 
   # ============================================================================
   # COMMENTED OUT: Old hourly forecast via homeassistant.action

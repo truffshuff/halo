@@ -46,11 +46,21 @@ psram:
 # ESP32 Board Configuration
 # ============================================================================
 api:
-  # Reduced values to prevent protocol buffer encoding assertion failures
+  # Tuned for large responses (hourly weather forecast via homeassistant.action)
   # With 125+ weather entities + BLE proxy + LVGL, the queue can overflow
   reboot_timeout: 0s  # Disable automatic reboot on API disconnect
   encryption:
     key: !secret api_encryption_key
+
+  # Increase buffer sizes to handle large homeassistant.action responses
+  # Default buffer_size is 1024 bytes - too small for hourly forecast (~48 hours of data)
+  # Hourly forecast JSON can be 15-20KB+, need larger buffers
+  buffer_size_rx: 32768  # 32KB receive buffer (up from 1KB default)
+  buffer_size_tx: 4096   # 4KB transmit buffer
+
+  # Allow only 1 connection during critical operations to maximize available bandwidth
+  # When BLE is paused and only HA is connected, dedicate all resources to that connection
+  max_send_queue: 128    # Increased queue to handle burst data (up from default ~32)
 
 esp32:
   board: esp32-s3-devkitc-1
