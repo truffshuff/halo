@@ -62,6 +62,18 @@ dashboard_import:
 ota:
   - platform: esphome
     id: ota_default
+    on_begin:
+      # Pause BLE scanning during OTA to ensure clean API communication
+      - switch.turn_off: ble_scanner_switch
+      - logger.log: "OTA started - BLE scanning paused"
+    on_end:
+      # Resume BLE scanning after OTA completes
+      - switch.turn_on: ble_scanner_switch
+      - logger.log: "OTA completed - BLE scanning resumed"
+    on_error:
+      # Resume BLE scanning if OTA fails
+      - switch.turn_on: ble_scanner_switch
+      - logger.log: "OTA failed - BLE scanning resumed"
 
 wifi:
   # Reduce WiFi transmission power to prevent brownouts during WiFi connection
