@@ -46,21 +46,11 @@ psram:
 # ESP32 Board Configuration
 # ============================================================================
 api:
-  # Tuned for large responses (hourly weather forecast via homeassistant.action)
-  # With 125+ weather entities + BLE proxy + LVGL, the queue can overflow
+  # Note: Buffer sizes for large responses are controlled via ESP-IDF sdkconfig_options below
+  # See CONFIG_LWIP_TCP_RCV_WND and CONFIG_LWIP_TCP_SND_BUF
   reboot_timeout: 0s  # Disable automatic reboot on API disconnect
   encryption:
     key: !secret api_encryption_key
-
-  # Increase buffer sizes to handle large homeassistant.action responses
-  # Default buffer_size is 1024 bytes - too small for hourly forecast (~48 hours of data)
-  # Hourly forecast JSON can be 15-20KB+, need larger buffers
-  buffer_size_rx: 32768  # 32KB receive buffer (up from 1KB default)
-  buffer_size_tx: 4096   # 4KB transmit buffer
-
-  # Allow only 1 connection during critical operations to maximize available bandwidth
-  # When BLE is paused and only HA is connected, dedicate all resources to that connection
-  max_send_queue: 128    # Increased queue to handle burst data (up from default ~32)
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -154,13 +144,15 @@ esp32:
       # Network Configuration
       # ============================================================================
       # TCP/IP Configuration for better API throughput
-      # CRITICAL: Large buffers needed for BLE proxy advertisement bursts
-      # Without these, "Cannot send message because of TCP buffer space" errors occur
-      # causing protocol buffer assertion failures and crashes
-      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "65535"  # TCP send buffer (max for BLE bursts)
-      CONFIG_LWIP_TCP_WND_DEFAULT: "65535"      # TCP receive window (max for throughput)
-      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "32"       # TCP mailbox size (doubled from 16)
-      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "256"    # TCPIP task mailbox (doubled to handle bursts)
+      # CRITICAL: Large buffers needed for:
+      # - BLE proxy advertisement bursts
+      # - Hourly weather forecast responses (~15-20KB JSON via homeassistant.action)
+      # Without these, "Cannot send message because of TCP buffer space" or
+      # "BAD_HANDSHAKE_PACKET_LEN errno=11" errors occur
+      CONFIG_LWIP_TCP_SND_BUF_DEFAULT: "65535"  # TCP send buffer (64KB max)
+      CONFIG_LWIP_TCP_WND_DEFAULT: "65535"      # TCP receive window (64KB max)
+      CONFIG_LWIP_RECVMBOX_SIZE: "32"           # Mailbox size for recv (doubled from 16)
+      CONFIG_LWIP_TCPIP_RECVMBOX_SIZE: "256"    # TCPIP task mailbox (4x from 64)
 
       # Additional TCP optimizations for BLE proxy traffic
       CONFIG_LWIP_TCP_MSS: "1436"               # Maximum Segment Size (default: 1436)
