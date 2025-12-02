@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 25.12.01.1911
+# Version: 25.12.01.1915
 # Last Updated: December 01, 2025
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "25.12.01.1911"
+  version: "25.12.01.1915"
   device_description: ${name} - v${version}.
   
 # ============================================================================
