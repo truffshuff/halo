@@ -1064,7 +1064,7 @@ script:
                     return;
                   }
 
-                  // Extract data (only first 24 hours, only essential fields)
+                  // Extract data (only first 24 hours, all fields)
                   int count = std::min((int)forecast_array.size(), 24);
                   ESP_LOGI("weather", "Processing %d hours...", count);
 
@@ -1072,14 +1072,31 @@ script:
                   for (JsonObjectConst hour : forecast_array) {
                     if (idx >= 24) break;
 
+                    // Core fields
                     if (hour["temperature"].is<float>())
                       id(weather_hourly_temp)[idx] = hour["temperature"];
+                    if (hour["apparent_temperature"].is<float>())
+                      id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"];
                     if (hour["condition"].is<const char*>())
                       id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
                     if (hour["precipitation_probability"].is<float>())
                       id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"];
                     if (hour["datetime"].is<const char*>())
                       id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
+
+                    // Additional fields
+                    if (hour["humidity"].is<float>())
+                      id(weather_hourly_humidity)[idx] = hour["humidity"];
+                    if (hour["precipitation"].is<float>())
+                      id(weather_hourly_precipitation)[idx] = hour["precipitation"];
+                    if (hour["pressure"].is<float>())
+                      id(weather_hourly_pressure)[idx] = hour["pressure"];
+                    if (hour["uv_index"].is<float>())
+                      id(weather_hourly_uv_index)[idx] = hour["uv_index"];
+                    if (hour["wind_speed"].is<float>())
+                      id(weather_hourly_wind_speed)[idx] = hour["wind_speed"];
+                    if (hour["wind_bearing"].is<float>())
+                      id(weather_hourly_wind_bearing)[idx] = hour["wind_bearing"];
 
                     idx++;
                     if (idx % 6 == 0) App.feed_wdt();
