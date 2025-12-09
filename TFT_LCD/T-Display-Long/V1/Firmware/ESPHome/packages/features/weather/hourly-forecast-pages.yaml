@@ -72,7 +72,7 @@ lvgl:
               width: 170
               height: SIZE_CONTENT
               align: TOP_MID
-              y: 35
+              y: 30
               bg_color: 0x101010
               bg_opa: COVER
               border_width: 0
@@ -276,7 +276,7 @@ lvgl:
               width: 170
               height: SIZE_CONTENT
               align: TOP_MID
-              y: 245
+              y: 235
               bg_color: 0x101010
               bg_opa: COVER
               border_width: 0
@@ -480,7 +480,7 @@ lvgl:
               width: 170
               height: SIZE_CONTENT
               align: TOP_MID
-              y: 455
+              y: 440
               bg_color: 0x101010
               bg_opa: COVER
               border_width: 0
@@ -679,25 +679,14 @@ lvgl:
                           text_font: montserrat_10
                           text_color: my_white
 
-          # Center navigation button - click to go to hours 4-6
-          - obj:
-              id: nav_button_hourly_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 1 CENTER button RELEASED - going to page 2!"
-                - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
-                - lvgl.page.show:
-                    id: hourly_forecast_page_2
-                    animation: OUT_LEFT
-                    time: 300ms
+          # "More >" label at bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right navigation button - normal page rotation
           - obj:
@@ -717,6 +706,28 @@ lvgl:
                     id(last_auto_rotation_time) = millis();
                     ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          # Bottom navigation button - click to go to hours 4-6
+          - obj:
+              id: nav_button_hourly_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 1 BOTTOM 'More' button RELEASED - going to page 2!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page_2
                     animation: OUT_LEFT
                     time: 300ms
 
@@ -1362,25 +1373,14 @@ lvgl:
                           text_font: montserrat_10
                           text_color: my_white
 
-          # Center navigation button - click to go back to hours 1-3
-          - obj:
-              id: nav_button_hourly_page2_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 2 CENTER button RELEASED - going to page 3!"
-                - lambda: |-
-                    ESP_LOGI("touch", "Navigation button touched");
-                    id(last_auto_rotation_time) = millis();
-                    ESP_LOGD("touch", "Auto-rotation timer reset");
-                - lvgl.page.show:
-                    id: hourly_forecast_page_3
-                    animation: OUT_LEFT
-                    time: 300ms
+          # "More >" label at bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right navigation button - normal page rotation
           - obj:
@@ -1400,6 +1400,28 @@ lvgl:
                     id(last_auto_rotation_time) = millis();
                     ESP_LOGD("touch", "Auto-rotation timer reset");
                 - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          # Bottom navigation button - click to go to page 3
+          - obj:
+              id: nav_button_hourly_page2_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 2 BOTTOM 'More' button RELEASED - going to page 3!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page_3
                     animation: OUT_LEFT
                     time: 300ms
 
@@ -2044,23 +2066,14 @@ lvgl:
                           text_font: montserrat_10
                           text_color: my_white
 
-          # Center nav to page 4
-          - obj:
-              id: nav_button_hourly_page3_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 3 CENTER button RELEASED - going to page 4!"
-                - lambda: |-
-                    id(last_auto_rotation_time) = millis();
-                - lvgl.page.show:
-                    id: hourly_forecast_page_4
-                    animation: OUT_LEFT
-                    time: 300ms
+          # "More >" label at bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right nav back/next
           - obj:
@@ -2078,6 +2091,28 @@ lvgl:
                 - lambda: |-
                     id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          # Bottom navigation button - click to go to page 4
+          - obj:
+              id: nav_button_hourly_page3_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 3 BOTTOM 'More' button RELEASED - going to page 4!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page_4
                     animation: OUT_LEFT
                     time: 300ms
 
@@ -2721,23 +2756,14 @@ lvgl:
                           text_font: montserrat_10
                           text_color: my_white
 
-          # Center navigation button - click to go to page 5
-          - obj:
-              id: nav_button_hourly_page4_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 4 CENTER button RELEASED - going to page 5!"
-                - lambda: |-
-                    id(last_auto_rotation_time) = millis();
-                - lvgl.page.show:
-                    id: hourly_forecast_page_5
-                    animation: OUT_LEFT
-                    time: 300ms
+          # "More >" label at bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right navigation button - normal page rotation
           - obj:
@@ -2757,7 +2783,29 @@ lvgl:
                 - lvgl.page.next:
                     animation: OUT_LEFT
                     time: 300ms
-  
+
+          # Bottom navigation button - click to go to page 5
+          - obj:
+              id: nav_button_hourly_page4_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 4 BOTTOM 'More' button RELEASED - going to page 5!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page_5
+                    animation: OUT_LEFT
+                    time: 300ms
+
       - id: hourly_forecast_page_5
         skip: true
         bg_color: 0x000000
@@ -3398,23 +3446,14 @@ lvgl:
                           text_font: montserrat_10
                           text_color: my_white
 
-          # Center navigation button - click to go to page 6
-          - obj:
-              id: nav_button_hourly_page5_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 5 CENTER button RELEASED - going to page 6!"
-                - lambda: |-
-                    id(last_auto_rotation_time) = millis();
-                - lvgl.page.show:
-                    id: hourly_forecast_page_6
-                    animation: OUT_LEFT
-                    time: 300ms
+          # "More >" label at bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right navigation button - normal page rotation
           - obj:
@@ -3432,6 +3471,28 @@ lvgl:
                 - lambda: |-
                     id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
+                    animation: OUT_LEFT
+                    time: 300ms
+
+          # Bottom navigation button - click to go to page 6
+          - obj:
+              id: nav_button_hourly_page5_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 5 BOTTOM 'More' button RELEASED - going to page 6!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page_6
                     animation: OUT_LEFT
                     time: 300ms
 
@@ -4075,25 +4136,15 @@ lvgl:
                           text: "--"
                           text_font: montserrat_10
                           text_color: my_white
-        
 
-          # Center navigation button - click to go to page 7
-          - obj:
-              id: nav_button_hourly_page6_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 6 CENTER button RELEASED - going to page 7!"
-                - lambda: |-
-                    id(last_auto_rotation_time) = millis();
-                - lvgl.page.show:
-                    id: hourly_forecast_page_7
-                    animation: OUT_LEFT
-                    time: 300ms
+          # "More >" label at bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right navigation button - normal page rotation
           - obj:
@@ -4114,6 +4165,27 @@ lvgl:
                     animation: OUT_LEFT
                     time: 300ms
 
+          # Bottom navigation button - click to go to page 7
+          - obj:
+              id: nav_button_hourly_page6_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 6 BOTTOM 'More' button RELEASED - going to page 7!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page_7
+                    animation: OUT_LEFT
+                    time: 300ms
 
       - id: hourly_forecast_page_7
         skip: true
@@ -4756,24 +4828,14 @@ lvgl:
                           text_font: montserrat_10
                           text_color: my_white
 
-
-          # Center navigation button - click to go to page 8
-          - obj:
-              id: nav_button_hourly_page7_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 7 CENTER button RELEASED - going to page 8!"
-                - lambda: |-
-                    id(last_auto_rotation_time) = millis();
-                - lvgl.page.show:
-                    id: hourly_forecast_page_8
-                    animation: OUT_LEFT
-                    time: 300ms
+          # "More >" label at bottom
+          - label:
+              text: "More >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right navigation button - normal page rotation
           - obj:
@@ -4794,6 +4856,27 @@ lvgl:
                     animation: OUT_LEFT
                     time: 300ms
 
+          # Bottom navigation button - click to go to page 8
+          - obj:
+              id: nav_button_hourly_page7_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 7 BOTTOM 'More' button RELEASED - going to page 8!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page_8
+                    animation: OUT_LEFT
+                    time: 300ms
 
       - id: hourly_forecast_page_8
         skip: true
@@ -5436,24 +5519,14 @@ lvgl:
                           text_font: montserrat_10
                           text_color: my_white
 
-
-          # Center navigation button - click to go back to page 1
-          - obj:
-              id: nav_button_hourly_page8_center
-              align: CENTER
-              width: 150
-              height: 150
-              bg_opa: 0
-              border_width: 0
-              clickable: true
-              on_release:
-                - logger.log: "Hourly page 8 CENTER button RELEASED - going back to page 1!"
-                - lambda: |-
-                    id(last_auto_rotation_time) = millis();
-                - lvgl.page.show:
-                    id: hourly_forecast_page
-                    animation: OUT_RIGHT
-                    time: 300ms
+          # "Beginning >" label at bottom
+          - label:
+              text: "Beginning >"
+              align: BOTTOM_MID
+              y: -5
+              text_font: montserrat_18
+              text_color: my_gray
+              text_align: CENTER
 
           # Top-right navigation button - normal page rotation
           - obj:
@@ -5472,5 +5545,27 @@ lvgl:
                     id(last_auto_rotation_time) = millis();
                 - lvgl.page.next:
                     animation: OUT_LEFT
+                    time: 300ms
+
+          # Bottom navigation button - click to go back to page 1
+          - obj:
+              id: nav_button_hourly_page8_bottom
+              align: BOTTOM_MID
+              x: 0
+              y: 0
+              width: 100
+              height: 60
+              bg_opa: 0
+              border_width: 0
+              clickable: true
+              on_release:
+                - logger.log: "Hourly page 8 BOTTOM 'Beginning' button RELEASED - going back to page 1!"
+                - lambda: |-
+                    ESP_LOGI("touch", "Navigation button touched");
+                    id(last_auto_rotation_time) = millis();
+                    ESP_LOGD("touch", "Auto-rotation timer reset");
+                - lvgl.page.show:
+                    id: hourly_forecast_page
+                    animation: OUT_RIGHT
                     time: 300ms
 
