@@ -43,6 +43,9 @@ wifi:
 # Note: Captive portal is defined in base/hardware.yaml (legacy)
 # It will be moved here in Phase 2 when hardware.yaml is deprecated.
 
+web_server:
+  port: 80
+
 # Note: WiFi signal sensor and IP address sensor will be added
 # in Phase 2 when they are extracted from the Core file.
 
