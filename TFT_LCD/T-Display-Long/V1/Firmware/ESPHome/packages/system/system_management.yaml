@@ -54,9 +54,9 @@ time:
     id: sntp_time
     timezone: America/New_York
     servers:
-      - 0.pool.ntp.org
-      - 1.pool.ntp.org
-      - 2.pool.ntp.org
+      - 10.140.80.1
+      - time.cloudflare.com
+      - time1.google.com
 
 # Note: Web server, API, and system buttons are defined in
 # base/esphome_base.yaml (legacy). They will be moved here in Phase 2.

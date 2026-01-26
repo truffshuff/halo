@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.01.18.0836
-# Last Updated: January 18, 2026
+# Version: 26.01.26.1445
+# Last Updated: January 26, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.01.18.0836"
+  version: "26.01.26.1445"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -56,7 +56,7 @@ select:
           // Don't apply effects during boot - let startup_light_blink handle it
           if (!id(boot_complete)) return;
 
-          std::string effect = id(led_effect_select).current_option();
+          auto effect = id(led_effect_select).current_option();
           if (effect == "None") {
             auto call = id(rgb_light).turn_off();
             call.perform();
@@ -594,7 +594,7 @@ api:
       # ========================================================================
       - delay: 2s
       - lambda: |-
-          std::string effect = id(led_effect_select).current_option();
+          auto effect = id(led_effect_select).current_option();
           if (effect == "None") {
           auto call = id(rgb_light).turn_off();
           call.perform();
@@ -852,7 +852,7 @@ esphome:
 
         # Map user's text selection to page index number
         - lambda: |-
-            const std::string &choice = id(default_page_select_boot).current_option();
+            auto choice = id(default_page_select_boot).current_option();
             // Core pages
             if (choice == "Vertical Clock") {
             id(default_page_index) = 0;  // vertical_clock_page
