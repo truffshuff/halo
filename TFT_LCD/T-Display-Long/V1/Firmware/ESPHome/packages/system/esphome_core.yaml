@@ -56,6 +56,9 @@ esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
   cpu_frequency: 240MHz  # Maximum performance
+  # PSRAM-equipped ESP32 r3.0+ can save ~10KB IRAM by disabling legacy workarounds
+  # See changelog: set only if your module reports minimum_chip_revision >= "3.0"
+  minimum_chip_revision: "3.0"
 
   framework:
     type: esp-idf
