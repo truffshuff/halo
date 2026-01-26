@@ -58,13 +58,14 @@ esp32:
   cpu_frequency: 240MHz  # Maximum performance
   # PSRAM-equipped ESP32 r3.0+ can save ~10KB IRAM by disabling legacy workarounds
   # See changelog: set only if your module reports minimum_chip_revision >= "3.0"
-  minimum_chip_revision: "3.0"
+  
 
   framework:
     type: esp-idf
     advanced:
       loop_task_stack_size: 24576
       execute_from_psram: true
+      minimum_chip_revision: "3.0"
     # Use ESPHome-supported framework channels. Options: recommended (default), latest, dev
     # Switch to 'dev' to pick up the very latest ESP-IDF/NimBLE fixes sooner.
     version: recommended
