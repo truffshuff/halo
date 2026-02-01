@@ -1137,10 +1137,8 @@ script:
                     - lambda: |-
                         // Clear lock and retry with backoff
                         id(weather_fetch_lock) = false;
-                    - logger.log:
-                        format: "Retrying hourly forecast fetch (attempt %d)..."
-                        args: [ "${weather_hourly_retry_count}" ]
-                        level: INFO
+                    - lambda: |-
+                        ESP_LOGI("weather", "Retrying hourly forecast fetch (attempt %d)...", id(weather_hourly_retry_count));
                     - script.execute: fetch_hourly_forecast
                   else:
                     - lambda: |-
