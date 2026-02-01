@@ -163,6 +163,11 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  - id: weather_hourly_retry_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+
   - id: weather_on_weather_page
     type: bool
     restore_value: no
@@ -989,6 +994,7 @@ script:
     then:
       - lambda: |-
           id(weather_fetch_lock) = true;
+          id(weather_hourly_retry_count) = 0;
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP) START ===");
 
       # Pause BLE to reduce network congestion
@@ -1116,6 +1122,31 @@ script:
                     lambda: 'return id(current_page_name) == "hourly_forecast";'
                   then:
                     - script.execute: update_hourly_page_1
+
+          on_error:
+            then:
+              - lambda: |-
+                  // Increment retry counter and log error
+                  id(weather_hourly_retry_count)++;
+                  ESP_LOGE("weather", "Hourly forecast HTTP request ERROR (attempt %d)", id(weather_hourly_retry_count));
+              - if:
+                  condition:
+                    lambda: 'return id(weather_hourly_retry_count) < 3;'
+                  then:
+                    - delay: 3s
+                    - lambda: |-
+                        // Clear lock and retry with backoff
+                        id(weather_fetch_lock) = false;
+                    - logger.log:
+                        format: "Retrying hourly forecast fetch (attempt %d)..."
+                        args: [ "${weather_hourly_retry_count}" ]
+                        level: INFO
+                    - script.execute: fetch_hourly_forecast
+                  else:
+                    - lambda: |-
+                        ESP_LOGE("weather", "Hourly forecast fetch retries exhausted (attempts=%d)", id(weather_hourly_retry_count));
+                        id(weather_hourly_retry_count) = 0;
+                        id(weather_fetch_lock) = false;
 
       # Resume BLE
       - switch.turn_on: ble_scanner_switch
