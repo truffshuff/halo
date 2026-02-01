@@ -168,6 +168,11 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  - id: weather_hourly_action_start_time
+    type: unsigned long
+    restore_value: no
+    initial_value: '0'
+
   - id: weather_on_weather_page
     type: bool
     restore_value: no
@@ -993,6 +998,8 @@ script:
     then:
       - lambda: |-
           id(weather_fetch_lock) = true;
+          id(weather_hourly_retry_count) = 0;
+          id(weather_hourly_action_start_time) = millis();
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (native action) START ===");
 
       # Pause BLE to reduce network congestion
@@ -1153,6 +1160,29 @@ script:
               - lambda: |-
                   ESP_LOGI("weather", "Invoking HTTP fallback: fetch_hourly_forecast_http");
               - script.execute: fetch_hourly_forecast_http
+
+      # Give native action a short window to complete; if no result, treat as failure and retry/fallback
+      - delay: 3s
+      - lambda: |-
+          unsigned long start = id(weather_hourly_action_start_time);
+          if (id(weather_hourly_last_update) < start) {
+            // Native action produced no result within timeout
+            id(weather_hourly_retry_count)++;
+            ESP_LOGW("weather", "No native hourly response after timeout (attempt %d)", id(weather_hourly_retry_count));
+            if (id(weather_hourly_retry_count) < 3) {
+              ESP_LOGI("weather", "Retrying native hourly fetch (attempt %d)", id(weather_hourly_retry_count));
+              id(weather_fetch_lock) = false;  // allow new fetch
+              id(fetch_hourly_forecast).execute();
+            } else {
+              ESP_LOGI("weather", "Native hourly attempts exhausted; invoking HTTP fallback");
+              id(weather_hourly_retry_count) = 0;
+              id(weather_fetch_lock) = false;
+              id(fetch_hourly_forecast_http).execute();
+            }
+          } else {
+            ESP_LOGI("weather", "Native hourly fetch completed during wait");
+            id(weather_hourly_retry_count) = 0;
+          }
 
       # Resume BLE
       - switch.turn_on: ble_scanner_switch
