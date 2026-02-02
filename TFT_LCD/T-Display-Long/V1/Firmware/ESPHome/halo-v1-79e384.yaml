@@ -183,14 +183,13 @@ packages:
       # Memory savings are cumulative - disable multiple features to save more!
 
       # -------------------------
-      # BLE WiFi Provisioning (~40KB - LARGEST optional feature)
+      # BLE WiFi Provisioning (temporarily disabled)
       # -------------------------
-      # Provides: Improv WiFi setup via phone app, Bluetooth proxy for HA
-      # Memory: ~40KB (BLE stack)
-      # Hardware: Built-in ESP32-S3 Bluetooth
-      # Disable to: Save 40KB memory (biggest savings!)
-      # Keep if: You need easy WiFi setup or Bluetooth proxy
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
+      # NOTE: BLE proxy functionality is temporarily disabled. Using a minimal
+      # stub package prevents missing-ID errors (e.g., references to
+      # `ble_scanner_switch`) while keeping the system functional.
+      # Replace with `ble_improv.yaml` to re-enable full BLE behavior.
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_stub.yaml
 
       # -------------------------
       # Clock Feature (~5KB)
