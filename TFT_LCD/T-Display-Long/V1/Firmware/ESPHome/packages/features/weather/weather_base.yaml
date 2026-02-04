@@ -476,6 +476,84 @@ text_sensor:
               id(update_weather_icon_color).execute();
             }
 
+  # Hourly forecast attribute pulled from HA template sensor (JSON in `attributes.forecast`) 
+  - platform: homeassistant
+    id: hourly_forecast_attr
+    entity_id: sensor.hourly_forecast_esp
+    attribute: forecast
+    on_value:
+      then:
+        - lambda: |-
+            // Small guard and logging
+            std::string s = x;
+            ESP_LOGI("weather", "Received hourly forecast attribute (%d bytes)", s.length());
+
+            // Parse JSON in PSRAM to avoid internal RAM exhaustion
+            void* json_mem = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM);
+            if (!json_mem) {
+              ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM for hourly attribute!");
+              return;
+            }
+            JsonDocument *doc = new (json_mem) JsonDocument;
+            App.feed_wdt();
+            DeserializationError err = deserializeJson(*doc, s);
+            if (err) {
+              ESP_LOGE("weather", "Hourly attribute JSON parse failed: %s", err.c_str());
+              doc->~JsonDocument();
+              heap_caps_free(json_mem);
+              return;
+            }
+
+            JsonArray forecast_array = (*doc).as<JsonArray>();
+            int count = std::min((int)forecast_array.size(), 24);
+            ESP_LOGI("weather", "Parsing %d hourly entries from attribute", count);
+
+            int idx = 0;
+            for (JsonObject hour : forecast_array) {
+              if (idx >= 24) break;
+
+              if (hour["temperature"].is<float>())
+                id(weather_hourly_temp)[idx] = hour["temperature"].as<float>();
+              if (hour["apparent_temperature"].is<float>())
+                id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"].as<float>();
+              if (hour["condition"].is<const char*>())
+                id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
+              if (hour["precipitation_probability"].is<float>())
+                id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"].as<float>();
+              if (hour["datetime"].is<const char*>())
+                id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
+
+              // Additional fields
+              if (hour["humidity"].is<float>())
+                id(weather_hourly_humidity)[idx] = hour["humidity"].as<float>();
+              if (hour["precipitation"].is<float>())
+                id(weather_hourly_precipitation)[idx] = hour["precipitation"].as<float>();
+              if (hour["pressure"].is<float>())
+                id(weather_hourly_pressure)[idx] = hour["pressure"].as<float>();
+              if (hour["uv_index"].is<float>())
+                id(weather_hourly_uv_index)[idx] = hour["uv_index"].as<float>();
+              if (hour["wind_speed"].is<float>())
+                id(weather_hourly_wind_speed)[idx] = hour["wind_speed"].as<float>();
+              if (hour["wind_bearing"].is<float>())
+                id(weather_hourly_wind_bearing)[idx] = hour["wind_bearing"].as<float>();
+
+              idx++;
+              if (idx % 6 == 0) App.feed_wdt();
+            }
+
+            // Cleanup
+            doc->~JsonDocument();
+            heap_caps_free(json_mem);
+
+            id(weather_hourly_last_update) = millis();
+            id(weather_last_update) = millis();
+            ESP_LOGI("weather", "✓ Hourly forecast stored successfully (from attribute)");
+
+            // If on hourly page, trigger update
+            if (id(current_page_name) == "hourly_forecast") {
+              id(update_hourly_page_1).execute();
+            }
+
 # ============================================================================
 # Weather Refresh Intervals
 # ============================================================================
