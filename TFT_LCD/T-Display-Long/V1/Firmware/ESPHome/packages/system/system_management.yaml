@@ -52,6 +52,7 @@ time:
     id: ha_time
   - platform: sntp
     id: sntp_time
+    update_interval: 5min
     timezone: America/New_York
     servers:
       - 10.140.80.1
