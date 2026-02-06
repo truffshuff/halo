@@ -112,7 +112,7 @@ wireguard:
   peer_allowed_ips: !secret wg_allowed_ips
   peer_persistent_keepalive: 25s
   require_connection_to_proceed: false  # Non-blocking boot
-  mtu: 1280
+  # mtu: 1280
   
 # ============================================================================
 # Switch Components
