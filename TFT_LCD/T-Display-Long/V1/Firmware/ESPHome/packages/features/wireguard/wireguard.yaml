@@ -43,6 +43,7 @@
 substitutions:
   wg_peerendpt: !secret wg_peerendpt  # WireGuard server endpoint (hostname or IP)
   wg_peerport: !secret wg_peerport    # WireGuard server port
+  wireguard_default: "RESTORE_DEFAULT_OFF"
 
 # ============================================================================
 # Global Variables
@@ -121,7 +122,7 @@ switch:
     name: "Enable WireGuard"
     id: wireguard_enabled
     icon: mdi:vpn
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ${wireguard_default}  # ← Use substitution
     optimistic: true
     entity_category: "config"
     on_turn_on:
