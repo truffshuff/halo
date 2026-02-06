@@ -267,8 +267,19 @@ esphome:
             condition:
               lambda: 'return id(wireguard_enabled).state;'
             then:
-              - wireguard.enable:
-                  id: wg0
-              - logger.log: "✓ WireGuard enabled successfully"
+              - logger.log: "WireGuard enable requested at boot; waiting for SNTP time sync (2min timeout)"
+              - wait_until:
+                  condition:
+                    lambda: 'return id(sntp_time).now().is_valid();'
+                  timeout: 2min
+              - if:
+                  condition:
+                    lambda: 'return id(sntp_time).now().is_valid();'
+                  then:
+                    - wireguard.enable:
+                        id: wg0
+                    - logger.log: "✓ WireGuard enabled after time sync"
+                  else:
+                    - logger.log: "SNTP did not sync within 2min; will not enable WireGuard at boot (on_time_sync will retry)"
             else:
               - logger.log: "WireGuard switch is OFF, not enabling at boot"
