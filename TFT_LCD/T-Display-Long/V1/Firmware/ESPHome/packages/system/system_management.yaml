@@ -166,7 +166,7 @@ interval:
       # Check API connection state and log/warn if WireGuard connected but API is not
       - if:
           condition:
-            api.connected: true
+            - api.connected: true
           then:
             - lambda: |-
                 id(diag_api_connected) = true;
