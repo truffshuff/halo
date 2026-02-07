@@ -84,6 +84,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: diag_api_connected
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 # Template binary sensors for diagnostics
 binary_sensor:
@@ -102,6 +106,11 @@ binary_sensor:
     name: "HTTP: cloudflare.com reachable"
     id: http_cloudflare_reachable
     lambda: "return id(diag_http_cloudflare_ok);"
+
+  - platform: template
+    name: "Home Assistant API Connected"
+    id: homeassistant_api_connected
+    lambda: "return id(diag_api_connected);"
 
 # Optional numeric sensor exposing SNTP epoch for debugging
 sensor:
@@ -154,6 +163,24 @@ interval:
               - lambda: |-
                   id(diag_http_cloudflare_ok) = false;
 
+      # Check API connection state and log/warn if WireGuard connected but API is not
+      - if:
+          condition:
+            api.connected: true
+          then:
+            - lambda: |-
+                id(diag_api_connected) = true;
+            - logger.log: "API connected"
+          else:
+            - lambda: |-
+                id(diag_api_connected) = false;
+            - logger.log: "API disconnected"
+            - if:
+                condition:
+                  lambda: 'return id(wg_status_connected_state);'
+                then:
+                  - logger.log: "⚠ WireGuard connected but API disconnected - HA may not be reaching device over VPN"
+
       # Publish template sensor/binary states so they stay current without per-component polling
       - binary_sensor.template.publish:
           id: sntp_time_valid_sensor
@@ -164,6 +191,9 @@ interval:
       - binary_sensor.template.publish:
           id: http_cloudflare_reachable
           state: !lambda 'return id(diag_http_cloudflare_ok);'
+      - binary_sensor.template.publish:
+          id: homeassistant_api_connected
+          state: !lambda 'return id(diag_api_connected);'
       - sensor.template.publish:
           id: sntp_time_timestamp
           state: !lambda 'return (float)id(sntp_time).now().timestamp;'
