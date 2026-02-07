@@ -87,24 +87,21 @@ globals:
 
 # Template binary sensors for diagnostics
 binary_sensor:
-  # Template binary sensor exposing SNTP validity
+  # Template binary sensor exposing SNTP validity (published from diagnostics interval)
   - platform: template
     name: "SNTP Time Valid"
     id: sntp_time_valid_sensor
     lambda: "return id(sntp_time).now().is_valid();"
-    update_interval: 30s
 
   - platform: template
     name: "HTTP: google.com reachable"
     id: http_google_reachable
     lambda: "return id(diag_http_google_ok);"
-    update_interval: 30s
 
   - platform: template
     name: "HTTP: cloudflare.com reachable"
     id: http_cloudflare_reachable
     lambda: "return id(diag_http_cloudflare_ok);"
-    update_interval: 30s
 
 # Optional numeric sensor exposing SNTP epoch for debugging
 sensor:
@@ -112,7 +109,6 @@ sensor:
     name: "SNTP Timestamp"
     id: sntp_time_timestamp
     lambda: "return (float)id(sntp_time).now().timestamp;"
-    update_interval: 30s
 
 # Periodic diagnostic checks and logs
 interval:
@@ -157,6 +153,20 @@ interval:
               - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
               - lambda: |-
                   id(diag_http_cloudflare_ok) = false;
+
+      # Publish template sensor/binary states so they stay current without per-component polling
+      - binary_sensor.template.publish:
+          id: sntp_time_valid_sensor
+          state: !lambda 'return id(sntp_time).now().is_valid();'
+      - binary_sensor.template.publish:
+          id: http_google_reachable
+          state: !lambda 'return id(diag_http_google_ok);'
+      - binary_sensor.template.publish:
+          id: http_cloudflare_reachable
+          state: !lambda 'return id(diag_http_cloudflare_ok);'
+      - sensor.template.publish:
+          id: sntp_time_timestamp
+          state: !lambda 'return (float)id(sntp_time).now().timestamp;'
 
 # Note: Web server, API, and system buttons are defined in
 # base/esphome_base.yaml (legacy). They will be moved here in Phase 2.
