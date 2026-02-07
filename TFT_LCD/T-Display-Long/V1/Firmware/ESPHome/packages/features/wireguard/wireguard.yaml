@@ -132,11 +132,23 @@ switch:
       - wireguard.enable:
           id: wg0
       - logger.log: "✓ WireGuard enabled"
+      - lambda: |-
+          // Reflect enabled state in UI immediately; actual connection may follow
+          std::string s = "Status: Enabled";
+          id(wg_status_last_text) = s;
+          id(wg_status_needs_render) = true;
+          id(wg_status_connected_state) = false;
     on_turn_off:
       - logger.log: "WireGuard switch turned OFF - disabling WireGuard"
       - wireguard.disable:
           id: wg0
       - logger.log: "✓ WireGuard disabled"
+      - lambda: |-
+          // Reflect disabled state in UI
+          std::string s = "Status: Disabled";
+          id(wg_status_last_text) = s;
+          id(wg_status_needs_render) = true;
+          id(wg_status_connected_state) = false;
 
 # ============================================================================
 # Binary Sensor Components
@@ -151,8 +163,16 @@ binary_sensor:
       on_state:
         then:
           - lambda: |-
+              // x == true when connected
+              ESP_LOGI("wireguard", "Status changed: %s", x ? "Connected" : "Disconnected");
+              id(wg_status_connected_state) = x;
               std::string status_text = "Status: ";
-              status_text += x ? "Connected" : "Disconnected";
+              if (x) {
+                status_text += "Connected";
+              } else {
+                // If the switch is off, show Disabled; otherwise show Disconnected
+                status_text += (id(wireguard_enabled).state ? "Disconnected" : "Disabled");
+              }
               if (status_text != id(wg_status_last_text)) {
                 id(wg_status_last_text) = status_text;
                 id(wg_status_needs_render) = true;
@@ -160,6 +180,17 @@ binary_sensor:
     enabled:
       name: "WireGuard Enabled"
       id: wireguard_enabled_sensor
+      on_state:
+        then:
+          - lambda: |-
+              // Reflect enabled state on the UI when not connected
+              if (!id(wg_status_connected_state)) {
+                std::string s = id(wireguard_enabled_sensor).state ? "Status: Enabled" : "Status: Disabled";
+                if (s != id(wg_status_last_text)) {
+                  id(wg_status_last_text) = s;
+                  id(wg_status_needs_render) = true;
+                }
+              }
 
 # ============================================================================
 # Sensor Components
@@ -263,6 +294,14 @@ esphome:
             id: wireguard_endpoint_text
             state: !lambda |-
               return "${wg_peerendpt}:${wg_peerport}";
+        - lambda: |-
+            // Initialize endpoint global to ensure UI shows it even if on_value didn't fire yet
+            std::string endpoint_text = "Endpoint:\n";
+            endpoint_text += std::string("${wg_peerendpt}:${wg_peerport}");
+            if (endpoint_text != id(wg_endpoint_last_text)) {
+              id(wg_endpoint_last_text) = endpoint_text;
+              id(wg_endpoint_needs_render) = true;
+            }
         - if:
             condition:
               lambda: 'return id(wireguard_enabled).state;'
