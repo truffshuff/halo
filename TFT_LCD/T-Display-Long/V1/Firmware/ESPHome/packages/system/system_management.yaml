@@ -70,29 +70,40 @@ time:
               - logger.log: "WireGuard enabled by SNTP sync"
 
 # ---------------------------------------------------------------------------
-# Diagnostics: ping checks, SNTP validity sensor, HTTP connectivity check,
+# Diagnostics: HTTP-based reachability sensors, SNTP validity sensor,
 # periodic diagnostic logging (helps troubleshoot NTP/DNS reachability)
 # ---------------------------------------------------------------------------
 
-# Ping reachability tests (binary sensors)
+# Diagnostic globals (set by interval actions)
+globals:
+  - id: diag_http_google_ok
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: diag_http_cloudflare_ok
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+# Template binary sensors for diagnostics
 binary_sensor:
-  - platform: ping
-    host: 1.1.1.1
-    name: "Ping 1.1.1.1"
-    id: ping_1_1_1_1
-    update_interval: 30s
-
-  - platform: ping
-    host: time.cloudflare.com
-    name: "Ping time.cloudflare.com"
-    id: ping_time_cloudflare
-    update_interval: 30s
-
   # Template binary sensor exposing SNTP validity
   - platform: template
     name: "SNTP Time Valid"
     id: sntp_time_valid_sensor
     lambda: "return id(sntp_time).now().is_valid();"
+    update_interval: 30s
+
+  - platform: template
+    name: "HTTP: google.com reachable"
+    id: http_google_reachable
+    lambda: "return id(diag_http_google_ok);"
+    update_interval: 30s
+
+  - platform: template
+    name: "HTTP: cloudflare.com reachable"
+    id: http_cloudflare_reachable
+    lambda: "return id(diag_http_cloudflare_ok);"
     update_interval: 30s
 
 # Optional numeric sensor exposing SNTP epoch for debugging
@@ -110,21 +121,42 @@ interval:
       - lambda: |-
           bool sntp_ok = id(sntp_time).now().is_valid();
           ESP_LOGI("sntp_diag", "SNTP valid=%s, ts=%u", sntp_ok ? "yes" : "no", (unsigned)id(sntp_time).now().timestamp);
-          ESP_LOGI("net_diag", "Ping 1.1.1.1=%s, time.cloudflare=%s",
-                   id(ping_1_1_1_1).state ? "reachable" : "unreachable",
-                   id(ping_time_cloudflare).state ? "reachable" : "unreachable");
+          ESP_LOGI("net_diag", "HTTP google=%s, cloudflare=%s",
+                   id(diag_http_google_ok) ? "reachable" : "unreachable",
+                   id(diag_http_cloudflare_ok) ? "reachable" : "unreachable");
       - http_request.get:
           url: https://www.google.com/generate_204
           on_response:
             then:
               - logger.log:
-                  format: 'HTTP test: status=%d duration=%ums'
+                  format: 'HTTP google: status=%d duration=%ums'
                   args:
                     - response->status_code
                     - response->duration_ms
+              - lambda: |-
+                  id(diag_http_google_ok) = true;
           on_error:
             then:
-              - logger.log: 'HTTP test failed (network/DNS unreachable)'
+              - logger.log: 'HTTP google test failed (network/DNS unreachable)'
+              - lambda: |-
+                  id(diag_http_google_ok) = false;
+
+      - http_request.get:
+          url: https://cloudflare.com
+          on_response:
+            then:
+              - logger.log:
+                  format: 'HTTP cloudflare: status=%d duration=%ums'
+                  args:
+                    - response->status_code
+                    - response->duration_ms
+              - lambda: |-
+                  id(diag_http_cloudflare_ok) = true;
+          on_error:
+            then:
+              - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
+              - lambda: |-
+                  id(diag_http_cloudflare_ok) = false;
     on_time_sync:
       then:
         - logger.log: "SNTP synchronized - enabling WireGuard if switch is ON"
