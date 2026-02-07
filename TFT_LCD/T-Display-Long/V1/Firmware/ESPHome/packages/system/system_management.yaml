@@ -157,16 +157,6 @@ interval:
               - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
               - lambda: |-
                   id(diag_http_cloudflare_ok) = false;
-    on_time_sync:
-      then:
-        - logger.log: "SNTP synchronized - enabling WireGuard if switch is ON"
-        - if:
-            condition:
-              lambda: 'return id(wireguard_enabled).state;'
-            then:
-              - wireguard.enable:
-                  id: wg0
-              - logger.log: "WireGuard enabled by SNTP sync"
 
 # Note: Web server, API, and system buttons are defined in
 # base/esphome_base.yaml (legacy). They will be moved here in Phase 2.
