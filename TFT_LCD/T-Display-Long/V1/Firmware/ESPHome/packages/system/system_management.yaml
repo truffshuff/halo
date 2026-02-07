@@ -88,6 +88,19 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  # Diagnostics enable flags (toggleable via UI switches)
+  - id: diag_check_sntp_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: diag_check_google_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: diag_check_cloudflare_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true' 
 
 # Template binary sensors for diagnostics
 binary_sensor:
@@ -112,6 +125,44 @@ binary_sensor:
     id: homeassistant_api_connected
     lambda: "return id(diag_api_connected);"
 
+# Diagnostic control switches (allow enabling/disabling individual checks)
+switch:
+  - platform: template
+    name: "Diag: SNTP checks"
+    id: diag_check_sntp
+    icon: mdi:clock-check-outline
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: "diagnostic"
+    on_turn_on:
+      - lambda: 'id(diag_check_sntp_enabled) = true;'
+    on_turn_off:
+      - lambda: 'id(diag_check_sntp_enabled) = false;'
+
+  - platform: template
+    name: "Diag: Google HTTP check"
+    id: diag_check_google
+    icon: mdi:web
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: "diagnostic"
+    on_turn_on:
+      - lambda: 'id(diag_check_google_enabled) = true;'
+    on_turn_off:
+      - lambda: 'id(diag_check_google_enabled) = false;'
+
+  - platform: template
+    name: "Diag: Cloudflare HTTP check"
+    id: diag_check_cloudflare
+    icon: mdi:domain
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: "diagnostic"
+    on_turn_on:
+      - lambda: 'id(diag_check_cloudflare_enabled) = true;'
+    on_turn_off:
+      - lambda: 'id(diag_check_cloudflare_enabled) = false;'
+
 # Optional numeric sensor exposing SNTP epoch for debugging
 sensor:
   - platform: template
@@ -123,41 +174,66 @@ sensor:
 interval:
   - interval: 30s
     then:
+      - if:
+          condition:
+            lambda: 'return id(diag_check_sntp_enabled);'
+          then:
+            - lambda: |-
+                bool sntp_ok = id(sntp_time).now().is_valid();
+                ESP_LOGI("sntp_diag", "SNTP valid=%s, ts=%u", sntp_ok ? "yes" : "no", (unsigned)id(sntp_time).now().timestamp);
+          else:
+            - lambda: |-
+                ESP_LOGI("sntp_diag", "SNTP checks disabled");
+
       - lambda: |-
-          bool sntp_ok = id(sntp_time).now().is_valid();
-          ESP_LOGI("sntp_diag", "SNTP valid=%s, ts=%u", sntp_ok ? "yes" : "no", (unsigned)id(sntp_time).now().timestamp);
           ESP_LOGI("net_diag", "HTTP google=%s, cloudflare=%s",
                    id(diag_http_google_ok) ? "reachable" : "unreachable",
                    id(diag_http_cloudflare_ok) ? "reachable" : "unreachable");
-      - http_request.get:
-          url: https://www.google.com/generate_204
-          on_response:
-            then:
-              - logger.log:
-                  format: 'HTTP google: status=%d duration=%ums'
-                  args:
-                    - response->status_code
-                    - response->duration_ms
-              - lambda: |-
-                  id(diag_http_google_ok) = true;
-          on_error:
-            then:
-              - logger.log: 'HTTP google test failed (network/DNS unreachable)'
-              - lambda: |-
-                  id(diag_http_google_ok) = false;
 
-      - http_request.get:
-          url: https://cloudflare.com
-          on_response:
-            then:
-              - logger.log:
-                  format: 'HTTP cloudflare: status=%d duration=%ums'
-                  args:
-                    - response->status_code
-                    - response->duration_ms
-              - lambda: |-
-                  id(diag_http_cloudflare_ok) = true;
-          on_error:
+      - if:
+          condition:
+            lambda: 'return id(diag_check_google_enabled);'
+          then:
+            - http_request.get:
+                url: https://www.google.com/generate_204
+                on_response:
+                  then:
+                    - logger.log:
+                        format: 'HTTP google: status=%d duration=%ums'
+                        args:
+                          - response->status_code
+                          - response->duration_ms
+                    - lambda: |-
+                        id(diag_http_google_ok) = true;
+                on_error:
+                  then:
+                    - logger.log: 'HTTP google test failed (network/DNS unreachable)'
+                    - lambda: |-
+                        id(diag_http_google_ok) = false;
+          else:
+            - lambda: |-
+                ESP_LOGI("net_diag", "Google HTTP check disabled");
+
+      - if:
+          condition:
+            lambda: 'return id(diag_check_cloudflare_enabled);'
+          then:
+            - http_request.get:
+                url: https://cloudflare.com
+                on_response:
+                  then:
+                    - logger.log:
+                        format: 'HTTP cloudflare: status=%d duration=%ums'
+                        args:
+                          - response->status_code
+                          - response->duration_ms
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = true;
+                on_error:
+                  then:
+                    - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = false;
             then:
               - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
               - lambda: |-
