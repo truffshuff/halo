@@ -54,10 +54,10 @@ time:
     id: sntp_time
     update_interval: 5min
     timezone: America/New_York
-    servers:
-      - 10.140.80.1
-      - time.cloudflare.com
-      - time1.google.com
+    # servers:
+    #   - 10.140.80.1
+    #   - time.cloudflare.com
+    #   - time1.google.com
     on_time_sync:
       then:
         - logger.log: "SNTP synchronized - enabling WireGuard if switch is ON"
