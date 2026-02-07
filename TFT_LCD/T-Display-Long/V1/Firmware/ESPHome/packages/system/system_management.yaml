@@ -233,11 +233,7 @@ interval:
                   then:
                     - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
                     - lambda: |-
-                        id(diag_http_cloudflare_ok) = false;
-            then:
-              - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
-              - lambda: |-
-                  id(diag_http_cloudflare_ok) = false;
+                        id(diag_http_cloudflare_ok) = false; 
 
       # Check API connection state and log/warn if WireGuard connected but API is not
       - if:

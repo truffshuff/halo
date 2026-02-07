@@ -177,6 +177,15 @@ binary_sensor:
                 id(wg_status_last_text) = status_text;
                 id(wg_status_needs_render) = true;
               }
+          - if:
+              condition:
+                lambda: 'return id(wg_status_needs_render) && id(current_page_name) == "wifi";'
+              then:
+                - lvgl.label.update:
+                    id: wg_status_label
+                    text: !lambda 'return id(wg_status_last_text);'
+                - lambda: 'id(wg_status_needs_render) = false;'
+
     enabled:
       name: "WireGuard Enabled"
       id: wireguard_enabled_sensor
@@ -229,6 +238,15 @@ sensor:
                 id(wg_handshake_last_text) = handshake_text;
                 id(wg_handshake_needs_render) = true;
               }
+          - if:
+              condition:
+                lambda: 'return id(wg_handshake_needs_render) && id(current_page_name) == "wifi";'
+              then:
+                - lvgl.label.update:
+                    id: wg_handshake_label
+                    text: !lambda 'return id(wg_handshake_last_text);'
+                - lambda: 'id(wg_handshake_needs_render) = false;'
+
 
 # ============================================================================
 # Text Sensor Components
@@ -249,6 +267,15 @@ text_sensor:
                 id(wg_address_last_text) = addr_text;
                 id(wg_address_needs_render) = true;
               }
+          - if:
+              condition:
+                lambda: 'return id(wg_address_needs_render) && id(current_page_name) == "wifi";'
+              then:
+                - lvgl.label.update:
+                    id: wg_address_label
+                    text: !lambda 'return id(wg_address_last_text);'
+                - lambda: 'id(wg_address_needs_render) = false;'
+
 
   # WireGuard endpoint (peer server) - initialized once at boot
   - platform: template
@@ -266,6 +293,15 @@ text_sensor:
               id(wg_endpoint_last_text) = endpoint_text;
               id(wg_endpoint_needs_render) = true;
             }
+        - if:
+            condition:
+              lambda: 'return id(wg_endpoint_needs_render) && id(current_page_name) == "wifi";'
+            then:
+              - lvgl.label.update:
+                  id: wg_endpoint_label
+                  text: !lambda 'return id(wg_endpoint_last_text);'
+              - lambda: 'id(wg_endpoint_needs_render) = false;'
+
 
 # ============================================================================
 # Boot Sequence Integration
