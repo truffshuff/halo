@@ -92,13 +92,13 @@ bluetooth_proxy:
 # Improv WiFi Provisioning (ESPHome native)
 # ============================================================================
 # Allows WiFi reconfiguration via BLE using the Improv protocol.
-# authorizer: false → auto-authorize on connection (no button press required),
+# authorizer: null → always authorized (no button press required),
 #   matching the nimble_improv behavior in ble_improv.yaml.
 #   Set authorizer to a binary_sensor ID to require a physical button press.
 # NOTE: authorized_duration and wifi_timeout are not supported by esp32_improv.
 # ============================================================================
 esp32_improv:
-  authorizer: false
+  authorizer: null  # null = always authorized (no button press required)
 
 # ============================================================================
 # BLE Scanner Control Switch
