@@ -129,6 +129,7 @@ nimble_improv:
 # The increased TCP buffers in esphome_core.yaml handle advertisement bursts
 # ============================================================================
 bluetooth_proxy:
+  active: true
 
 nimble_proxy:
   id: nimble_proxy_component
