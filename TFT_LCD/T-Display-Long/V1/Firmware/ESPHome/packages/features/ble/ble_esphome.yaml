@@ -1,12 +1,16 @@
 # ============================================================================
-# BLE WiFi Provisioning - ESPHome Native Stack
+# BLE WiFi Provisioning - ESPHome Native Stack (Bluedroid)
 # ============================================================================
 # Alternative to ble_improv.yaml using ESPHome's built-in BLE components
 # instead of the custom NimBLE components.
 #
-# Why use this instead of ble_improv.yaml?
-#   - ESPHome's BLE stack has received significant memory improvements
-#   - Fewer external_components to fetch (no custom NimBLE fork needed)
+# Stack difference:
+#   ble_esphome.yaml  → Bluedroid (ESP32 default; required by esp32_ble_tracker)
+#   ble_improv.yaml   → NimBLE    (custom components; lower memory footprint)
+#
+# Why try this instead of ble_improv.yaml?
+#   - ESPHome's Bluedroid BLE management has received memory improvements
+#   - No custom external_components to fetch
 #   - Stays in sync with upstream ESPHome BLE fixes automatically
 #   - Maintained by the ESPHome project
 #
@@ -14,9 +18,10 @@
 #   - No connection_slots tuning (ESPHome manages connection count internally)
 #   - No NVS service caching (cache_services not available)
 #   - ble_scanner_switch is a template switch (optimistic), not a native proxy switch
+#   - Bluedroid uses more internal RAM than NimBLE by default
 #
 # Dependencies:
-#   - system/esphome_core.yaml (PSRAM and base BT sdkconfig)
+#   - system/esphome_core.yaml (PSRAM and base configuration)
 #   - system/networking.yaml (provisions WiFi)
 #
 # This module configures:
@@ -25,41 +30,39 @@
 #   - Bluetooth proxy for Home Assistant (built-in ESPHome component)
 #   - Scanner switch to pause/resume BLE scanning (OTA, weather fetches)
 #
-# Usage:
-#   In Halo-v1.yaml packages list, replace ble_improv.yaml with this file.
-#   Also remove the NimBLE sdkconfig and external_components from
-#   esphome_core.yaml (or they are already moved to ble_improv.yaml if you
-#   used the split approach).
-#
-# MEMORY IMPACT: ~30-40KB (ESPHome native BLE stack, PSRAM-backed)
+# MEMORY IMPACT: ~40-50KB (Bluedroid stack)
 # ============================================================================
 
 # ============================================================================
-# BT sdkconfig - Enable NimBLE, disable Bluedroid
+# BT sdkconfig - Bluedroid BLE stack
 # ============================================================================
-# ESPHome's native bluetooth_proxy also uses NimBLE under the hood.
-# These options ensure Bluedroid is fully disabled and PSRAM is used for BT.
+# ESPHome's native esp32_ble_tracker and bluetooth_proxy are Bluedroid-based.
+# They include esp_bt_defs.h which is only available when Bluedroid is enabled.
+# (The custom nimble_proxy in ble_improv.yaml is the NimBLE alternative.)
+#
+# BLE-only (no Classic BR/EDR): Bluedroid + BLE_ENABLED + GATT on,
+# Classic BT features off.
 # ============================================================================
 esp32:
   framework:
     sdkconfig_options:
-      # Enable NimBLE, disable Bluedroid
+      # Enable Bluedroid, disable NimBLE
       CONFIG_BT_ENABLED: "y"
-      CONFIG_BT_NIMBLE_ENABLED: "y"
-      CONFIG_BT_BLUEDROID_ENABLED: "n"
+      CONFIG_BT_BLUEDROID_ENABLED: "y"
+      CONFIG_BT_NIMBLE_ENABLED: "n"
 
-      # Explicitly disable all Bluedroid sub-components
-      CONFIG_BT_BLE_ENABLED: "n"           # Bluedroid BLE (not NimBLE BLE)
-      CONFIG_BT_CLASSIC_ENABLED: "n"       # Classic Bluetooth (BR/EDR)
-      CONFIG_BT_SPP_ENABLED: "n"           # Serial Port Profile
-      CONFIG_BT_HFP_ENABLE: "n"            # Hands-Free Profile
-      CONFIG_BT_A2DP_ENABLE: "n"           # Advanced Audio Distribution Profile
-      CONFIG_BT_BLUFI_ENABLE: "n"          # BluFi WiFi provisioning
-      CONFIG_BT_GATTS_ENABLE: "n"          # GATT Server (Bluedroid)
-      CONFIG_BT_GATTC_ENABLE: "n"          # GATT Client (Bluedroid)
+      # BLE only — no Classic Bluetooth (BR/EDR)
+      CONFIG_BT_CLASSIC_ENABLED: "n"      # Disable BR/EDR
+      CONFIG_BT_BLE_ENABLED: "y"          # Enable Bluedroid BLE
+      CONFIG_BT_SPP_ENABLED: "n"          # Serial Port Profile
+      CONFIG_BT_HFP_ENABLE: "n"           # Hands-Free Profile
+      CONFIG_BT_A2DP_ENABLE: "n"          # Advanced Audio Distribution Profile
+      CONFIG_BT_BLUFI_ENABLE: "n"         # BluFi WiFi provisioning
 
-      # NimBLE PSRAM allocation (key memory improvement)
-      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"
+      # GATT required for proxy (client) and Improv (server)
+      CONFIG_BT_GATTS_ENABLE: "y"         # GATT Server (Improv provisioning)
+      CONFIG_BT_GATTC_ENABLE: "y"         # GATT Client (active proxy connections)
+
       CONFIG_BT_RELEASE_IRAM_ON_SLEEP: "n"  # Keep BT memory accessible
 
 # ============================================================================
