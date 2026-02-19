@@ -1,14 +1,11 @@
 # BLE Stub Package
 # Purpose: Lightweight placeholder to satisfy references to BLE-related IDs
 # (e.g., `ble_scanner_switch`) when you intentionally omit the full
-# BLE implementation (`ble_improv.yaml`). This avoids compile-time errors
-# from missing IDs while keeping behavior inert.
+# BLE implementation (`ble_improv.yaml` or `ble_esphome.yaml`). This avoids
+# compile-time errors from missing IDs while keeping behavior inert.
 
-# Usage: In your `Halo-v1.yaml` packages list, replace
-#   - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
-# with
-#   - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_stub.yaml
-# to temporarily disable Bluetooth proxy functionality.
+# Usage: In your `Halo-v1.yaml` packages list, replace the active BLE package
+# with this file to disable Bluetooth proxy functionality entirely.
 
 switch:
   - platform: template
@@ -21,14 +18,6 @@ switch:
       - logger.log: "BLE stub: scanner turned ON (no-op)"
     on_turn_off:
       - logger.log: "BLE stub: scanner turned OFF (no-op)"
-
-# Optional: provide a diagnostic sensor so you can see stub status in HA
-sensor:
-  - platform: template
-    name: "BLE Stub Active"
-    lambda: |-
-      return 1.0;  // Always present when stub is included
-    update_interval: 60s
 
 # Keep this package intentionally minimal. If you later need more
 # stubbed IDs (other `ble_*` IDs referenced in your YAML), add them here
