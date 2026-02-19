@@ -39,6 +39,16 @@ wifi:
           id(cycleCounter) = 30;
           ESP_LOGI("wifi", "WiFi connected - stopping startup blink");
         }
+    # Re-enable WireGuard after WiFi reconnect if the switch is ON and time is
+    # already valid. The on_time_sync handler covers the initial boot case where
+    # SNTP hasn't synced yet, so we only need to act here when time is ready.
+    - if:
+        condition:
+          lambda: 'return id(wireguard_enabled).state && id(sntp_time).now().is_valid();'
+        then:
+          - logger.log: "WiFi reconnected - re-enabling WireGuard tunnel"
+          - wireguard.enable:
+              id: wg0
 
 # Note: Captive portal is defined in base/hardware.yaml (legacy)
 # It will be moved here in Phase 2 when hardware.yaml is deprecated.
