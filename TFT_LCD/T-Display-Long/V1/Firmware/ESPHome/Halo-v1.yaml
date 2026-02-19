@@ -162,11 +162,11 @@ packages:
       # -------------------------
       # Three options — uncomment exactly ONE:
       #
-      # Option 1: ESPHome native BLE stack (recommended to try first)
+      # Option 1: ESPHome native BLE stack (Bluedroid-based)
       #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + esp32_improv.
-      #   Tracks upstream ESPHome memory improvements automatically.
+      #   ESPHome's Bluedroid management has received memory/stability improvements.
       #   No custom external components needed.
-      #   Trade-offs: no connection_slots/cache_services tuning vs. custom NimBLE.
+      #   Trade-offs: Bluedroid uses more RAM than NimBLE; no connection_slots/cache_services.
       # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_esphome.yaml
       #
       # Option 2: Custom NimBLE stack (original implementation)
