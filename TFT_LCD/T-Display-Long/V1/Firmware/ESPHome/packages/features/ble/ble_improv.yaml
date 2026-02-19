@@ -1,15 +1,15 @@
 # ============================================================================
-# BLE WiFi Provisioning Capability
+# BLE WiFi Provisioning Capability - Custom NimBLE Stack
 # ============================================================================
-# NimBLE stack + Improv WiFi provisioning
+# Custom NimBLE components + Improv WiFi provisioning
 # Dependencies:
 #   - system/esphome_core.yaml (PSRAM needed for BLE)
 #   - system/networking.yaml (provisions WiFi)
 #
 # This module configures:
-#   - NimBLE Bluetooth stack
+#   - Custom NimBLE Bluetooth stack (from truffshuff/esphome-components)
 #   - Improv WiFi provisioning service
-#   - Bluetooth proxy for Home Assistant
+#   - Bluetooth proxy for Home Assistant (custom nimble_proxy)
 #   - Startup RGB LED blink animation
 #
 # Features:
@@ -19,12 +19,18 @@
 #   - Auto-authorization on connection (no button press required)
 #   - Device info response (firmware, version, hardware, name)
 #   - State management and error handling
+#   - connection_slots: tunable active GATT connection count
+#   - cache_services: NVS service caching
+#   - authorized_duration / wifi_timeout on improv
 #
 # Usage:
 #   1. Open https://www.improv-wifi.com/ in Chrome browser
 #   2. Click "Connect device via Improv"
 #   3. Select "Halo Improv" from BLE devices
 #   4. Enter WiFi credentials and provision
+#
+# Alternative: Use ble_esphome.yaml for ESPHome's built-in BLE stack
+# (fewer features but tracks upstream ESPHome memory improvements)
 #
 # Compatible with standard Improv protocol clients
 # Protocol spec: https://www.improv-wifi.com/
@@ -37,10 +43,67 @@
 # Since networking.yaml loads before this module, cycleCounter cannot be moved here
 
 # ============================================================================
+# Custom NimBLE External Components
+# ============================================================================
+# The custom NimBLE component set lives in the truffshuff fork.
+# These are NOT needed when using ble_esphome.yaml.
+# esphome_core.yaml only registers the hardware drivers (axs15231, sy6970,
+# weather_helpers); BLE components are declared here so swapping BLE files
+# is the only change required.
+# ============================================================================
+external_components:
+  - source: github://truffshuff/esphome-components@8623f0439f2ec173fbbf03903b736cbbd9e8ff58
+    components: [nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv]
+    refresh: always
+
+# ============================================================================
+# NimBLE sdkconfig Options
+# ============================================================================
+# These options tune the NimBLE stack.  They live here so that switching to
+# ble_esphome.yaml (which sets its own BT sdkconfig) requires no edits to
+# esphome_core.yaml.
+# ============================================================================
+esp32:
+  framework:
+    sdkconfig_options:
+      # Enable NimBLE, disable Bluedroid
+      CONFIG_BT_ENABLED: "y"
+      CONFIG_BT_NIMBLE_ENABLED: "y"
+      CONFIG_BT_BLUEDROID_ENABLED: "n"
+
+      # Explicitly disable ALL Bluedroid sub-components to prevent compilation
+      # This fixes "esp_bt_defs.h: No such file or directory" errors
+      CONFIG_BT_BLE_ENABLED: "n"           # Bluedroid BLE (not NimBLE BLE)
+      CONFIG_BT_CLASSIC_ENABLED: "n"       # Classic Bluetooth (BR/EDR)
+      CONFIG_BT_SPP_ENABLED: "n"           # Serial Port Profile
+      CONFIG_BT_HFP_ENABLE: "n"            # Hands-Free Profile
+      CONFIG_BT_A2DP_ENABLE: "n"           # Advanced Audio Distribution Profile
+      CONFIG_BT_BLUFI_ENABLE: "n"          # BluFi WiFi provisioning (causes esp_blufi_api.c errors)
+      CONFIG_BT_GATTS_ENABLE: "n"          # GATT Server (Bluedroid)
+      CONFIG_BT_GATTC_ENABLE: "n"          # GATT Client (Bluedroid)
+
+      # NimBLE tuning (working with nimble_proxy)
+      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "3"
+      CONFIG_BT_NIMBLE_ROLE_CENTRAL: "y"
+      CONFIG_BT_NIMBLE_ROLE_PERIPHERAL: "y"
+      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM
+      CONFIG_BT_NIMBLE_TASK_STACK_SIZE: "4096"        # Increased from default
+      CONFIG_BT_RELEASE_IRAM_ON_SLEEP: "n"            # Keep BT memory accessible
+
+      # Increase ATT MTU (browser commonly negotiates 185/247)
+      CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU: "247"
+      # Allow more concurrent GATT procedures and prep entries
+      CONFIG_BT_NIMBLE_GATT_MAX_PROCS: "16"
+      CONFIG_BT_NIMBLE_GATT_PREP_WRITE_COUNT: "16"
+      # More CCCDs (we have multiple notifies)
+      CONFIG_BT_NIMBLE_MAX_CCCDS: "16"
+      # NimBLE debug logging
+      CONFIG_BT_NIMBLE_LOG_LEVEL: "DEBUG"
+
+# ============================================================================
 # NimBLE Base Stack
 # ============================================================================
 # Base NimBLE stack - required before nimble_improv can be used
-# Also defined in base/hardware.yaml (duplicate is intentional for Phase 1)
 # ============================================================================
 nimble_base:
 

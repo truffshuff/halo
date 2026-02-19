@@ -158,12 +158,24 @@ packages:
       # Memory savings are cumulative - disable multiple features to save more!
 
       # -------------------------
-      # BLE WiFi Provisioning (temporarily disabled)
+      # BLE WiFi Provisioning (pick one)
       # -------------------------
-      # NOTE: BLE proxy functionality is temporarily disabled. Using a minimal
-      # stub package prevents missing-ID errors (e.g., references to
-      # `ble_scanner_switch`) while keeping the system functional.
-      # Replace with `ble_improv.yaml` to re-enable full BLE behavior.
+      # Three options — uncomment exactly ONE:
+      #
+      # Option 1: ESPHome native BLE stack (recommended to try first)
+      #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + esp32_improv.
+      #   Tracks upstream ESPHome memory improvements automatically.
+      #   No custom external components needed.
+      #   Trade-offs: no connection_slots/cache_services tuning, no authorized_duration.
+      # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_esphome.yaml
+      #
+      # Option 2: Custom NimBLE stack (original implementation)
+      #   Full feature set: connection_slots, cache_services, authorized_duration, ATT MTU tuning.
+      #   Requires truffshuff/esphome-components external fork.
+      # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
+      #
+      # Option 3: No BLE (stub — saves ~40KB)
+      #   Provides a no-op ble_scanner_switch so the rest of the config compiles.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_stub.yaml
 
       # -------------------------
