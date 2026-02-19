@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.02.18.2106
+# Version: 26.02.18.2110
 # Last Updated: February 18, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.02.18.2106"
+  version: "26.02.18.2110"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -405,7 +405,9 @@ interval:
                       auto addresses = esphome::wifi::global_wifi_component->get_ip_addresses();
                       std::string ip_text = "IP: Not assigned";
                       if (!addresses.empty()) {
-                      ip_text = std::string("IP: ") + addresses[0].str();
+                      char ip_buf[40];
+                      addresses[0].str_to(ip_buf);
+                      ip_text = std::string("IP: ") + ip_buf;
                       }
                       if (ip_text != id(wifi_ip_last_text)) {
                       id(wifi_ip_last_text) = ip_text;
