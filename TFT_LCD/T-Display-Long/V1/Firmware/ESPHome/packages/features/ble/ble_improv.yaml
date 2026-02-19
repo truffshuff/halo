@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@8623f0439f2ec173fbbf03903b736cbbd9e8ff58
+  - source: github://truffshuff/esphome-components@1bc8174e9b0f4182fc9be08c16070d814368fc45
     components: [nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv]
     refresh: always
 
@@ -129,7 +129,6 @@ nimble_improv:
 # The increased TCP buffers in esphome_core.yaml handle advertisement bursts
 # ============================================================================
 bluetooth_proxy:
-  active: true
 
 nimble_proxy:
   id: nimble_proxy_component
