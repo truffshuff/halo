@@ -1,0 +1,122 @@
+# ============================================================================
+# BLE WiFi Provisioning - ESPHome Native Stack
+# ============================================================================
+# Alternative to ble_improv.yaml using ESPHome's built-in BLE components
+# instead of the custom NimBLE components.
+#
+# Why use this instead of ble_improv.yaml?
+#   - ESPHome's BLE stack has received significant memory improvements
+#   - Fewer external_components to fetch (no custom NimBLE fork needed)
+#   - Stays in sync with upstream ESPHome BLE fixes automatically
+#   - Maintained by the ESPHome project
+#
+# Trade-offs vs ble_improv.yaml (custom NimBLE):
+#   - No connection_slots tuning (ESPHome manages connection count internally)
+#   - No NVS service caching (cache_services not available)
+#   - No authorized_duration / wifi_timeout on improv (not supported by esp32_improv)
+#   - ble_scanner_switch is a template switch (optimistic), not a native proxy switch
+#
+# Dependencies:
+#   - system/esphome_core.yaml (PSRAM and base BT sdkconfig)
+#   - system/networking.yaml (provisions WiFi)
+#
+# This module configures:
+#   - ESPHome native BLE tracker (BLE scanning for HA proxy)
+#   - Improv WiFi provisioning via BLE (esp32_improv)
+#   - Bluetooth proxy for Home Assistant (built-in ESPHome component)
+#   - Scanner switch to pause/resume BLE scanning (OTA, weather fetches)
+#
+# Usage:
+#   In Halo-v1.yaml packages list, replace ble_improv.yaml with this file.
+#   Also remove the NimBLE sdkconfig and external_components from
+#   esphome_core.yaml (or they are already moved to ble_improv.yaml if you
+#   used the split approach).
+#
+# MEMORY IMPACT: ~30-40KB (ESPHome native BLE stack, PSRAM-backed)
+# ============================================================================
+
+# ============================================================================
+# BT sdkconfig - Enable NimBLE, disable Bluedroid
+# ============================================================================
+# ESPHome's native bluetooth_proxy also uses NimBLE under the hood.
+# These options ensure Bluedroid is fully disabled and PSRAM is used for BT.
+# ============================================================================
+esp32:
+  framework:
+    sdkconfig_options:
+      # Enable NimBLE, disable Bluedroid
+      CONFIG_BT_ENABLED: "y"
+      CONFIG_BT_NIMBLE_ENABLED: "y"
+      CONFIG_BT_BLUEDROID_ENABLED: "n"
+
+      # Explicitly disable all Bluedroid sub-components
+      CONFIG_BT_BLE_ENABLED: "n"           # Bluedroid BLE (not NimBLE BLE)
+      CONFIG_BT_CLASSIC_ENABLED: "n"       # Classic Bluetooth (BR/EDR)
+      CONFIG_BT_SPP_ENABLED: "n"           # Serial Port Profile
+      CONFIG_BT_HFP_ENABLE: "n"            # Hands-Free Profile
+      CONFIG_BT_A2DP_ENABLE: "n"           # Advanced Audio Distribution Profile
+      CONFIG_BT_BLUFI_ENABLE: "n"          # BluFi WiFi provisioning
+      CONFIG_BT_GATTS_ENABLE: "n"          # GATT Server (Bluedroid)
+      CONFIG_BT_GATTC_ENABLE: "n"          # GATT Client (Bluedroid)
+
+      # NimBLE PSRAM allocation (key memory improvement)
+      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"
+      CONFIG_BT_RELEASE_IRAM_ON_SLEEP: "n"  # Keep BT memory accessible
+
+# ============================================================================
+# ESPHome Native BLE Tracker
+# ============================================================================
+# Drives BLE scanning used by the bluetooth_proxy below.
+# active: true enables active scan (requests scan response packets).
+# Tune interval/window to balance scan coverage vs. power/CPU load.
+# ============================================================================
+esp32_ble_tracker:
+  id: ble_tracker
+  scan_parameters:
+    active: true
+    interval: 1100ms   # Time between scan windows (duty cycle)
+    window: 1100ms     # How long to listen per interval (100% duty cycle here)
+
+# ============================================================================
+# ESPHome Native Bluetooth Proxy
+# ============================================================================
+# Allows Home Assistant to use this device as a Bluetooth proxy.
+# active: true enables outbound GATT connections (connect to BLE devices).
+# NOTE: connection_slots and cache_services are not available in the native
+# component; ESPHome manages connection limits internally.
+# ============================================================================
+bluetooth_proxy:
+  active: true
+
+# ============================================================================
+# Improv WiFi Provisioning (ESPHome native)
+# ============================================================================
+# Allows WiFi reconfiguration via BLE using the Improv protocol.
+# NOTE: authorized_duration and wifi_timeout are not supported by esp32_improv.
+# Authorization is always active until the device is provisioned.
+# ============================================================================
+esp32_improv:
+
+# ============================================================================
+# BLE Scanner Control Switch
+# ============================================================================
+# Pause/resume BLE scanning during OTA updates and weather fetches.
+# Uses a template switch calling esp32_ble_tracker.start_scan / stop_scan.
+# optimistic: true means the switch state is trusted immediately without
+# waiting for BLE state confirmation (safe here as start/stop are synchronous).
+# ============================================================================
+switch:
+  - platform: template
+    id: ble_scanner_switch
+    name: "BLE Scanner"
+    icon: mdi:bluetooth-audio
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: "config"
+    optimistic: true
+    on_turn_on:
+      - esp32_ble_tracker.start_scan:
+          id: ble_tracker
+          continuous: true
+    on_turn_off:
+      - esp32_ble_tracker.stop_scan:
+          id: ble_tracker
