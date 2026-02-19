@@ -122,8 +122,12 @@ esp32_improv:
 # ============================================================================
 # Pause/resume BLE scanning during OTA updates and weather fetches.
 # Uses a template switch calling esp32_ble_tracker.start_scan / stop_scan.
-# optimistic: true means the switch state is trusted immediately without
-# waiting for BLE state confirmation (safe here as start/stop are synchronous).
+# optimistic: true means the switch state is trusted immediately.
+#
+# Note: esp32_ble_tracker starts automatically on boot. The on_turn_on
+# action (via RESTORE_DEFAULT_ON) calls start_scan after all components are
+# already initialized, so it safely restarts the scan cycle rather than
+# conflicting with startup.
 # ============================================================================
 switch:
   - platform: template
