@@ -166,7 +166,7 @@ packages:
       #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + esp32_improv.
       #   Tracks upstream ESPHome memory improvements automatically.
       #   No custom external components needed.
-      #   Trade-offs: no connection_slots/cache_services tuning, no authorized_duration.
+      #   Trade-offs: no connection_slots/cache_services tuning vs. custom NimBLE.
       # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_esphome.yaml
       #
       # Option 2: Custom NimBLE stack (original implementation)

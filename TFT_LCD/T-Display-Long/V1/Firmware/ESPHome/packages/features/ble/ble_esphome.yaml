@@ -13,7 +13,6 @@
 # Trade-offs vs ble_improv.yaml (custom NimBLE):
 #   - No connection_slots tuning (ESPHome manages connection count internally)
 #   - No NVS service caching (cache_services not available)
-#   - No authorized_duration / wifi_timeout on improv (not supported by esp32_improv)
 #   - ble_scanner_switch is a template switch (optimistic), not a native proxy switch
 #
 # Dependencies:
@@ -92,13 +91,28 @@ bluetooth_proxy:
 # Improv WiFi Provisioning (ESPHome native)
 # ============================================================================
 # Allows WiFi reconfiguration via BLE using the Improv protocol.
-# authorizer: null → always authorized (no button press required),
-#   matching the nimble_improv behavior in ble_improv.yaml.
-#   Set authorizer to a binary_sensor ID to require a physical button press.
-# NOTE: authorized_duration and wifi_timeout are not supported by esp32_improv.
+#
+# esp32_improv requires an authorizer binary_sensor — it checks this sensor
+# to decide whether to accept provisioning requests. We define an internal
+# always-on sensor (ble_improv_authorizer) so provisioning is auto-approved
+# on connection, matching the nimble_improv behavior in ble_improv.yaml.
+#
+# To require a physical button press instead: replace the template sensor
+# with a real button/GPIO binary_sensor.
+#
+# authorized_duration and wifi_timeout ARE supported by esp32_improv and
+# are set here to match the values in ble_improv.yaml.
 # ============================================================================
+binary_sensor:
+  - platform: template
+    id: ble_improv_authorizer
+    internal: true   # Not exposed to Home Assistant
+    lambda: "return true;"  # Always authorized — no button press required
+
 esp32_improv:
-  authorizer: null  # null = always authorized (no button press required)
+  authorizer: ble_improv_authorizer
+  authorized_duration: 2min  # Match ble_improv.yaml
+  wifi_timeout: 1min         # Match ble_improv.yaml
 
 # ============================================================================
 # BLE Scanner Control Switch
