@@ -172,69 +172,9 @@ sensor:
 
 # Periodic diagnostic checks and logs
 interval:
-  - interval: 30s
+  # Fast interval: API connection check and sensor state publishing
+  - interval: 60s
     then:
-      - if:
-          condition:
-            lambda: 'return id(diag_check_sntp_enabled);'
-          then:
-            - lambda: |-
-                bool sntp_ok = id(sntp_time).now().is_valid();
-                ESP_LOGI("sntp_diag", "SNTP valid=%s, ts=%u", sntp_ok ? "yes" : "no", (unsigned)id(sntp_time).now().timestamp);
-          else:
-            - lambda: |-
-                ESP_LOGI("sntp_diag", "SNTP checks disabled");
-
-      - lambda: |-
-          ESP_LOGI("net_diag", "HTTP google=%s, cloudflare=%s",
-                   id(diag_http_google_ok) ? "reachable" : "unreachable",
-                   id(diag_http_cloudflare_ok) ? "reachable" : "unreachable");
-
-      - if:
-          condition:
-            lambda: 'return id(diag_check_google_enabled);'
-          then:
-            - http_request.get:
-                url: https://www.google.com/generate_204
-                on_response:
-                  then:
-                    - logger.log:
-                        format: 'HTTP google: status=%d duration=%ums'
-                        args:
-                          - response->status_code
-                          - response->duration_ms
-                    - lambda: |-
-                        id(diag_http_google_ok) = true;
-                on_error:
-                  then:
-                    - logger.log: 'HTTP google test failed (network/DNS unreachable)'
-                    - lambda: |-
-                        id(diag_http_google_ok) = false;
-          else:
-            - lambda: |-
-                ESP_LOGI("net_diag", "Google HTTP check disabled");
-
-      - if:
-          condition:
-            lambda: 'return id(diag_check_cloudflare_enabled);'
-          then:
-            - http_request.get:
-                url: https://cloudflare.com
-                on_response:
-                  then:
-                    - logger.log:
-                        format: 'HTTP cloudflare: status=%d duration=%ums'
-                        args:
-                          - response->status_code
-                          - response->duration_ms
-                    - lambda: |-
-                        id(diag_http_cloudflare_ok) = true;
-                on_error:
-                  then:
-                    - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
-                    - lambda: |-
-                        id(diag_http_cloudflare_ok) = false; 
-
       # Check API connection state and log/warn if WireGuard connected but API is not
       - if:
           condition:
@@ -258,17 +198,81 @@ interval:
           id: sntp_time_valid_sensor
           state: !lambda 'return id(sntp_time).now().is_valid();'
       - binary_sensor.template.publish:
-          id: http_google_reachable
-          state: !lambda 'return id(diag_http_google_ok);'
-      - binary_sensor.template.publish:
-          id: http_cloudflare_reachable
-          state: !lambda 'return id(diag_http_cloudflare_ok);'
-      - binary_sensor.template.publish:
           id: homeassistant_api_connected
           state: !lambda 'return id(diag_api_connected);'
       - sensor.template.publish:
           id: sntp_time_timestamp
           state: !lambda 'return (float)id(sntp_time).now().timestamp;'
+
+  # Slow interval: SNTP and network HTTP diagnostic checks
+  - interval: 5min
+    then:
+      - if:
+          condition:
+            lambda: 'return id(diag_check_sntp_enabled);'
+          then:
+            - lambda: |-
+                bool sntp_ok = id(sntp_time).now().is_valid();
+                ESP_LOGI("sntp_diag", "SNTP valid=%s, ts=%u", sntp_ok ? "yes" : "no", (unsigned)id(sntp_time).now().timestamp);
+
+      - if:
+          condition:
+            lambda: 'return id(diag_check_google_enabled) || id(diag_check_cloudflare_enabled);'
+          then:
+            - lambda: |-
+                ESP_LOGI("net_diag", "HTTP google=%s, cloudflare=%s",
+                         id(diag_http_google_ok) ? "reachable" : "unreachable",
+                         id(diag_http_cloudflare_ok) ? "reachable" : "unreachable");
+
+      - if:
+          condition:
+            lambda: 'return id(diag_check_google_enabled);'
+          then:
+            - http_request.get:
+                url: https://www.google.com/generate_204
+                on_response:
+                  then:
+                    - logger.log:
+                        format: 'HTTP google: status=%d duration=%ums'
+                        args:
+                          - response->status_code
+                          - response->duration_ms
+                    - lambda: |-
+                        id(diag_http_google_ok) = true;
+                on_error:
+                  then:
+                    - logger.log: 'HTTP google test failed (network/DNS unreachable)'
+                    - lambda: |-
+                        id(diag_http_google_ok) = false;
+
+      - if:
+          condition:
+            lambda: 'return id(diag_check_cloudflare_enabled);'
+          then:
+            - http_request.get:
+                url: https://cloudflare.com
+                on_response:
+                  then:
+                    - logger.log:
+                        format: 'HTTP cloudflare: status=%d duration=%ums'
+                        args:
+                          - response->status_code
+                          - response->duration_ms
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = true;
+                on_error:
+                  then:
+                    - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = false;
+
+      # Publish HTTP reachability sensor states after checks complete
+      - binary_sensor.template.publish:
+          id: http_google_reachable
+          state: !lambda 'return id(diag_http_google_ok);'
+      - binary_sensor.template.publish:
+          id: http_cloudflare_reachable
+          state: !lambda 'return id(diag_http_cloudflare_ok);'
 
 # Note: Web server, API, and system buttons are defined in
 # base/esphome_base.yaml (legacy). They will be moved here in Phase 2.
