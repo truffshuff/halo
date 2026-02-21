@@ -1,20 +1,20 @@
 # ============================================================================
 # Weather Daily - Daily Forecast Display
 # ============================================================================
-# Part of Phase 2 modular refactoring
+# Part of modular refactoring
 #
 # This module provides the daily forecast display scripts:
 #   - update_daily_forecast_display script (updates all 10 days)
 #
 # Dependencies:
 #   - packages/features/weather/weather_base.yaml (for globals and data)
-#   - packages/base/hardware.yaml (for LVGL display)
-#   - packages/weather/daily-forecast-pages.yaml (for LVGL pages - to be moved)
+#   - packages/system/display_hardware.yaml (for LVGL display)
+#   - packages/features/weather/daily-forecast-pages.yaml (for LVGL pages)
 #
 # Required IDs from other modules:
 #   - current_page_name (from page_rotation)
 #   - weather_forecast_* globals (from weather_base)
-#   - sntp_time (from esphome_base)
+#   - sntp_time (from system_management.yaml)
 #
 # Notes:
 #   - Displays 10-day forecast with high/low temps, conditions, precipitation

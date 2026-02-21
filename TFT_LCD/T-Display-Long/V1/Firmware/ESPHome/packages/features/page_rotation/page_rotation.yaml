@@ -16,7 +16,7 @@
 #   - Clock: features/clock/clock_base.yaml
 #   - AirQ: features/airq/airq_base.yaml
 #   - WiFi: features/wifi_status/wifi_page_base.yaml
-#   - Weather: Halo-v1-Core.yaml (will move to features/weather in Phase 3)
+#   - Weather: Halo-v1-Core.yaml (now handled by features/weather)
 #
 #   The actual rotation logic (interval that cycles pages) remains in
 #   Halo-v1-Core.yaml as it needs to orchestrate across all pages.
@@ -32,7 +32,7 @@
 #
 # MEMORY USAGE: ~1KB
 #
-# Created: 2025-11-14 (Phase 2 extraction)
+# Created: 2025-11-14 (module extraction)
 # ============================================================================
 
 # ============================================================================

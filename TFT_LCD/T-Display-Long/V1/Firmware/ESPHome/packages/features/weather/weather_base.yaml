@@ -1,7 +1,7 @@
 # ============================================================================
 # Weather Base - Core Weather Infrastructure
 # ============================================================================
-# Part of Phase 2 modular refactoring
+# Part of modular refactoring
 #
 # This module provides the core weather capability infrastructure including:
 #   - Global weather data storage (current conditions, daily/hourly forecasts)
@@ -13,8 +13,8 @@
 #
 # Dependencies:
 #   - packages/base/globals.yaml (for page rotation globals like current_page_name)
-#   - packages/base/esphome_base.yaml (for http_request, time components)
-#   - packages/base/hardware.yaml (for LVGL display)
+#   - packages/system/esphome_core.yaml and system_management.yaml (http_request, time)
+#   - packages/system/display_hardware.yaml (for LVGL display)
 #   - packages/features/page_rotation/page_rotation.yaml (for page rotation system)
 #
 # Required Substitutions:
@@ -1585,7 +1585,9 @@ script:
   #          id(weather_fetch_lock) = false;
   #          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP) END ===");
 
-  # Legacy script for backward compatibility - fetches both
+  # Transitional helper script that triggers both forecast fetches.
+  # Retained for compatibility with existing automation; prefer calling
+  # fetch_daily_forecast and fetch_hourly_forecast directly when practical.
   - id: fetch_weather_data
     mode: single
     then:

@@ -24,7 +24,7 @@
 # NOTE: WiFi signal sensor is defined in system/networking.yaml
 #       This module only provides the page controls and navigation
 #
-# Created: 2025-11-14 (Phase 2 extraction)
+# Created: 2025-11-14 (module extraction)
 # ============================================================================
 
 # ============================================================================
