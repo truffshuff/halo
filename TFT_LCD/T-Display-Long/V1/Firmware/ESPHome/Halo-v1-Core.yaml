@@ -8,17 +8,17 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.02.20.1947
+# Version: 26.02.20.2101
 # Last Updated: February 20, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.02.20.1947"
+  version: "26.02.20.2101"
   device_description: ${name} - v${version}.
   
 # ============================================================================
-# MODULAR ARCHITECTURE (Phases 1-2 Complete)
+# MODULAR ARCHITECTURE (complete)
 # ============================================================================
 # Most components have been extracted to capability modules in packages/.
 # This Core file contains cross-capability components and LVGL display config.
@@ -91,8 +91,9 @@ select:
 interval:
 
   # Batched sensor UI update - prevents LVGL cascade rendering
-  # NOTE: This is legacy code - sensor_ui_dirty is never set in current config
-  # Kept for potential future use
+  # NOTE: Currently unused; `sensor_ui_dirty` is not modified by any active
+  # script or component. The interval is retained for future reference or if
+  # a batched update mechanism is later required.
   - interval: 2s
     then:
       - lambda: |-
@@ -108,7 +109,7 @@ interval:
           }
           }
 
-  # Display watchdog and periodic health check intervals moved to features/diagnostics/diagnostics.yaml (Phase 2)
+  # Display watchdog and periodic health check intervals moved to features/diagnostics/diagnostics.yaml
 
   # Automatic page rotation - controllable via Home Assistant with custom page selection and order
   - interval: 1s
@@ -219,8 +220,8 @@ interval:
                 args: ['id(current_page_name).c_str()']
                 level: DEBUG
 
-  # Note: Colon blink interval moved to features/clock/clock_base.yaml (Phase 2)
-  # Note: Weather refresh intervals moved to features/weather/weather_base.yaml (Phase 2)
+  # Note: Colon blink interval moved to features/clock/clock_base.yaml
+  # Note: Weather refresh intervals moved to features/weather/weather_base.yaml
 
   - interval: 100ms  # Check frequently for page index changes
     then:
@@ -680,16 +681,16 @@ lvgl:
         - color: 0x00FF00  # Green - strong signal
           position: 255
 
-  # IMPORTANT: Pages are now modularized into separate package files
-  # Phase 1: Base components (globals, hardware) are in packages/base/
-  # Phase 2: Simple pages (clock, airq, wifi) are in packages/pages/
-  # Phase 3: Weather system (hourly/daily forecast, LED effects) are in packages/weather/
+  # IMPORTANT: Pages are modularized into separate package files
+  # Base components (globals, hardware) live in packages/base/
+  # Simple feature pages (clock, airq, wifi) are under packages/pages/
+  # Weather-related pages and LED effects reside in packages/weather/
 
   # ============================================================================
   # LVGL Pages - Weather Pages
   # ============================================================================
-  # HOURLY FORECAST PAGES: Moved to packages/weather/hourly-forecast-pages.yaml (Phase 3)
-  # DAILY FORECAST PAGES: Moved to packages/weather/daily-forecast-pages.yaml (Phase 3)
+  # HOURLY FORECAST PAGES: moved to packages/weather/hourly-forecast-pages.yaml
+  # DAILY FORECAST PAGES: moved to packages/weather/daily-forecast-pages.yaml
   pages:
       
 # ============================================================================
@@ -829,7 +830,7 @@ esphome:
     # -------------------------------------------------------------------------
     # Runs before WiFi and sensors to show something on screen immediately
     # 50ms delay allows LVGL to complete basic initialization
-    # Note: Watchdog timer initialization moved to features/diagnostics/diagnostics.yaml (Phase 2)
+    # Note: Watchdog timer initialization moved to features/diagnostics/diagnostics.yaml
     - priority: 800
       then:
         - delay: 50ms

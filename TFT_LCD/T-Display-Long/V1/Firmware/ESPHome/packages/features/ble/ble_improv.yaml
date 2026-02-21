@@ -133,14 +133,14 @@ bluetooth_proxy:
 nimble_proxy:
   id: nimble_proxy_component
   active: true
-  connection_slots: 3  # Phase 2 complete: supports active GATT connections
-  cache_services: true  # Phase 2.5: NVS service caching implemented
+  connection_slots: 3  # supports active GATT connections
+  cache_services: true  # NVS service caching implemented
   # Now supports:
   # - Active GATT connections (connect/disconnect)
   # - Service/characteristic/descriptor discovery
   # - GATT read/write operations
   # - Notification/indication subscriptions
-  # - Pairing/bonding (Phase 2.6)
+  # - Pairing/bonding (future)
   # - Service caching in NVS flash
 
 # ============================================================================

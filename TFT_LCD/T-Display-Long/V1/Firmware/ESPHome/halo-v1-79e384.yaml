@@ -121,7 +121,7 @@ logger:
 # ============================================================================
 # HALO V1 - MODULAR CONFIGURATION
 # ============================================================================
-# ✅ PHASE 2 COMPLETE! (2025-11-15)
+# ✅ Modular configuration complete as of 2025-11-15
 #
 # All 7 capabilities successfully extracted from Core:
 #   ✅ Clock, AirQ, WiFi Status, WireGuard, Diagnostics, Page Rotation, Weather
@@ -290,7 +290,7 @@ packages:
       # - LVGL display initialization
       # - Remaining integration glue
       # - Navigation coordination
-      # - Legacy components being phased out
+      # - Remaining legacy components (to be removed in future releases)
       #
       # Most functionality has been extracted to capability modules above.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml

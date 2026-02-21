@@ -32,7 +32,7 @@
 #   - wg_shrdkey: Pre-shared key (for additional security)
 #   - wg_allowed_ips: Allowed VPN routes (e.g., "0.0.0.0/0")
 #
-# Created: 2025-11-14 (Phase 2 extraction)
+# Created: 2025-11-14 (module extraction)
 # ============================================================================
 
 # ============================================================================

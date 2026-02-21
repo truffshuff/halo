@@ -99,17 +99,19 @@ wifi:
 #     nimble_improv: DEBUG
 
 # ============================================================================
-# MODULAR PACKAGE IMPORTS - PHASE 1 REORGANIZATION
+# MODULAR PACKAGE IMPORTS
 # ============================================================================
-# Each package below represents a specific feature or component.
-# Packages are loaded from GitHub for easy updates and sharing.
+# Configuration is organized into capability-based packages located under
+# packages/ and imported dynamically from the repository. This makes it
+# easier to update individual features independently and to reuse config
+# across devices.
 #
-# PHASE 1 STATUS: 🚧 IN PROGRESS - Reorganizing into capability-based structure
-#   ✅ System modules: esphome_core, display_hardware, networking, fonts_colors, system_management
-#   ✅ BLE module: ble_improv
-#   🚧 Still using old: globals, Core (all remaining features)
+# System modules handle core hardware and networking; feature modules provide
+# optional capabilities (clock, air quality, weather, etc.). Core-level
+# settings remain in Halo-v1-Core.yaml, which contains cross-capability
+# components such as LVGL display configuration.
 #
-# NEXT: Phase 2 will extract features from Core into capability modules
+# See MODULARIZATION_PLAN_V2.md for details on architecture and migration.
 # ============================================================================
 
 packages:
@@ -277,7 +279,7 @@ packages:
       # - LVGL display initialization
       # - Remaining integration glue
       # - Navigation coordination
-      # - Legacy components being phased out
+      # - Remaining legacy components (to be removed in future releases)
       #
       # Most functionality has been extracted to capability modules above.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml

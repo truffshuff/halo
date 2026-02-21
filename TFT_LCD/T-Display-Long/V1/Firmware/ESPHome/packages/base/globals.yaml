@@ -15,7 +15,7 @@
 #   - Sensor UI batching (sensor_ui_dirty, last_sensor_ui_update)
 #   - Default page configuration (default_page_index)
 #
-# MIGRATED GLOBALS (Phase 2 Complete):
+# GLOBALS MOVED TO FEATURE FILES (complete):
 #   - Clock → features/clock/clock_base.yaml
 #   - Page Rotation → features/page_rotation/page_rotation.yaml
 #   - Weather → features/weather/weather_base.yaml

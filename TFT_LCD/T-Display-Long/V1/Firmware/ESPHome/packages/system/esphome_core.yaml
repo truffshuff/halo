@@ -10,9 +10,6 @@
 #   - Memory management (PSRAM, stack sizes)
 # ============================================================================
 
-# Note: Logger is defined in base/esphome_base.yaml (legacy)
-# It will be moved here in Phase 2 when esphome_base.yaml is deprecated.
-
 # ============================================================================
 # External Components
 # ============================================================================
@@ -61,7 +58,7 @@ esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
   cpu_frequency: 240MHz  # Maximum performance
-  # PSRAM-equipped ESP32 r3.0+ can save ~10KB IRAM by disabling legacy workarounds
+  # PSRAM-equipped ESP32 r3.0+ can save ~10KB IRAM by disabling older workarounds
   # See changelog: set only if your module reports minimum_chip_revision >= "3.0"
   
 

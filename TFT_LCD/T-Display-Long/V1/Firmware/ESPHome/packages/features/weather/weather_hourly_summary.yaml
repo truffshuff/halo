@@ -1,7 +1,7 @@
 # ============================================================================
 # Weather Hourly Summary - 24-Hour Summary Pages
 # ============================================================================
-# Part of Phase 2 modular refactoring
+# Part of modular refactoring
 #
 # This module provides the hourly summary pages showing 24 hours of forecast:
 #   - Hourly Summary Page 1 (hours 1-12)
@@ -10,13 +10,13 @@
 #
 # Dependencies:
 #   - packages/features/weather/weather_base.yaml (for globals and data)
-#   - packages/base/hardware.yaml (for LVGL display)
+#   - packages/system/display_hardware.yaml (for LVGL display)
 #   - packages/features/page_rotation/page_rotation.yaml (for page rotation)
 #
 # Required IDs from other modules:
 #   - current_page_name (from page_rotation)
 #   - weather_hourly_* globals (from weather_base)
-#   - sntp_time (from esphome_base)
+#   - sntp_time (from system_management.yaml)
 #
 # Notes:
 #   - Each page shows 12 hours in a compact column format

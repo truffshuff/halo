@@ -1,7 +1,7 @@
 # ============================================================================
 # Weather Hourly - Hourly Forecast Display Scripts
 # ============================================================================
-# Part of Phase 2 modular refactoring
+# Part of modular refactoring
 #
 # This module provides the hourly forecast display scripts:
 #   - 8 update scripts for hourly forecast pages (3 hours per page, 24 hours total)
@@ -9,13 +9,13 @@
 #
 # Dependencies:
 #   - packages/features/weather/weather_base.yaml (for globals and data)
-#   - packages/base/hardware.yaml (for LVGL display)
-#   - packages/weather/hourly-forecast-pages.yaml (for LVGL pages - to be moved)
+#   - packages/system/display_hardware.yaml (for LVGL display)
+#   - packages/features/weather/hourly-forecast-pages.yaml (for LVGL pages)
 #
 # Required IDs from other modules:
 #   - current_page_name (from page_rotation)
 #   - weather_hourly_* globals (from weather_base)
-#   - sntp_time (from esphome_base)
+#   - sntp_time (from system_management.yaml)
 #
 # Notes:
 #   - Each script updates 3 hours of forecast data
