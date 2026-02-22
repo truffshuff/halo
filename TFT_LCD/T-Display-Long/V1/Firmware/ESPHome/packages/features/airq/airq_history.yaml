@@ -15,8 +15,9 @@
 #
 # BUFFER SIZING (fully runtime-configurable via HA entities):
 #   BUF_SIZE = max_days × 86400 ÷ sample_interval_s  (computed each tick)
-#   Default : 3 days × 86400 ÷ 60 s = 4 320 entries ≈ 33.75 KB PSRAM
-#   Max     : 7 days × 86400 ÷ 30 s = 20 160 entries ≈ 157.5 KB PSRAM
+#   Each entry stores 12 sensors (float[12]) + 1 timestamp (uint32_t) = 52 bytes
+#   Default : 3 days × 86400 ÷ 60 s = 4 320 entries ≈  220 KB PSRAM
+#   Max     : 7 days × 86400 ÷ 30 s = 20 160 entries ≈ 1024 KB PSRAM
 #
 #   When either setting changes the PSRAM arrays are freed, reallocated at
 #   the new size, and the ring buffer is cleared.  This is logged as a WARN.
@@ -74,7 +75,12 @@
 # Globals – ring buffer state
 # ============================================================================
 globals:
-  # Pointer to PSRAM-allocated float array (size aqi_history_buf_size).
+  # Pointer to PSRAM-allocated float array used as a flat 2D matrix:
+  #   values[(size_t)slot * 12 + sensor_idx]
+  # 12 sensors per slot (indexes 0-11):
+  #   0=AQI  1=CO2  2=NO2  3=CO   4=H2   5=CH4
+  #   6=Ethanol  7=NH3  8=PM1.0  9=PM2.5  10=PM4.0  11=PM10.0
+  # Total allocation: aqi_history_buf_size x 12 x 4 bytes
   # Null until first use; allocated lazily by the sampler interval.
   - id: aqi_history_values
     type: float*
@@ -217,8 +223,8 @@ script:
   # HA events (batches of BATCH_SIZE entries) so each event payload stays
   # comfortably within the 64 KB LWIP TCP send buffer.
   #
-  #   4 320 entries × ~29 chars ≈ 125 KB total
-  #   Batched at 500 entries    ≈  14.5 KB per event  (9 events worst-case)
+  #   4 320 entries x ~130 chars (12 sensors) ~= 562 KB total
+  #   Batched at 200 entries               ~=  26 KB per event (~22 events worst-case)
   #
   # std::string and the ring buffer arrays both live in PSRAM (ESP-IDF
   # CONFIG_SPIRAM_USE_MALLOC=y ensures large heap allocations go there).
@@ -229,7 +235,8 @@ script:
     mode: single        # Do not re-enter if already running
     then:
       - lambda: |-
-          const uint16_t BATCH_SIZE = 500;  // ~14.5 KB JSON per event; well within 64 KB TCP buffer
+          const uint16_t BATCH_SIZE = 200;  // 12 sensors x ~130 chars ~= 26 KB/event; within 64 KB TCP buffer
+          const uint8_t  NS         = 12;   // sensors per slot: aqi,co2,no2,co,h2,ch4,eth,nh3,pm1,pm25,pm4,pm10
           uint16_t BUF_SIZE = id(aqi_history_buf_size);  // runtime-configured allocation size
 
           uint16_t count = id(aqi_history_count);
@@ -268,18 +275,35 @@ script:
           while (sent < count) {
             uint16_t batch_count = (count - sent < BATCH_SIZE) ? (count - sent) : BATCH_SIZE;
 
-            // Build JSON array for this batch
+            // Build JSON array for this batch (all 12 sensors per entry)
             std::string json;
-            json.reserve(batch_count * 30 + 4);
+            json.reserve((size_t)batch_count * 140 + 4);
             json += '[';
 
             for (uint16_t i = 0; i < batch_count; i++) {
-              uint16_t idx = (start + sent + i) % BUF_SIZE;
-              uint32_t ts  = id(aqi_history_timestamps)[idx];
-              float    aqi = id(aqi_history_values)[idx];
+              uint16_t idx        = (start + sent + i) % BUF_SIZE;
+              uint32_t ts         = id(aqi_history_timestamps)[idx];
+              const float *vs     = id(aqi_history_values) + (size_t)idx * NS;
+              auto vf = [](float v) -> float { return std::isnan(v) ? 0.0f : v; };
 
-              char entry[32];
-              snprintf(entry, sizeof(entry), "{\"ts\":%u,\"aqi\":%.0f}", ts, aqi);
+              char entry[192];
+              snprintf(entry, sizeof(entry),
+                "{\"ts\":%u,\"q\":%.0f,\"c2\":%.0f,\"n2\":%.2f,\"co\":%.2f,\"h2\":%.2f,"
+                "\"c4\":%.2f,\"et\":%.2f,\"n3\":%.2f,\"p1\":%.1f,\"p25\":%.1f,\"p4\":%.1f,\"p10\":%.1f}",
+                ts,
+                vf(vs[0]),   // AQI
+                vf(vs[1]),   // CO2
+                vf(vs[2]),   // NO2
+                vf(vs[3]),   // CO
+                vf(vs[4]),   // H2
+                vf(vs[5]),   // CH4
+                vf(vs[6]),   // Ethanol
+                vf(vs[7]),   // NH3
+                vf(vs[8]),   // PM1.0
+                vf(vs[9]),   // PM2.5
+                vf(vs[10]),  // PM4.0
+                vf(vs[11])   // PM10.0
+              );
               json += entry;
               if (i < batch_count - 1) json += ',';
               App.feed_wdt();
@@ -421,12 +445,13 @@ interval:
           }
 
           const uint16_t BUF_SIZE = needed_size;
+          const uint8_t  NS = 12;  // sensors per slot: aqi,co2,no2,co,h2,ch4,ethanol,nh3,pm1,pm25,pm4,pm10
 
           if (id(aqi_history_values) == nullptr) {
-            id(aqi_history_values) = (float*)heap_caps_malloc(BUF_SIZE * sizeof(float), MALLOC_CAP_SPIRAM);
+            id(aqi_history_values) = (float*)heap_caps_malloc((size_t)BUF_SIZE * NS * sizeof(float), MALLOC_CAP_SPIRAM);
             if (id(aqi_history_values) == nullptr) {
-              ESP_LOGE("aqi_history", "Failed to alloc PSRAM for AQI values (%d B)",
-                       (int)(BUF_SIZE * sizeof(float)));
+              ESP_LOGE("aqi_history", "Failed to alloc PSRAM for sensor values (%d B)",
+                       (int)((size_t)BUF_SIZE * NS * sizeof(float)));
               return;
             }
           }
@@ -444,15 +469,28 @@ interval:
             // Both arrays allocated — record the active buffer size
             id(aqi_history_buf_size) = BUF_SIZE;
             ESP_LOGI("aqi_history",
-              "PSRAM buffer ready: %d entries (%.1f days @ %.0fs) = %d B",
+              "PSRAM buffer ready: %d entries x 12 sensors (%.1f days @ %.0fs) = %d B",
               BUF_SIZE, id(aqi_history_max_days).state,
               id(aqi_history_sample_interval).state,
-              (int)(BUF_SIZE * 8));
+              (int)((size_t)BUF_SIZE * (NS * sizeof(float) + sizeof(uint32_t))));
           }
 
-          // Write to ring buffer
+          // Write to ring buffer (12 sensors per slot, flat 2D layout)
           uint16_t head = id(aqi_history_head);
-          id(aqi_history_values)[head]     = aqi;
+          float *vs = id(aqi_history_values) + (size_t)head * NS;
+          auto safe = [](float v) -> float { return std::isnan(v) ? 0.0f : v; };
+          vs[0]  = aqi;                            // AQI       (already NaN-checked above)
+          vs[1]  = safe(id(co2).state);            // CO2 ppm
+          vs[2]  = safe(id(no2).state);            // NO2 ppm
+          vs[3]  = safe(id(co).state);             // CO  ppm
+          vs[4]  = safe(id(h2).state);             // H2  ppm
+          vs[5]  = safe(id(ch4).state);            // CH4 ppm
+          vs[6]  = safe(id(ethanol).state);        // Ethanol ppm
+          vs[7]  = safe(id(nh3).state);            // NH3 ppm
+          vs[8]  = safe(id(pm_1_0).state);         // PM1.0  µg/m³
+          vs[9]  = safe(id(pm_2_5).state);         // PM2.5  µg/m³
+          vs[10] = safe(id(pm_4_0).state);         // PM4.0  µg/m³
+          vs[11] = safe(id(pm_10_0).state);        // PM10.0 µg/m³
           id(aqi_history_timestamps)[head] = sample_ts;
           id(aqi_history_head) = (head + 1) % BUF_SIZE;
           if (id(aqi_history_count) < BUF_SIZE) {
@@ -460,5 +498,5 @@ interval:
           }
 
           last_sample_ms = now_ms;
-          ESP_LOGD("aqi_history", "Buffered AQI=%.0f ts=%u  (%d/%d slots used)",
-                   aqi, sample_ts, id(aqi_history_count), BUF_SIZE);
+          ESP_LOGD("aqi_history", "Buffered AQI=%.0f CO2=%.0f ts=%u  (%d/%d slots used)",
+                   aqi, vs[1], sample_ts, id(aqi_history_count), BUF_SIZE);
