@@ -498,5 +498,10 @@ interval:
           }
 
           last_sample_ms = now_ms;
-          ESP_LOGD("aqi_history", "Buffered AQI=%.0f CO2=%.0f ts=%u  (%d/%d slots used)",
-                   aqi, vs[1], sample_ts, id(aqi_history_count), BUF_SIZE);
+          ESP_LOGD("aqi_history",
+                   "Buffered ts=%u  AQI=%.0f CO2=%.0f NO2=%.2f CO=%.2f H2=%.2f "
+                   "CH4=%.2f Eth=%.2f NH3=%.2f PM1=%.1f PM2.5=%.1f PM4=%.1f PM10=%.1f  (%d/%d slots)",
+                   sample_ts,
+                   vs[0], vs[1], vs[2], vs[3], vs[4],
+                   vs[5], vs[6], vs[7], vs[8], vs[9], vs[10], vs[11],
+                   id(aqi_history_count), BUF_SIZE);
