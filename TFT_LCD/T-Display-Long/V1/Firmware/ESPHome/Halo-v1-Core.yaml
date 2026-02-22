@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.02.22.1608
+# Version: 26.02.22.1718
 # Last Updated: February 22, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.02.22.1608"
+  version: "26.02.22.1718"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -547,23 +547,24 @@ interval:
                             text: !lambda 'return id(wg_endpoint_last_text);'
                         - lambda: 'id(wg_endpoint_needs_render) = false;'
 
-  # Optional: API watchdog for automatic recovery
-  # Monitors Home Assistant API connection and reboots if disconnected for 30+ minutes
-  # This provides automatic recovery from API failures while still allowing HA restarts
-  - interval: 5min
-    then:
-      - if:
-          condition:
-            lambda: |-
-                static uint32_t last_connected = millis();
-                if (id(ink_ha_connected).state) {
-                last_connected = millis();
-                return false;
-                }
-                return (millis() - last_connected) > 1800000; // 30 min
-          then:
-            - logger.log: "API disconnected for 30+ minutes, triggering automatic reboot..."
-            - button.press: esp_reboot_button  # Trigger ESP restart
+  # DISABLED – this watchdog reboots the device after 30 min of API disconnect, which wipes
+  # the offline sensor history ring buffer. api_reboot_timeout: "0s" is the correct approach.
+  # Uncomment only if you do NOT care about preserving the offline history buffer.
+  #
+  # - interval: 5min
+  #   then:
+  #     - if:
+  #         condition:
+  #           lambda: |-
+  #               static uint32_t last_connected = millis();
+  #               if (id(ink_ha_connected).state) {
+  #               last_connected = millis();
+  #               return false;
+  #               }
+  #               return (millis() - last_connected) > 1800000; // 30 min
+  #         then:
+  #           - logger.log: "API disconnected for 30+ minutes, triggering automatic reboot..."
+  #           - button.press: esp_reboot_button  # Trigger ESP restart
 
 # ============================================================================
 # Home Assistant API Configuration

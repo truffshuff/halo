@@ -1,0 +1,15 @@
+# ============================================================================
+# Halo Sensor History – AppDaemon app configuration
+# ============================================================================
+# Add this block to your AppDaemon apps.yaml, or place this file in your
+# apps/ directory if you use per-file app loading.
+#
+# OPTIONAL: set device_filter to your ESPHome device name to ignore events
+# from other devices (useful if you have multiple Halo units).
+# ============================================================================
+halo_sensor_history:
+  module: halo_sensor_history
+  class: HaloSensorHistory
+  # Restrict to a single device name (value of ${name} in ESPHome config).
+  # Remove or set to null to accept batches from any device.
+  device_filter: "halo-v1-79e35c"
