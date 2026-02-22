@@ -200,6 +200,11 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_page.yaml
 
+      # AQI offline history buffer (~2.3KB RAM, optional) - ~1KB code
+      # Stores AQI readings while HA is unreachable; replays them on reconnect.
+      # Remove this line to disable the feature and reclaim the 2.3 KB RAM.
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_history.yaml
+
       # -------------------------
       # Weather Information (10-19KB depending on enabled pages)
       # -------------------------

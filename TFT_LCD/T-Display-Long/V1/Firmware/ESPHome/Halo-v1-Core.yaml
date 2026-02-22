@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.02.20.2101
-# Last Updated: February 20, 2026
+# Version: 26.02.22.1153
+# Last Updated: February 22, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.02.20.2101"
+  version: "26.02.22.1153"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -627,6 +627,18 @@ api:
           call.set_effect(effect);
           call.perform();
           }
+      # ========================================================================
+      # AQI History Buffer Flush
+      # ========================================================================
+      # Replays any AQI values that were buffered during the HA outage.
+      # Extra delay lets the API fully stabilise before sending a potentially
+      # large batch event.  Script is a no-op when the buffer is empty.
+      # NOTE: Requires packages/features/airq/airq_history.yaml to be included.
+      #       If you remove that package, also remove these two lines below.
+      # ========================================================================
+      - delay: 5s
+      - script.execute: flush_aqi_history
+
       # BLE scanning disabled (using NimBLE instead of Bluedroid)
       # - delay: 500ms
       # - esp32_ble_tracker.start_scan:

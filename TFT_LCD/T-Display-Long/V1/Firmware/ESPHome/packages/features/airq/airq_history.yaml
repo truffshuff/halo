@@ -1,0 +1,425 @@
+# ============================================================================
+# AQI History Buffer
+# ============================================================================
+# Stores AQI readings in RAM while Home Assistant is unreachable, then
+# replays the full buffer to HA when the connection is restored so that
+# recorder history stays accurate across outages.
+#
+# ARCHITECTURE:
+#   - Ring buffer of (unix timestamp, AQI float) pair arrays allocated in
+#     PSRAM on first use (lazy init), pointed to by globals.
+#   - A periodic interval samples id(computed_halo_aqi) when HA is offline.
+#   - On HA reconnect, script flush_aqi_history serialises the buffer and
+#     fires batched HA events that an automation can consume to backfill
+#     recorder.import_statistics.
+#
+# BUFFER SIZING (fully runtime-configurable via HA entities):
+#   BUF_SIZE = max_days × 86400 ÷ sample_interval_s  (computed each tick)
+#   Default : 3 days × 86400 ÷ 60 s = 4 320 entries ≈ 33.75 KB PSRAM
+#   Max     : 7 days × 86400 ÷ 30 s = 20 160 entries ≈ 157.5 KB PSRAM
+#
+#   When either setting changes the PSRAM arrays are freed, reallocated at
+#   the new size, and the ring buffer is cleared.  This is logged as a WARN.
+#
+# FLUSH EVENTS (batched to stay within the 64 KB LWIP TCP send buffer):
+#   Each batch fires one event:
+#     Event name : esphome.aqi_history_batch
+#     Event data :
+#       device    – ESPHome device name (substituted at compile time)
+#       count     – number of entries in THIS batch (string)
+#       total     – total entries being flushed in this reconnect (string)
+#       batch     – 0-based batch index (string)
+#       readings  – compact JSON array, e.g.
+#                   [{"ts":1700000000,"aqi":42},{"ts":1700000300,"aqi":45},…]
+#
+# HOME ASSISTANT SIDE (sample automation in automation.yaml / scripts.yaml):
+#
+#   alias: "Halo – ingest offline AQI history"
+#   trigger:
+#     - platform: event
+#       event_type: esphome.aqi_history_batch
+#   action:
+#     - service: recorder.import_statistics
+#       data:
+#         statistic_id: sensor.halo_computed_aqi
+#         source: recorder
+#         unit_of_measurement: ""
+#         has_mean: true
+#         has_sum: false
+#         stats: >
+#           {% set readings = trigger.event.data.readings | from_json %}
+#           {% set ns = namespace(result=[]) %}
+#           {% for r in readings %}
+#             {% set dt = r.ts | timestamp_custom('%Y-%m-%dT%H:%M:%S+00:00', false) %}
+#             {% set ns.result = ns.result + [
+#                 {"start": dt, "mean": r.aqi | float,
+#                  "min": r.aqi | float, "max": r.aqi | float}
+#             ] %}
+#           {% endfor %}
+#           {{ ns.result }}
+#
+# WIRING (required in Halo-v1-Core.yaml api.on_client_connected):
+#   - delay: 5s            # give API time to stabilise before heavy send
+#   - script.execute: flush_aqi_history
+#
+# DEPENDENCIES:
+#   - features/airq/airq_base.yaml           (id: computed_halo_aqi)
+#   - features/diagnostics/diagnostics.yaml  (id: ink_ha_connected)
+#   - system/system_management.yaml          (id: sntp_time)
+#
+# Created: 2026-02-22
+# ============================================================================
+
+# ============================================================================
+# Globals – ring buffer state
+# ============================================================================
+globals:
+  # Pointer to PSRAM-allocated float array (size aqi_history_buf_size).
+  # Null until first use; allocated lazily by the sampler interval.
+  - id: aqi_history_values
+    type: float*
+    restore_value: no
+    initial_value: 'nullptr'
+
+  # Pointer to PSRAM-allocated uint32_t array (size aqi_history_buf_size).
+  - id: aqi_history_timestamps
+    type: uint32_t*
+    restore_value: no
+    initial_value: 'nullptr'
+
+  # Actual number of slots in the currently-allocated PSRAM arrays.
+  # 0 = not yet allocated. Used by flush and diagnostic sensors.
+  - id: aqi_history_buf_size
+    type: uint16_t
+    restore_value: no
+    initial_value: '0'
+
+  # Next write slot (advances modulo aqi_history_buf_size, wraps around).
+  # uint16_t supports up to 65 535; safe up to 7 days @ 30 s = 20 160.
+  - id: aqi_history_head
+    type: uint16_t
+    restore_value: no
+    initial_value: '0'
+
+  # Number of valid entries currently in the buffer (capped at buf_size).
+  - id: aqi_history_count
+    type: uint16_t
+    restore_value: no
+    initial_value: '0'
+
+# ============================================================================
+# Configuration – exposed to Home Assistant
+# ============================================================================
+switch:
+  - platform: template
+    name: "AQI History: Enable Buffering"
+    id: aqi_history_enabled
+    icon: mdi:database-clock-outline
+    entity_category: "config"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+number:
+  # How often (in seconds) to sample AQI when HA is offline.
+  # Valid range: 30 s – 1800 s (30 min). Default: 60 s (1 min).
+  # Changing this value triggers a buffer reallocation and clears stored history.
+  - platform: template
+    name: "AQI History: Sample Interval (s)"
+    id: aqi_history_sample_interval
+    entity_category: "config"
+    min_value: 30
+    max_value: 1800
+    step: 30
+    initial_value: 60
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: "s"
+    mode: box
+
+  # How many days of offline AQI readings to retain in the ring buffer.
+  # BUF_SIZE = max_days × 86400 ÷ sample_interval_s (computed at runtime).
+  # Memory   = BUF_SIZE × 8 B in PSRAM  (max: 7 d @ 30 s = 157.5 KB).
+  # Changing this value triggers a buffer reallocation and clears stored history.
+  - platform: template
+    name: "AQI History: Max Coverage (days)"
+    id: aqi_history_max_days
+    entity_category: "config"
+    min_value: 0.5
+    max_value: 7
+    step: 0.5
+    initial_value: 3
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: "days"
+    mode: box
+
+sensor:
+  # Percentage of the ring buffer that is currently filled.
+  # When this reaches 100 % the oldest entries are overwritten (ring wraps).
+  - platform: template
+    name: "AQI History: Buffer Fill"
+    id: aqi_history_fill_pct
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: "diagnostic"
+    icon: mdi:database-arrow-up-outline
+    update_interval: 60s
+    lambda: |-
+      if (id(aqi_history_buf_size) == 0) return 0.0f;
+      return (float)id(aqi_history_count) / id(aqi_history_buf_size) * 100.0f;
+
+  # Number of entries currently waiting to be flushed to HA.
+  - platform: template
+    name: "AQI History: Buffered Entries"
+    id: aqi_history_buffered_count
+    unit_of_measurement: "entries"
+    accuracy_decimals: 0
+    entity_category: "diagnostic"
+    icon: mdi:counter
+    update_interval: 60s
+    lambda: |-
+      return (float)id(aqi_history_count);
+
+  # Allocated buffer capacity derived from current settings.
+  # = max_days × 86400 ÷ sample_interval_s (0 until first offline sample).
+  - platform: template
+    name: "AQI History: Buffer Capacity"
+    id: aqi_history_capacity
+    unit_of_measurement: "entries"
+    accuracy_decimals: 0
+    entity_category: "diagnostic"
+    icon: mdi:database-outline
+    update_interval: 60s
+    lambda: |-
+      return (float)id(aqi_history_buf_size);
+
+# ============================================================================
+# Scripts
+# ============================================================================
+script:
+  # ---------------------------------------------------------------------------
+  # flush_aqi_history
+  # ---------------------------------------------------------------------------
+  # Serialises the ring buffer in chronological order and fires one or more
+  # HA events (batches of BATCH_SIZE entries) so each event payload stays
+  # comfortably within the 64 KB LWIP TCP send buffer.
+  #
+  #   4 320 entries × ~29 chars ≈ 125 KB total
+  #   Batched at 500 entries    ≈  14.5 KB per event  (9 events worst-case)
+  #
+  # std::string and the ring buffer arrays both live in PSRAM (ESP-IDF
+  # CONFIG_SPIRAM_USE_MALLOC=y ensures large heap allocations go there).
+  # App.feed_wdt() is called every iteration to prevent watchdog resets
+  # during the build loop (30 s WDT timeout configured in esphome_core.yaml).
+  # ---------------------------------------------------------------------------
+  - id: flush_aqi_history
+    mode: single        # Do not re-enter if already running
+    then:
+      - lambda: |-
+          const uint16_t BATCH_SIZE = 500;  // ~14.5 KB JSON per event; well within 64 KB TCP buffer
+          uint16_t BUF_SIZE = id(aqi_history_buf_size);  // runtime-configured allocation size
+
+          uint16_t count = id(aqi_history_count);
+
+          if (count == 0) {
+            ESP_LOGI("aqi_history", "No buffered AQI entries to flush – nothing to do.");
+            return;
+          }
+
+          if (!id(aqi_history_enabled).state) {
+            ESP_LOGI("aqi_history", "AQI history buffering disabled – skipping flush.");
+            return;
+          }
+
+          // Guard: PSRAM allocation must exist before we can read from it
+          if (BUF_SIZE == 0 || id(aqi_history_values) == nullptr || id(aqi_history_timestamps) == nullptr) {
+            ESP_LOGE("aqi_history", "PSRAM buffer not allocated – cannot flush.");
+            return;
+          }
+
+          auto *api_server = esphome::api::global_api_server;
+          if (!api_server || !api_server->is_connected()) {
+            ESP_LOGW("aqi_history", "API not connected during flush – buffer preserved for next reconnect.");
+            return;
+          }
+
+          ESP_LOGI("aqi_history", "Flushing %d buffered AQI entries to HA (buf=%d, batch=%d)…",
+                   count, BUF_SIZE, BATCH_SIZE);
+
+          // Chronological start index
+          uint16_t start = (count < BUF_SIZE) ? 0 : id(aqi_history_head);
+
+          uint16_t batch_index = 0;
+          uint16_t sent = 0;
+
+          while (sent < count) {
+            uint16_t batch_count = (count - sent < BATCH_SIZE) ? (count - sent) : BATCH_SIZE;
+
+            // Build JSON array for this batch
+            std::string json;
+            json.reserve(batch_count * 30 + 4);
+            json += '[';
+
+            for (uint16_t i = 0; i < batch_count; i++) {
+              uint16_t idx = (start + sent + i) % BUF_SIZE;
+              uint32_t ts  = id(aqi_history_timestamps)[idx];
+              float    aqi = id(aqi_history_values)[idx];
+
+              char entry[32];
+              snprintf(entry, sizeof(entry), "{\"ts\":%u,\"aqi\":%.0f}", ts, aqi);
+              json += entry;
+              if (i < batch_count - 1) json += ',';
+              App.feed_wdt();
+            }
+
+            json += ']';
+
+            ESP_LOGI("aqi_history", "Batch %d: %d entries, %d bytes JSON",
+                     batch_index, batch_count, (int)json.size());
+
+            std::map<std::string, std::string> data;
+            data["device"]   = "${name}";
+            data["count"]    = std::to_string(batch_count);
+            data["total"]    = std::to_string(count);
+            data["batch"]    = std::to_string(batch_index);
+            data["readings"] = json;
+            api_server->fire_homeassistant_event("esphome.aqi_history_batch", data);
+
+            sent        += batch_count;
+            batch_index += 1;
+            App.feed_wdt();
+          }
+
+          ESP_LOGI("aqi_history", "Flush complete: %d entries in %d batch(es).", count, batch_index);
+
+          // Clear the buffer only after all batches have been queued for send
+          id(aqi_history_head)  = 0;
+          id(aqi_history_count) = 0;
+          ESP_LOGI("aqi_history", "Ring buffer cleared.");
+
+# ============================================================================
+# Interval – periodic AQI sampler
+# ============================================================================
+interval:
+  # ---------------------------------------------------------------------------
+  # Samples AQI into the PSRAM ring buffer while HA is offline.
+  # The interval ticks every 10 s; the user-configured sample_interval is
+  # enforced inside the lambda so it can be changed at runtime.
+  #
+  # PSRAM allocation is lazy:  the two arrays are heap_caps_malloc'd on the
+  # very first sample attempt, so no boot-time init hook is needed.
+  # ---------------------------------------------------------------------------
+  - interval: 10s
+    then:
+      - lambda: |-
+          // Skip entirely if history buffering is disabled
+          if (!id(aqi_history_enabled).state) return;
+
+          // Only buffer when HA is actually offline
+          if (id(ink_ha_connected).state) return;
+
+          // Throttle to user-configured sample interval
+          static uint32_t last_sample_ms = 0;
+          uint32_t now_ms = millis();
+          uint32_t interval_ms = (uint32_t)(id(aqi_history_sample_interval).state * 1000.0f);
+          if ((now_ms - last_sample_ms) < interval_ms) return;
+
+          // Validate AQI reading
+          float aqi = id(computed_halo_aqi).state;
+          if (std::isnan(aqi)) {
+            ESP_LOGD("aqi_history", "AQI is NaN – skipping sample");
+            return;
+          }
+
+          // Validate time source
+          auto t = id(sntp_time).now();
+          if (!t.is_valid()) {
+            ESP_LOGD("aqi_history", "SNTP time not valid – skipping sample");
+            return;
+          }
+
+          // ---------------------------------------------------------------------------
+          // Dynamic PSRAM allocation / reallocation
+          //
+          // BUF_SIZE is computed from the two user-configurable settings:
+          //   needed = max_days × 86400 ÷ sample_interval_s
+          //   clamped to [60, 20160]  (20160 = 7 d @ 30 s = ~157 KB PSRAM)
+          //
+          // If either setting changed since the last allocation the old arrays
+          // are freed, the ring state is reset, and new arrays are allocated.
+          // This is intentional: resizing mid-session discards history rather
+          // than silently serving stale data from a stale index.
+          //
+          // heap_caps_malloc(MALLOC_CAP_SPIRAM) explicitly targets external PSRAM,
+          // keeping the ~33–158 KB arrays out of the limited internal heap.
+          // ---------------------------------------------------------------------------
+          uint16_t needed_size = (uint16_t)(
+            id(aqi_history_max_days).state * 86400.0f / id(aqi_history_sample_interval).state
+          );
+          if (needed_size < 60)    needed_size = 60;
+          if (needed_size > 20160) needed_size = 20160;
+
+          // Detect setting change → free old arrays and reset ring state
+          if (id(aqi_history_buf_size) != needed_size) {
+            if (id(aqi_history_values) != nullptr) {
+              heap_caps_free(id(aqi_history_values));
+              id(aqi_history_values) = nullptr;
+            }
+            if (id(aqi_history_timestamps) != nullptr) {
+              heap_caps_free(id(aqi_history_timestamps));
+              id(aqi_history_timestamps) = nullptr;
+            }
+            if (id(aqi_history_buf_size) != 0) {
+              // Only warn on actual resize, not on first boot
+              ESP_LOGW("aqi_history",
+                "Settings changed (%.1f days @ %.0fs) → resizing buffer %d→%d; history cleared.",
+                id(aqi_history_max_days).state, id(aqi_history_sample_interval).state,
+                id(aqi_history_buf_size), needed_size);
+            }
+            id(aqi_history_head)     = 0;
+            id(aqi_history_count)    = 0;
+            id(aqi_history_buf_size) = 0;  // stays 0 until both allocs succeed
+          }
+
+          const uint16_t BUF_SIZE = needed_size;
+
+          if (id(aqi_history_values) == nullptr) {
+            id(aqi_history_values) = (float*)heap_caps_malloc(BUF_SIZE * sizeof(float), MALLOC_CAP_SPIRAM);
+            if (id(aqi_history_values) == nullptr) {
+              ESP_LOGE("aqi_history", "Failed to alloc PSRAM for AQI values (%d B)",
+                       (int)(BUF_SIZE * sizeof(float)));
+              return;
+            }
+          }
+
+          if (id(aqi_history_timestamps) == nullptr) {
+            id(aqi_history_timestamps) = (uint32_t*)heap_caps_malloc(BUF_SIZE * sizeof(uint32_t), MALLOC_CAP_SPIRAM);
+            if (id(aqi_history_timestamps) == nullptr) {
+              ESP_LOGE("aqi_history", "Failed to alloc PSRAM for AQI timestamps (%d B)",
+                       (int)(BUF_SIZE * sizeof(uint32_t)));
+              // Free the values array so we don't leave a partial allocation
+              heap_caps_free(id(aqi_history_values));
+              id(aqi_history_values) = nullptr;
+              return;
+            }
+            // Both arrays allocated — record the active buffer size
+            id(aqi_history_buf_size) = BUF_SIZE;
+            ESP_LOGI("aqi_history",
+              "PSRAM buffer ready: %d entries (%.1f days @ %.0fs) = %d B",
+              BUF_SIZE, id(aqi_history_max_days).state,
+              id(aqi_history_sample_interval).state,
+              (int)(BUF_SIZE * 8));
+          }
+
+          // Write to ring buffer
+          uint16_t head = id(aqi_history_head);
+          id(aqi_history_values)[head]     = aqi;
+          id(aqi_history_timestamps)[head] = (uint32_t)t.timestamp;
+          id(aqi_history_head) = (head + 1) % BUF_SIZE;
+          if (id(aqi_history_count) < BUF_SIZE) {
+            id(aqi_history_count)++;
+          }
+
+          last_sample_ms = now_ms;
+          ESP_LOGD("aqi_history", "Buffered AQI=%.0f ts=%u  (%d/%d slots used)",
+                   aqi, (uint32_t)t.timestamp, id(aqi_history_count), BUF_SIZE);
