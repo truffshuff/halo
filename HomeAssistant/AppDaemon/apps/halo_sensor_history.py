@@ -2,8 +2,14 @@
 halo_sensor_history.py – AppDaemon app
 =======================================
 Listens for ``esphome.aqi_history_batch`` events fired by the Halo device
-when it reconnects after an outage and backfills all 12 sensor statistics into
-the Home Assistant recorder database via ``recorder.import_statistics``.
+and backfills all 12 sensor statistics into the Home Assistant recorder DB.
+
+WHY WEBSOCKET DIRECTLY?
+    ``recorder.import_statistics`` was removed as a HA *service call* in HA
+    2026.x, but the underlying WebSocket command ``recorder/import_statistics``
+    still exists.  AppDaemon's ``call_service()`` only wraps the ``call_service``
+    WS command, so we talk to the HA WebSocket API directly using ``aiohttp``
+    (already installed as an AppDaemon dependency).
 
 SETUP
 -----
@@ -39,6 +45,7 @@ If you need to override units for a sensor, edit the SENSORS list below.
 import json
 from datetime import datetime, timezone
 
+import aiohttp
 import appdaemon.plugins.hass.hassapi as hass
 
 # ---------------------------------------------------------------------------
@@ -62,17 +69,26 @@ SENSORS = [
 
 
 class HaloSensorHistory(hass.Hass):
+
     def initialize(self):
-        target_device = self.args.get("device_filter", None)
-        self._device_filter = target_device
+        self._device_filter = self.args.get("device_filter", None)
+        self._ha_url        = self.args["ha_url"].rstrip("/")
+        self._ha_token      = self.args["ha_token"]
+        # Convert http(s) base URL to ws(s) WebSocket URL
+        self._ws_url = (
+            self._ha_url
+            .replace("https://", "wss://", 1)
+            .replace("http://",  "ws://",  1)
+            + "/api/websocket"
+        )
 
         self.listen_event(self.handle_batch, "esphome.aqi_history_batch")
         self.log(
             f"Halo sensor history listener started "
-            f"(device_filter={target_device or 'any'})"
+            f"(device_filter={self._device_filter or 'any'}, ws={self._ws_url})"
         )
 
-    def handle_batch(self, event_name, data, kwargs):
+    async def handle_batch(self, event_name, data, kwargs):
         device = data.get("device", "unknown")
 
         # Optionally filter to a specific device name (set in apps.yaml)
@@ -103,8 +119,8 @@ class HaloSensorHistory(hass.Hass):
             self.log(f"[{device}] Empty readings list – nothing to import.", level="WARNING")
             return
 
-        imported_total = 0
-
+        # Build per-sensor stats lists from the batch
+        sensor_stats = {}
         for key, statistic_id, unit in SENSORS:
             stats = []
             for r in readings:
@@ -112,52 +128,89 @@ class HaloSensorHistory(hass.Hass):
                 if val is None:
                     continue
                 try:
-                    val = float(val)
-                    ts  = int(r["ts"])
-                    dt  = datetime.fromtimestamp(ts, tz=timezone.utc)
-                    stats.append(
-                        {
-                            "start": dt.isoformat(),
-                            "mean":  val,
-                            "min":   val,
-                            "max":   val,
-                        }
-                    )
+                    dt = datetime.fromtimestamp(int(r["ts"]), tz=timezone.utc)
+                    stats.append({
+                        "start": dt.isoformat(),
+                        "mean":  float(val),
+                        "min":   float(val),
+                        "max":   float(val),
+                    })
                 except Exception as exc:
                     self.log(
                         f"[{device}] Skipping malformed entry for key '{key}': {exc}",
                         level="WARNING",
                     )
-                    continue
+            if stats:
+                sensor_stats[key] = stats
 
-            if not stats:
-                self.log(
-                    f"[{device}] No valid values for '{key}' ({statistic_id}) – skipping.",
-                    level="DEBUG",
-                )
-                continue
+        if not sensor_stats:
+            self.log(f"[{device}] No valid sensor data in batch – skipping.", level="WARNING")
+            return
 
-            try:
-                self.call_service(
-                    "recorder/import_statistics",
-                    statistic_id=statistic_id,
-                    source="recorder",
-                    unit_of_measurement=unit,
-                    has_mean=True,
-                    has_sum=False,
-                    stats=stats,
-                )
-                self.log(
-                    f"[{device}]   ✓ {len(stats):>4d} pts → {statistic_id}"
-                )
-                imported_total += len(stats)
-            except Exception as exc:
-                self.log(
-                    f"[{device}]   ✗ Failed to import {statistic_id}: {exc}",
-                    level="ERROR",
-                )
+        try:
+            imported_total = await self._import_via_websocket(device, sensor_stats)
+        except Exception as exc:
+            self.log(
+                f"[{device}] WebSocket import failed for batch {batch_idx}: {exc}",
+                level="ERROR",
+            )
+            return
 
         self.log(
             f"[{device}] Batch {batch_idx} complete – "
-            f"{imported_total} stat points imported across {len(SENSORS)} sensors."
+            f"{imported_total} stat points imported across {len(sensor_stats)} sensors."
         )
+
+    async def _import_via_websocket(self, device: str, sensor_stats: dict) -> int:
+        """Send recorder/import_statistics directly over the HA WebSocket API.
+
+        recorder.import_statistics was removed as a *service* in HA 2026.x
+        but the raw WebSocket command type still works.
+        """
+        imported_total = 0
+        msg_id = 1  # monotonically increasing per WS session
+
+        async with aiohttp.ClientSession() as session:
+            async with session.ws_connect(self._ws_url) as ws:
+
+                # HA WebSocket authentication handshake
+                auth_req = await ws.receive_json()
+                if auth_req.get("type") != "auth_required":
+                    raise RuntimeError(f"Unexpected WS opening message: {auth_req}")
+
+                await ws.send_json({"type": "auth", "access_token": self._ha_token})
+                auth_resp = await ws.receive_json()
+                if auth_resp.get("type") != "auth_ok":
+                    raise RuntimeError(f"HA WebSocket auth failed: {auth_resp}")
+
+                # Send recorder/import_statistics for each sensor
+                for key, statistic_id, unit in SENSORS:
+                    stats = sensor_stats.get(key)
+                    if not stats:
+                        continue
+
+                    await ws.send_json({
+                        "id":                  msg_id,
+                        "type":                "recorder/import_statistics",
+                        "statistic_id":        statistic_id,
+                        "source":              "recorder",
+                        "unit_of_measurement": unit,
+                        "has_mean":            True,
+                        "has_sum":             False,
+                        "stats":               stats,
+                    })
+
+                    result = await ws.receive_json()
+                    if result.get("success") is False:
+                        self.log(
+                            f"[{device}]   ✗ {statistic_id}: "
+                            f"{result.get('error', {}).get('message', result)}",
+                            level="ERROR",
+                        )
+                    else:
+                        self.log(f"[{device}]   ✓ {len(stats):>4d} pts → {statistic_id}")
+                        imported_total += len(stats)
+
+                    msg_id += 1
+
+        return imported_total

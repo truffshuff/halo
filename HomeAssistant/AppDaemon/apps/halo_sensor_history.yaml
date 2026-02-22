@@ -10,6 +10,10 @@
 halo_sensor_history:
   module: halo_sensor_history
   class: HaloSensorHistory
+  # Your Home Assistant base URL (no trailing slash).
+  ha_url: "http://homeassistant.local:8123"
+  # Long-Lived Access Token – create one at HA Profile -> Security -> Long-Lived Access Tokens
+  ha_token: "YOUR_LONG_LIVED_TOKEN_HERE"
   # Restrict to a single device name (value of ${name} in ESPHome config).
   # Remove or set to null to accept batches from any device.
   device_filter: "halo-v1-79e35c"
