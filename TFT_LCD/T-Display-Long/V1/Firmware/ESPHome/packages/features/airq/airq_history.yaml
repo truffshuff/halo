@@ -283,7 +283,18 @@ script:
             data["total"]    = std::to_string(count);
             data["batch"]    = std::to_string(batch_index);
             data["readings"] = json;
-            api_server->fire_homeassistant_event("esphome.aqi_history_batch", data);
+            {
+              esphome::api::HomeassistantActionRequest req;
+              req.service = esphome::StringRef("esphome.aqi_history_batch");
+              req.is_event = true;
+              req.data.init(data.size());
+              for (auto &it : data) {
+                auto &kv = req.data.emplace_back();
+                kv.key   = esphome::StringRef(it.first);
+                kv.value = esphome::StringRef(it.second);
+              }
+              api_server->send_homeassistant_action(req);
+            }
 
             sent        += batch_count;
             batch_index += 1;
