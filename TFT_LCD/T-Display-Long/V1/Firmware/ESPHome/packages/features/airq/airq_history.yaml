@@ -107,6 +107,19 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  # Dead-reckoning support: last SNTP epoch and millis() at that moment.
+  # Used to estimate timestamps when SNTP is unavailable (e.g. NTP unreachable
+  # because the only internet path goes through WireGuard / the offline hotspot).
+  - id: aqi_history_last_epoch
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+  - id: aqi_history_last_epoch_millis
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
 # ============================================================================
 # Configuration – exposed to Home Assistant
 # ============================================================================
@@ -342,11 +355,26 @@ interval:
             return;
           }
 
-          // Validate time source
-          auto t = id(sntp_time).now();
-          if (!t.is_valid()) {
-            ESP_LOGD("aqi_history", "SNTP time not valid – skipping sample");
-            return;
+          // Determine timestamp: use live SNTP when available, otherwise dead-reckon
+          // from the last known-good epoch + elapsed ms. This keeps buffering alive
+          // when the only internet path (e.g. WireGuard) is down.
+          uint32_t sample_ts = 0;
+          {
+            auto t = id(sntp_time).now();
+            if (t.is_valid()) {
+              sample_ts = (uint32_t)t.timestamp;
+              id(aqi_history_last_epoch)        = sample_ts;
+              id(aqi_history_last_epoch_millis) = now_ms;
+            } else if (id(aqi_history_last_epoch) != 0) {
+              uint32_t elapsed_s = (now_ms - id(aqi_history_last_epoch_millis)) / 1000;
+              sample_ts = id(aqi_history_last_epoch) + elapsed_s;
+              ESP_LOGD("aqi_history",
+                "SNTP unavailable – dead-reckoned ts=%u (+%us from last sync)",
+                sample_ts, elapsed_s);
+            } else {
+              ESP_LOGD("aqi_history", "SNTP not yet valid and no prior reference – skipping");
+              return;
+            }
           }
 
           // ---------------------------------------------------------------------------
@@ -425,7 +453,7 @@ interval:
           // Write to ring buffer
           uint16_t head = id(aqi_history_head);
           id(aqi_history_values)[head]     = aqi;
-          id(aqi_history_timestamps)[head] = (uint32_t)t.timestamp;
+          id(aqi_history_timestamps)[head] = sample_ts;
           id(aqi_history_head) = (head + 1) % BUF_SIZE;
           if (id(aqi_history_count) < BUF_SIZE) {
             id(aqi_history_count)++;
@@ -433,4 +461,4 @@ interval:
 
           last_sample_ms = now_ms;
           ESP_LOGD("aqi_history", "Buffered AQI=%.0f ts=%u  (%d/%d slots used)",
-                   aqi, (uint32_t)t.timestamp, id(aqi_history_count), BUF_SIZE);
+                   aqi, sample_ts, id(aqi_history_count), BUF_SIZE);

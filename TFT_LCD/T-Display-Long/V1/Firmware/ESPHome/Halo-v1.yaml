@@ -22,7 +22,8 @@ substitutions:
   ota_password: !secret ota_password
 
   # API
-  api_reboot_timeout: "30min"
+  # 0s = never reboot on API disconnect (required for offline history buffering to survive outages)
+  api_reboot_timeout: "0s"
 
 esphome:
   name: halo-v1
