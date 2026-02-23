@@ -190,14 +190,18 @@ class HaloSensorHistory(hass.Hass):
                         continue
 
                     await ws.send_json({
-                        "id":                  msg_id,
-                        "type":                "recorder/import_statistics",
-                        "statistic_id":        statistic_id,
-                        "source":              "recorder",
-                        "unit_of_measurement": unit,
-                        "has_mean":            True,
-                        "has_sum":             False,
-                        "stats":               stats,
+                        "id":   msg_id,
+                        "type": "recorder/import_statistics",
+                        # HA 2026.x moved all descriptor fields into "metadata"
+                        "metadata": {
+                            "statistic_id":        statistic_id,
+                            "source":              "recorder",
+                            "unit_of_measurement": unit,
+                            "has_mean":            True,
+                            "has_sum":             False,
+                            "name":                None,
+                        },
+                        "stats": stats,
                     })
 
                     result = await ws.receive_json()
