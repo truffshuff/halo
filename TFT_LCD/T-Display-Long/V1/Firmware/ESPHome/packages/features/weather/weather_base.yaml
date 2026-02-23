@@ -612,7 +612,7 @@ interval:
                 }
                 return false;
           then:
-            - lambda: 'id(weather_fetch_lock) = true;'
+            - lambda: 'id(weather_fetch_lock) = true; id(weather_hourly_retry_count) = 0;'
             - script.execute: fetch_hourly_forecast
 
 # ============================================================================
@@ -1072,11 +1072,13 @@ script:
   # Script to fetch HOURLY forecast data via native HA action
   # Uses homeassistant.action: weather.get_forecasts with capture_response (preferred)
   - id: fetch_hourly_forecast
-    mode: single
+    mode: restart
     then:
       - lambda: |-
           id(weather_fetch_lock) = true;
-          id(weather_hourly_retry_count) = 0;
+          // Note: weather_hourly_retry_count is NOT reset here so retries
+          // accumulate across script restarts. It is reset by the caller
+          // before the first invocation.
           id(weather_hourly_action_start_time) = millis();
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (native action) START ===");
 
@@ -1241,6 +1243,17 @@ script:
 
       # Give native action a short window to complete; if no result, treat as failure and retry/fallback
       - delay: 3s
+
+      # Resume BLE and release lock BEFORE the retry/restart logic.
+      # This ensures cleanup always runs even when mode:restart kills the current
+      # execution after execute() is called in the lambda below.
+      - switch.turn_on: ble_scanner_switch
+      - lambda: |-
+          id(weather_fetch_lock) = false;
+          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (native action) END ===");
+
+      # Retry/fallback logic is the LAST step so that cleanup above is guaranteed
+      # to have run before the script is restarted (mode: restart).
       - lambda: |-
           unsigned long start = id(weather_hourly_action_start_time);
           if (id(weather_hourly_last_update) < start) {
@@ -1249,24 +1262,17 @@ script:
             ESP_LOGW("weather", "No native hourly response after timeout (attempt %d)", id(weather_hourly_retry_count));
             if (id(weather_hourly_retry_count) < 3) {
               ESP_LOGI("weather", "Retrying native hourly fetch (attempt %d)", id(weather_hourly_retry_count));
-              id(weather_fetch_lock) = false;  // allow new fetch
+              // mode: restart allows re-executing this script; retry_count persists
               id(fetch_hourly_forecast).execute();
             } else {
               ESP_LOGI("weather", "Native hourly attempts exhausted; invoking HTTP fallback");
               id(weather_hourly_retry_count) = 0;
-              id(weather_fetch_lock) = false;
               id(fetch_hourly_forecast_http).execute();
             }
           } else {
             ESP_LOGI("weather", "Native hourly fetch completed during wait");
             id(weather_hourly_retry_count) = 0;
           }
-
-      # Resume BLE
-      - switch.turn_on: ble_scanner_switch
-      - lambda: |-
-          id(weather_fetch_lock) = false;
-          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (native action) END ===");
 
   # HTTP fallback script for hourly forecasts (used when native action fails)
   - id: fetch_hourly_forecast_http
