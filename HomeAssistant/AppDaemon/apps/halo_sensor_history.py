@@ -43,6 +43,10 @@ If you need to override units for a sensor, edit the SENSORS list below.
 """
 
 import json
+import os
+import sqlite3
+import struct
+import hashlib
 from datetime import datetime, timezone
 
 import aiohttp
@@ -74,6 +78,7 @@ class HaloSensorHistory(hass.Hass):
         self._device_filter = self.args.get("device_filter", None)
         self._ha_url        = self.args["ha_url"].rstrip("/")
         self._ha_token      = self.args["ha_token"]
+        self._ha_db_path    = self.args.get("ha_db_path", "/config/home-assistant_v2.db")
         # Convert http(s) base URL to ws(s) WebSocket URL
         self._ws_url = (
             self._ha_url
@@ -85,7 +90,8 @@ class HaloSensorHistory(hass.Hass):
         self.listen_event(self.handle_batch, "esphome.aqi_history_batch")
         self.log(
             f"Halo sensor history listener started "
-            f"(device_filter={self._device_filter or 'any'}, ws={self._ws_url})"
+            f"(device_filter={self._device_filter or 'any'}, ws={self._ws_url}, "
+            f"db={self._ha_db_path})"
         )
 
     async def handle_batch(self, event_name, data, kwargs):
@@ -171,11 +177,26 @@ class HaloSensorHistory(hass.Hass):
                 f"[{device}] WebSocket import failed for batch {batch_idx}: {exc}",
                 level="ERROR",
             )
-            return
+            imported_total = 0
+
+        # Also write per-minute states directly to the recorder SQLite DB so the
+        # History panel shows the full sub-hourly resolution, not just hourly stats.
+        try:
+            loop = self.AD.loop
+            history_total = await loop.run_in_executor(
+                None, self._import_via_sqlite, device, readings
+            )
+        except Exception as exc:
+            self.log(
+                f"[{device}] SQLite history import failed for batch {batch_idx}: {exc}",
+                level="ERROR",
+            )
+            history_total = 0
 
         self.log(
             f"[{device}] Batch {batch_idx} complete – "
-            f"{imported_total} stat points imported across {len(sensor_stats)} sensors."
+            f"{imported_total} hourly stat pts + {history_total} per-min history pts "
+            f"across {len(sensor_stats)} sensors."
         )
 
     async def _import_via_websocket(self, device: str, sensor_stats: dict) -> int:
@@ -235,3 +256,187 @@ class HaloSensorHistory(hass.Hass):
                     msg_id += 1
 
         return imported_total
+
+    # ------------------------------------------------------------------
+    # Write per-minute states directly to the HA recorder SQLite DB so
+    # that the History panel shows sub-hourly resolution data.
+    #
+    # This method is SYNCHRONOUS and must be called via run_in_executor.
+    # It uses WAL mode and short transactions to minimise lock contention
+    # with the HA recorder process that is also writing to the same DB.
+    #
+    # Schema notes (HA 2023.4+ / schema >= 43):
+    #   states_meta(metadata_id, entity_id)
+    #   state_attributes(attributes_id, hash, shared_attrs)
+    #   states(state_id, state, last_changed_ts, last_updated_ts,
+    #          last_reported_ts, old_state_id, attributes_id,
+    #          context_id_bin, context_user_id_bin, context_parent_id_bin,
+    #          metadata_id, origin_idx)
+    # ------------------------------------------------------------------
+    def _import_via_sqlite(self, device: str, readings: list) -> int:
+        if not os.path.exists(self._ha_db_path):
+            self.log(
+                f"[{device}] Recorder DB not found at {self._ha_db_path} – "
+                f"set ha_db_path in halo_sensor_history.yaml",
+                level="ERROR",
+            )
+            return 0
+
+        inserted_total = 0
+
+        conn = sqlite3.connect(self._ha_db_path, timeout=30, check_same_thread=False)
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+
+            # Introspect states table columns once
+            state_cols = {row[1] for row in conn.execute("PRAGMA table_info(states)")}
+            has_metadata_id      = "metadata_id"       in state_cols
+            has_last_changed_ts  = "last_changed_ts"    in state_cols
+            has_last_reported_ts = "last_reported_ts"   in state_cols
+            has_origin_idx       = "origin_idx"         in state_cols
+            has_context_bin      = "context_id_bin"     in state_cols
+
+            for key, entity_id, unit in SENSORS:
+                # Collect readings for this sensor in timestamp order
+                rows = []
+                for r in readings:
+                    val = r.get(key)
+                    if val is None:
+                        continue
+                    try:
+                        rows.append((float(r["ts"]), round(float(val), 4)))
+                    except Exception:
+                        continue
+                if not rows:
+                    continue
+                rows.sort(key=lambda x: x[0])
+
+                # ---- ensure states_meta entry ----
+                if has_metadata_id:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO states_meta (entity_id) VALUES (?)",
+                        (entity_id,),
+                    )
+                    meta = conn.execute(
+                        "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
+                        (entity_id,),
+                    ).fetchone()
+                    if not meta:
+                        continue
+                    metadata_id = meta[0]
+                else:
+                    metadata_id = None
+
+                # ---- get/create attributes_id ----
+                # Try to reuse the most recent attributes for this entity so
+                # the injected states look identical to live ones (same unit, etc.)
+                if has_metadata_id:
+                    recent_attr = conn.execute(
+                        "SELECT attributes_id FROM states WHERE metadata_id = ? "
+                        "AND attributes_id IS NOT NULL "
+                        "ORDER BY last_updated_ts DESC LIMIT 1",
+                        (metadata_id,),
+                    ).fetchone()
+                else:
+                    recent_attr = conn.execute(
+                        "SELECT attributes_id FROM states WHERE entity_id = ? "
+                        "AND attributes_id IS NOT NULL "
+                        "ORDER BY last_updated DESC LIMIT 1",
+                        (entity_id,),
+                    ).fetchone()
+
+                if recent_attr:
+                    attributes_id = recent_attr[0]
+                else:
+                    # Fallback: create a minimal attributes entry
+                    attrs_json = json.dumps({
+                        "unit_of_measurement": unit,
+                        "state_class": "measurement",
+                        "friendly_name": entity_id.replace("sensor.", "").replace("_", " ").title(),
+                    })
+                    attrs_hash = struct.unpack(">q", hashlib.sha256(attrs_json.encode()).digest()[:8])[0]
+                    conn.execute(
+                        "INSERT OR IGNORE INTO state_attributes (hash, shared_attrs) VALUES (?, ?)",
+                        (attrs_hash, attrs_json),
+                    )
+                    attr_row = conn.execute(
+                        "SELECT attributes_id FROM state_attributes WHERE hash = ?",
+                        (attrs_hash,),
+                    ).fetchone()
+                    attributes_id = attr_row[0] if attr_row else None
+
+                # ---- find old_state_id anchor ----
+                # Link our first inserted row to the last existing state before it
+                first_ts = rows[0][0]
+                if has_metadata_id and has_last_changed_ts:
+                    anchor = conn.execute(
+                        "SELECT state_id FROM states WHERE metadata_id = ? "
+                        "AND last_updated_ts < ? ORDER BY last_updated_ts DESC LIMIT 1",
+                        (metadata_id, first_ts),
+                    ).fetchone()
+                elif has_metadata_id:
+                    anchor = conn.execute(
+                        "SELECT state_id FROM states WHERE metadata_id = ? "
+                        "AND last_updated < ? ORDER BY last_updated DESC LIMIT 1",
+                        (metadata_id, first_ts),
+                    ).fetchone()
+                else:
+                    anchor = None
+                prev_state_id = anchor[0] if anchor else None
+
+                # ---- insert one state row per reading ----
+                inserted_this = 0
+                for ts, val in rows:
+                    state_str = str(val)
+                    ctx_bin   = os.urandom(16)  # random context UUID
+
+                    if has_metadata_id and has_last_changed_ts:
+                        extra_cols = ""
+                        extra_vals = []
+                        if has_last_reported_ts:
+                            extra_cols += ", last_reported_ts"
+                            extra_vals.append(ts)
+                        if has_origin_idx:
+                            extra_cols += ", origin_idx"
+                            extra_vals.append(0)  # 0 = LOCAL
+                        if has_context_bin:
+                            extra_cols += ", context_id_bin, context_user_id_bin, context_parent_id_bin"
+                            extra_vals += [ctx_bin, None, None]
+
+                        cur = conn.execute(
+                            f"INSERT INTO states "
+                            f"(state, last_changed_ts, last_updated_ts, "
+                            f"old_state_id, attributes_id, metadata_id{extra_cols}) "
+                            f"VALUES (?, ?, ?, ?, ?, ?{', ?' * len(extra_vals)})",
+                            [state_str, ts, ts, prev_state_id, attributes_id, metadata_id]
+                            + extra_vals,
+                        )
+                    else:
+                        # Older schema fallback
+                        from datetime import datetime, timezone as _tz
+                        dt_str = datetime.fromtimestamp(ts, tz=_tz.utc).isoformat()
+                        cur = conn.execute(
+                            "INSERT INTO states "
+                            "(entity_id, state, last_changed, last_updated, "
+                            "old_state_id, attributes_id) "
+                            "VALUES (?, ?, ?, ?, ?, ?)",
+                            [entity_id, state_str, ts, ts, prev_state_id, attributes_id],
+                        )
+
+                    prev_state_id = cur.lastrowid
+                    inserted_this += 1
+
+                conn.commit()
+                inserted_total += inserted_this
+                self.log(
+                    f"[{device}]   DB {inserted_this:>4d} rows → {entity_id}"
+                )
+
+        except Exception as exc:
+            conn.rollback()
+            self.log(f"[{device}] SQLite write error: {exc}", level="ERROR")
+        finally:
+            conn.close()
+
+        return inserted_total
