@@ -57,11 +57,16 @@ time:
     #   - time1.google.com
     on_time_sync:
       then:
-        - logger.log: "SNTP synchronized - enabling WireGuard if switch is ON"
+        # Only enable WireGuard on the *first* successful SNTP sync (i.e. the
+        # fallback path for when the boot-sequence wait_until timed out before
+        # SNTP was ready).  Subsequent syncs (every 5 min) must NOT call
+        # wireguard.enable again - repeated reinitialisation causes memory
+        # churn that eventually triggers a watchdog reboot in offline mode.
         - if:
             condition:
-              lambda: 'return id(wireguard_enabled).state;'
+              lambda: 'return id(wireguard_enabled).state && !id(wireguard_enabled_sensor).state;'
             then:
+              - logger.log: "SNTP synchronized - WireGuard switch ON but not yet active, enabling"
               - wireguard.enable:
                   id: wg0
               - logger.log: "WireGuard enabled by SNTP sync"
@@ -223,7 +228,12 @@ interval:
 
       - if:
           condition:
-            lambda: 'return id(diag_check_google_enabled);'
+            # Skip the HTTP probe when WireGuard is enabled but not yet
+            # connected.  If wg_allowed_ips routes all traffic through the
+            # tunnel (0.0.0.0/0), outbound HTTP hangs for the full 30 s
+            # timeout while WireGuard is offline, blocking the event loop
+            # long enough to trigger a watchdog reboot.
+            lambda: 'return id(diag_check_google_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
           then:
             - http_request.get:
                 url: https://www.google.com/generate_204
@@ -244,7 +254,8 @@ interval:
 
       - if:
           condition:
-            lambda: 'return id(diag_check_cloudflare_enabled);'
+            # Same guard as the Google check above.
+            lambda: 'return id(diag_check_cloudflare_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
           then:
             - http_request.get:
                 url: https://cloudflare.com
