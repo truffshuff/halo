@@ -201,6 +201,14 @@ binary_sensor:
                   id(wg_status_needs_render) = true;
                 }
               }
+          - if:
+              condition:
+                lambda: 'return id(wg_status_needs_render) && id(current_page_name) == "wifi";'
+              then:
+                - lvgl.label.update:
+                    id: wg_status_label
+                    text: !lambda 'return id(wg_status_last_text);'
+                - lambda: 'id(wg_status_needs_render) = false;'
 
 # ============================================================================
 # Sensor Components
