@@ -19,7 +19,7 @@
 #
 # Required Substitutions:
 #   - weather_entity_id: Home Assistant weather entity (e.g., weather.hhut)
-#   - ha_url: Home Assistant URL (e.g., http://homeassistant.local:8123)
+#   - ha_url: Home Assistant URL (e.g., https://homeassistant.local:8123)
 #   - ha_token: Long-lived access token for Home Assistant
 #   - weather_daily_refresh_interval: Daily forecast refresh interval in seconds (e.g., 3600)
 #   - weather_hourly_refresh_interval: Hourly forecast refresh interval in seconds (e.g., 900)
