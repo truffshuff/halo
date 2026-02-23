@@ -1260,12 +1260,12 @@ script:
             // Native action produced no result within timeout
             id(weather_hourly_retry_count)++;
             ESP_LOGW("weather", "No native hourly response after timeout (attempt %d)", id(weather_hourly_retry_count));
-            if (id(weather_hourly_retry_count) < 3) {
+            if (id(weather_hourly_retry_count) < 1) {
               ESP_LOGI("weather", "Retrying native hourly fetch (attempt %d)", id(weather_hourly_retry_count));
               // mode: restart allows re-executing this script; retry_count persists
               id(fetch_hourly_forecast).execute();
             } else {
-              ESP_LOGI("weather", "Native hourly attempts exhausted; invoking HTTP fallback");
+              ESP_LOGI("weather", "Native hourly attempt timed out; invoking HTTP fallback immediately");
               id(weather_hourly_retry_count) = 0;
               id(fetch_hourly_forecast_http).execute();
             }

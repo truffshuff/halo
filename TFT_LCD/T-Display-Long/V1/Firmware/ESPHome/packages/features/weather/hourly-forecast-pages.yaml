@@ -38,6 +38,11 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    // Skip if a fetch is already in progress
+                    if (id(weather_fetch_lock)) {
+                      ESP_LOGW("weather", "Hourly fetch already in progress, skipping page-triggered fetch");
+                      return false;
+                    }
                     // Check if hourly forecast needs refresh (stale > 15 minutes)
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
@@ -52,9 +57,10 @@ lvgl:
                     }
               then:
                 # Fetch will update display when complete (no need to call update_hourly_forecast_display here)
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
-                # Data is fresh, update display with existing data
+                # Data is fresh (or fetch in progress), update display with existing data
                 - delay: 50ms  # Additional delay before rendering
                 - script.execute: update_hourly_page_1  # Lazy loading: only update hours 1-3
         widgets:
@@ -744,10 +750,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
@@ -1437,10 +1445,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
@@ -2128,10 +2138,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
@@ -2818,10 +2830,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
@@ -3508,10 +3522,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
@@ -4199,10 +4215,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
@@ -4890,10 +4908,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms

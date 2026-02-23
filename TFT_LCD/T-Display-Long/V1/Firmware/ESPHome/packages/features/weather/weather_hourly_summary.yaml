@@ -570,10 +570,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
@@ -1165,10 +1167,12 @@ lvgl:
           - if:
               condition:
                 lambda: |-
+                    if (id(weather_fetch_lock)) { return false; }
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
                     return is_stale;
               then:
+                - lambda: 'id(weather_hourly_retry_count) = 0;'
                 - script.execute: fetch_hourly_forecast
               else:
                 - delay: 50ms
