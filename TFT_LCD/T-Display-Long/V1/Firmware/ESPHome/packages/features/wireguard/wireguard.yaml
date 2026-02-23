@@ -112,7 +112,6 @@ wireguard:
   peer_allowed_ips: !secret wg_allowed_ips
   peer_persistent_keepalive: 25s
   require_connection_to_proceed: false  # Non-blocking boot
-  reboot_timeout: 0s  # Never reboot when peer is unreachable (offline mode support)
   # mtu: 1280
   
 # ============================================================================
