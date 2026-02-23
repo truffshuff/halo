@@ -78,7 +78,34 @@ class HaloSensorHistory(hass.Hass):
         self._device_filter = self.args.get("device_filter", None)
         self._ha_url        = self.args["ha_url"].rstrip("/")
         self._ha_token      = self.args["ha_token"]
-        self._ha_db_path    = self.args.get("ha_db_path", "/config/home-assistant_v2.db")
+
+        # Resolve the recorder DB path. AppDaemon add-ons mount the HA config
+        # directory at /homeassistant, not /config. Try the configured path first,
+        # then fall back to common locations automatically.
+        configured_path = self.args.get("ha_db_path", None)
+        candidates = []
+        if configured_path:
+            candidates.append(configured_path)
+        candidates += [
+            "/homeassistant/home-assistant_v2.db",  # HAOS / Supervised add-on
+            "/config/home-assistant_v2.db",          # Docker with /config mount
+            "/usr/share/hassio/homeassistant/home-assistant_v2.db",
+        ]
+        self._ha_db_path = None
+        for path in candidates:
+            if os.path.exists(path):
+                self._ha_db_path = path
+                break
+        if self._ha_db_path is None:
+            self._ha_db_path = configured_path or candidates[0]
+            self.log(
+                f"WARNING: recorder DB not found at any of {candidates}. "
+                f"Set ha_db_path in halo_sensor_history.yaml to the correct path. "
+                f"Per-minute history writes will be skipped.",
+                level="WARNING",
+            )
+        else:
+            self.log(f"Recorder DB resolved to: {self._ha_db_path}")
         # Convert http(s) base URL to ws(s) WebSocket URL
         self._ws_url = (
             self._ha_url
@@ -276,9 +303,8 @@ class HaloSensorHistory(hass.Hass):
     def _import_via_sqlite(self, device: str, readings: list) -> int:
         if not os.path.exists(self._ha_db_path):
             self.log(
-                f"[{device}] Recorder DB not found at {self._ha_db_path} – "
-                f"set ha_db_path in halo_sensor_history.yaml",
-                level="ERROR",
+                f"[{device}] Recorder DB not found at {self._ha_db_path} – skipping history write.",
+                level="WARNING",
             )
             return 0
 
