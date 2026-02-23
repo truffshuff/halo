@@ -23,7 +23,7 @@ SENSOR MAP
 ----------
 JSON key  →  HA statistic_id                                        unit
 ---------     -------------------------------------------------------  ------
-q         →  sensor.halo_v1_79e35c_computed_aqi                       None (aqi)
+q         →  sensor.halo_v1_79e35c_computed_aqi                       (aqi)
 c2        →  sensor.halo_v1_79e35c_co2                                 ppm
 n2        →  sensor.halo_v1_79e35c_nitrogen_dioxide                    ppm
 co        →  sensor.halo_v1_79e35c_carbon_monoxide                     ppm
@@ -35,19 +35,11 @@ p1        →  sensor.halo_v1_79e35c_pm_1_m_weight_concentration         µg/m³
 p25       →  sensor.halo_v1_79e35c_pm_2_5_m_weight_concentration       µg/m³
 p4        →  sensor.halo_v1_79e35c_pm_4_m_weight_concentration         µg/m³
 p10       →  sensor.halo_v1_79e35c_pm_10_m_weight_concentration        µg/m³
-tm        →  sensor.halo_v1_79e35c_sen55_temperature                   °C
-vc        →  sensor.halo_v1_79e35c_sen55_voc                           (index, no unit)
-rh        →  sensor.halo_v1_79e35c_sen55_humidity                     %
 
 NOTE: ``unit_of_measurement`` must exactly match what HA has already recorded
 for each sensor.  If a sensor's unit in HA doesn't match, import will silently
 fail.  Verify via Developer Tools → Statistics → <sensor> → ⓘ.
 If you need to override units for a sensor, edit the SENSORS list below.
-
-NOTE on AQI unit: HA stores ``device_class: aqi`` sensors with a NULL unit
-internally (not empty-string ""), so the entry uses ``None`` which serialises
-to JSON ``null``.  Both display as '' in HA error messages, hence the
-apparently identical-but-incompatible unit warning.
 """
 
 import json
@@ -65,7 +57,7 @@ import appdaemon.plugins.hass.hassapi as hass
 # Update statistic_id / unit if your entity names differ.
 # ---------------------------------------------------------------------------
 SENSORS = [
-    ("q",   "sensor.halo_v1_79e35c_computed_aqi",                None),  # AQI: HA stores NULL unit for device_class=aqi
+    ("q",   "sensor.halo_v1_79e35c_computed_aqi",                ""),
     ("c2",  "sensor.halo_v1_79e35c_co2",                         "ppm"),
     ("n2",  "sensor.halo_v1_79e35c_nitrogen_dioxide",            "ppm"),
     ("co",  "sensor.halo_v1_79e35c_carbon_monoxide",             "ppm"),
@@ -77,9 +69,6 @@ SENSORS = [
     ("p25", "sensor.halo_v1_79e35c_pm_2_5_m_weight_concentration","µg/m³"),
     ("p4",  "sensor.halo_v1_79e35c_pm_4_m_weight_concentration", "µg/m³"),
     ("p10", "sensor.halo_v1_79e35c_pm_10_m_weight_concentration","µg/m³"),
-    ("tm",  "sensor.halo_v1_79e35c_sen55_temperature",           "°C"),
-    ("vc",  "sensor.halo_v1_79e35c_sen55_voc",                   ""),
-    ("rh",  "sensor.halo_v1_79e35c_sen55_humidity",              "%"),
 ]
 
 
