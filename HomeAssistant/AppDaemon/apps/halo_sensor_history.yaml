@@ -15,8 +15,11 @@ halo_sensor_history:
   # Long-Lived Access Token – create one at HA Profile -> Security -> Long-Lived Access Tokens
   ha_token: "YOUR_LONG_LIVED_TOKEN_HERE"
   # Path to the HA recorder SQLite database (for per-minute history writes).
-  # Default is correct for most HA installations; adjust if using an external DB.
-  ha_db_path: "/config/home-assistant_v2.db"
+  # The app auto-detects common locations (/homeassistant, /config).
+  # Override here ONLY if auto-detection fails (check logs on startup).
+  # HAOS add-on path:  /homeassistant/home-assistant_v2.db  (default)
+  # Docker /config:    /config/home-assistant_v2.db
+  # ha_db_path: "/homeassistant/home-assistant_v2.db"
   # Restrict to a single device name (value of ${name} in ESPHome config).
   # Remove or set to null to accept batches from any device.
   device_filter: "halo-v1-79e35c"
