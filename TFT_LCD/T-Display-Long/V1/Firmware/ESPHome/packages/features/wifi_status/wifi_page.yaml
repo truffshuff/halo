@@ -52,6 +52,41 @@ lvgl:
             id(wg_address_needs_render) = true;
             id(wg_handshake_needs_render) = true;
             id(wg_endpoint_needs_render) = true;
+        # Immediately render cached WireGuard values so labels are not stale
+        # when the page is visited while WireGuard is already active (sensors
+        # won't fire again unless their value changes).
+        - if:
+            condition:
+              lambda: 'return !id(wg_status_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: wg_status_label
+                  text: !lambda 'return id(wg_status_last_text);'
+              - lambda: 'id(wg_status_needs_render) = false;'
+        - if:
+            condition:
+              lambda: 'return !id(wg_address_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: wg_address_label
+                  text: !lambda 'return id(wg_address_last_text);'
+              - lambda: 'id(wg_address_needs_render) = false;'
+        - if:
+            condition:
+              lambda: 'return !id(wg_handshake_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: wg_handshake_label
+                  text: !lambda 'return id(wg_handshake_last_text);'
+              - lambda: 'id(wg_handshake_needs_render) = false;'
+        - if:
+            condition:
+              lambda: 'return !id(wg_endpoint_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: wg_endpoint_label
+                  text: !lambda 'return id(wg_endpoint_last_text);'
+              - lambda: 'id(wg_endpoint_needs_render) = false;'
       widgets:
         - label:
             text: "WiFi & VPN \nStatistics"
