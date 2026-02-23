@@ -119,29 +119,46 @@ class HaloSensorHistory(hass.Hass):
             self.log(f"[{device}] Empty readings list – nothing to import.", level="WARNING")
             return
 
-        # Build per-sensor stats lists from the batch
+        # Build per-sensor stats lists from the batch.
+        # recorder/import_statistics requires hourly buckets: timestamps must
+        # be floored to the top of the hour (minutes=0, seconds=0).
+        # Multiple readings within the same hour are averaged together.
         sensor_stats = {}
         for key, statistic_id, unit in SENSORS:
-            stats = []
+            # bucket_key -> {sum, count, min, max}
+            buckets: dict = {}
             for r in readings:
                 val = r.get(key)
                 if val is None:
                     continue
                 try:
-                    dt = datetime.fromtimestamp(int(r["ts"]), tz=timezone.utc)
-                    stats.append({
-                        "start": dt.isoformat(),
-                        "mean":  float(val),
-                        "min":   float(val),
-                        "max":   float(val),
-                    })
+                    val = float(val)
+                    dt  = datetime.fromtimestamp(int(r["ts"]), tz=timezone.utc)
+                    # Floor to top of hour
+                    hour_dt = dt.replace(minute=0, second=0, microsecond=0)
+                    iso     = hour_dt.isoformat()
+                    if iso not in buckets:
+                        buckets[iso] = {"sum": 0.0, "count": 0, "min": val, "max": val}
+                    b = buckets[iso]
+                    b["sum"]   += val
+                    b["count"] += 1
+                    if val < b["min"]: b["min"] = val
+                    if val > b["max"]: b["max"] = val
                 except Exception as exc:
                     self.log(
                         f"[{device}] Skipping malformed entry for key '{key}': {exc}",
                         level="WARNING",
                     )
-            if stats:
-                sensor_stats[key] = stats
+            if buckets:
+                sensor_stats[key] = [
+                    {
+                        "start": iso,
+                        "mean":  b["sum"] / b["count"],
+                        "min":   b["min"],
+                        "max":   b["max"],
+                    }
+                    for iso, b in sorted(buckets.items())
+                ]
 
         if not sensor_stats:
             self.log(f"[{device}] No valid sensor data in batch – skipping.", level="WARNING")
