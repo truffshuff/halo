@@ -226,6 +226,22 @@ class HaloSensorHistory(hass.Hass):
             f"across {len(sensor_stats)} sensors."
         )
 
+        # Log the time window to check in HA History panel
+        if readings and history_total > 0:
+            try:
+                ts_list = [int(r["ts"]) for r in readings if "ts" in r]
+                if ts_list:
+                    t_start = datetime.fromtimestamp(min(ts_list), tz=timezone.utc)
+                    t_end   = datetime.fromtimestamp(max(ts_list), tz=timezone.utc)
+                    self.log(
+                        f"[{device}] Check HA History panel for: "
+                        f"{t_start.strftime('%Y-%m-%d %H:%M')} – "
+                        f"{t_end.strftime('%Y-%m-%d %H:%M')} UTC. "
+                        f"Navigate to History, select the sensor, and set a custom time range."
+                    )
+            except Exception:
+                pass
+
     async def _import_via_websocket(self, device: str, sensor_stats: dict) -> int:
         """Send recorder/import_statistics directly over the HA WebSocket API.
 
@@ -458,6 +474,11 @@ class HaloSensorHistory(hass.Hass):
                 self.log(
                     f"[{device}]   DB {inserted_this:>4d} rows → {entity_id}"
                 )
+
+            # Force WAL checkpoint so HA's reader connection sees the new rows
+            # immediately without waiting for the automatic checkpoint threshold.
+            # TRUNCATE resets the WAL file to zero length after checkpointing.
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
         except Exception as exc:
             conn.rollback()
