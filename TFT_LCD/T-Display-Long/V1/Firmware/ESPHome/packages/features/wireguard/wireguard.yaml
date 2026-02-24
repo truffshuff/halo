@@ -97,6 +97,13 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  # Tracks whether a WireGuard disconnection paused auto page rotation
+  # so we only resume rotation if we were the ones who paused it
+  - id: wg_paused_page_rotation
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 # ============================================================================
 # WireGuard VPN Configuration
 # ============================================================================
@@ -186,6 +193,28 @@ binary_sensor:
                     id: wg_status_label
                     text: !lambda 'return id(wg_status_last_text);'
                 - lambda: 'id(wg_status_needs_render) = false;'
+          # WireGuard disconnected while enabled: pause rotation and jump to AirQ page
+          - if:
+              condition:
+                lambda: 'return !x && id(wireguard_enabled).state && id(boot_complete);'
+              then:
+                - lambda: |-
+                    ESP_LOGI("wireguard", "WireGuard disconnected - pausing page rotation and switching to AirQ");
+                    if (id(auto_page_rotation_enabled)) {
+                      id(wg_paused_page_rotation) = true;
+                      id(auto_page_rotation_enabled) = false;
+                    }
+                    id(current_page_name) = "airq";
+          # WireGuard reconnected: resume rotation only if we paused it
+          - if:
+              condition:
+                lambda: 'return x && id(wg_paused_page_rotation);'
+              then:
+                - lambda: |-
+                    ESP_LOGI("wireguard", "WireGuard reconnected - resuming page rotation");
+                    id(wg_paused_page_rotation) = false;
+                    id(auto_page_rotation_enabled) = true;
+                    id(last_auto_rotation_time) = millis();
 
     enabled:
       name: "WireGuard Enabled"
