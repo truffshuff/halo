@@ -256,19 +256,25 @@ sensor:
               if (std::isnan(x) || x <= 0) {
                 snprintf(time_str, sizeof(time_str), "Handshake: \nUnavailable");
               } else {
-                int seconds = (int)x;
-                int minutes = seconds / 60;
-                int hours = minutes / 60;
-                int days = hours / 24;
-
-                if (days > 0) {
-                  snprintf(time_str, sizeof(time_str), "Handshake: \n%dd %dh ago", days, hours % 24);
-                } else if (hours > 0) {
-                  snprintf(time_str, sizeof(time_str), "Handshake: \n%dh %dm ago", hours, minutes % 60);
-                } else if (minutes > 0) {
-                  snprintf(time_str, sizeof(time_str), "Handshake: \n%dm %ds ago", minutes, seconds % 60);
+                auto now = id(sntp_time).now();
+                if (!now.is_valid()) {
+                  snprintf(time_str, sizeof(time_str), "Handshake: \nTime not synced");
                 } else {
-                  snprintf(time_str, sizeof(time_str), "Handshake: \n%ds ago", seconds);
+                  int seconds = (int)(now.timestamp - (time_t)x);
+                  if (seconds < 0) seconds = 0;
+                  int minutes = seconds / 60;
+                  int hours = minutes / 60;
+                  int days = hours / 24;
+
+                  if (days > 0) {
+                    snprintf(time_str, sizeof(time_str), "Handshake: \n%dd %dh ago", days, hours % 24);
+                  } else if (hours > 0) {
+                    snprintf(time_str, sizeof(time_str), "Handshake: \n%dh %dm ago", hours, minutes % 60);
+                  } else if (minutes > 0) {
+                    snprintf(time_str, sizeof(time_str), "Handshake: \n%dm %ds ago", minutes, seconds % 60);
+                  } else {
+                    snprintf(time_str, sizeof(time_str), "Handshake: \n%ds ago", seconds);
+                  }
                 }
               }
               std::string handshake_text(time_str);
