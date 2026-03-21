@@ -50,7 +50,7 @@ esphome:
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
 
-  min_version: 2025.11.0
+  min_version: 2026.3.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"
@@ -267,6 +267,18 @@ packages:
       # Disable to: Save 2KB, but lose auto-rotation (manual navigation still works)
       # IMPORTANT: Must be loaded AFTER all page modules!
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
+
+      # -------------------------
+      # 3D Printer Status (~5KB)
+      # -------------------------
+      # Provides: Real-time BambuLab printer status page (progress, temps, errors)
+      # Memory: ~5KB
+      # Hardware: None (uses HA API sensor subscriptions)
+      # Requirements: Home Assistant BambuLab integration with entity IDs defined
+      #               in HomeAssistant/dashbaord.yaml
+      # Disable to: Save 5KB if you don't have a 3D printer
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_page.yaml
 
       # -------------------------
       # Diagnostics (Optional - ~5-10KB)

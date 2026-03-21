@@ -42,16 +42,37 @@ wifi:
           id(cycleCounter) = 30;
           ESP_LOGI("wifi", "WiFi connected - stopping startup blink");
         }
-    # Re-enable WireGuard after WiFi reconnect if the switch is ON and time is
-    # already valid. The on_time_sync handler covers the initial boot case where
-    # SNTP hasn't synced yet, so we only need to act here when time is ready.
+    # Post-boot WiFi reconnect: force a clean WireGuard re-handshake.
+    # Only fires after boot_complete to avoid conflicting with the wireguard.yaml
+    # on_boot hook (which handles the initial enable with the 20s BLE delay).
+    #
+    # ROOT CAUSE of reported bug: after an extended WiFi outage the WireGuard
+    # component is still "enabled" but stuck — calling wireguard.enable() on an
+    # already-enabled instance is a no-op in libwg and never resets the crypto
+    # session or restarts handshake initiation.  The fix is to explicitly
+    # disable then re-enable so the component performs a fresh handshake
+    # initiation with a current timestamp.  Stale timestamps are rejected by
+    # the server (WireGuard replay-protection window), which is the likely
+    # reason tunnels don't reconnect after long outages even after power cycles.
     - if:
         condition:
-          lambda: 'return id(wireguard_enabled).state && id(sntp_time).now().is_valid();'
+          lambda: 'return id(boot_complete) && id(wireguard_enabled).state;'
         then:
-          - logger.log: "WiFi reconnected - re-enabling WireGuard tunnel"
-          - wireguard.enable:
-              id: wg0
+          - if:
+              condition:
+                lambda: 'return id(sntp_time).now().is_valid();'
+              then:
+                - logger.log: "WiFi reconnected (post-boot, time valid) - cycling WireGuard for fresh handshake"
+                - wireguard.disable:
+                    id: wg0
+                - delay: 500ms
+                - wireguard.enable:
+                    id: wg0
+              else:
+                # SNTP not yet valid (extended outage during boot).
+                # on_time_sync in system_management.yaml will call wireguard.enable
+                # once SNTP gets its first successful sync over the reconnected WiFi.
+                - logger.log: "WiFi reconnected (post-boot, SNTP not yet synced) - WireGuard will be enabled by on_time_sync"
 
 web_server:
   port: 80
