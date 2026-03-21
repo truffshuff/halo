@@ -1,0 +1,305 @@
+views:
+  - title: 3D Printer
+    icon: mdi:printer-3d
+    type: sections
+    sections:
+      - type: grid
+        column_span: 4
+        cards:
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.h2c_31b8ap5c0301590_print_error
+                state: 'on'
+            card:
+              type: custom:mushroom-template-card
+              primary: PRINT ERROR!
+              secondary: Check Printer
+              icon: mdi:alert
+              icon_color: red
+              layout: horizontal
+              tap_action:
+                action: more-info
+              entity: binary_sensor.h2c_31b8ap5c0301590_print_error
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.h2c_31b8ap5c0301590_hms_errors
+                state: 'on'
+            card:
+              type: custom:mushroom-template-card
+              primary: HMS ERROR!
+              secondary: Check Diagnostics
+              icon: mdi:alert-circle
+              icon_color: red
+              layout: horizontal
+              tap_action:
+                action: more-info
+              entity: binary_sensor.h2c_31b8ap5c0301590_hms_errors
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Pause Print
+                icon: mdi:pause-circle
+                icon_color: orange
+                layout: horizontal
+                entity: button.h2c_31b8ap5c0301590_pause_print
+                tap_action:
+                  action: toggle
+              - type: custom:mushroom-template-card
+                primary: Stop Print
+                icon: mdi:stop-circle
+                icon_color: red
+                layout: horizontal
+                entity: button.h2c_31b8ap5c0301590_stop_print
+                tap_action:
+                  action: toggle
+                  confirmation:
+                    text: Are you sure you want to stop the print?
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: Live Status
+          - type: custom:ha-bambulab-print_status-card
+            printer: 969c9bc6aa9516915f4c7403131806bc
+            style: simple
+            grid_options:
+              columns: 12
+              rows: 5
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: sensor.bambi_hms_a_humidity
+                icon: mdi:water-percent
+                name: Chamber A
+              - type: custom:mushroom-entity-card
+                entity: sensor.bambi_hms_b_humidity
+                icon: mdi:water-percent
+                name: Chamber B
+              - type: custom:mushroom-entity-card
+                entity: sensor.bambi_hms_a_temperature
+                icon: mdi:temperature-fahrenheit
+                name: Chamber A
+              - type: custom:mushroom-entity-card
+                entity: sensor.bambi_hms_b_temperature
+                icon: mdi:temperature-fahrenheit
+                name: Chamber B
+              - type: custom:mushroom-entity-card
+                entity: sensor.bambi_hms_a_battery
+                icon: mdi:battery-outline
+                name: Chamber A
+              - type: custom:mushroom-entity-card
+                entity: sensor.bambi_hms_b_battery
+                icon: mdi:battery-outline
+                name: Chamber A
+          - type: custom:ha-bambulab-print_control-card
+            printer: 969c9bc6aa9516915f4c7403131806bc
+          - type: custom:mushroom-entity-card
+            entity: sensor.h2c_31b8ap5c0301590_print_progress
+            primary_info: state
+            secondary_info: name
+            name: Print Progress
+            icon_color: green
+            layout: horizontal
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: sensor.h2c_31b8ap5c0301590_remaining_time
+                icon: mdi:timer-sand
+                name: Remaining
+                icon_color: orange
+              - type: custom:mushroom-entity-card
+                entity: sensor.h2c_31b8ap5c0301590_end_time
+                icon: mdi:clock-end
+                name: Est. End
+                icon_color: blue
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Current Job
+          - type: custom:mushroom-template-card
+            entity: sensor.h2c_31b8ap5c0301590_task_name
+            primary: '{{ states(''sensor.h2c_31b8ap5c0301590_task_name'') }}'
+            secondary: '{{ states(''sensor.h2c_31b8ap5c0301590_print_status'') }}'
+            icon: mdi:file-document-outline
+            icon_color: blue
+            multiline_secondary: true
+          - type: custom:mushroom-chips-card
+            chips:
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_current_layer
+                icon: mdi:layers
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_print_type
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_speed_profile
+                icon: mdi:speedometer
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-entity-card
+                entity: sensor.h2c_31b8ap5c0301590_print_weight
+                icon: mdi:weight-gram
+              - type: custom:mushroom-entity-card
+                entity: sensor.h2c_31b8ap5c0301590_print_length
+                icon: mdi:tape-measure
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Temperatures
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_nozzle_temperature
+                icon: mdi:printer-3d-nozzle
+                icon_color: red
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_bed_temperature
+                icon: mdi:radiator
+                icon_color: orange
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_chamber_temperature
+                icon: mdi:home-thermometer
+                icon_color: blue
+          - type: tile
+            entity: sensor.h2c_31b8ap5c0301590_nozzle_target_temperature
+            name: Nozzle Target
+            icon: mdi:target
+          - type: tile
+            entity: sensor.h2c_31b8ap5c0301590_bed_target_temperature
+            name: Bed Target
+            icon: mdi:target
+      - type: grid
+        column_span: 4
+        cards:
+          - type: heading
+            heading: AMS Filament System
+          - type: vertical-stack
+            cards:
+              - type: custom:ha-bambulab-ams-card
+                entity: ''
+                header: AMS 1 (Graphic)
+                style: graphic
+                ams: eccced0e02b7ed19b3c553daee9df2c4
+                show_info_bar: true
+                custom_humidity: sensor.h2c_31b8ap5c0301590_ams_1_humidity_2
+                custom_temperature: sensor.h2c_31b8ap5c0301590_ams_1_temperature_2
+              - type: custom:ha-bambulab-ams-card
+                entity: ''
+                header: AMS 1 (Vector)
+                style: vector
+                ams: eccced0e02b7ed19b3c553daee9df2c4
+                show_info_bar: false
+                custom_humidity: sensor.h2c_31b8ap5c0301590_ams_1_humidity_2
+                custom_temperature: sensor.h2c_31b8ap5c0301590_ams_1_temperature_2
+          - type: vertical-stack
+            cards:
+              - type: custom:ha-bambulab-ams-card
+                entity: ''
+                header: AMS 2 (Graphic)
+                style: graphic
+                ams: 35f23e5df1c60ccaaabe3330e8585d79
+                show_info_bar: true
+                show_type: true
+                custom_humidity: sensor.h2c_31b8ap5c0301590_ams_1_humidity
+                custom_temperature: sensor.h2c_31b8ap5c0301590_ams_1_temperature
+              - type: custom:ha-bambulab-ams-card
+                entity: ''
+                header: AMS 2 (Vector)
+                style: vector
+                ams: 35f23e5df1c60ccaaabe3330e8585d79
+                show_info_bar: false
+                show_type: true
+                custom_humidity: sensor.h2c_31b8ap5c0301590_ams_1_humidity
+                custom_temperature: sensor.h2c_31b8ap5c0301590_ams_1_temperature
+          - type: vertical-stack
+            cards:
+              - type: custom:ha-bambulab-ams-card
+                entity: ''
+                header: AMS 3 (Graphic)
+                style: graphic
+                ams: ec5e3c8693a4f379c71a9f93c945fd7b
+                show_info_bar: true
+                custom_humidity: sensor.h2c_31b8ap5c0301590_ams_128_humidity
+                custom_temperature: sensor.h2c_31b8ap5c0301590_ams_128_temperature
+              - type: custom:ha-bambulab-ams-card
+                entity: ''
+                header: AMS 3 (Vector)
+                style: vector
+                ams: ec5e3c8693a4f379c71a9f93c945fd7b
+                show_info_bar: false
+                custom_humidity: sensor.h2c_31b8ap5c0301590_ams_128_humidity
+                custom_temperature: sensor.h2c_31b8ap5c0301590_ams_128_temperature
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Fans
+          - type: custom:mushroom-chips-card
+            alignment: start
+            chips:
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_cooling_fan_speed
+                icon: mdi:fan
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_aux_fan_speed
+                icon: mdi:fan-plus
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_chamber_fan_speed
+                icon: mdi:fan-auto
+              - type: entity
+                entity: sensor.h2c_31b8ap5c0301590_heatbreak_fan_speed
+                icon: mdi:fan-chevron-up
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: System & Diagnostics
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: template
+                entity: binary_sensor.h2c_31b8ap5c0301590_online
+                icon: '{{ ''mdi:wifi'' if is_state(entity, ''on'') else ''mdi:wifi-off'' }}'
+                icon_color: '{{ ''green'' if is_state(entity, ''on'') else ''red'' }}'
+                content: '{{ ''Online'' if is_state(entity, ''on'') else ''Offline'' }}'
+              - type: conditional
+                conditions:
+                  - entity: binary_sensor.h2c_31b8ap5c0301590_print_error
+                    state: 'on'
+                chip:
+                  type: template
+                  icon: mdi:alert
+                  icon_color: red
+                  content: Print Error!
+              - type: conditional
+                conditions:
+                  - entity: binary_sensor.h2c_31b8ap5c0301590_hms_errors
+                    state: 'on'
+                chip:
+                  type: template
+                  icon: mdi:alert-circle
+                  icon_color: red
+                  content: HMS Error!
+          - type: custom:mushroom-entity-card
+            entity: update.h2c_31b8ap5c0301590_firmware_update
+            icon: mdi:update
+            name: Firmware
+          - type: custom:mushroom-entity-card
+            entity: sensor.h2c_31b8ap5c0301590_total_usage
+            icon: mdi:clock-outline
+            name: Total Usage
+      - type: grid
+        column_span: 4
+        cards:
+          - type: custom:auto-reload-card
+            delay_in_minute: 7

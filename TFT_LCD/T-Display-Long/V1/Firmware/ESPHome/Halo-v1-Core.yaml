@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.02.23.1914
-# Last Updated: February 23, 2026
+# Version: 26.03.21.1040
+# Last Updated: March 21, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.02.23.1914"
+  version: "26.03.21.1040"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -170,6 +170,13 @@ interval:
                 if (id(page_rotation_daily_forecast_enabled)) {
                 page_orders.push_back(id(page_rotation_daily_forecast_order));
                 page_ids.push_back("daily_forecast");
+                }
+
+                // Printer page (conditionally available based on printer package)
+                // Global provided by features/printer/printer_base.yaml
+                if (id(page_rotation_printer_enabled)) {
+                page_orders.push_back(id(page_rotation_printer_order));
+                page_ids.push_back("printer");
                 }
 
                 // If no pages are enabled, don't rotate
@@ -330,15 +337,26 @@ interval:
                                                                 animation: OUT_LEFT
                                                                 time: 300ms
                                                           else:
-                                                            # Unknown page - fall back to vertical clock
-                                                            - logger.log:
-                                                                format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
-                                                                args: ['id(current_page_name).c_str()']
-                                                                level: WARN
-                                                            - lvgl.page.show:
-                                                                id: vertical_clock_page
-                                                                animation: OUT_LEFT
-                                                                time: 300ms
+                                                            # Printer
+                                                            - if:
+                                                                condition:
+                                                                  lambda: 'return id(current_page_name) == "printer";'
+                                                                then:
+                                                                  - logger.log: "Page rotation: Showing Printer page"
+                                                                  - lvgl.page.show:
+                                                                      id: printer_page
+                                                                      animation: OUT_LEFT
+                                                                      time: 300ms
+                                                                else:
+                                                                  # Unknown page - fall back to vertical clock
+                                                                  - logger.log:
+                                                                      format: "Page rotation: Page '%s' not available, falling back to Vertical Clock"
+                                                                      args: ['id(current_page_name).c_str()']
+                                                                      level: WARN
+                                                                  - lvgl.page.show:
+                                                                      id: vertical_clock_page
+                                                                      animation: OUT_LEFT
+                                                                      time: 300ms
 
 
   - interval: 1s  # Reduced from 5s for faster WiFi stats updates

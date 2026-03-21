@@ -1,0 +1,286 @@
+# ============================================================================
+# 3D Printer Status Page Module
+# ============================================================================
+# LVGL display page for BambuLab printer monitoring
+#
+# Layout (180 x 640 AMOLED, portrait, y=0 at screen centre):
+#
+#   y: -295  Title "3D Printer"
+#   y: -265  Status label  (color-coded: green/orange/red/teal/gray)
+#   y: -235  Error banner  (empty when OK, red "! PRINT ERROR !" or "! HMS ERROR !")
+#   y: -202  Task / file name (truncated to ~22 chars)
+#   y: -170  Progress bar  (160 x 12 px, green fill)
+#   y: -148  Progress %    (large, centred)
+#   y: -112  Remaining time
+#   y:  -87  Estimated end time (HH:MM)
+#   y:  -57  "Temperatures" section header
+#   y:  -37  Nozzle temperature
+#   y:  -17  Bed temperature
+#   y:   +3  Chamber temperature
+#   y:  +32  Current layer
+#   y:  +75  Touch button → navigate to AirQ page
+#
+# Dependencies:
+#   - features/printer/printer_base.yaml  (all globals & sensor subscriptions)
+#   - base/globals.yaml                   (current_page_name, last_touch_time)
+#   - system/fonts_colors.yaml            (montserrat fonts, color palette)
+#   - Core scripts: page_transition_cleanup
+# ============================================================================
+
+# ============================================================================
+# LVGL Page Definition
+# ============================================================================
+lvgl:
+  pages:
+    # -------------------------------------------------------------------------
+    # Printer Status Page
+    # -------------------------------------------------------------------------
+    - id: printer_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_name) = "printer";'
+        # Restore all cached values immediately so labels are never stale
+        # when the page is visited while data hasn't changed since last visit.
+        - if:
+            condition:
+              lambda: 'return !id(printer_status_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_status_label
+                  text: !lambda 'return id(printer_status_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_error_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_error_label
+                  text: !lambda 'return id(printer_error_last_text);'
+                  text_color: my_red
+        - if:
+            condition:
+              lambda: 'return !id(printer_task_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_task_label
+                  text: !lambda 'return id(printer_task_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_progress_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_progress_label
+                  text: !lambda 'return id(printer_progress_last_text);'
+              - lvgl.bar.update:
+                  id: printer_progress_bar
+                  value: !lambda 'return (int)id(printer_progress_bar_last_value);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_remaining_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_remaining_label
+                  text: !lambda 'return id(printer_remaining_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_endtime_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_endtime_label
+                  text: !lambda 'return id(printer_endtime_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_nozzle_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_nozzle_label
+                  text: !lambda 'return id(printer_nozzle_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_bed_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_bed_label
+                  text: !lambda 'return id(printer_bed_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_chamber_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_chamber_label
+                  text: !lambda 'return id(printer_chamber_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_layer_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_layer_label
+                  text: !lambda 'return id(printer_layer_last_text);'
+
+      widgets:
+        # ── Title ─────────────────────────────────────────────────────────────
+        - label:
+            text: "3D Printer"
+            align: CENTER
+            x: 0
+            y: -295
+            text_font: montserrat_20
+            text_color: my_teal
+            text_align: CENTER
+
+        # ── Print status (color-coded; updated by printer_base on_value) ──────
+        - label:
+            id: printer_status_label
+            text: "Status: --"
+            align: CENTER
+            x: 0
+            y: -265
+            text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
+        # ── Error / HMS alert banner (empty string = invisible) ────────────────
+        - label:
+            id: printer_error_label
+            text: ""
+            align: CENTER
+            x: 0
+            y: -235
+            text_font: montserrat_14
+            text_color: my_red
+            text_align: CENTER
+
+        # ── Current task / file name ───────────────────────────────────────────
+        - label:
+            id: printer_task_label
+            text: "--"
+            align: CENTER
+            x: 0
+            y: -202
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        # ── Progress bar (0–100, green fill on dark grey track) ───────────────
+        - bar:
+            id: printer_progress_bar
+            align: CENTER
+            x: 0
+            y: -175
+            width: 160
+            height: 12
+            min_value: 0
+            max_value: 100
+            value: 0
+            bg_color: my_gray
+            indicator:
+              bg_color: my_green
+
+        # ── Progress percentage ────────────────────────────────────────────────
+        - label:
+            id: printer_progress_label
+            text: "0%"
+            align: CENTER
+            x: 0
+            y: -148
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # ── Remaining time ─────────────────────────────────────────────────────
+        - label:
+            id: printer_remaining_label
+            text: "Remaining: --"
+            align: CENTER
+            x: 0
+            y: -112
+            text_font: montserrat_16
+            text_color: my_orange
+            text_align: CENTER
+
+        # ── Estimated end time ─────────────────────────────────────────────────
+        - label:
+            id: printer_endtime_label
+            text: "Done: --"
+            align: CENTER
+            x: 0
+            y: -87
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        # ── Temperature section header ─────────────────────────────────────────
+        - label:
+            text: "Temperatures"
+            align: CENTER
+            x: 0
+            y: -57
+            text_font: montserrat_14
+            text_color: my_teal
+            text_align: CENTER
+
+        # ── Nozzle ─────────────────────────────────────────────────────────────
+        - label:
+            id: printer_nozzle_label
+            text: "Nozzle: --"
+            align: LEFT_MID
+            x: 10
+            y: -37
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Bed ────────────────────────────────────────────────────────────────
+        - label:
+            id: printer_bed_label
+            text: "Bed: --"
+            align: LEFT_MID
+            x: 10
+            y: -17
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Chamber ────────────────────────────────────────────────────────────
+        - label:
+            id: printer_chamber_label
+            text: "Chamber: --"
+            align: LEFT_MID
+            x: 10
+            y: +3
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Layer counter ──────────────────────────────────────────────────────
+        - label:
+            id: printer_layer_label
+            text: "Layer: --"
+            align: CENTER
+            x: 0
+            y: +32
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        # ── Navigation touch area → AirQ page ─────────────────────────────────
+        - obj:
+            align: CENTER
+            x: 0
+            y: +75
+            width: 160
+            height: 36
+            bg_opa: TRANSP
+            border_width: 0
+            on_click:
+              then:
+                - lambda: |-
+                    id(current_page_name) = "airq";
+                    id(last_touch_time) = millis();
+                    id(last_auto_rotation_time) = millis();
+            widgets:
+              - label:
+                  text: "< Back to AirQ"
+                  align: CENTER
+                  text_font: montserrat_14
+                  text_color: my_gray
+                  text_align: CENTER

@@ -1,0 +1,478 @@
+# ============================================================================
+# 3D Printer Status Capability Module
+# ============================================================================
+# Displays real-time BambuLab printer status pulled from Home Assistant
+#
+# FEATURES:
+#   - Print status (idle / printing / paused / failed) with color coding
+#   - Current task/file name
+#   - Print progress percentage + animated progress bar
+#   - Remaining time (minutes → formatted Xh Ym)
+#   - Estimated end time
+#   - Nozzle, bed, and chamber temperatures
+#   - Current layer number
+#   - Print error & HMS error alert banner
+#   - Page rotation enable/disable
+#
+# DEPENDENCIES:
+#   - system/esphome_core.yaml (ESP32 config, api component)
+#   - system/display_hardware.yaml (Display, LVGL)
+#   - system/fonts_colors.yaml (color palette, fonts)
+#   - page_rotation/page_rotation.yaml (current_page_name global)
+#   - Home Assistant integration with BambuLab addon (entities listed below)
+#
+# ENTITY IDs (from HomeAssistant/dashbaord.yaml):
+#   sensor.h2c_31b8ap5c0301590_print_status
+#   sensor.h2c_31b8ap5c0301590_print_progress
+#   sensor.h2c_31b8ap5c0301590_remaining_time    (minutes, numeric)
+#   sensor.h2c_31b8ap5c0301590_end_time          (timestamp/string)
+#   sensor.h2c_31b8ap5c0301590_task_name
+#   sensor.h2c_31b8ap5c0301590_current_layer
+#   sensor.h2c_31b8ap5c0301590_nozzle_temperature
+#   sensor.h2c_31b8ap5c0301590_bed_temperature
+#   sensor.h2c_31b8ap5c0301590_chamber_temperature
+#   binary_sensor.h2c_31b8ap5c0301590_print_error
+#   binary_sensor.h2c_31b8ap5c0301590_hms_errors
+#
+# MEMORY USAGE: ~5KB
+# ============================================================================
+
+# ============================================================================
+# Global Variables
+# ============================================================================
+globals:
+  # Page rotation configuration
+  - id: page_rotation_printer_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+
+  - id: page_rotation_printer_order
+    type: int
+    restore_value: yes
+    initial_value: '8'
+
+  # ---- Label text cache (avoids redundant LVGL re-renders) ----
+  - id: printer_status_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_task_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_progress_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_progress_bar_last_value
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+
+  - id: printer_remaining_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_endtime_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_nozzle_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_bed_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_chamber_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_layer_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  - id: printer_error_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  # ---- Render-dirty flags ----
+  - id: printer_status_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: printer_progress_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: printer_temps_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: printer_detail_needs_render
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+# ============================================================================
+# Switch Components
+# ============================================================================
+switch:
+  # Enable/disable printer page in the auto-rotation cycle
+  - platform: template
+    name: "Page Rotation: Printer Page"
+    id: page_rotation_printer_switch
+    icon: mdi:printer-3d
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+    on_turn_on:
+      - lambda: 'id(page_rotation_printer_enabled) = true;'
+      - logger.log: "Printer page enabled in rotation"
+    on_turn_off:
+      - lambda: 'id(page_rotation_printer_enabled) = false;'
+      - logger.log: "Printer page disabled in rotation"
+
+# ============================================================================
+# Number Components
+# ============================================================================
+number:
+  # Printer page position in the rotation sequence
+  - platform: template
+    name: "Page Order: Printer Page"
+    id: page_order_printer
+    icon: mdi:numeric
+    restore_value: true
+    initial_value: 8
+    min_value: 1
+    max_value: 8
+    entity_category: "config"
+    optimistic: true
+    step: 1
+    mode: box
+    on_value:
+      - lambda: 'id(page_rotation_printer_order) = (int)x;'
+      - logger.log:
+          format: "Printer page order set to %d"
+          args: ['(int)x']
+
+# ============================================================================
+# Home Assistant Sensor Subscriptions (numeric)
+# ============================================================================
+sensor:
+  # --- Print Progress (0–100 %) ---
+  - platform: homeassistant
+    id: printer_progress_sensor
+    entity_id: sensor.h2c_31b8ap5c0301590_print_progress
+    name: "Print Progress"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            char buf[12];
+            snprintf(buf, sizeof(buf), "%.0f%%", x);
+            std::string s(buf);
+            if (s != id(printer_progress_last_text) ||
+                x != id(printer_progress_bar_last_value)) {
+              id(printer_progress_last_text) = s;
+              id(printer_progress_bar_last_value) = x;
+              id(printer_progress_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_progress_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_progress_label
+                  text: !lambda 'return id(printer_progress_last_text);'
+              - lvgl.bar.update:
+                  id: printer_progress_bar
+                  value: !lambda 'return (int)id(printer_progress_bar_last_value);'
+              - lambda: 'id(printer_progress_needs_render) = false;'
+
+  # --- Remaining Time (minutes, numeric) ---
+  - platform: homeassistant
+    id: printer_remaining_sensor
+    entity_id: sensor.h2c_31b8ap5c0301590_remaining_time
+    name: "Print Remaining Time"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            char buf[32];
+            int minutes = std::isnan(x) ? 0 : (int)x;
+            if (minutes <= 0) {
+              snprintf(buf, sizeof(buf), "Remaining: --");
+            } else if (minutes < 60) {
+              snprintf(buf, sizeof(buf), "Remaining: %dm", minutes);
+            } else {
+              snprintf(buf, sizeof(buf), "Remaining: %dh %dm", minutes / 60, minutes % 60);
+            }
+            std::string s(buf);
+            if (s != id(printer_remaining_last_text)) {
+              id(printer_remaining_last_text) = s;
+              id(printer_detail_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_remaining_label
+                  text: !lambda 'return id(printer_remaining_last_text);'
+
+  # --- Nozzle Temperature ---
+  - platform: homeassistant
+    id: printer_nozzle_temp
+    entity_id: sensor.h2c_31b8ap5c0301590_nozzle_temperature
+    name: "Printer Nozzle Temp"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            char buf[24];
+            snprintf(buf, sizeof(buf), "Nozzle: %.0f\xC2\xB0", x);
+            std::string s(buf);
+            if (s != id(printer_nozzle_last_text)) {
+              id(printer_nozzle_last_text) = s;
+              id(printer_temps_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_nozzle_label
+                  text: !lambda 'return id(printer_nozzle_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Bed Temperature ---
+  - platform: homeassistant
+    id: printer_bed_temp
+    entity_id: sensor.h2c_31b8ap5c0301590_bed_temperature
+    name: "Printer Bed Temp"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            char buf[24];
+            snprintf(buf, sizeof(buf), "Bed: %.0f\xC2\xB0", x);
+            std::string s(buf);
+            if (s != id(printer_bed_last_text)) {
+              id(printer_bed_last_text) = s;
+              id(printer_temps_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_bed_label
+                  text: !lambda 'return id(printer_bed_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Chamber Temperature ---
+  - platform: homeassistant
+    id: printer_chamber_temp
+    entity_id: sensor.h2c_31b8ap5c0301590_chamber_temperature
+    name: "Printer Chamber Temp"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            char buf[24];
+            snprintf(buf, sizeof(buf), "Chamber: %.0f\xC2\xB0", x);
+            std::string s(buf);
+            if (s != id(printer_chamber_last_text)) {
+              id(printer_chamber_last_text) = s;
+              id(printer_temps_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_chamber_label
+                  text: !lambda 'return id(printer_chamber_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Current Layer ---
+  - platform: homeassistant
+    id: printer_layer_sensor
+    entity_id: sensor.h2c_31b8ap5c0301590_current_layer
+    name: "Printer Current Layer"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            char buf[20];
+            snprintf(buf, sizeof(buf), "Layer: %d", (int)x);
+            std::string s(buf);
+            if (s != id(printer_layer_last_text)) {
+              id(printer_layer_last_text) = s;
+            }
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_layer_label
+                  text: !lambda 'return id(printer_layer_last_text);'
+
+# ============================================================================
+# Home Assistant Text Sensor Subscriptions
+# ============================================================================
+text_sensor:
+  # --- Print Status ("idle", "printing", "pause", "failed", "finish", ...) ---
+  - platform: homeassistant
+    id: printer_status_text
+    entity_id: sensor.h2c_31b8ap5c0301590_print_status
+    name: "Print Status"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            // Capitalise first letter for display
+            std::string raw = x;
+            if (!raw.empty()) raw[0] = toupper((unsigned char)raw[0]);
+            std::string s = "Status: " + raw;
+            if (s != id(printer_status_last_text)) {
+              id(printer_status_last_text) = s;
+              id(printer_status_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_status_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_status_label
+                  text: !lambda 'return id(printer_status_last_text);'
+                  text_color: !lambda |-
+                    std::string val = x;
+                    if (val == "printing" || val == "running") return id(my_green);
+                    if (val == "pause" || val == "paused")     return id(my_orange);
+                    if (val == "failed"  || val == "error")    return id(my_red);
+                    if (val == "finish"  || val == "finished") return id(my_teal);
+                    return id(my_gray);
+              - lambda: 'id(printer_status_needs_render) = false;'
+
+  # --- Task / File Name ---
+  - platform: homeassistant
+    id: printer_task_name
+    entity_id: sensor.h2c_31b8ap5c0301590_task_name
+    name: "Print Task Name"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            // Truncate long filenames to fit the narrow display (≈22 chars at 14pt)
+            std::string s = (x.length() > 22) ? x.substr(0, 19) + "..." : x;
+            if (s != id(printer_task_last_text)) {
+              id(printer_task_last_text) = s;
+              id(printer_detail_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_detail_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_task_label
+                  text: !lambda 'return id(printer_task_last_text);'
+              - lambda: 'id(printer_detail_needs_render) = false;'
+
+  # --- Estimated End Time (datetime string from HA) ---
+  - platform: homeassistant
+    id: printer_end_time
+    entity_id: sensor.h2c_31b8ap5c0301590_end_time
+    name: "Print End Time"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            // HA datetime sensor state is ISO 8601; extract HH:MM for display
+            std::string raw = x;
+            std::string time_part = raw;
+            // Format: "2026-03-21T14:30:00+00:00" — extract chars at index 11..15
+            if (raw.length() >= 16 && raw[10] == 'T') {
+              time_part = raw.substr(11, 5);  // "HH:MM"
+            }
+            std::string s = "Done: " + time_part;
+            if (s != id(printer_endtime_last_text)) {
+              id(printer_endtime_last_text) = s;
+            }
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_endtime_label
+                  text: !lambda 'return id(printer_endtime_last_text);'
+
+  # --- Print Error (binary_sensor exposed as text: "on" / "off") ---
+  - platform: homeassistant
+    id: printer_error_sensor
+    entity_id: binary_sensor.h2c_31b8ap5c0301590_print_error
+    name: "Print Error Flag"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            bool err = (x == "on");
+            std::string s = err ? "! PRINT ERROR !" : "";
+            if (s != id(printer_error_last_text)) {
+              id(printer_error_last_text) = s;
+            }
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_error_label
+                  text: !lambda 'return id(printer_error_last_text);'
+                  text_color: !lambda 'return (x == "on") ? id(my_red) : id(my_black);'
+
+  # --- HMS Errors (AMS / filament system errors) ---
+  - platform: homeassistant
+    id: printer_hms_error_sensor
+    entity_id: binary_sensor.h2c_31b8ap5c0301590_hms_errors
+    name: "HMS Error Flag"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            // If both print_error and hms_error are on, prefer print_error message.
+            // Only override the error label content when hms fires.
+            bool hms_err = (x == "on");
+            if (!hms_err && id(printer_error_last_text) == "! HMS ERROR !") {
+              id(printer_error_last_text) = "";
+            } else if (hms_err && id(printer_error_last_text).empty()) {
+              id(printer_error_last_text) = "! HMS ERROR !";
+            }
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_error_label
+                  text: !lambda 'return id(printer_error_last_text);'
+                  text_color: !lambda 'return (x == "on") ? id(my_red) : id(my_black);'
