@@ -357,7 +357,7 @@ lvgl:
             text_align: CENTER
 
         # ── Navigation button → AirQ page ─────────────────────────────────────
-        - btn:
+        - button:
             align: CENTER
             x: 0
             y: +75
