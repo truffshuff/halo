@@ -5,19 +5,21 @@
 #
 # Layout (180 x 640 AMOLED, portrait, y=0 at screen centre):
 #
-#   y: -295  Title "3D Printer"
-#   y: -265  Status label  (color-coded: green/orange/red/teal/gray)
-#   y: -235  Error banner  (empty when OK, red "! PRINT ERROR !" or "! HMS ERROR !")
-#   y: -202  Task / file name (truncated to ~22 chars)
+#   y: -295  Printer name  (from HA sensor, default "3D Printer")
+#   y: -270  Status label  (color-coded: green/orange/red/teal/gray)
+#   y: -249  Current stage (e.g. "Printing", "Heatbed Preheating")
+#   y: -229  Error banner  (empty when OK, red "! PRINT ERROR !" or "! HMS ERROR !")
+#   y: -205  Task / file name (truncated to ~22 chars)
 #   y: -170  Progress bar  (160 x 12 px, green fill)
 #   y: -148  Progress %    (large, centred)
 #   y: -112  Remaining time
 #   y:  -87  Estimated end time (HH:MM)
 #   y:  -57  "Temperatures" section header
-#   y:  -37  Nozzle temperature
-#   y:  -17  Bed temperature
-#   y:   +3  Chamber temperature
-#   y:  +32  Current layer (X/Y format when total layers known)
+#   y:  -38  Right nozzle actual/target (R: 218/220°)
+#   y:  -20  Left nozzle actual/target  (L: 218/220°)
+#   y:   -2  Bed temperature
+#   y:  +16  Chamber temperature
+#   y:  +38  Current layer (X/Y format when total layers known)
 #   y:  +75  Touch button → navigate to AirQ page
 #   y: +170  Cover image (140×140 thumbnail fetched from HA image entity)
 #
@@ -100,6 +102,13 @@ lvgl:
                   text: !lambda 'return id(printer_nozzle_last_text);'
         - if:
             condition:
+              lambda: 'return !id(printer_left_nozzle_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_left_nozzle_label
+                  text: !lambda 'return id(printer_left_nozzle_last_text);'
+        - if:
+            condition:
               lambda: 'return !id(printer_bed_last_text).empty();'
             then:
               - lvgl.label.update:
@@ -119,10 +128,30 @@ lvgl:
               - lvgl.label.update:
                   id: printer_layer_label
                   text: !lambda 'return id(printer_layer_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_name_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_name_label
+                  text: !lambda 'return id(printer_name_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_stage_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_stage_label
+                  text: !lambda 'return id(printer_stage_last_text);'
+        # Refresh cover image widget in case the image was already downloaded
+        # before this page was navigated to.
+        - lvgl.image.update:
+            id: printer_cover_image_widget
+            src: printer_cover_image_data
 
       widgets:
-        # ── Title ─────────────────────────────────────────────────────────────
+        # ── Printer name (from HA; falls back to "3D Printer" until sensor fires) ─
         - label:
+            id: printer_name_label
             text: "3D Printer"
             align: CENTER
             x: 0
@@ -137,8 +166,19 @@ lvgl:
             text: "Status: --"
             align: CENTER
             x: 0
-            y: -265
+            y: -270
             text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
+        # ── Current stage (e.g. "Printing", "Heatbed Preheating", "Idle") ─────
+        - label:
+            id: printer_stage_label
+            text: ""
+            align: CENTER
+            x: 0
+            y: -249
+            text_font: montserrat_10
             text_color: my_gray
             text_align: CENTER
 
@@ -148,7 +188,7 @@ lvgl:
             text: ""
             align: CENTER
             x: 0
-            y: -235
+            y: -229
             text_font: montserrat_14
             text_color: my_red
             text_align: CENTER
@@ -159,7 +199,7 @@ lvgl:
             text: "--"
             align: CENTER
             x: 0
-            y: -202
+            y: -205
             text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
@@ -190,14 +230,14 @@ lvgl:
             text_color: my_white
             text_align: CENTER
 
-        # ── Remaining time ─────────────────────────────────────────────────────
+        # ── Remaining time (blank when printer is idle) ───────────────────────
         - label:
             id: printer_remaining_label
-            text: "Remaining: --"
+            text: ""
             align: CENTER
             x: 0
             y: -112
-            text_font: montserrat_16
+            text_font: montserrat_14
             text_color: my_orange
             text_align: CENTER
 
@@ -222,13 +262,23 @@ lvgl:
             text_color: my_teal
             text_align: CENTER
 
-        # ── Nozzle ─────────────────────────────────────────────────────────────
+        # ── Active Nozzle (whichever is currently in use; actual/target) ────────
         - label:
             id: printer_nozzle_label
-            text: "Nozzle: --"
+            text: "Active: --"
             align: LEFT_MID
             x: 10
-            y: -37
+            y: -38
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Left Nozzle (actual/target) ────────────────────────────────────────
+        - label:
+            id: printer_left_nozzle_label
+            text: "L: --"
+            align: LEFT_MID
+            x: 10
+            y: -20
             text_font: montserrat_14
             text_color: my_white
 
@@ -238,7 +288,7 @@ lvgl:
             text: "Bed: --"
             align: LEFT_MID
             x: 10
-            y: -17
+            y: -2
             text_font: montserrat_14
             text_color: my_white
 
@@ -248,7 +298,7 @@ lvgl:
             text: "Chamber: --"
             align: LEFT_MID
             x: 10
-            y: +3
+            y: +16
             text_font: montserrat_14
             text_color: my_white
 
@@ -258,7 +308,7 @@ lvgl:
             text: "Layer: --"
             align: CENTER
             x: 0
-            y: +32
+            y: +38
             text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
