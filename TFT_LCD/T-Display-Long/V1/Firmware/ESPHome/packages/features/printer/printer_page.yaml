@@ -21,12 +21,12 @@
 #   y:  +19  Bed temperature             (Bed: 45/55°)
 #   y:  +38  Chamber temperature
 #   y:  +57  Current layer (X/Y format when total layers known)
-#   y:  +75  Touch button → navigate to AirQ page
+#   y:    0  Invisible nav tap zone (top-right, 180×150) → lvgl.page.next
 #   y: +170  Cover image (140×140 thumbnail fetched from HA image entity)
 #   y: +252  "── AMS ──" section header
-#   y: +268  AMS A  (22°  45%  ▶ active  |  DRY 45m  |  idle)
-#   y: +284  AMS B  (same format)
-#   y: +300  AMS HT (same format)
+#   y: +270  AMS A  (22°  45%  ▶ active  |  DRY 45m  |  idle)
+#   y: +288  AMS B  (same format)
+#   y: +306  AMS HT (same format)
 #
 # Dependencies:
 #   - features/printer/printer_base.yaml  (all globals & sensor subscriptions)
@@ -211,7 +211,7 @@ lvgl:
             align: CENTER
             x: 0
             y: -249
-            text_font: montserrat_10
+            text_font: montserrat_14
             text_color: my_gray
             text_align: CENTER
 
@@ -356,35 +356,26 @@ lvgl:
             text_color: my_white
             text_align: CENTER
 
-        # ── Navigation button → AirQ page ─────────────────────────────────────
-        - button:
-            align: CENTER
+        # ── Navigation tap zone (top-right corner, invisible) ─────────────────
+        # Mirrors the AirQ page pattern: transparent obj covering the top-right
+        # quadrant so users can tap anywhere there to advance to the next page.
+        - obj:
+            id: nav_button_printer
+            align: TOP_RIGHT
             x: 0
-            y: +75
-            width: 160
-            height: 36
-            bg_color: 0x111111
-            bg_opa: COVER
-            border_width: 1
-            border_color: my_gray
-            radius: 8
-            on_click:
-              then:
-                - lambda: |-
-                    id(current_page_name) = "airq";
-                    id(last_touch_time) = millis();
-                    id(last_auto_rotation_time) = millis();
-                - lvgl.page.show:
-                    id: AirQ_page
-                    animation: OUT_LEFT
-                    time: 300ms
-            widgets:
-              - label:
-                  text: "< AirQ"
-                  align: CENTER
-                  text_font: montserrat_14
-                  text_color: my_gray
-                  text_align: CENTER
+            y: 0
+            width: 180
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_release:
+              - lambda: |-
+                  id(last_touch_time) = millis();
+                  id(last_auto_rotation_time) = millis();
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
 
         # ── Cover image (thumbnail of the model being printed) ─────────────────
         - image:
@@ -402,7 +393,7 @@ lvgl:
             align: CENTER
             x: 0
             y: +252
-            text_font: montserrat_10
+            text_font: montserrat_14
             text_color: my_teal
             text_align: CENTER
 
@@ -411,8 +402,8 @@ lvgl:
             text: "A: --"
             align: CENTER
             x: 0
-            y: +268
-            text_font: montserrat_10
+            y: +270
+            text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
 
@@ -421,8 +412,8 @@ lvgl:
             text: "B: --"
             align: CENTER
             x: 0
-            y: +284
-            text_font: montserrat_10
+            y: +288
+            text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
 
@@ -431,7 +422,7 @@ lvgl:
             text: "HT: --"
             align: CENTER
             x: 0
-            y: +300
-            text_font: montserrat_10
+            y: +306
+            text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
