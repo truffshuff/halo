@@ -9,7 +9,7 @@
 # moved to their respective feature files.
 #
 # CONTENTS:
-#   - Startup/boot state (cycleCounter for LED animation)
+#   - Startup/boot state (boot_complete flag, cycleCounter for LED animation)
 #   - OTA operation state (ota_in_progress)
 #   - Display backlight state (display_backlight_is_on)
 #   - Sensor UI batching (sensor_ui_dirty, last_sensor_ui_update)
@@ -30,6 +30,16 @@ globals:
   # ============================================================================
   # Startup/Boot State
   # ============================================================================
+
+  # Boot completion flag
+  # Set to true after the first Home Assistant API client connects.
+  # Guards page rotation, watchdog, WireGuard cycling and LED effect selection
+  # so they don't fire during the startup sequence.
+  # Required by: networking.yaml, Halo-v1-Core.yaml, page_rotation.yaml, diagnostics.yaml
+  - id: boot_complete
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
   # Startup light blink cycle counter
   # Tracks how many 1-second intervals have passed during startup LED animation

@@ -50,21 +50,14 @@ globals:
     restore_value: yes
     initial_value: 'true'
 
-  # Boot completion flag (used to prevent watchdog during boot)
-  - id: boot_complete
-    type: bool
-    restore_value: no
-    initial_value: 'false'
+  # NOTE: boot_complete is defined in packages/base/globals.yaml (required by non-optional modules)
+  # NOTE: ink_ha_connected is defined in packages/system/system_management.yaml
+  # NOTE: startup_light_blink is defined in packages/system/networking.yaml
 
 # ============================================================================
 # Binary Sensor Components
 # ============================================================================
 binary_sensor:
-  # Online status - indicates connection to Home Assistant
-  - platform: status
-    name: Online
-    id: ink_ha_connected
-
   # Display backlight state indicator
   - platform: template
     name: "Display Backlight Active"
@@ -277,14 +270,7 @@ switch:
       - lambda: 'id(display_watchdog_enabled) = false;'
       - logger.log: "Display watchdog disabled"
 
-  # Startup light blink effect
-  - platform: template
-    name: "Startup Light Blink"
-    id: startup_light_blink
-    icon: mdi:lightbulb
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
+  # NOTE: startup_light_blink switch is defined in packages/system/networking.yaml
 
 # ============================================================================
 # Button Components

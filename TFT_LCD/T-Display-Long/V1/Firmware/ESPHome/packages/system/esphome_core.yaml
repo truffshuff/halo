@@ -8,7 +8,17 @@
 #   - ESP32-S3 board, PSRAM, CPU frequency
 #   - ESPHome framework configuration
 #   - Memory management (PSRAM, stack sizes)
+#   - Logger (base level INFO; device YAML can override with higher verbosity)
 # ============================================================================
+
+# ============================================================================
+# Logger
+# ============================================================================
+# Must be declared so logger.log: actions in all packages resolve correctly.
+# Device-specific config (e.g., halo-v1-79e384.yaml) can override level/logs.
+# ============================================================================
+logger:
+  level: INFO
 
 # ============================================================================
 # External Components

@@ -65,8 +65,7 @@
 #
 # DEPENDENCIES:
 #   - features/airq/airq_base.yaml           (id: computed_halo_aqi)
-#   - features/diagnostics/diagnostics.yaml  (id: ink_ha_connected)
-#   - system/system_management.yaml          (id: sntp_time)
+#   - system/system_management.yaml          (id: ink_ha_connected, id: sntp_time)
 #
 # Created: 2026-02-22
 # ============================================================================

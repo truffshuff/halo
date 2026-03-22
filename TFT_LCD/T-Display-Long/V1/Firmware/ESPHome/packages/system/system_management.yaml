@@ -107,6 +107,14 @@ globals:
 
 # Template binary sensors for diagnostics
 binary_sensor:
+  # Home Assistant API connection status (event-driven, real-time).
+  # Required by: networking.yaml, Halo-v1-Core.yaml, airq_history.yaml
+  # Defined here (required module) so it is available even when
+  # features/diagnostics/diagnostics.yaml is disabled.
+  - platform: status
+    name: Online
+    id: ink_ha_connected
+
   # Template binary sensor exposing SNTP validity (published from diagnostics interval)
   - platform: template
     name: "SNTP Time Valid"
