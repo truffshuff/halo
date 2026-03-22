@@ -35,11 +35,16 @@
 #   sensor.${printer_device_id}_current_layer
 #   sensor.${printer_device_id}_total_layer_count
 #   sensor.${printer_device_id}_nozzle_temperature
+#   sensor.${printer_device_id}_nozzle_target_temperature
+#   sensor.${printer_device_id}_left_nozzle_temperature
+#   sensor.${printer_device_id}_left_nozzle_target_temperature
 #   sensor.${printer_device_id}_bed_temperature
 #   sensor.${printer_device_id}_chamber_temperature
 #   binary_sensor.${printer_device_id}_print_error
 #   binary_sensor.${printer_device_id}_hms_errors
 #   image.${printer_device_id}_cover_image  (fetched via ${ha_url} using ${ha_token})
+#   sensor.${printer_device_id}_printer_name
+#   sensor.${printer_device_id}_current_stage
 #
 # EXISTING SUBSTITUTIONS USED (no extra secrets needed):
 #   ha_url    — already required for weather; e.g. http://homeassistant.local:8123
@@ -124,6 +129,36 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+
+  # Cached right nozzle target — combined with current for Actual/Target display
+  - id: printer_nozzle_target_value
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+
+  # Left nozzle display text cache
+  - id: printer_left_nozzle_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  # Cached left nozzle target — combined with current for Actual/Target display
+  - id: printer_left_nozzle_target_value
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+
+  # Printer display name (from HA entity, shown at top of page)
+  - id: printer_name_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  # Current printer stage (e.g. "Printing", "Heatbed Preheating", "Idle")
+  - id: printer_stage_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
 
   # ---- Render-dirty flags ----
   - id: printer_status_needs_render
@@ -251,16 +286,18 @@ sensor:
     on_value:
       then:
         - lambda: |-
-            char buf[32];
             int minutes = std::isnan(x) ? 0 : (int)x;
-            if (minutes <= 0) {
-              snprintf(buf, sizeof(buf), "Remaining: --");
-            } else if (minutes < 60) {
+            std::string s;
+            if (minutes > 0 && minutes < 60) {
+              char buf[24];
               snprintf(buf, sizeof(buf), "Remaining: %dm", minutes);
-            } else {
+              s = buf;
+            } else if (minutes >= 60) {
+              char buf[32];
               snprintf(buf, sizeof(buf), "Remaining: %dh %dm", minutes / 60, minutes % 60);
+              s = buf;
             }
-            std::string s(buf);
+            // empty string when idle (minutes == 0) — hides the label cleanly
             if (s != id(printer_remaining_last_text)) {
               id(printer_remaining_last_text) = s;
               id(printer_detail_needs_render) = true;
@@ -273,18 +310,23 @@ sensor:
                   id: printer_remaining_label
                   text: !lambda 'return id(printer_remaining_last_text);'
 
-  # --- Nozzle Temperature ---
+  # --- Right Nozzle Temperature ---
   - platform: homeassistant
     id: printer_nozzle_temp
     entity_id: sensor.${printer_device_id}_nozzle_temperature
-    name: "Printer Nozzle Temp"
+    name: "Printer Active Nozzle Temp"
     internal: true
     on_value:
       then:
         - lambda: |-
             if (std::isnan(x)) return;
-            char buf[24];
-            snprintf(buf, sizeof(buf), "Nozzle: %.0f\xC2\xB0", x);
+            char buf[32];
+            float tgt = id(printer_nozzle_target_value);
+            if (tgt > 0) {
+              snprintf(buf, sizeof(buf), "Active: %.0f/%.0f\xC2\xB0", x, tgt);
+            } else {
+              snprintf(buf, sizeof(buf), "Active: %.0f\xC2\xB0", x);
+            }
             std::string s(buf);
             if (s != id(printer_nozzle_last_text)) {
               id(printer_nozzle_last_text) = s;
@@ -297,6 +339,97 @@ sensor:
               - lvgl.label.update:
                   id: printer_nozzle_label
                   text: !lambda 'return id(printer_nozzle_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Active Nozzle Target Temperature ---
+  - platform: homeassistant
+    id: printer_nozzle_target_temp
+    entity_id: sensor.${printer_device_id}_nozzle_target_temperature
+    name: "Printer Active Nozzle Target"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(printer_nozzle_target_value) = x;
+            float cur = id(printer_nozzle_temp).state;
+            if (std::isnan(cur)) return;
+            char buf[32];
+            if (x > 0) {
+              snprintf(buf, sizeof(buf), "Active: %.0f/%.0f\xC2\xB0", cur, x);
+            } else {
+              snprintf(buf, sizeof(buf), "Active: %.0f\xC2\xB0", cur);
+            }
+            id(printer_nozzle_last_text) = std::string(buf);
+            id(printer_temps_needs_render) = true;
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_nozzle_label
+                  text: !lambda 'return id(printer_nozzle_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Left Nozzle Temperature ---
+  - platform: homeassistant
+    id: printer_left_nozzle_temp
+    entity_id: sensor.${printer_device_id}_left_nozzle_temperature
+    name: "Printer Left Nozzle Temp"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            char buf[32];
+            float tgt = id(printer_left_nozzle_target_value);
+            if (tgt > 0) {
+              snprintf(buf, sizeof(buf), "L: %.0f/%.0f\xC2\xB0", x, tgt);
+            } else {
+              snprintf(buf, sizeof(buf), "L: %.0f\xC2\xB0", x);
+            }
+            std::string s(buf);
+            if (s != id(printer_left_nozzle_last_text)) {
+              id(printer_left_nozzle_last_text) = s;
+              id(printer_temps_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_left_nozzle_label
+                  text: !lambda 'return id(printer_left_nozzle_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Left Nozzle Target Temperature ---
+  - platform: homeassistant
+    id: printer_left_nozzle_target_temp
+    entity_id: sensor.${printer_device_id}_left_nozzle_target_temperature
+    name: "Printer Left Nozzle Target"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(printer_left_nozzle_target_value) = x;
+            float cur = id(printer_left_nozzle_temp).state;
+            if (std::isnan(cur)) return;
+            char buf[32];
+            if (x > 0) {
+              snprintf(buf, sizeof(buf), "L: %.0f/%.0f\xC2\xB0", cur, x);
+            } else {
+              snprintf(buf, sizeof(buf), "L: %.0f\xC2\xB0", cur);
+            }
+            id(printer_left_nozzle_last_text) = std::string(buf);
+            id(printer_temps_needs_render) = true;
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_left_nozzle_label
+                  text: !lambda 'return id(printer_left_nozzle_last_text);'
               - lambda: 'id(printer_temps_needs_render) = false;'
 
   # --- Bed Temperature ---
@@ -549,6 +682,44 @@ text_sensor:
                   text: !lambda 'return id(printer_error_last_text);'
                   text_color: !lambda 'return (x == "on") ? id(my_red) : id(my_black);'
 
+  # --- Printer Name (displayed at top of printer page) ---
+  - platform: homeassistant
+    id: printer_name_sensor
+    entity_id: sensor.${printer_device_id}_printer_name
+    name: "Printer Name"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (x.empty() || x == id(printer_name_last_text)) return;
+            id(printer_name_last_text) = x;
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_name_label
+                  text: !lambda 'return id(printer_name_last_text);'
+
+  # --- Current Stage (e.g. "Printing", "Heatbed Preheating", "Changing Filament") ---
+  - platform: homeassistant
+    id: printer_current_stage
+    entity_id: sensor.${printer_device_id}_current_stage
+    name: "Printer Current Stage"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (x == id(printer_stage_last_text)) return;
+            id(printer_stage_last_text) = x;
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_stage_label
+                  text: !lambda 'return id(printer_stage_last_text);'
+
 # ============================================================================
 # Cover Image (fetched from Home Assistant REST API via online_image)
 # ============================================================================
@@ -567,6 +738,13 @@ online_image:
       - logger.log:
           level: DEBUG
           format: "Printer cover image downloaded successfully"
+      - if:
+          condition:
+            lambda: 'return id(current_page_name) == "printer";'
+          then:
+            - lvgl.image.update:
+                id: printer_cover_image_widget
+                src: printer_cover_image_data
     on_error:
       - logger.log:
           level: WARN
