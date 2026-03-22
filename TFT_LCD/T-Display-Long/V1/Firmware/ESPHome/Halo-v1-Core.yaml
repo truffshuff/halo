@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.03.22.1101
+# Version: 26.03.22.1105
 # Last Updated: March 22, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.03.22.1101"
+  version: "26.03.22.1105"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -405,7 +405,8 @@ interval:
                         - lambda: 'id(wifi_signal_bar_needs_render) = false;'
                   # Update WiFi SSID
                   - lambda: |-
-                      std::string ssid = esphome::wifi::global_wifi_component->wifi_ssid();
+                      std::string ssid;
+                      esphome::wifi::global_wifi_component->wifi_ssid_to(ssid);
                       std::string new_text = std::string("SSID: ") + ssid;
                       if (new_text != id(wifi_ssid_last_text)) {
                       id(wifi_ssid_last_text) = new_text;
