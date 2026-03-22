@@ -269,14 +269,17 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
 
       # -------------------------
-      # 3D Printer Status (~5KB)
+      # 3D Printer Status (~6KB)
       # -------------------------
-      # Provides: Real-time BambuLab printer status page (progress, temps, errors)
-      # Memory: ~5KB
-      # Hardware: None (uses HA API sensor subscriptions)
-      # Requirements: Home Assistant BambuLab integration with entity IDs defined
-      #               in HomeAssistant/dashbaord.yaml
-      # Disable to: Save 5KB if you don't have a 3D printer
+      # Provides: Real-time BambuLab printer status page (progress, temps, layer X/Y, errors, cover image)
+      # Memory: ~6KB code + ~38KB PSRAM for cover image buffer
+      # Hardware: None (uses HA API sensor subscriptions + REST for cover image)
+      # Requirements: Home Assistant BambuLab integration.
+      #   Set printer_device_id substitution to your device's HA entity prefix.
+      #   Uses existing ha_url and ha_token substitutions — no extra secrets needed.
+      # Disable to: Save 6KB if you don't have a 3D printer
+      #
+      # printer_device_id: "h2c_31b8ap5c0301590"  # ← set this in your device file
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_page.yaml
 

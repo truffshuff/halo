@@ -17,8 +17,9 @@
 #   y:  -37  Nozzle temperature
 #   y:  -17  Bed temperature
 #   y:   +3  Chamber temperature
-#   y:  +32  Current layer
+#   y:  +32  Current layer (X/Y format when total layers known)
 #   y:  +75  Touch button → navigate to AirQ page
+#   y: +170  Cover image (140×140 thumbnail fetched from HA image entity)
 #
 # Dependencies:
 #   - features/printer/printer_base.yaml  (all globals & sensor subscriptions)
@@ -284,3 +285,11 @@ lvgl:
                   text_font: montserrat_14
                   text_color: my_gray
                   text_align: CENTER
+
+        # ── Cover image (thumbnail of the model being printed) ─────────────────
+        - image:
+            id: printer_cover_image_widget
+            src: printer_cover_image_data
+            align: CENTER
+            x: 0
+            y: +170
