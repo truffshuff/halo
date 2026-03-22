@@ -3,7 +3,7 @@ substitutions:
   name: halo-v1-79e384  # Override Core's default 'halo' name
   # Home Assistant connection for HTTP API calls
   # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
-  ha_url: !secret ha_url  # Example: "https://homeassistant.local:8123"
+  ha_url: !secret ha_url  # Example: "http://homeassistant.local:8123"
   ha_token: !secret ha_token  # Your long-lived access token
 
   # Weather configuration (if enabled below)
@@ -50,7 +50,7 @@ esphome:
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
 
-  min_version: 2025.11.0
+  min_version: 2026.3.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"
@@ -63,7 +63,6 @@ dashboard_import:
 ota:
   - platform: esphome
     id: ota_default
-    password: !secret ota_password
     on_begin:
       # Pause BLE scanning during OTA to ensure clean API communication
       - switch.turn_off: ble_scanner_switch
@@ -88,6 +87,7 @@ wifi:
   output_power: 8.5dB
   # ESPHome 2026.1.0 enables post-connect roaming by default; disable for stationary devices
   post_connect_roaming: false
+  use_address: 10.140.80.170
 
   on_connect:
     - delay: 5s # Gives time for improv results to be transmitted
@@ -96,34 +96,35 @@ wifi:
   ap:
     ssid: "Halo Hotspot"
 
-logger:
-  level: VERBOSE
-  logs:
-    component: INFO       # Suppress component setup messages
-  #   wifi: INFO            # Suppress WiFi debug messages
-  #   api: DEBUG             # Keep general API at INFO
-  #   api.connection: INFO # But enable API connection debug for BLE proxy
-    nimble_proxy: INFO 
-    nimble_improv: INFO
-    sensor: INFO
-    lvgl: INFO
-    display: INFO
-    time_update: INFO
-    display.qspi_dbi: INFO
-  #   i2c.idf: INFO
-  #   touchscreen: DEBUG
-  #   axs15231: VERBOSE
-    aqi_history: DEBUG    # Offline AQI buffer: sample/flush activity
-    wireguard: INFO
-    bme280.sensor: INFO
-    mics_4514: INFO
-    scd4x: INFO
-  #   esp32.preferences: INFO
+# logger:
+#   level: DEBUG
+#   logs:
+#     component: INFO       # Suppress component setup messages
+#     wifi: INFO            # Suppress WiFi debug messages
+#     api: INFO             # Keep general API at INFO
+#     api.connection: INFO # But enable API connection debug for BLE proxy
+#     nimble_proxy: INFO
+#     nimble_improv: INFO
+#     sensor: INFO
+#     lvgl: INFO
+#     display: INFO
+#     time_update: INFO
+#     display.qspi_dbi: INFO
+#     i2c.idf: INFO
+#     touchscreen: INFO
+#     axs15231: INFO
+#     wireguard: INFO
+#     bme280.sensor: INFO
+#     mics_4514: INFO
+#     scd4x: INFO
+#     weather: INFO
+#     script: INFO
+#     esp32.preferences: INFO
 
 # ============================================================================
 # HALO V1 - MODULAR CONFIGURATION
 # ============================================================================
-# ✅ Modular configuration complete as of 2025-11-15
+# ✅ PHASE 2 COMPLETE! (2025-11-15)
 #
 # All 7 capabilities successfully extracted from Core:
 #   ✅ Clock, AirQ, WiFi Status, WireGuard, Diagnostics, Page Rotation, Weather
@@ -185,13 +186,26 @@ packages:
       # Memory savings are cumulative - disable multiple features to save more!
 
       # -------------------------
-      # BLE WiFi Provisioning (temporarily disabled)
+      # BLE WiFi Provisioning (pick one)
       # -------------------------
-      # NOTE: BLE proxy functionality is temporarily disabled. Using a minimal
-      # stub package prevents missing-ID errors (e.g., references to
-      # `ble_scanner_switch`) while keeping the system functional.
-      # Replace with `ble_improv.yaml` to re-enable full BLE behavior.
-      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_stub.yaml
+      # Three options — uncomment exactly ONE:
+      #
+      # Option 1: ESPHome native BLE stack (Bluedroid-based)
+      #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + esp32_improv.
+      #   ESPHome's Bluedroid management has received memory/stability improvements.
+      #   No custom external components needed.
+      #   Trade-offs: Bluedroid uses more RAM than NimBLE; no connection_slots/cache_services.
+      # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_esphome.yaml
+      #
+      # Option 2: Custom NimBLE stack (original implementation)
+      #   Full feature set: connection_slots, cache_services, authorized_duration, ATT MTU tuning.
+      #   Requires truffshuff/esphome-components external fork.
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
+      #
+      # Option 3: No BLE (stub — saves ~40KB)
+      #   Provides a no-op ble_scanner_switch so the rest of the config compiles.
+      # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_stub.yaml
+
 
       # -------------------------
       # Clock Feature (~5KB)
@@ -279,7 +293,19 @@ packages:
       # Disable to: Save 2KB, but lose auto-rotation (manual navigation still works)
       # IMPORTANT: Must be loaded AFTER all page modules!
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
-
+      
+      # -------------------------
+      # 3D Printer Status (~5KB)
+      # -------------------------
+      # Provides: Real-time BambuLab printer status page (progress, temps, errors)
+      # Memory: ~5KB
+      # Hardware: None (uses HA API sensor subscriptions)
+      # Requirements: Home Assistant BambuLab integration with entity IDs defined
+      #               in HomeAssistant/dashbaord.yaml
+      # Disable to: Save 5KB if you don't have a 3D printer
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_base.yaml
+      - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_page.yaml
+      
       # -------------------------
       # Diagnostics (Optional - ~5-10KB)
       # -------------------------
@@ -297,8 +323,8 @@ packages:
       # - LVGL display initialization
       # - Remaining integration glue
       # - Navigation coordination
-      # - Remaining legacy components (to be removed in future releases)
+      # - Legacy components being phased out
       #
       # Most functionality has been extracted to capability modules above.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
-    refresh: Always
+    refresh: always
