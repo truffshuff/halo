@@ -559,8 +559,7 @@ online_image:
     url: "${ha_url}/api/image_proxy/image.${printer_device_id}_cover_image"
     format: PNG
     type: RGB565
-    resize_width: 140
-    resize_height: 140
+    resize: 140x140
     update_interval: 60s
     request_headers:
       Authorization: "Bearer ${ha_token}"
