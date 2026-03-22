@@ -21,20 +21,31 @@
 #   - page_rotation/page_rotation.yaml (current_page_name global)
 #   - Home Assistant integration with BambuLab addon (entities listed below)
 #
-# ENTITY IDs (from HomeAssistant/dashbaord.yaml):
-#   sensor.h2c_31b8ap5c0301590_print_status
-#   sensor.h2c_31b8ap5c0301590_print_progress
-#   sensor.h2c_31b8ap5c0301590_remaining_time    (minutes, numeric)
-#   sensor.h2c_31b8ap5c0301590_end_time          (timestamp/string)
-#   sensor.h2c_31b8ap5c0301590_task_name
-#   sensor.h2c_31b8ap5c0301590_current_layer
-#   sensor.h2c_31b8ap5c0301590_nozzle_temperature
-#   sensor.h2c_31b8ap5c0301590_bed_temperature
-#   sensor.h2c_31b8ap5c0301590_chamber_temperature
-#   binary_sensor.h2c_31b8ap5c0301590_print_error
-#   binary_sensor.h2c_31b8ap5c0301590_hms_errors
+# SUBSTITUTIONS REQUIRED (set in your device file or Halo-v1.yaml):
+#   printer_device_id:  The BambuLab device serial/prefix used in HA entity IDs.
+#                       Example: "h2c_31b8ap5c0301590"
+#                       All entities are derived as sensor.${printer_device_id}_<suffix>
 #
-# MEMORY USAGE: ~5KB
+# Entity IDs resolved at compile time (HomeAssistant/dashbaord.yaml for reference):
+#   sensor.${printer_device_id}_print_status
+#   sensor.${printer_device_id}_print_progress
+#   sensor.${printer_device_id}_remaining_time    (minutes, numeric)
+#   sensor.${printer_device_id}_end_time          (timestamp/string)
+#   sensor.${printer_device_id}_task_name
+#   sensor.${printer_device_id}_current_layer
+#   sensor.${printer_device_id}_total_layer_count
+#   sensor.${printer_device_id}_nozzle_temperature
+#   sensor.${printer_device_id}_bed_temperature
+#   sensor.${printer_device_id}_chamber_temperature
+#   binary_sensor.${printer_device_id}_print_error
+#   binary_sensor.${printer_device_id}_hms_errors
+#   image.${printer_device_id}_cover_image  (fetched via ${ha_url} using ${ha_token})
+#
+# EXISTING SUBSTITUTIONS USED (no extra secrets needed):
+#   ha_url    — already required for weather; e.g. http://homeassistant.local:8123
+#   ha_token  — long-lived access token, already required for weather
+#
+# MEMORY USAGE: ~6KB (extra ~38KB PSRAM for decoded cover image buffer)
 # ============================================================================
 
 # ============================================================================
@@ -108,6 +119,12 @@ globals:
     restore_value: no
     initial_value: ""
 
+  # Cached total layer count (numeric) — combined with current layer for X/Y display
+  - id: printer_total_layer_value
+    type: int
+    restore_value: no
+    initial_value: '0'
+
   # ---- Render-dirty flags ----
   - id: printer_status_needs_render
     type: bool
@@ -135,7 +152,7 @@ globals:
 switch:
   # Enable/disable printer page in the auto-rotation cycle
   - platform: template
-    name: "Page Rotation: Printer Page"
+    name: "Page Rotation: 3D Printer Page"
     id: page_rotation_printer_switch
     icon: mdi:printer-3d
     restore_mode: RESTORE_DEFAULT_ON
@@ -154,7 +171,7 @@ switch:
 number:
   # Printer page position in the rotation sequence
   - platform: template
-    name: "Page Order: Printer Page"
+    name: "Page Order: 3D Printer Page"
     id: page_order_printer
     icon: mdi:numeric
     restore_value: true
@@ -172,13 +189,32 @@ number:
           args: ['(int)x']
 
 # ============================================================================
+# Button Components
+# ============================================================================
+button:
+  # Navigate directly to the 3D Printer page from Home Assistant
+  - platform: template
+    name: "Go to 3D Printer Page"
+    id: goto_printer_page
+    icon: mdi:printer-3d
+    on_press:
+      - logger.log: "Navigating to 3D Printer page"
+      - lambda: |-
+          id(current_page_name) = "printer";
+          id(last_auto_rotation_time) = millis();
+      - lvgl.page.show:
+          id: printer_page
+          animation: OUT_LEFT
+          time: 300ms
+
+# ============================================================================
 # Home Assistant Sensor Subscriptions (numeric)
 # ============================================================================
 sensor:
   # --- Print Progress (0–100 %) ---
   - platform: homeassistant
     id: printer_progress_sensor
-    entity_id: sensor.h2c_31b8ap5c0301590_print_progress
+    entity_id: sensor.${printer_device_id}_print_progress
     name: "Print Progress"
     internal: true
     on_value:
@@ -209,7 +245,7 @@ sensor:
   # --- Remaining Time (minutes, numeric) ---
   - platform: homeassistant
     id: printer_remaining_sensor
-    entity_id: sensor.h2c_31b8ap5c0301590_remaining_time
+    entity_id: sensor.${printer_device_id}_remaining_time
     name: "Print Remaining Time"
     internal: true
     on_value:
@@ -240,7 +276,7 @@ sensor:
   # --- Nozzle Temperature ---
   - platform: homeassistant
     id: printer_nozzle_temp
-    entity_id: sensor.h2c_31b8ap5c0301590_nozzle_temperature
+    entity_id: sensor.${printer_device_id}_nozzle_temperature
     name: "Printer Nozzle Temp"
     internal: true
     on_value:
@@ -266,7 +302,7 @@ sensor:
   # --- Bed Temperature ---
   - platform: homeassistant
     id: printer_bed_temp
-    entity_id: sensor.h2c_31b8ap5c0301590_bed_temperature
+    entity_id: sensor.${printer_device_id}_bed_temperature
     name: "Printer Bed Temp"
     internal: true
     on_value:
@@ -292,7 +328,7 @@ sensor:
   # --- Chamber Temperature ---
   - platform: homeassistant
     id: printer_chamber_temp
-    entity_id: sensor.h2c_31b8ap5c0301590_chamber_temperature
+    entity_id: sensor.${printer_device_id}_chamber_temperature
     name: "Printer Chamber Temp"
     internal: true
     on_value:
@@ -318,18 +354,54 @@ sensor:
   # --- Current Layer ---
   - platform: homeassistant
     id: printer_layer_sensor
-    entity_id: sensor.h2c_31b8ap5c0301590_current_layer
+    entity_id: sensor.${printer_device_id}_current_layer
     name: "Printer Current Layer"
     internal: true
     on_value:
       then:
         - lambda: |-
             if (std::isnan(x)) return;
-            char buf[20];
-            snprintf(buf, sizeof(buf), "Layer: %d", (int)x);
+            char buf[32];
+            int total = id(printer_total_layer_value);
+            if (total > 0) {
+              snprintf(buf, sizeof(buf), "Layer: %d/%d", (int)x, total);
+            } else {
+              snprintf(buf, sizeof(buf), "Layer: %d", (int)x);
+            }
             std::string s(buf);
             if (s != id(printer_layer_last_text)) {
               id(printer_layer_last_text) = s;
+            }
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_layer_label
+                  text: !lambda 'return id(printer_layer_last_text);'
+
+  # --- Total Layer Count ---
+  - platform: homeassistant
+    id: printer_total_layer_sensor
+    entity_id: sensor.${printer_device_id}_total_layer_count
+    name: "Printer Total Layer Count"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(printer_total_layer_value) = (int)x;
+            // Re-render the layer label now that we have the total
+            float cur = id(printer_layer_sensor).state;
+            if (!std::isnan(cur)) {
+              char buf[32];
+              int total = id(printer_total_layer_value);
+              if (total > 0) {
+                snprintf(buf, sizeof(buf), "Layer: %d/%d", (int)cur, total);
+              } else {
+                snprintf(buf, sizeof(buf), "Layer: %d", (int)cur);
+              }
+              id(printer_layer_last_text) = std::string(buf);
             }
         - if:
             condition:
@@ -346,7 +418,7 @@ text_sensor:
   # --- Print Status ("idle", "printing", "pause", "failed", "finish", ...) ---
   - platform: homeassistant
     id: printer_status_text
-    entity_id: sensor.h2c_31b8ap5c0301590_print_status
+    entity_id: sensor.${printer_device_id}_print_status
     name: "Print Status"
     internal: true
     on_value:
@@ -379,7 +451,7 @@ text_sensor:
   # --- Task / File Name ---
   - platform: homeassistant
     id: printer_task_name
-    entity_id: sensor.h2c_31b8ap5c0301590_task_name
+    entity_id: sensor.${printer_device_id}_task_name
     name: "Print Task Name"
     internal: true
     on_value:
@@ -403,7 +475,7 @@ text_sensor:
   # --- Estimated End Time (datetime string from HA) ---
   - platform: homeassistant
     id: printer_end_time
-    entity_id: sensor.h2c_31b8ap5c0301590_end_time
+    entity_id: sensor.${printer_device_id}_end_time
     name: "Print End Time"
     internal: true
     on_value:
@@ -431,7 +503,7 @@ text_sensor:
   # --- Print Error (binary_sensor exposed as text: "on" / "off") ---
   - platform: homeassistant
     id: printer_error_sensor
-    entity_id: binary_sensor.h2c_31b8ap5c0301590_print_error
+    entity_id: binary_sensor.${printer_device_id}_print_error
     name: "Print Error Flag"
     internal: true
     on_value:
@@ -454,7 +526,7 @@ text_sensor:
   # --- HMS Errors (AMS / filament system errors) ---
   - platform: homeassistant
     id: printer_hms_error_sensor
-    entity_id: binary_sensor.h2c_31b8ap5c0301590_hms_errors
+    entity_id: binary_sensor.${printer_device_id}_hms_errors
     name: "HMS Error Flag"
     internal: true
     on_value:
@@ -476,3 +548,27 @@ text_sensor:
                   id: printer_error_label
                   text: !lambda 'return id(printer_error_last_text);'
                   text_color: !lambda 'return (x == "on") ? id(my_red) : id(my_black);'
+
+# ============================================================================
+# Cover Image (fetched from Home Assistant REST API via online_image)
+# ============================================================================
+# Uses the existing ha_url and ha_token substitutions — no extra secrets needed.
+# ============================================================================
+online_image:
+  - id: printer_cover_image_data
+    url: "${ha_url}/api/image_proxy/image.${printer_device_id}_cover_image"
+    format: PNG
+    type: RGB565
+    resize_width: 140
+    resize_height: 140
+    update_interval: 60s
+    request_headers:
+      Authorization: "Bearer ${ha_token}"
+    on_download_finished:
+      - logger.log:
+          level: DEBUG
+          format: "Printer cover image downloaded successfully"
+    on_error:
+      - logger.log:
+          level: WARN
+          format: "Failed to download printer cover image — verify ha_url and ha_token substitutions"

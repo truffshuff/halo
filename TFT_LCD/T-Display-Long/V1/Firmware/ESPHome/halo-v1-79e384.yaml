@@ -6,6 +6,11 @@ substitutions:
   ha_url: !secret ha_url  # Example: "http://homeassistant.local:8123"
   ha_token: !secret ha_token  # Your long-lived access token
 
+  # 3D Printer — BambuLab device serial prefix used in Home Assistant entity IDs.
+  # Find yours in HA: navigate to any BambuLab entity and copy the part before the first _
+  # Example entity: sensor.h2c_31b8ap5c0301590_print_status → prefix is h2c_31b8ap5c0301590
+  printer_device_id: "h2c_31b8ap5c0301590"
+
   # Weather configuration (if enabled below)
   weather_entity_id: "weather.hhut"
   weather_daily_refresh_interval: "3600"  # 60 minutes for daily forecast
