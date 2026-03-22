@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.03.21.2022
+# Version: 26.03.21.2242
 # Last Updated: March 21, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.03.21.2022"
+  version: "26.03.21.2242"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -639,11 +639,11 @@ api:
           } else if (effect == "Weather Condition" || effect == "Auto Context") {
           // New lambda effects - activate them
           auto call = id(rgb_light).turn_on();
-          call.set_effect(effect);
+          call.set_effect(std::string(effect));
           call.perform();
           } else {
           auto call = id(rgb_light).turn_on();
-          call.set_effect(effect);
+          call.set_effect(std::string(effect));
           call.perform();
           }
       # ========================================================================
