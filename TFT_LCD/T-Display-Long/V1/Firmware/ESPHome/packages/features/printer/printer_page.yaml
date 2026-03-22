@@ -10,18 +10,23 @@
 #   y: -249  Current stage (e.g. "Printing", "Heatbed Preheating")
 #   y: -229  Error banner  (empty when OK, red "! PRINT ERROR !" or "! HMS ERROR !")
 #   y: -205  Task / file name (truncated to ~22 chars)
-#   y: -170  Progress bar  (160 x 12 px, green fill)
+#   y: -175  Progress bar  (160 x 12 px, green fill)
 #   y: -148  Progress %    (large, centred)
 #   y: -112  Remaining time
 #   y:  -87  Estimated end time (HH:MM)
 #   y:  -57  "Temperatures" section header
-#   y:  -38  Right nozzle actual/target (R: 218/220°)
-#   y:  -20  Left nozzle actual/target  (L: 218/220°)
-#   y:   -2  Bed temperature
-#   y:  +16  Chamber temperature
-#   y:  +38  Current layer (X/Y format when total layers known)
+#   y:  -38  Active nozzle actual/target (Active: 218/220°)
+#   y:  -19  Right nozzle actual/target  (R: 218/220°)
+#   y:    0  Left nozzle actual/target   (L: 218/220°)
+#   y:  +19  Bed temperature             (Bed: 45/55°)
+#   y:  +38  Chamber temperature
+#   y:  +57  Current layer (X/Y format when total layers known)
 #   y:  +75  Touch button → navigate to AirQ page
 #   y: +170  Cover image (140×140 thumbnail fetched from HA image entity)
+#   y: +252  "── AMS ──" section header
+#   y: +268  AMS A  (22°  45%  ▶ active  |  DRY 45m  |  idle)
+#   y: +284  AMS B  (same format)
+#   y: +300  AMS HT (same format)
 #
 # Dependencies:
 #   - features/printer/printer_base.yaml  (all globals & sensor subscriptions)
@@ -102,6 +107,13 @@ lvgl:
                   text: !lambda 'return id(printer_nozzle_last_text);'
         - if:
             condition:
+              lambda: 'return !id(printer_right_nozzle_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_right_nozzle_label
+                  text: !lambda 'return id(printer_right_nozzle_last_text);'
+        - if:
+            condition:
               lambda: 'return !id(printer_left_nozzle_last_text).empty();'
             then:
               - lvgl.label.update:
@@ -142,6 +154,27 @@ lvgl:
               - lvgl.label.update:
                   id: printer_stage_label
                   text: !lambda 'return id(printer_stage_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(ams_a_last_text).empty() && id(ams_a_last_text) != "A: --";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_a_label
+                  text: !lambda 'return id(ams_a_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(ams_b_last_text).empty() && id(ams_b_last_text) != "B: --";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_b_label
+                  text: !lambda 'return id(ams_b_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(ams_ht_last_text).empty() && id(ams_ht_last_text) != "HT: --";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_ht_label
+                  text: !lambda 'return id(ams_ht_last_text);'
         # Refresh cover image widget in case the image was already downloaded
         # before this page was navigated to.
         - lvgl.image.update:
@@ -272,13 +305,23 @@ lvgl:
             text_font: montserrat_14
             text_color: my_white
 
+        # ── Right Nozzle (dedicated right nozzle; actual/target) ──────────────
+        - label:
+            id: printer_right_nozzle_label
+            text: "R: --"
+            align: LEFT_MID
+            x: 10
+            y: -19
+            text_font: montserrat_14
+            text_color: my_white
+
         # ── Left Nozzle (actual/target) ────────────────────────────────────────
         - label:
             id: printer_left_nozzle_label
             text: "L: --"
             align: LEFT_MID
             x: 10
-            y: -20
+            y: 0
             text_font: montserrat_14
             text_color: my_white
 
@@ -288,7 +331,7 @@ lvgl:
             text: "Bed: --"
             align: LEFT_MID
             x: 10
-            y: -2
+            y: +19
             text_font: montserrat_14
             text_color: my_white
 
@@ -298,7 +341,7 @@ lvgl:
             text: "Chamber: --"
             align: LEFT_MID
             x: 10
-            y: +16
+            y: +38
             text_font: montserrat_14
             text_color: my_white
 
@@ -308,29 +351,36 @@ lvgl:
             text: "Layer: --"
             align: CENTER
             x: 0
-            y: +38
+            y: +57
             text_font: montserrat_14
             text_color: my_white
             text_align: CENTER
 
-        # ── Navigation touch area → AirQ page ─────────────────────────────────
-        - obj:
+        # ── Navigation button → AirQ page ─────────────────────────────────────
+        - btn:
             align: CENTER
             x: 0
             y: +75
             width: 160
             height: 36
-            bg_opa: TRANSP
-            border_width: 0
+            bg_color: 0x111111
+            bg_opa: COVER
+            border_width: 1
+            border_color: my_gray
+            radius: 8
             on_click:
               then:
                 - lambda: |-
                     id(current_page_name) = "airq";
                     id(last_touch_time) = millis();
                     id(last_auto_rotation_time) = millis();
+                - lvgl.page.show:
+                    id: AirQ_page
+                    animation: OUT_LEFT
+                    time: 300ms
             widgets:
               - label:
-                  text: "< Back to AirQ"
+                  text: "< AirQ"
                   align: CENTER
                   text_font: montserrat_14
                   text_color: my_gray
@@ -343,3 +393,45 @@ lvgl:
             align: CENTER
             x: 0
             y: +170
+
+        # ── AMS / AMS HT status section ─────────────────────────────────────────
+        # Shows temp, humidity, active (▶), and drying status per unit.
+        # Format: "A: 22°  45%  ▶"  /  "A: 22°  45%  DRY 45m"  /  "A: 22°  45%"
+        - label:
+            text: "── AMS ──"
+            align: CENTER
+            x: 0
+            y: +252
+            text_font: montserrat_10
+            text_color: my_teal
+            text_align: CENTER
+
+        - label:
+            id: printer_ams_a_label
+            text: "A: --"
+            align: CENTER
+            x: 0
+            y: +268
+            text_font: montserrat_10
+            text_color: my_white
+            text_align: CENTER
+
+        - label:
+            id: printer_ams_b_label
+            text: "B: --"
+            align: CENTER
+            x: 0
+            y: +284
+            text_font: montserrat_10
+            text_color: my_white
+            text_align: CENTER
+
+        - label:
+            id: printer_ams_ht_label
+            text: "HT: --"
+            align: CENTER
+            x: 0
+            y: +300
+            text_font: montserrat_10
+            text_color: my_white
+            text_align: CENTER
