@@ -166,7 +166,7 @@ switch:
 # Rainbow effect for 30 seconds on startup/WiFi disconnect
 # ============================================================================
 
-# Note: startup_light_blink switch is in features/diagnostics/diagnostics.yaml
+# Note: startup_light_blink switch is in packages/system/networking.yaml
 # Note: Startup blink animation intervals are in system/networking.yaml (HA connection check)
 # Note: RGB light component is in features/weather/weather_led_effects.yaml
 # Note: cycleCounter global is in base/globals.yaml (load order dependency)

@@ -81,11 +81,27 @@ web_server:
 # feature package (features/wifi_status/).
 
 # ============================================================================
+# Startup Light Blink Control Switch
+# ============================================================================
+# Config switch to enable/disable the startup rainbow LED animation.
+# Defined here (required module) so networking.yaml intervals can reference it
+# even when features/diagnostics/diagnostics.yaml is disabled.
+# ============================================================================
+switch:
+  - platform: template
+    name: "Startup Light Blink"
+    id: startup_light_blink
+    icon: mdi:lightbulb
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    entity_category: "config"
+
+# ============================================================================
 # Startup Light Blink Animation
 # ============================================================================
 # Rainbow effect runs for 30 seconds when not connected to Home Assistant.
 # Uses cycleCounter global (packages/base/globals.yaml) and the
-# startup_light_blink switch (features/diagnostics/diagnostics.yaml).
+# startup_light_blink switch defined above in this file.
 # Controlled by WiFi connection state and HA API connection state.
 # ============================================================================
 interval:
