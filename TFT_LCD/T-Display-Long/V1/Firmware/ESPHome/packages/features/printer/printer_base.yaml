@@ -9,9 +9,11 @@
 #   - Print progress percentage + animated progress bar
 #   - Remaining time (minutes → formatted Xh Ym)
 #   - Estimated end time
-#   - Nozzle, bed, and chamber temperatures
+#   - Nozzle, bed, and chamber temperatures (active, R, L, bed, chamber)
 #   - Current layer number
 #   - Print error & HMS error alert banner
+#   - Printer name and current stage label
+#   - AMS A, AMS B, AMS HT: temperature, humidity, active status, drying status
 #   - Page rotation enable/disable
 #
 # DEPENDENCIES:
@@ -34,23 +36,41 @@
 #   sensor.${printer_device_id}_task_name
 #   sensor.${printer_device_id}_current_layer
 #   sensor.${printer_device_id}_total_layer_count
-#   sensor.${printer_device_id}_nozzle_temperature
-#   sensor.${printer_device_id}_nozzle_target_temperature
+#   sensor.${printer_device_id}_nozzle_temperature        (active nozzle)
+#   sensor.${printer_device_id}_nozzle_target_temperature   (active nozzle target)
+#   sensor.${printer_device_id}_right_nozzle_temperature
+#   sensor.${printer_device_id}_right_nozzle_target_temperature
 #   sensor.${printer_device_id}_left_nozzle_temperature
 #   sensor.${printer_device_id}_left_nozzle_target_temperature
 #   sensor.${printer_device_id}_bed_temperature
+#   sensor.${printer_device_id}_bed_target_temperature
 #   sensor.${printer_device_id}_chamber_temperature
 #   binary_sensor.${printer_device_id}_print_error
 #   binary_sensor.${printer_device_id}_hms_errors
 #   image.${printer_device_id}_cover_image  (fetched via ${ha_url} using ${ha_token})
 #   sensor.${printer_device_id}_printer_name
 #   sensor.${printer_device_id}_current_stage
+#   sensor.${printer_device_id}_ams_a_temperature
+#   sensor.${printer_device_id}_ams_a_humidity
+#   sensor.${printer_device_id}_ams_a_remaining_drying_time
+#   binary_sensor.${printer_device_id}_ams_a_active
+#   binary_sensor.${printer_device_id}_ams_a_drying
+#   sensor.${printer_device_id}_ams_b_temperature
+#   sensor.${printer_device_id}_ams_b_humidity
+#   sensor.${printer_device_id}_ams_b_remaining_drying_time
+#   binary_sensor.${printer_device_id}_ams_b_active
+#   binary_sensor.${printer_device_id}_ams_b_drying
+#   sensor.${printer_device_id}_ams_ht_temperature
+#   sensor.${printer_device_id}_ams_ht_humidity
+#   sensor.${printer_device_id}_ams_ht_remaining_drying_time
+#   binary_sensor.${printer_device_id}_ams_ht_active
+#   binary_sensor.${printer_device_id}_ams_ht_drying
 #
 # EXISTING SUBSTITUTIONS USED (no extra secrets needed):
 #   ha_url    — already required for weather; e.g. http://homeassistant.local:8123
 #   ha_token  — long-lived access token, already required for weather
 #
-# MEMORY USAGE: ~6KB (extra ~38KB PSRAM for decoded cover image buffer)
+# MEMORY USAGE: ~7KB (extra ~38KB PSRAM for decoded cover image buffer)
 # ============================================================================
 
 # ============================================================================
@@ -148,6 +168,24 @@ globals:
     restore_value: no
     initial_value: '0.0'
 
+  # Right nozzle display text cache
+  - id: printer_right_nozzle_last_text
+    type: std::string
+    restore_value: no
+    initial_value: ""
+
+  # Cached right nozzle target — combined with current for R: Actual/Target display
+  - id: printer_right_nozzle_target_value
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+
+  # Cached bed target — combined with current bed temp for Bed: Actual/Target display
+  - id: printer_bed_target_value
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+
   # Printer display name (from HA entity, shown at top of page)
   - id: printer_name_last_text
     type: std::string
@@ -159,6 +197,84 @@ globals:
     type: std::string
     restore_value: no
     initial_value: ""
+
+  # ---- AMS / AMS HT intermediate value caches ----
+  # Each unit stores temp, humidity, remaining drying time, active flag, and drying flag.
+  # These are combined into a single display string per unit whenever any value fires.
+  - id: ams_a_temp_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_a_humidity_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_a_drying_time_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_a_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ams_a_is_drying
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ams_a_last_text
+    type: std::string
+    restore_value: no
+    initial_value: '"A: --"'
+
+  - id: ams_b_temp_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_b_humidity_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_b_drying_time_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_b_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ams_b_is_drying
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ams_b_last_text
+    type: std::string
+    restore_value: no
+    initial_value: '"B: --"'
+
+  - id: ams_ht_temp_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_ht_humidity_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_ht_drying_time_val
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: ams_ht_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ams_ht_is_drying
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: ams_ht_last_text
+    type: std::string
+    restore_value: no
+    initial_value: '"HT: --"'
 
   # ---- Render-dirty flags ----
   - id: printer_status_needs_render
@@ -432,6 +548,67 @@ sensor:
                   text: !lambda 'return id(printer_left_nozzle_last_text);'
               - lambda: 'id(printer_temps_needs_render) = false;'
 
+  # --- Right Nozzle Temperature ---
+  - platform: homeassistant
+    id: printer_right_nozzle_temp
+    entity_id: sensor.${printer_device_id}_right_nozzle_temperature
+    name: "Printer Right Nozzle Temp"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            char buf[32];
+            float tgt = id(printer_right_nozzle_target_value);
+            if (tgt > 0) {
+              snprintf(buf, sizeof(buf), "R: %.0f/%.0f\xC2\xB0", x, tgt);
+            } else {
+              snprintf(buf, sizeof(buf), "R: %.0f\xC2\xB0", x);
+            }
+            std::string s(buf);
+            if (s != id(printer_right_nozzle_last_text)) {
+              id(printer_right_nozzle_last_text) = s;
+              id(printer_temps_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_right_nozzle_label
+                  text: !lambda 'return id(printer_right_nozzle_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Right Nozzle Target Temperature ---
+  - platform: homeassistant
+    id: printer_right_nozzle_target_temp
+    entity_id: sensor.${printer_device_id}_right_nozzle_target_temperature
+    name: "Printer Right Nozzle Target"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(printer_right_nozzle_target_value) = x;
+            float cur = id(printer_right_nozzle_temp).state;
+            if (std::isnan(cur)) return;
+            char buf[32];
+            if (x > 0) {
+              snprintf(buf, sizeof(buf), "R: %.0f/%.0f\xC2\xB0", cur, x);
+            } else {
+              snprintf(buf, sizeof(buf), "R: %.0f\xC2\xB0", cur);
+            }
+            id(printer_right_nozzle_last_text) = std::string(buf);
+            id(printer_temps_needs_render) = true;
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_right_nozzle_label
+                  text: !lambda 'return id(printer_right_nozzle_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
   # --- Bed Temperature ---
   - platform: homeassistant
     id: printer_bed_temp
@@ -442,13 +619,48 @@ sensor:
       then:
         - lambda: |-
             if (std::isnan(x)) return;
-            char buf[24];
-            snprintf(buf, sizeof(buf), "Bed: %.0f\xC2\xB0", x);
+            char buf[32];
+            float tgt = id(printer_bed_target_value);
+            if (tgt > 0) {
+              snprintf(buf, sizeof(buf), "Bed: %.0f/%.0f\xC2\xB0", x, tgt);
+            } else {
+              snprintf(buf, sizeof(buf), "Bed: %.0f\xC2\xB0", x);
+            }
             std::string s(buf);
             if (s != id(printer_bed_last_text)) {
               id(printer_bed_last_text) = s;
               id(printer_temps_needs_render) = true;
             }
+        - if:
+            condition:
+              lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_bed_label
+                  text: !lambda 'return id(printer_bed_last_text);'
+              - lambda: 'id(printer_temps_needs_render) = false;'
+
+  # --- Bed Target Temperature ---
+  - platform: homeassistant
+    id: printer_bed_target_temp
+    entity_id: sensor.${printer_device_id}_bed_target_temperature
+    name: "Printer Bed Target"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(printer_bed_target_value) = x;
+            float cur = id(printer_bed_temp).state;
+            if (std::isnan(cur)) return;
+            char buf[32];
+            if (x > 0) {
+              snprintf(buf, sizeof(buf), "Bed: %.0f/%.0f\xC2\xB0", cur, x);
+            } else {
+              snprintf(buf, sizeof(buf), "Bed: %.0f\xC2\xB0", cur);
+            }
+            id(printer_bed_last_text) = std::string(buf);
+            id(printer_temps_needs_render) = true;
         - if:
             condition:
               lambda: 'return id(printer_temps_needs_render) && id(current_page_name) == "printer";'
@@ -543,6 +755,271 @@ sensor:
               - lvgl.label.update:
                   id: printer_layer_label
                   text: !lambda 'return id(printer_layer_last_text);'
+
+  # ==========================================================================
+  # AMS / AMS HT Environment Sensors (temperature, humidity, drying time)
+  # ==========================================================================
+  # Each sensor rebuilds a single display string for its unit and updates
+  # the corresponding LVGL label.  Format examples:
+  #   Active:   "A: 22°  45%  ▶"
+  #   Drying:   "A: 22°  45%  DRY 45m"
+  #   Idle:     "A: 22°  45%"
+  # ==========================================================================
+
+  # --- AMS A ---
+  - platform: homeassistant
+    id: ams_a_temp_sensor
+    entity_id: sensor.${printer_device_id}_ams_a_temperature
+    name: "AMS A Temperature"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(ams_a_temp_val) = x;
+            char buf[48];
+            float h = id(ams_a_humidity_val);
+            float dt = id(ams_a_drying_time_val);
+            bool drying = id(ams_a_is_drying);
+            bool active = id(ams_a_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY %dm", x, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY", x, h);
+            else if (active)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", x, h);
+            else                  snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%", x, h);
+            id(ams_a_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_a_label
+                  text: !lambda 'return id(ams_a_last_text);'
+
+  - platform: homeassistant
+    id: ams_a_humidity_sensor
+    entity_id: sensor.${printer_device_id}_ams_a_humidity
+    name: "AMS A Humidity"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(ams_a_humidity_val) = x;
+            char buf[48];
+            float t = id(ams_a_temp_val);
+            float dt = id(ams_a_drying_time_val);
+            bool drying = id(ams_a_is_drying);
+            bool active = id(ams_a_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, x, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY", t, x);
+            else if (active)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, x);
+            else                  snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%", t, x);
+            id(ams_a_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_a_label
+                  text: !lambda 'return id(ams_a_last_text);'
+
+  - platform: homeassistant
+    id: ams_a_drying_time_sensor
+    entity_id: sensor.${printer_device_id}_ams_a_remaining_drying_time
+    name: "AMS A Remaining Drying Time"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_a_drying_time_val) = (std::isnan(x) || x < 0) ? 0.0f : x;
+            float dt = id(ams_a_drying_time_val);
+            char buf[48];
+            float t = id(ams_a_temp_val);
+            float h = id(ams_a_humidity_val);
+            bool drying = id(ams_a_is_drying);
+            bool active = id(ams_a_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_a_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_a_label
+                  text: !lambda 'return id(ams_a_last_text);'
+
+  # --- AMS B ---
+  - platform: homeassistant
+    id: ams_b_temp_sensor
+    entity_id: sensor.${printer_device_id}_ams_b_temperature
+    name: "AMS B Temperature"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(ams_b_temp_val) = x;
+            char buf[48];
+            float h = id(ams_b_humidity_val);
+            float dt = id(ams_b_drying_time_val);
+            bool drying = id(ams_b_is_drying);
+            bool active = id(ams_b_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY %dm", x, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY", x, h);
+            else if (active)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", x, h);
+            else                  snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%", x, h);
+            id(ams_b_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_b_label
+                  text: !lambda 'return id(ams_b_last_text);'
+
+  - platform: homeassistant
+    id: ams_b_humidity_sensor
+    entity_id: sensor.${printer_device_id}_ams_b_humidity
+    name: "AMS B Humidity"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(ams_b_humidity_val) = x;
+            char buf[48];
+            float t = id(ams_b_temp_val);
+            float dt = id(ams_b_drying_time_val);
+            bool drying = id(ams_b_is_drying);
+            bool active = id(ams_b_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, x, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY", t, x);
+            else if (active)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, x);
+            else                  snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%", t, x);
+            id(ams_b_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_b_label
+                  text: !lambda 'return id(ams_b_last_text);'
+
+  - platform: homeassistant
+    id: ams_b_drying_time_sensor
+    entity_id: sensor.${printer_device_id}_ams_b_remaining_drying_time
+    name: "AMS B Remaining Drying Time"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_b_drying_time_val) = (std::isnan(x) || x < 0) ? 0.0f : x;
+            float dt = id(ams_b_drying_time_val);
+            char buf[48];
+            float t = id(ams_b_temp_val);
+            float h = id(ams_b_humidity_val);
+            bool drying = id(ams_b_is_drying);
+            bool active = id(ams_b_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_b_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_b_label
+                  text: !lambda 'return id(ams_b_last_text);'
+
+  # --- AMS HT ---
+  - platform: homeassistant
+    id: ams_ht_temp_sensor
+    entity_id: sensor.${printer_device_id}_ams_ht_temperature
+    name: "AMS HT Temperature"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(ams_ht_temp_val) = x;
+            char buf[48];
+            float h = id(ams_ht_humidity_val);
+            float dt = id(ams_ht_drying_time_val);
+            bool drying = id(ams_ht_is_drying);
+            bool active = id(ams_ht_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY %dm", x, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY", x, h);
+            else if (active)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", x, h);
+            else                  snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%", x, h);
+            id(ams_ht_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_ht_label
+                  text: !lambda 'return id(ams_ht_last_text);'
+
+  - platform: homeassistant
+    id: ams_ht_humidity_sensor
+    entity_id: sensor.${printer_device_id}_ams_ht_humidity
+    name: "AMS HT Humidity"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            if (std::isnan(x)) return;
+            id(ams_ht_humidity_val) = x;
+            char buf[48];
+            float t = id(ams_ht_temp_val);
+            float dt = id(ams_ht_drying_time_val);
+            bool drying = id(ams_ht_is_drying);
+            bool active = id(ams_ht_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, x, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY", t, x);
+            else if (active)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, x);
+            else                  snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%", t, x);
+            id(ams_ht_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_ht_label
+                  text: !lambda 'return id(ams_ht_last_text);'
+
+  - platform: homeassistant
+    id: ams_ht_drying_time_sensor
+    entity_id: sensor.${printer_device_id}_ams_ht_remaining_drying_time
+    name: "AMS HT Remaining Drying Time"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_ht_drying_time_val) = (std::isnan(x) || x < 0) ? 0.0f : x;
+            float dt = id(ams_ht_drying_time_val);
+            char buf[48];
+            float t = id(ams_ht_temp_val);
+            float h = id(ams_ht_humidity_val);
+            bool drying = id(ams_ht_is_drying);
+            bool active = id(ams_ht_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_ht_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_ht_label
+                  text: !lambda 'return id(ams_ht_last_text);'
 
 # ============================================================================
 # Home Assistant Text Sensor Subscriptions
@@ -719,6 +1196,184 @@ text_sensor:
               - lvgl.label.update:
                   id: printer_stage_label
                   text: !lambda 'return id(printer_stage_last_text);'
+
+  # ==========================================================================
+  # AMS / AMS HT Active & Drying binary sensors
+  # ==========================================================================
+  # binary_sensor entities come through the HA text_sensor platform as "on"/"off".
+  # Each handler updates the bool cache and rebuilds the unit's display string.
+  # ==========================================================================
+
+  # --- AMS A ---
+  - platform: homeassistant
+    id: ams_a_active_sensor
+    entity_id: binary_sensor.${printer_device_id}_ams_a_active
+    name: "AMS A Active"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_a_active) = (x == "on");
+            char buf[48];
+            float t = id(ams_a_temp_val);
+            float h = id(ams_a_humidity_val);
+            float dt = id(ams_a_drying_time_val);
+            bool drying = id(ams_a_is_drying);
+            bool active = (x == "on");
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_a_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_a_label
+                  text: !lambda 'return id(ams_a_last_text);'
+
+  - platform: homeassistant
+    id: ams_a_drying_sensor
+    entity_id: binary_sensor.${printer_device_id}_ams_a_drying
+    name: "AMS A Drying"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_a_is_drying) = (x == "on");
+            char buf[48];
+            float t = id(ams_a_temp_val);
+            float h = id(ams_a_humidity_val);
+            float dt = id(ams_a_drying_time_val);
+            bool drying = (x == "on");
+            bool active = id(ams_a_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "A: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_a_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_a_label
+                  text: !lambda 'return id(ams_a_last_text);'
+
+  # --- AMS B ---
+  - platform: homeassistant
+    id: ams_b_active_sensor
+    entity_id: binary_sensor.${printer_device_id}_ams_b_active
+    name: "AMS B Active"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_b_active) = (x == "on");
+            char buf[48];
+            float t = id(ams_b_temp_val);
+            float h = id(ams_b_humidity_val);
+            float dt = id(ams_b_drying_time_val);
+            bool drying = id(ams_b_is_drying);
+            bool active = (x == "on");
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_b_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_b_label
+                  text: !lambda 'return id(ams_b_last_text);'
+
+  - platform: homeassistant
+    id: ams_b_drying_sensor
+    entity_id: binary_sensor.${printer_device_id}_ams_b_drying
+    name: "AMS B Drying"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_b_is_drying) = (x == "on");
+            char buf[48];
+            float t = id(ams_b_temp_val);
+            float h = id(ams_b_humidity_val);
+            float dt = id(ams_b_drying_time_val);
+            bool drying = (x == "on");
+            bool active = id(ams_b_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "B: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_b_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_b_label
+                  text: !lambda 'return id(ams_b_last_text);'
+
+  # --- AMS HT ---
+  - platform: homeassistant
+    id: ams_ht_active_sensor
+    entity_id: binary_sensor.${printer_device_id}_ams_ht_active
+    name: "AMS HT Active"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_ht_active) = (x == "on");
+            char buf[48];
+            float t = id(ams_ht_temp_val);
+            float h = id(ams_ht_humidity_val);
+            float dt = id(ams_ht_drying_time_val);
+            bool drying = id(ams_ht_is_drying);
+            bool active = (x == "on");
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_ht_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_ht_label
+                  text: !lambda 'return id(ams_ht_last_text);'
+
+  - platform: homeassistant
+    id: ams_ht_drying_sensor
+    entity_id: binary_sensor.${printer_device_id}_ams_ht_drying
+    name: "AMS HT Drying"
+    internal: true
+    on_value:
+      then:
+        - lambda: |-
+            id(ams_ht_is_drying) = (x == "on");
+            char buf[48];
+            float t = id(ams_ht_temp_val);
+            float h = id(ams_ht_humidity_val);
+            float dt = id(ams_ht_drying_time_val);
+            bool drying = (x == "on");
+            bool active = id(ams_ht_active);
+            if (drying && dt > 0) snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY %dm", t, h, (int)dt);
+            else if (drying)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  DRY", t, h);
+            else if (active)      snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%  \xE2\x96\xB6", t, h);
+            else                  snprintf(buf, sizeof(buf), "HT: %.0f\xC2\xB0  %.0f%%", t, h);
+            id(ams_ht_last_text) = std::string(buf);
+        - if:
+            condition:
+              lambda: 'return id(current_page_name) == "printer";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_ht_label
+                  text: !lambda 'return id(ams_ht_last_text);'
 
 # ============================================================================
 # Cover Image (fetched from Home Assistant REST API via online_image)
