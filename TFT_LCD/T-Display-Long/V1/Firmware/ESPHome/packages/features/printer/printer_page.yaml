@@ -176,8 +176,8 @@ lvgl:
                   id: printer_ams_ht_label
                   text: !lambda 'return id(ams_ht_last_text);'
         # Refresh cover image widget if a valid image has already been downloaded.
-        # Guard with printer_image_ready to avoid passing a null data pointer
-        # to LVGL before the first download completes.
+        # Guard with printer_image_ready to skip calling lvgl.image.update before
+        # the first download completes (avoids a no-op render with empty pixel data).
         - if:
             condition:
               lambda: 'return id(printer_image_ready);'
@@ -385,13 +385,9 @@ lvgl:
                   time: 300ms
 
         # ── Cover image (thumbnail of the model being printed) ─────────────────
-        # NOTE: src is intentionally omitted here. Setting src: printer_cover_image_data
-        # during LVGL init can crash NimBLE-enabled devices if the online_image buffer
-        # allocation failed (null data pointer). The image is set only after the first
-        # successful download via on_download_finished, and refreshed on page load via
-        # on_load when printer_image_ready is true.
         - image:
             id: printer_cover_image_widget
+            src: printer_cover_image_data
             align: CENTER
             x: 0
             y: +170

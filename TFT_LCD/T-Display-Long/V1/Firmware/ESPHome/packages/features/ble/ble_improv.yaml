@@ -52,9 +52,13 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@8ea38d6a3cae9f65822d6e1c78a160018dc230ed
+  - source: github://truffshuff/esphome-components@91876b22879b478864303357c4b8f77762fc2418
     components: [nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv]
     refresh: always
+    # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
+    # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
+    # - nimble_port_freertos_init() guarded for IDF < 5.5 to avoid duplicate task
+    # - WiFi global null-checked in load_saved_credentials_() to prevent crash on boot
 
 # ============================================================================
 # NimBLE sdkconfig Options
@@ -87,7 +91,7 @@ esp32:
       CONFIG_BT_NIMBLE_ROLE_CENTRAL: "y"
       CONFIG_BT_NIMBLE_ROLE_PERIPHERAL: "y"
       CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM
-      CONFIG_BT_NIMBLE_TASK_STACK_SIZE: "4096"        # Increased from default
+      CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192"  # Correct key (was TASK_STACK_SIZE); 8KB for safety
       CONFIG_BT_RELEASE_IRAM_ON_SLEEP: "n"            # Keep BT memory accessible
 
       # Increase ATT MTU (browser commonly negotiates 185/247)
