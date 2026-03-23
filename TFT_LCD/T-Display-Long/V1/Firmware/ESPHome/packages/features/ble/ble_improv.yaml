@@ -52,13 +52,15 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@91876b22879b478864303357c4b8f77762fc2418
+  - source: github://truffshuff/esphome-components@96fb7214e4ed0e57c11e1de673b3bad09efbe3f3
     components: [nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
     # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
     # - nimble_port_freertos_init() guarded for IDF < 5.5 to avoid duplicate task
     # - WiFi global null-checked in load_saved_credentials_() to prevent crash on boot
+    # - adv_buffer_ allocation deferred to add_advertisement_() (lazy init)
+    #   to avoid crashing during setup() before API globals are ready
 
 # ============================================================================
 # NimBLE sdkconfig Options
