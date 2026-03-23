@@ -226,16 +226,18 @@ lvgl:
             text_color: my_red
             text_align: CENTER
 
-        # ── Current task / file name ───────────────────────────────────────────
+        # ── Current task / file name (scrolls if text overflows) ─────────────
         - label:
             id: printer_task_label
             text: "--"
             align: CENTER
             x: 0
             y: -205
+            width: 170
             text_font: montserrat_14
             text_color: my_white
-            text_align: CENTER
+            text_align: LEFT
+            long_mode: SCROLL_CIRCULAR
 
         # ── Progress bar (0–100, green fill on dark grey track) ───────────────
         - bar:
@@ -389,7 +391,7 @@ lvgl:
         # Shows temp, humidity, active (▶), and drying status per unit.
         # Format: "A: 22°  45%  ▶"  /  "A: 22°  45%  DRY 45m"  /  "A: 22°  45%"
         - label:
-            text: "── AMS ──"
+            text: "-- AMS --"
             align: CENTER
             x: 0
             y: +252
