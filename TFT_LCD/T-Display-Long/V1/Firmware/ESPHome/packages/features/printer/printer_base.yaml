@@ -276,6 +276,16 @@ globals:
     restore_value: no
     initial_value: '"HT: --"'
 
+  # Cover image download state
+  # Set to true only after the first successful download completes.
+  # Guards lvgl.image.update calls so they never pass a null data pointer
+  # to LVGL (which would crash on NimBLE-enabled devices where PSRAM
+  # allocation for the online_image buffer is more constrained).
+  - id: printer_image_ready
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   # ---- Render-dirty flags ----
   - id: printer_status_needs_render
     type: bool
@@ -1398,6 +1408,7 @@ online_image:
       - logger.log:
           level: DEBUG
           format: "Printer cover image downloaded successfully"
+      - lambda: 'id(printer_image_ready) = true;'
       - if:
           condition:
             lambda: 'return id(current_page_name) == "printer";'
