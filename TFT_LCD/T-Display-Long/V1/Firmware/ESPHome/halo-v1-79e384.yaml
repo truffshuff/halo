@@ -205,6 +205,8 @@ packages:
       # Option 2: Custom NimBLE stack (original implementation)
       #   Full feature set: connection_slots, cache_services, authorized_duration, ATT MTU tuning.
       #   Requires truffshuff/esphome-components external fork.
+      #   Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0) as of commit 91876b2:
+      #   callbacks now set before nimble_port_init; host task guarded for IDF < 5.5.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
       #
       # Option 3: No BLE (stub — saves ~40KB)
