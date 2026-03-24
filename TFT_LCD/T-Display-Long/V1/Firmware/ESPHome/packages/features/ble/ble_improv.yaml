@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@d388b6e886b7e7353708ce7cc8b0e451cfa97659
+  - source: github://truffshuff/esphome-components@378eeadca4ac781265ab3f529377c0d8867acf28
     components: [nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):

@@ -32,7 +32,7 @@ external_components:
   #   ble_improv.yaml  → custom NimBLE stack (truffshuff fork)
   #   ble_esphome.yaml → ESPHome built-in BLE stack (no external components)
   #   ble_stub.yaml    → no BLE
-  - source: github://truffshuff/esphome-components@d388b6e886b7e7353708ce7cc8b0e451cfa97659 # Fix bluetooth_set_connection_params template pattern
+  - source: github://truffshuff/esphome-components@378eeadca4ac781265ab3f529377c0d8867acf28 # Fix bluetooth_set_connection_params template pattern
     components: [axs15231, sy6970, weather_helpers]
     refresh: always
 
