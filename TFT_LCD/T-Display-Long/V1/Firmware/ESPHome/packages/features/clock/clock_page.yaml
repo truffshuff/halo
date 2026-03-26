@@ -40,6 +40,8 @@ lvgl:
             id(current_page_name) = "vertical_clock";
             id(time_update_last_text).clear();
             id(colon_blink_state) = true;  // Ensure colon is visible when page loads
+                # Defer first label writes slightly so LVGL page/widget init fully settles.
+                - delay: 100ms
         - script.execute: time_update
         - script.execute: update_colon_widget
       widgets:
