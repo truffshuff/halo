@@ -244,7 +244,7 @@ light:
               // Set all LEDs to the determined color
               it.all() = color;
 
-  - platform: monochromatic
+  - platform: binary
     output: backlight
     name: "Display Backlight"
     id: display_backlight
