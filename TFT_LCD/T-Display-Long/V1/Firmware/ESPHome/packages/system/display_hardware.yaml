@@ -54,6 +54,7 @@ output:
   - platform: ledc
     pin: 1
     id: backlight
+    channel: 7  # Avoid auto-assigned channel 0; boot log shows crash on LEDC channel 0 duty update
     frequency: 100Hz  # Datasheet suggests low-frequency PWM. Should prevent stability issues.
 
 # Note: The backlight light component is defined in weather/weather-led-effects.yaml
