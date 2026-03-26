@@ -3,9 +3,11 @@
 # ============================================================================
 # Core ESP32 hardware and ESPHome configuration
 # Dependencies: None
+# Temporary diagnostic setting: VERBOSE exposes `Setup <component>` traces from
+# ESPHome's Component::call() so boot-time dispatch crashes can be localized.
 #
 # This module configures:
-#   - ESP32-S3 board, PSRAM, CPU frequency
+  level: VERBOSE
 #   - ESPHome framework configuration
 #   - Memory management (PSRAM, stack sizes)
 #   - Logger (base level INFO; device YAML can override with higher verbosity)
