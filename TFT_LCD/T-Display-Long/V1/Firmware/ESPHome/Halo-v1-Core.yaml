@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.03.25.2153
-# Last Updated: March 25, 2026
+# Version: 26.03.26.1735
+# Last Updated: March 26, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.03.25.2153"
+  version: "26.03.26.1735"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -866,8 +866,7 @@ esphome:
     - priority: 800
       then:
         - delay: 50ms
-        - lvgl.page.show: vertical_clock_page
-        - logger.log: "Set initial page to Vertical Clock"
+        - logger.log: "Boot Stage 1: deferred initial page show"
 
     # -------------------------------------------------------------------------
     # Boot Stage 2: WireGuard Delayed Start (Priority 50)
@@ -883,7 +882,7 @@ esphome:
     - priority: -100
       then:
         - logger.log: "Boot sequence starting (priority -100)"
-        - delay: 1s  # Brief delay for LVGL page system to be ready
+        - delay: 2s  # Extra delay to avoid early LVGL page-switch race at boot
 
         # Map user's text selection to page index number
         - lambda: |-

@@ -82,15 +82,19 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return id(colon_blink_state);'
+            lambda: 'return id(current_page_name) == "vertical_clock";'
           then:
-            - lvgl.label.update:
-                id: vclock_colon
-                text: ":"
-          else:
-            - lvgl.label.update:
-                id: vclock_colon
-                text: " "
+            - if:
+                condition:
+                  lambda: 'return id(colon_blink_state);'
+                then:
+                  - lvgl.label.update:
+                      id: vclock_colon
+                      text: ":"
+                else:
+                  - lvgl.label.update:
+                      id: vclock_colon
+                      text: " "
 
   # Main time update script
   # Updates time display on ALL pages that show time (vertical_clock, airq)
@@ -172,6 +176,10 @@ script:
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
                   static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+                   if (now.month < 1 || now.month > 12 || now.day_of_month < 1 || now.day_of_month > 31) {
+                     ESP_LOGW("time_update", "Skipping vertical clock date render with invalid calendar fields: month=%d day=%d", now.month, now.day_of_month);
+                     return std::string("--");
+                   }
                   char buf[20];
                   snprintf(buf, sizeof(buf), "%s %d", months[now.month - 1], now.day_of_month);
                   return std::string(buf);
@@ -181,6 +189,10 @@ script:
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
                   static const char* days[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+                   if (now.day_of_week < 1 || now.day_of_week > 7) {
+                     ESP_LOGW("time_update", "Skipping vertical clock day render with invalid day_of_week=%d", now.day_of_week);
+                     return std::string("--");
+                   }
                   return std::string(days[now.day_of_week - 1]);
       - script.execute: update_colon_widget
       - lambda: |-
