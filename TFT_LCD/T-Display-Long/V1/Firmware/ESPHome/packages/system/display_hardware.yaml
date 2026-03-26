@@ -48,14 +48,15 @@ i2c:
 # ============================================================================
 # Display Output (Backlight)
 # ============================================================================
-# LEDC PWM for display backlight control
+# GPIO backlight control.
+# The ESP32-S3/IDF 5.5 LEDC path is crashing on zero-duty updates during boot,
+# and this configuration only uses the display backlight as ON/OFF.
 # ============================================================================
 output:
-  - platform: ledc
+  - platform: gpio
     pin: 1
     id: backlight
-    channel: 7  # Avoid auto-assigned channel 0; boot log shows crash on LEDC channel 0 duty update
-    frequency: 100Hz  # Datasheet suggests low-frequency PWM. Should prevent stability issues.
+    inverted: false
 
 # Note: The backlight light component is defined in weather/weather-led-effects.yaml
 # since it also controls the RGB LED on the same output pin.
