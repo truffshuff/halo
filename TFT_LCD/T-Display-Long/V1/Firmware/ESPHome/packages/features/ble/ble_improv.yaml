@@ -138,7 +138,7 @@ bluetooth_proxy:
 
 nimble_proxy:
   id: nimble_proxy_component
-  active: true
+  active: false  # Diagnostic: keep component loaded but disable active proxy runtime path
   connection_slots: 3  # supports active GATT connections
   cache_services: true  # NVS service caching implemented
   # Now supports:
@@ -158,13 +158,17 @@ nimble_proxy:
 # ============================================================================
 
 switch:
-  - platform: nimble_proxy
-    nimble_proxy_id: nimble_proxy_component
+  - platform: template
     id: ble_scanner_switch
-    name: "BLE Scanner"
-    icon: mdi:bluetooth-audio
-    restore_mode: RESTORE_DEFAULT_ON
+    name: "BLE Scanner (proxy disabled diagnostic)"
+    icon: mdi:bluetooth-off
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
     entity_category: "config"
+    on_turn_on:
+      - logger.log: "BLE scanner ON requested (diagnostic no-op while proxy is disabled)"
+    on_turn_off:
+      - logger.log: "BLE scanner OFF requested (diagnostic no-op while proxy is disabled)"
 
 # ============================================================================
 # Startup Light Blink Animation
