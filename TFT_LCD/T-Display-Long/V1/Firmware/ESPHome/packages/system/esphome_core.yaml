@@ -15,11 +15,11 @@
 # ============================================================================
 # Must be declared so logger.log: actions in all packages resolve correctly.
 # Device-specific config (e.g., halo-v1-79e384.yaml) can override level/logs.
-# Temporary diagnostic setting: VERBOSE exposes `Setup <component>` traces from
-# ESPHome's Component::call() so boot-time dispatch crashes can be localized.
+# Keep default at INFO to reduce boot-time logging pressure with NimBLE enabled.
+# Raise to DEBUG/VERBOSE temporarily only when capturing targeted diagnostics.
 # ============================================================================
 logger:
-  level: VERBOSE
+  level: INFO
 
 # ============================================================================
 # External Components
