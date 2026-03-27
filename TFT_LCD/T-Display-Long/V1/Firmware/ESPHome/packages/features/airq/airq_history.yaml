@@ -182,7 +182,7 @@ sensor:
     accuracy_decimals: 0
     entity_category: "diagnostic"
     icon: mdi:database-arrow-up-outline
-    update_interval: 60s
+    update_interval: never
     lambda: |-
       if (!id(boot_complete)) return 0.0f;
       if (id(aqi_history_buf_size) == 0) return 0.0f;
@@ -196,7 +196,7 @@ sensor:
     accuracy_decimals: 0
     entity_category: "diagnostic"
     icon: mdi:counter
-    update_interval: 60s
+    update_interval: never
     lambda: |-
       return (float)id(aqi_history_count);
 
@@ -209,7 +209,7 @@ sensor:
     accuracy_decimals: 0
     entity_category: "diagnostic"
     icon: mdi:database-outline
-    update_interval: 60s
+    update_interval: never
     lambda: |-
       return (float)id(aqi_history_buf_size);
 
