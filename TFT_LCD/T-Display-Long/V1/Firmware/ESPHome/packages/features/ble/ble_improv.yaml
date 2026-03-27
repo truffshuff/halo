@@ -53,7 +53,7 @@
 # ============================================================================
 external_components:
   - source: github://truffshuff/esphome-components@0cf610c33152e86638d76bbc0c576f65f4f8e036
-    components: [nimble_base, nimble_proxy, bluetooth_proxy, nimble_improv]
+    components: [nimble_base, nimble_improv]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
     # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
@@ -123,31 +123,12 @@ nimble_improv:
   authorized_duration: 2min  # How long authorization lasts
   wifi_timeout: 1min         # Timeout for WiFi connection attempts
 
-# ============================================================================
+# ==========================================================================
 # Bluetooth Proxy for Home Assistant
-# ============================================================================
-# Allows Home Assistant to use this device as a Bluetooth proxy
-# CRITICAL: Advertisement throttling prevents TCP buffer overflow and crashes
-# Without these limits, BLE bursts cause "Cannot send message" errors
-# and protocol buffer assertion failures (proto.h:820)
-#
-# Rate limiting is controlled via nimble_proxy max_connections below
-# The increased TCP buffers in esphome_core.yaml handle advertisement bursts
-# ============================================================================
-bluetooth_proxy:
-
-nimble_proxy:
-  id: nimble_proxy_component
-  active: false  # Diagnostic: keep component loaded but disable active proxy runtime path
-  connection_slots: 3  # supports active GATT connections
-  cache_services: true  # NVS service caching implemented
-  # Now supports:
-  # - Active GATT connections (connect/disconnect)
-  # - Service/characteristic/descriptor discovery
-  # - GATT read/write operations
-  # - Notification/indication subscriptions
-  # - Pairing/bonding (future)
-  # - Service caching in NVS flash
+# ==========================================================================
+# Diagnostic mode: proxy components are fully disabled to isolate crashes.
+# Leave ble_scanner_switch as a template no-op so other packages continue to work.
+# Re-enable `bluetooth_proxy` and `nimble_proxy` blocks after stability is proven.
 
 # ============================================================================
 # BLE Scanner Control Switch
