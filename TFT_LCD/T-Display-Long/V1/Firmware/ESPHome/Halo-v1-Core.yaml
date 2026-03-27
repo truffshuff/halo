@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.03.27.0602
+# Version: 26.03.27.0722
 # Last Updated: March 27, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.03.27.0602"
+  version: "26.03.27.0722"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -857,17 +857,6 @@ esphome:
     # No additional libraries needed - using standard C++ and ESP-IDF
 
   on_boot:
-    # -------------------------------------------------------------------------
-    # Boot Stage 1: Early Display Initialization (Priority 800)
-    # -------------------------------------------------------------------------
-    # Runs before WiFi and sensors to show something on screen immediately
-    # 50ms delay allows LVGL to complete basic initialization
-    # Note: Watchdog timer initialization moved to features/diagnostics/diagnostics.yaml
-    - priority: 800
-      then:
-        - delay: 50ms
-        - logger.log: "Boot Stage 1: deferred initial page show"
-
     # -------------------------------------------------------------------------
     # Boot Stage 2: WireGuard Delayed Start (Priority 50)
     # -------------------------------------------------------------------------
