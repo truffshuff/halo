@@ -466,15 +466,6 @@ interval:
 # ============================================================================
 # Boot Sequence Integration
 # ============================================================================
-# Display Watchdog Initialization (Priority 800)
-#
-# Initializes the watchdog timer early in boot sequence to prevent
-# false positive recoveries during startup
+# Watchdog timing state is initialized by normal display update paths.
+# No explicit priority-800 boot hook is used to avoid early startup races.
 # ============================================================================
-esphome:
-  on_boot:
-    - priority: 800  # Very early - before most initialization
-      then:
-        - delay: 50ms
-        - lambda: 'id(last_display_update_time) = millis();'  # Initialize watchdog timer
-        - logger.log: "Display watchdog timer initialized"
