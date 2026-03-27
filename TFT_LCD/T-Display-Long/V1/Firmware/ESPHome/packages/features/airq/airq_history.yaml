@@ -184,6 +184,7 @@ sensor:
     icon: mdi:database-arrow-up-outline
     update_interval: 60s
     lambda: |-
+      if (!id(boot_complete)) return 0.0f;
       if (id(aqi_history_buf_size) == 0) return 0.0f;
       return (float)id(aqi_history_count) / id(aqi_history_buf_size) * 100.0f;
 
