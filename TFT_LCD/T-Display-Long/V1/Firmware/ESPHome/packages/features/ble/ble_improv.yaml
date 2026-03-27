@@ -116,12 +116,8 @@ nimble_base:
 # ============================================================================
 # NimBLE Improv WiFi Provisioning
 # ============================================================================
-# Allows WiFi reconfiguration via BLE using the Improv protocol
-# Uses ESP-IDF native NimBLE stack for compatibility with nimble_proxy
-# ============================================================================
-nimble_improv:
-  authorized_duration: 2min  # How long authorization lasts
-  wifi_timeout: 1min         # Timeout for WiFi connection attempts
+# Diagnostic mode: nimble_improv disabled while keeping nimble_base loaded.
+# If boot stabilizes here, crash source is likely within nimble_improv runtime.
 
 # ==========================================================================
 # Bluetooth Proxy for Home Assistant
