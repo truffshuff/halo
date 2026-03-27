@@ -183,7 +183,9 @@ sensor:
   # DMA-capable memory monitoring
   - platform: template
     name: "DMA Capable Heap Free"
-    lambda: return heap_caps_get_free_size(MALLOC_CAP_DMA);
+    lambda: |-
+      if (!id(boot_complete)) return 0;
+      return heap_caps_get_free_size(MALLOC_CAP_DMA);
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
@@ -193,7 +195,9 @@ sensor:
 
   - platform: template
     name: "DMA Capable Largest Block"
-    lambda: return heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
+    lambda: |-
+      if (!id(boot_complete)) return 0;
+      return heap_caps_get_largest_free_block(MALLOC_CAP_DMA);
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
@@ -205,6 +209,7 @@ sensor:
   - platform: template
     name: "PSRAM Free"
     lambda: |-
+      if (!id(boot_complete)) return 0;
       size_t psram_free = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
       if (psram_free > 0) {
         return psram_free;
@@ -233,7 +238,9 @@ sensor:
   # Minimum free heap since boot (indicates worst-case memory pressure)
   - platform: template
     name: "Min Free Heap Ever"
-    lambda: return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+    lambda: |-
+      if (!id(boot_complete)) return 0;
+      return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
     unit_of_measurement: "bytes"
     update_interval: 5s
     entity_category: "diagnostic"
