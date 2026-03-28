@@ -53,7 +53,7 @@
 # ============================================================================
 external_components:
   - source: github://truffshuff/esphome-components@0cf610c33152e86638d76bbc0c576f65f4f8e036
-    components: [nimble_base, nimble_improv]
+    components: [nimble_base, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
     # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
@@ -122,9 +122,18 @@ nimble_base:
 # ==========================================================================
 # Bluetooth Proxy for Home Assistant
 # ==========================================================================
-# Diagnostic mode: proxy components are fully disabled to isolate crashes.
-# Leave ble_scanner_switch as a template no-op so other packages continue to work.
-# Re-enable `bluetooth_proxy` and `nimble_proxy` blocks after stability is proven.
+# Proxy-only diagnostic mode:
+# - nimble_base + nimble_proxy enabled
+# - nimble_improv disabled
+# This checks whether HA proxy can run stably without Improv provisioning.
+
+bluetooth_proxy:
+
+nimble_proxy:
+  id: nimble_proxy_component
+  active: true
+  connection_slots: 1  # start conservative for stability; raise after clean boots
+  cache_services: false
 
 # ============================================================================
 # BLE Scanner Control Switch
@@ -135,17 +144,13 @@ nimble_base:
 # ============================================================================
 
 switch:
-  - platform: template
+  - platform: nimble_proxy
+    nimble_proxy_id: nimble_proxy_component
     id: ble_scanner_switch
-    name: "BLE Scanner (proxy disabled diagnostic)"
-    icon: mdi:bluetooth-off
-    optimistic: true
+    name: "BLE Scanner"
+    icon: mdi:bluetooth-audio
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: "config"
-    on_turn_on:
-      - logger.log: "BLE scanner ON requested (diagnostic no-op while proxy is disabled)"
-    on_turn_off:
-      - logger.log: "BLE scanner OFF requested (diagnostic no-op while proxy is disabled)"
 
 # ============================================================================
 # Startup Light Blink Animation
