@@ -89,7 +89,7 @@ esp32:
       CONFIG_BT_GATTC_ENABLE: "n"          # GATT Client (Bluedroid)
 
       # NimBLE tuning (working with nimble_proxy)
-      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "3"
+      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "1"
       CONFIG_BT_NIMBLE_ROLE_CENTRAL: "y"
       CONFIG_BT_NIMBLE_ROLE_PERIPHERAL: "y"
       CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM
@@ -103,8 +103,8 @@ esp32:
       CONFIG_BT_NIMBLE_GATT_PREP_WRITE_COUNT: "16"
       # More CCCDs (we have multiple notifies)
       CONFIG_BT_NIMBLE_MAX_CCCDS: "16"
-      # NimBLE debug logging
-      CONFIG_BT_NIMBLE_LOG_LEVEL: "DEBUG"
+      # Keep NimBLE logs informative but lighter during boot stabilization.
+      CONFIG_BT_NIMBLE_LOG_LEVEL: "INFO"
 
 # ============================================================================
 # NimBLE Base Stack
