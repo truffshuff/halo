@@ -53,7 +53,7 @@
 # ============================================================================
 external_components:
   - source: github://truffshuff/esphome-components@0cf610c33152e86638d76bbc0c576f65f4f8e036
-    components: [nimble_base, nimble_proxy, bluetooth_proxy]
+    components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
     # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
@@ -122,10 +122,13 @@ nimble_base:
 # ==========================================================================
 # Bluetooth Proxy for Home Assistant
 # ==========================================================================
-# Proxy-only diagnostic mode:
-# - nimble_base + nimble_proxy enabled
-# - nimble_improv disabled
-# This checks whether HA proxy can run stably without Improv provisioning.
+# Staged restore mode:
+# - nimble_improv re-enabled with conservative timeouts
+# - nimble_proxy remains enabled with minimal connection load
+
+nimble_improv:
+  authorized_duration: 2min  # Keep session short while stability is being validated
+  wifi_timeout: 1min         # Bound provisioning runtime on weak networks
 
 bluetooth_proxy:
 
