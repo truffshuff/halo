@@ -53,7 +53,7 @@
 # ============================================================================
 external_components:
   - source: github://truffshuff/esphome-components@0cf610c33152e86638d76bbc0c576f65f4f8e036
-    components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
+    components: [nimble_base, nimble_improv]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
     # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
@@ -122,21 +122,16 @@ nimble_base:
 # ==========================================================================
 # Bluetooth Proxy for Home Assistant
 # ==========================================================================
-# Staged restore mode:
-# - nimble_improv re-enabled with conservative timeouts
-# - nimble_proxy remains enabled with minimal connection load
+# Improv-only diagnostic mode:
+# - nimble_improv enabled
+# - nimble_proxy and bluetooth_proxy compiled out
+# This isolates whether the crash is in Improv itself or proxy interaction.
 
 nimble_improv:
   authorized_duration: 2min  # Keep session short while stability is being validated
   wifi_timeout: 1min         # Bound provisioning runtime on weak networks
 
-bluetooth_proxy:
-
-nimble_proxy:
-  id: nimble_proxy_component
-  active: true
-  connection_slots: 1  # start conservative for stability; raise after clean boots
-  cache_services: false
+# bluetooth_proxy and nimble_proxy are disabled in this diagnostic mode.
 
 # ============================================================================
 # BLE Scanner Control Switch
@@ -147,13 +142,17 @@ nimble_proxy:
 # ============================================================================
 
 switch:
-  - platform: nimble_proxy
-    nimble_proxy_id: nimble_proxy_component
+  - platform: template
     id: ble_scanner_switch
-    name: "BLE Scanner"
-    icon: mdi:bluetooth-audio
+    name: "BLE Scanner (proxy disabled for Improv isolation)"
+    icon: mdi:bluetooth-off
+    optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: "config"
+    on_turn_on:
+      - logger.log: "BLE scanner ON requested (diagnostic no-op while proxy is disabled)"
+    on_turn_off:
+      - logger.log: "BLE scanner OFF requested (diagnostic no-op while proxy is disabled)"
 
 # ============================================================================
 # Startup Light Blink Animation
