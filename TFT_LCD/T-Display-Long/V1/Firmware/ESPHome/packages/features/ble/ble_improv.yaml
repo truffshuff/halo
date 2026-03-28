@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@8f9c2c5d444edc9a0870ff6effb0f770e7c6c7d1
+  - source: github://truffshuff/esphome-components@d039e9b10c5674e1093e2e6610e661915e319773
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
@@ -63,6 +63,7 @@ external_components:
     #   to avoid crashing during setup() before API globals are ready
     # - nimble_proxy scanner OFF now blocks forwarding and prevents auto-start on sync
     # - nimble_base starts host-task fallback if sync does not appear after boot
+    # - nimble_proxy emits periodic discovered/forwarded diagnostic counters
 
 # ============================================================================
 # NimBLE sdkconfig Options
