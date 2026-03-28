@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@b77b58123986648ef3b71fff3b8e57086aca2afe
+  - source: github://truffshuff/esphome-components@3ae99d56cb636723061c9ef6d581ca655b6733f0
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
@@ -61,6 +61,7 @@ external_components:
     # - WiFi global null-checked in load_saved_credentials_() to prevent crash on boot
     # - adv_buffer_ allocation deferred to add_advertisement_() (lazy init)
     #   to avoid crashing during setup() before API globals are ready
+    # - nimble_proxy scanner OFF now blocks forwarding and prevents auto-start on sync
 
 # ============================================================================
 # NimBLE sdkconfig Options
