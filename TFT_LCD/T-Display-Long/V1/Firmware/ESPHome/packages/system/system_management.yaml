@@ -20,7 +20,9 @@
 # ============================================================================
 http_request:
   useragent: esphome/halo
-  timeout: 30s  # Increased timeout for large weather responses
+  # Keep HTTP calls short to avoid blocking loopTask and tripping task_wdt.
+  # Weather forecasts use homeassistant.action and are not constrained by this timeout.
+  timeout: 10s
   buffer_size_rx: 1024  # 1KB RX buffer; smaller to reduce memory pressure
   buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
   verify_ssl: false  # Disable cert verification for local HTTPS (self-signed)
