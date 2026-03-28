@@ -53,7 +53,7 @@
 # ============================================================================
 external_components:
   - source: github://truffshuff/esphome-components@b77b58123986648ef3b71fff3b8e57086aca2afe
-    components: [nimble_base, nimble_improv]
+    components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
     # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
@@ -116,19 +116,21 @@ nimble_base:
 # ============================================================================
 # NimBLE Improv WiFi Provisioning
 # ============================================================================
-# Diagnostic mode: nimble_improv disabled while keeping nimble_base loaded.
-# If boot stabilizes here, crash source is likely within nimble_improv runtime.
-
-# ==========================================================================
-# Bluetooth Proxy for Home Assistant
-# ==========================================================================
-# Improv hotfix validation mode:
-# - nimble_improv enabled with patched host-sync gating
-# - nimble_proxy and bluetooth_proxy compiled out to isolate validation
+# Staged coexistence mode:
+# - nimble_improv kept enabled with hotfix commit
+# - nimble_proxy re-enabled with conservative load
 
 nimble_improv:
   authorized_duration: 2min
   wifi_timeout: 1min
+
+bluetooth_proxy:
+
+nimble_proxy:
+  id: nimble_proxy_component
+  active: true
+  connection_slots: 1
+  cache_services: false
 
 # ============================================================================
 # BLE Scanner Control Switch
@@ -139,17 +141,13 @@ nimble_improv:
 # ============================================================================
 
 switch:
-  - platform: template
+  - platform: nimble_proxy
+    nimble_proxy_id: nimble_proxy_component
     id: ble_scanner_switch
-    name: "BLE Scanner (proxy disabled for Improv hotfix validation)"
-    icon: mdi:bluetooth-off
-    optimistic: true
+    name: "BLE Scanner"
+    icon: mdi:bluetooth-audio
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: "config"
-    on_turn_on:
-      - logger.log: "BLE scanner ON requested (diagnostic no-op while proxy is disabled)"
-    on_turn_off:
-      - logger.log: "BLE scanner OFF requested (diagnostic no-op while proxy is disabled)"
 
 # ============================================================================
 # Startup Light Blink Animation
