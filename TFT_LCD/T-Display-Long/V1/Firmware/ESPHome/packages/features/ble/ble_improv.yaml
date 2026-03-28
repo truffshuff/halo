@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@c100b47a1a319b072239298e0f3b351cc1405bae
+  - source: github://truffshuff/esphome-components@463ba19bb70755cc49bc5c0b5f91adc6a548e8b3
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
@@ -134,6 +134,12 @@ nimble_proxy:
   active: true
   connection_slots: 1
   cache_services: false
+  # Active scanning with conservative timing to keep HA forwarding stable.
+  # Units are 0.625ms: 2048=1280ms, 256=160ms (12.5% duty cycle).
+  scan_active: true
+  scan_interval: 2048
+  scan_window: 256
+  scan_duplicate_filter: true
 
 # ============================================================================
 # BLE Scanner Control Switch
