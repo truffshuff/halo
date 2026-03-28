@@ -1401,7 +1401,7 @@ online_image:
     format: PNG
     type: RGB565
     resize: 140x140
-    update_interval: 60s
+    update_interval: 180s
     request_headers:
       Authorization: "Bearer ${ha_token}"
     on_download_finished:
