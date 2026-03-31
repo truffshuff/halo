@@ -173,13 +173,6 @@ globals:
     restore_value: no
     initial_value: '0'
 
-  # Preserve BLE scanner user preference while weather fetch scripts temporarily
-  # pause scanning to reduce API/network contention.
-  - id: weather_ble_scanner_was_on
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
   - id: weather_on_weather_page
     type: bool
     restore_value: no
@@ -707,14 +700,6 @@ script:
       - lambda: |-
           // Ensure lock is set
           id(weather_fetch_lock) = true;
-          id(weather_ble_scanner_was_on) = id(ble_scanner_switch).state;
-
-      # Pause BLE scanning to reduce API traffic during weather fetch
-      - if:
-          condition:
-            lambda: 'return id(weather_ble_scanner_was_on);'
-          then:
-            - switch.turn_off: ble_scanner_switch
 
       - logger.log:
           format: "→ Fetching daily forecast using native weather.get_forecasts action..."
@@ -895,15 +880,6 @@ script:
               - logger.log:
                   format: "ERROR: Native action failed - see logs above"
                   level: ERROR
-
-      # Restore BLE scanner to its previous state after weather fetch.
-      - if:
-          condition:
-            lambda: 'return id(weather_ble_scanner_was_on);'
-          then:
-            - switch.turn_on: ble_scanner_switch
-          else:
-            - switch.turn_off: ble_scanner_switch
 
       - lambda: |-
           // Always clear the lock when done
@@ -1125,20 +1101,11 @@ script:
     then:
       - lambda: |-
           id(weather_fetch_lock) = true;
-          id(weather_ble_scanner_was_on) = id(ble_scanner_switch).state;
           // Note: weather_hourly_retry_count is NOT reset here so retries
           // accumulate across script restarts. It is reset by the caller
           // before the first invocation.
           id(weather_hourly_action_start_time) = millis();
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (native action) START ===");
-
-      # Pause BLE to reduce network congestion
-      - if:
-          condition:
-            lambda: 'return id(weather_ble_scanner_was_on);'
-          then:
-            - switch.turn_off: ble_scanner_switch
-      - delay: 200ms  # Brief pause for queue flush
 
       - logger.log: "→ Fetching hourly forecast using native weather.get_forecasts action..."
 
@@ -1298,16 +1265,9 @@ script:
       # Give native action a short window to complete; if no result, treat as failure and retry/fallback
       - delay: 3s
 
-      # Restore BLE state and release lock BEFORE the retry/restart logic.
+      # Release lock BEFORE the retry/restart logic.
       # This ensures cleanup always runs even when mode:restart kills the current
       # execution after execute() is called in the lambda below.
-      - if:
-          condition:
-            lambda: 'return id(weather_ble_scanner_was_on);'
-          then:
-            - switch.turn_on: ble_scanner_switch
-          else:
-            - switch.turn_off: ble_scanner_switch
       - lambda: |-
           id(weather_fetch_lock) = false;
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (native action) END ===");
@@ -1340,17 +1300,8 @@ script:
     then:
       - lambda: |-
           id(weather_fetch_lock) = true;
-          id(weather_ble_scanner_was_on) = id(ble_scanner_switch).state;
           id(weather_hourly_retry_count) = 0;
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP fallback) START ===");
-
-      # Pause BLE to reduce network congestion
-      - if:
-          condition:
-            lambda: 'return id(weather_ble_scanner_was_on);'
-          then:
-            - switch.turn_off: ble_scanner_switch
-      - delay: 500ms  # Brief pause for queue flush
 
       - lambda: |-
           App.feed_wdt();
@@ -1486,14 +1437,6 @@ script:
                         ESP_LOGE("weather", "Hourly HTTP fallback retries exhausted (attempts=%d)", id(weather_hourly_retry_count));
                         id(weather_hourly_retry_count) = 0;
 
-      # Resume BLE
-      - if:
-          condition:
-            lambda: 'return id(weather_ble_scanner_was_on);'
-          then:
-            - switch.turn_on: ble_scanner_switch
-          else:
-            - switch.turn_off: ble_scanner_switch
       - lambda: |-
           id(weather_fetch_lock) = false;
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP fallback) END ===");
