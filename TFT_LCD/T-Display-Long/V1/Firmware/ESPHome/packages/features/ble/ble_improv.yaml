@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@ab2ec3f081479d1704ee1686b52d906b33bfdc99
+  - source: github://truffshuff/esphome-components@e8152bd98859fc83b6c0d49f8ee21925d712fd10
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
@@ -145,6 +145,8 @@ nimble_proxy:
   # Software duplicate suppression cache (0 disables). This helps preserve
   # buffer capacity for unique devices in busy RF environments.
   scan_duplicate_cache_size: 0
+  # Flush advertisement batches faster to reduce buffer-full drops.
+  advertisement_send_interval_ms: 25
   # Optional BLE advertising name source (use device name by default).
   # For Improv advertisements this is compacted to <=8 chars automatically.
   advertising_name: "${name}"
