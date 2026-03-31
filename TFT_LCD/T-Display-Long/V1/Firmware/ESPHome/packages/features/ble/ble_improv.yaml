@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@62d2c85c0e7c2e7487d998dc20a1ca649c3d235f
+  - source: github://truffshuff/esphome-components@ab2ec3f081479d1704ee1686b52d906b33bfdc99
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
@@ -134,12 +134,17 @@ nimble_proxy:
   active: true
   connection_slots: 1
   cache_services: false
-  # Active scanning with conservative timing to keep HA forwarding stable.
-  # Units are 0.625ms: 3072=1920ms, 192=120ms (~6.25% duty cycle).
+  # Active scanning tuned to reduce queue pressure while keeping HA device
+  # visibility fresh.
+  # Units are 0.625ms: 3072=1920ms, 96=60ms (~3.1% duty cycle).
   scan_active: true
   scan_interval: 3072
-  scan_window: 192
-  scan_duplicate_filter: true
+  scan_window: 96
+  # Keep duplicate reports flowing so HA advertisement list remains populated.
+  scan_duplicate_filter: false
+  # Software duplicate suppression cache (0 disables). This helps preserve
+  # buffer capacity for unique devices in busy RF environments.
+  scan_duplicate_cache_size: 256
   # Optional BLE advertising name source (use device name by default).
   # For Improv advertisements this is compacted to <=8 chars automatically.
   advertising_name: "${name}"
@@ -158,7 +163,7 @@ switch:
     id: ble_scanner_switch
     name: "BLE Scanner"
     icon: mdi:bluetooth-audio
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: RESTORE_DEFAULT_ON
     entity_category: "config"
 
 # ============================================================================
