@@ -144,7 +144,7 @@ nimble_proxy:
   scan_duplicate_filter: false
   # Software duplicate suppression cache (0 disables). This helps preserve
   # buffer capacity for unique devices in busy RF environments.
-  scan_duplicate_cache_size: 256
+  scan_duplicate_cache_size: 0
   # Optional BLE advertising name source (use device name by default).
   # For Improv advertisements this is compacted to <=8 chars automatically.
   advertising_name: "${name}"
