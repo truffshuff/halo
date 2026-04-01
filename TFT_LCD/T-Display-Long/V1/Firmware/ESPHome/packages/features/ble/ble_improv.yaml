@@ -147,6 +147,8 @@ nimble_proxy:
   scan_duplicate_cache_size: 0
   # Flush advertisement batches faster to reduce buffer-full drops.
   advertisement_send_interval_ms: 25
+  # Number of advertisements buffered per API send.
+  advertisement_batch_size: 4
   # Optional BLE advertising name source (use device name by default).
   # For Improv advertisements this is compacted to <=8 chars automatically.
   advertising_name: "${name}"
