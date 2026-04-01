@@ -134,11 +134,12 @@ nimble_proxy:
   active: true
   connection_slots: 1
   cache_services: false
-  # Active scanning tuned to reduce queue pressure while keeping HA device
-  # visibility fresh.
-  # Units are 0.625ms: 3072=1920ms, 96=60ms (~3.1% duty cycle).
+  # Active scanning tuned to keep HA's live advertisement view populated.
+  # Units are 0.625ms: 512=320ms interval, 96=60ms window (~18.75% duty cycle).
+  # Standard ESPHome bluetooth_proxy uses 320ms/30ms = 9.4% duty. We use
+  # a 60ms window for higher per-cycle yield while staying well below 100%.
   scan_active: true
-  scan_interval: 3072
+  scan_interval: 512
   scan_window: 96
   # Keep duplicate reports flowing so HA advertisement list remains populated.
   scan_duplicate_filter: false
