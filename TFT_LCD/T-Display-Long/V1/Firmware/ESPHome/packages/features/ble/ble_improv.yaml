@@ -141,11 +141,13 @@ nimble_proxy:
   scan_active: true
   scan_interval: 512
   scan_window: 96
-  # Keep duplicate reports flowing so HA advertisement list remains populated.
-  scan_duplicate_filter: false
-  # Software duplicate suppression cache (0 disables). This helps preserve
-  # buffer capacity for unique devices in busy RF environments.
-  scan_duplicate_cache_size: 0
+  # Hardware duplicate filter enabled to reduce buffer pressure and CPU load.
+  # HA deduplicates by (address, raw_data) anyway, so flooding duplicates
+  # at 40/sec provides no benefit over the ~1Hz natural advertisement rate.
+  scan_duplicate_filter: true
+  # Software duplicate cache size. 200 entries covers a typical RF environment
+  # before the ring buffer wraps and allows re-reporting stale devices.
+  scan_duplicate_cache_size: 200
   # Flush advertisement batches faster to reduce buffer-full drops.
   advertisement_send_interval_ms: 25
   # Number of advertisements buffered per API send.
