@@ -701,6 +701,10 @@ script:
           // Ensure lock is set
           id(weather_fetch_lock) = true;
 
+      # Pause BLE scanner during network fetch to reduce WiFi/BLE coexistence
+      # interference and CPU contention during JSON processing.
+      - switch.turn_off: ble_scanner_switch
+
       - logger.log:
           format: "→ Fetching daily forecast using native weather.get_forecasts action..."
           level: INFO
@@ -880,6 +884,9 @@ script:
               - logger.log:
                   format: "ERROR: Native action failed - see logs above"
                   level: ERROR
+
+      # Resume BLE scanner after fetch completes (success or failure)
+      - switch.turn_on: ble_scanner_switch
 
       - lambda: |-
           // Always clear the lock when done
@@ -1303,6 +1310,10 @@ script:
           id(weather_hourly_retry_count) = 0;
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP fallback) START ===");
 
+      # Pause BLE scanner during HTTP POST to reduce WiFi/BLE coexistence
+      # interference and free CPU for JSON parsing.
+      - switch.turn_off: ble_scanner_switch
+
       - lambda: |-
           App.feed_wdt();
           ESP_LOGI("weather", "Free heap before HTTP fallback: %d bytes", esp_get_free_heap_size());
@@ -1436,6 +1447,9 @@ script:
                     - lambda: |-
                         ESP_LOGE("weather", "Hourly HTTP fallback retries exhausted (attempts=%d)", id(weather_hourly_retry_count));
                         id(weather_hourly_retry_count) = 0;
+
+      # Resume BLE scanner after HTTP fallback completes
+      - switch.turn_on: ble_scanner_switch
 
       - lambda: |-
           id(weather_fetch_lock) = false;
