@@ -37,8 +37,8 @@ lvgl:
       on_load:
         - lambda: |-
             id(current_page_name) = "vertical_clock";
-                        id(time_update_force_render) = true;
-                - script.execute: time_update
+            id(time_update_force_render) = true;
+        - script.execute: time_update
       widgets:
         # Large time display vertically centered
         - label:
