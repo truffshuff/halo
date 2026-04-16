@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.04.15.2101
+# Version: 26.04.15.2144
 # Last Updated: April 15, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.04.15.2101"
+  version: "26.04.15.2144"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -692,9 +692,9 @@ lvgl:
   byte_order: big_endian
   color_depth: 16
   
-  disp_bg_color: 0x000000
-  disp_bg_opa: COVER
-  disp_bg_image: none
+  bottom_layer:
+    bg_color: 0x000000
+    bg_opa: COVER
   log_level: WARN  # Reduce logging overhead
 
   # Gradient definitions used by WiFi pages
@@ -724,8 +724,8 @@ lvgl:
   # ============================================================================
   # HOURLY FORECAST PAGES: moved to packages/weather/hourly-forecast-pages.yaml
   # DAILY FORECAST PAGES: moved to packages/weather/daily-forecast-pages.yaml
-  pages:
-      
+  # (pages: defined in modular package files - no pages: key here to avoid overriding)
+
 # ============================================================================
 # BUTTON SECTION MOVED TO packages/features/diagnostics/diagnostics.yaml
 # ============================================================================
