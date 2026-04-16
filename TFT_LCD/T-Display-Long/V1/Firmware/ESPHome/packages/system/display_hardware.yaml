@@ -77,7 +77,7 @@ display:
       width: 180
     cs_pin: 12
     reset_pin: 16
-    rotation: 0
+    # rotation is now configured under lvgl: (LVGL v9 breaking change in 2026.4.0)
     auto_clear_enabled: false
 
 # ============================================================================
@@ -96,10 +96,7 @@ touchscreen:
     i2c_id: touch_i2c
     interrupt_pin: GPIO11
     update_interval: never  # Interrupt-driven via interrupt_pin GPIO11; polling not needed
-    transform:
-      mirror_x: false
-      mirror_y: false
-      swap_xy: false
+    # transform: removed - LVGL v9 (2026.4.0) handles touch rotation automatically
     on_touch:
       - lambda: |-
           // Validate touch coordinates - filter out spurious/phantom touches

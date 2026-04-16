@@ -68,16 +68,22 @@ api:
 esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
-  cpu_frequency: 240MHz  # Maximum performance
+  cpu_frequency: 240MHz  # Default in 2026.4.0 for ESP32-S3; explicit here for clarity
   # PSRAM-equipped ESP32 r3.0+ can save ~10KB IRAM by disabling older workarounds
   # See changelog: set only if your module reports minimum_chip_revision >= "3.0"
-  
 
   framework:
     type: esp-idf
     advanced:
       loop_task_stack_size: 24576
       execute_from_psram: true
+      # Signed OTA verification (2026.4.0): verifies firmware signature during OTA
+      # without requiring hardware Secure Boot (eFuse burning).
+      # To enable: generate a signing key and configure below.
+      # See: https://esphome.io/components/esp32#esp32-advanced_configuration
+      # signed_ota_verification:
+      #   signing_key: secure_boot_signing_key.pem
+      #   signing_scheme: rsa3072
       # minimum_chip_revision: "3.0"
     # Use ESPHome-supported framework channels. Options: recommended (default), latest, dev
     # Switch to 'dev' to pick up the very latest ESP-IDF/NimBLE fixes sooner.
