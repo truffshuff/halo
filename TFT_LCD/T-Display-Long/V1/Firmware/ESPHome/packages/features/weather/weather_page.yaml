@@ -377,7 +377,9 @@ lvgl:
                       angle_range: 180
                       rotation: 180
                       ticks:
-                        count: 0
+                        count: 2
+                        width: 0
+                        length: 0
                       indicators:
                         - line:
                             id: weather_temp_needle
@@ -493,7 +495,9 @@ lvgl:
                       angle_range: 360
                       rotation: 270
                       ticks:
-                        count: 0
+                        count: 2
+                        width: 0
+                        length: 0
                       indicators:
                         - line:
                             id: wind_compass_needle
