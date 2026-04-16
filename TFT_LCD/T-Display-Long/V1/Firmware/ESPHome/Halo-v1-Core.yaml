@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.04.03.1035
-# Last Updated: April 03, 2026
+# Version: 26.04.15.2101
+# Last Updated: April 15, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.04.03.1035"
+  version: "26.04.15.2101"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -681,6 +681,7 @@ api:
 
 lvgl:
   id: lvgl_main
+  rotation: 0  # Moved here from display: (LVGL v9 breaking change in 2026.4.0)
   displays:
     - lily_display
   touchscreens:
