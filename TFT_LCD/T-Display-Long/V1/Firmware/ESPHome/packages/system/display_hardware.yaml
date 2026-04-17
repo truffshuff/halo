@@ -67,9 +67,10 @@ output:
 # LilyGo T-Display-Long AMOLED display (180x640 pixels)
 # ============================================================================
 display:
-  - platform: qspi_dbi
+  - platform: mipi_spi
     id: lily_display
     model: AXS15231
+    bus_mode: quad
     data_rate: 5MHz
     spi_id: lily_spi
     dimensions:

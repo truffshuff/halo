@@ -384,7 +384,7 @@ lvgl:
                         - line:
                             id: weather_temp_needle
                             width: 8
-                            r_mod: 2
+                            length: 2
                             value: 50
                             color: 0xFF0000
               - obj:
@@ -502,7 +502,7 @@ lvgl:
                         - line:
                             id: wind_compass_needle
                             width: 3
-                            r_mod: 2
+                            length: 2
                             value: 0
                             color: 0x00DFFF
               - label:
