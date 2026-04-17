@@ -1121,9 +1121,14 @@ script:
       # interference and free CPU for JSON parsing.
       - switch.turn_off: ble_scanner_switch
 
+      # Wait for NimBLE to release internal RAM before mbedtls allocates its TLS context.
+      # Without this delay, mbedtls_ssl_setup fails with MBEDTLS_ERR_SSL_ALLOC_FAILED (-0x7F00).
+      - delay: 750ms
+
       - lambda: |-
           App.feed_wdt();
-          ESP_LOGI("weather", "Free heap before HTTP fallback: %d bytes", esp_get_free_heap_size());
+          ESP_LOGI("weather", "Free heap before hourly HTTP: %d bytes (internal: %d)",
+                   esp_get_free_heap_size(), heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 
       - http_request.post:
           url: !lambda |-
@@ -1240,22 +1245,9 @@ script:
           on_error:
             then:
               - lambda: |-
-                  id(weather_hourly_retry_count)++;
-                  ESP_LOGE("weather", "Hourly HTTP fallback request ERROR (attempt %d)", id(weather_hourly_retry_count));
-              - if:
-                  condition:
-                    lambda: 'return id(weather_hourly_retry_count) < 3;'
-                  then:
-                    - delay: 3s
-                    - lambda: |-
-                        ESP_LOGI("weather", "Retrying hourly HTTP fallback (attempt %d)", id(weather_hourly_retry_count));
-                    - script.execute: fetch_hourly_forecast_http
-                  else:
-                    - lambda: |-
-                        ESP_LOGE("weather", "Hourly HTTP fallback retries exhausted (attempts=%d)", id(weather_hourly_retry_count));
-                        id(weather_hourly_retry_count) = 0;
+                  ESP_LOGE("weather", "✗ Hourly HTTP request failed (will retry at next interval)");
 
-      # Resume BLE scanner after HTTP fallback completes
+      # Resume BLE scanner after HTTP fetch completes
       - switch.turn_on: ble_scanner_switch
 
       - lambda: |-
