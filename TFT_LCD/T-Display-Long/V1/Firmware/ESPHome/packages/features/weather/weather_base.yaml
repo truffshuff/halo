@@ -1121,18 +1121,13 @@ script:
       # interference and free CPU for JSON parsing.
       - switch.turn_off: ble_scanner_switch
 
-      # Wait for NimBLE to release internal RAM before mbedtls allocates its TLS context.
-      # Without this delay, mbedtls_ssl_setup fails with MBEDTLS_ERR_SSL_ALLOC_FAILED (-0x7F00).
-      - delay: 750ms
-
       - lambda: |-
           App.feed_wdt();
           ESP_LOGI("weather", "Free heap before hourly HTTP: %d bytes (internal: %d)",
                    esp_get_free_heap_size(), heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 
       - http_request.post:
-          url: !lambda |-
-            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
+          url: "${ha_url}/api/services/weather/get_forecasts?return_response=true"
           request_headers:
             Content-Type: application/json
             Authorization: !lambda |-

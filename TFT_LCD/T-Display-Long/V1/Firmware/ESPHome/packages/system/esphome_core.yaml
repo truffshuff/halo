@@ -99,12 +99,13 @@ esp32:
       # More aggressive PSRAM usage
       CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"  # Reduce from 8192 to 4096 (only tiny allocations stay in internal RAM)
       CONFIG_SPIRAM_USE_CAPS_ALLOC: "y"  # Use capability allocator
-      #CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"  # Move WiFi/LWIP buffers to PSRAM
+      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"  # Move WiFi/LWIP buffers to PSRAM (frees ~100KB+ internal RAM for mbedtls TLS)
+      CONFIG_WIFI_LWIP_ALLOCATION_FROM_SPIRAM_FIRST: "y"  # ESP-IDF 5.x alias for the above
       CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"  # Allow BSS segment in PSRAM
 
       # More aggressive malloc strategy
       CONFIG_SPIRAM_MEMTEST: "n"  # Skip memory test (faster boot, assumes good PSRAM)
-      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"  # Reserve only 32KB internal (reduce if needed)
+      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "16384"  # Reserve 16KB internal (down from 32KB; mbedtls TLS needs ~50KB)
 
       # Move libc allocations to PSRAM (addresses your libc 3.4KB RAM usage)
       CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"  # Allow stacks in PSRAM (be careful!)
