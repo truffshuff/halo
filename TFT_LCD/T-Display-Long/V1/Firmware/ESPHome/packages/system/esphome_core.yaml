@@ -94,18 +94,26 @@ esp32:
       # ============================================================================
       # Memory management - allow heap allocation in PSRAM
       CONFIG_SPIRAM_USE_MALLOC: "y"  # Allow malloc() to use PSRAM
-      #CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "8192"  # Keep <16KB allocations in internal RAM
-      
+
       # More aggressive PSRAM usage
-      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "4096"  # Reduce from 8192 to 4096 (only tiny allocations stay in internal RAM)
+      # ALWAYSINTERNAL threshold: allocations BELOW this size stay in internal RAM.
+      # mbedtls AES/entropy contexts are small (~hundreds of bytes each) but numerous.
+      # Keeping this at 512 means only truly tiny allocations stay internal,
+      # pushing mbedtls and other medium-sized allocs to PSRAM.
+      CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL: "512"  # Down from 4096; pushes mbedtls contexts to PSRAM
       CONFIG_SPIRAM_USE_CAPS_ALLOC: "y"  # Use capability allocator
-      CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"  # Move WiFi/LWIP buffers to PSRAM (frees ~100KB+ internal RAM for mbedtls TLS)
-      CONFIG_WIFI_LWIP_ALLOCATION_FROM_SPIRAM_FIRST: "y"  # ESP-IDF 5.x alias for the above
+      #CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP: "y"  # Reverted: made internal RAM worse (WiFi needs DMA-internal RAM)
       CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"  # Allow BSS segment in PSRAM
+
+      # Direct mbedTLS PSRAM allocation - the targeted fix for TLS setup failures.
+      # mbedtls_ssl_setup / mbedtls_ctr_drbg_seed allocate ~50KB total; with only
+      # ~28KB internal RAM free these fail with -0x7F00 / -0x0001.
+      # This flag routes all mbedTLS heap calls through the SPIRAM-capable allocator.
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
 
       # More aggressive malloc strategy
       CONFIG_SPIRAM_MEMTEST: "n"  # Skip memory test (faster boot, assumes good PSRAM)
-      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "16384"  # Reserve 16KB internal (down from 32KB; mbedtls TLS needs ~50KB)
+      CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL: "32768"  # Restore 32KB reserve (reverted from 16KB)
 
       # Move libc allocations to PSRAM (addresses your libc 3.4KB RAM usage)
       CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"  # Allow stacks in PSRAM (be careful!)
