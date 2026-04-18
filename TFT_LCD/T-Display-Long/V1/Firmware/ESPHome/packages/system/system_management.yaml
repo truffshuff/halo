@@ -157,7 +157,9 @@ switch:
     id: diag_check_google
     icon: mdi:web
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
+    # DEFAULT OFF: http_request is synchronous; each check blocks the event loop for
+    # 12-18s (DNS + TCP) causing watchdog warnings. Enable only for targeted debugging.
+    restore_mode: RESTORE_DEFAULT_OFF
     entity_category: "diagnostic"
     on_turn_on:
       - lambda: 'id(diag_check_google_enabled) = true;'
@@ -169,7 +171,8 @@ switch:
     id: diag_check_cloudflare
     icon: mdi:domain
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
+    # DEFAULT OFF: same reason as Google check above.
+    restore_mode: RESTORE_DEFAULT_OFF
     entity_category: "diagnostic"
     on_turn_on:
       - lambda: 'id(diag_check_cloudflare_enabled) = true;'
