@@ -384,7 +384,11 @@ lvgl:
                         - line:
                             id: weather_temp_needle
                             width: 8
-                            length: 2
+                            # LVGL v9 (2026.4.0): 'length' is now % of scale radius from center
+                            # (was pixels of shortening from outer edge in LVGL v8).
+                            # Meter radius ≈80px, black overlay circle covers center 50px.
+                            # length:85 → tip at 68px, 18px past the overlay = clearly visible.
+                            length: 85
                             value: 50
                             color: 0xFF0000
               - obj:
@@ -502,7 +506,8 @@ lvgl:
                         - line:
                             id: wind_compass_needle
                             width: 3
-                            length: 2
+                            # LVGL v9: length is % of radius. 85% of ~25px = 21px needle.
+                            length: 85
                             value: 0
                             color: 0x00DFFF
               - label:
