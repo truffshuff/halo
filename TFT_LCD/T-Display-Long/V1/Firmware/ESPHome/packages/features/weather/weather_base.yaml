@@ -620,7 +620,7 @@ interval:
                 }
 
                 // Skip if API not connected - no point attempting HTTP if HA is unreachable
-                if (!id(diag_api_connected)) {
+                if (!api::global_api_server->is_connected()) {
                 ESP_LOGW("weather", "Hourly interval fetch skipped: API not connected");
                 return false;
                 }
