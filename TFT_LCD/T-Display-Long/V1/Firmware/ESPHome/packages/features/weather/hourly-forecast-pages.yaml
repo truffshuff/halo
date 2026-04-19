@@ -49,7 +49,9 @@ lvgl:
                     // API is still connecting blocks the event loop for ~19s (SSL handshake +
                     // 57KB response body read) and causes LVGL/touchscreen watchdog warnings.
                     // The background interval will retry if data is still stale after API connects.
-                    if (!id(diag_api_connected)) {
+                    // Use api::global_api_server->is_connected() for real-time state; diag_api_connected
+                    // is a cached global that only updates every 60s and may be stale at boot.
+                    if (!api::global_api_server->is_connected()) {
                       ESP_LOGI("weather", "Hourly fetch deferred: API not yet connected (hourly_forecast_attr will populate on connect)");
                       return false;
                     }
