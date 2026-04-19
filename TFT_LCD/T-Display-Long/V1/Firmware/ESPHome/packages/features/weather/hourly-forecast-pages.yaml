@@ -43,6 +43,14 @@ lvgl:
                       ESP_LOGW("weather", "Hourly fetch already in progress, skipping page-triggered fetch");
                       return false;
                     }
+                    // Skip if WireGuard is enabled but not yet connected - outbound TCP will be
+                    // silently dropped, causing a ~15s blocking timeout before failure.
+                    // The hourly_forecast_attr text_sensor will populate data once the API
+                    // connection syncs (which already works over the existing connection).
+                    if (id(wireguard_enabled).state && !id(wg_status_connected_state)) {
+                      ESP_LOGW("weather", "Hourly fetch skipped: WireGuard enabled but not connected (outbound HTTP would hang)");
+                      return false;
+                    }
                     // Check if hourly forecast needs refresh (stale > 15 minutes)
                     uint32_t time_since_update = millis() - id(weather_hourly_last_update);
                     bool is_stale = (id(weather_hourly_last_update) == 0 || time_since_update > 900000);
