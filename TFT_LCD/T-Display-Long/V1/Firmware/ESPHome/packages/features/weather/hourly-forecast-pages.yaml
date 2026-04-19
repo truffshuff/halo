@@ -43,12 +43,14 @@ lvgl:
                       ESP_LOGW("weather", "Hourly fetch already in progress, skipping page-triggered fetch");
                       return false;
                     }
-                    // Skip if WireGuard is enabled but not yet connected - outbound TCP will be
-                    // silently dropped, causing a ~15s blocking timeout before failure.
-                    // The hourly_forecast_attr text_sensor will populate data once the API
-                    // connection syncs (which already works over the existing connection).
-                    if (id(wireguard_enabled).state && !id(wg_status_connected_state)) {
-                      ESP_LOGW("weather", "Hourly fetch skipped: WireGuard enabled but not connected (outbound HTTP would hang)");
+                    // Skip if the API is not yet connected. The hourly_forecast_attr text_sensor
+                    // will push data automatically once the HA API connection is established —
+                    // no blocking HTTP fetch needed. Attempting HTTP during early boot while the
+                    // API is still connecting blocks the event loop for ~19s (SSL handshake +
+                    // 57KB response body read) and causes LVGL/touchscreen watchdog warnings.
+                    // The background interval will retry if data is still stale after API connects.
+                    if (!id(diag_api_connected)) {
+                      ESP_LOGI("weather", "Hourly fetch deferred: API not yet connected (hourly_forecast_attr will populate on connect)");
                       return false;
                     }
                     // Check if hourly forecast needs refresh (stale > 15 minutes)

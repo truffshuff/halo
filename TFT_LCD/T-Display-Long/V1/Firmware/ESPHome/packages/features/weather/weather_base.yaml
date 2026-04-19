@@ -619,9 +619,9 @@ interval:
                 return false;
                 }
 
-                // Skip if WireGuard is enabled but not yet connected - outbound HTTP will hang
-                if (id(wireguard_enabled).state && !id(wg_status_connected_state)) {
-                ESP_LOGW("weather", "Hourly interval fetch skipped: WireGuard enabled but not connected");
+                // Skip if API not connected - no point attempting HTTP if HA is unreachable
+                if (!id(diag_api_connected)) {
+                ESP_LOGW("weather", "Hourly interval fetch skipped: API not connected");
                 return false;
                 }
 
