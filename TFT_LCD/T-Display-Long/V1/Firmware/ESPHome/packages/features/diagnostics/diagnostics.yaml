@@ -321,7 +321,14 @@ button:
 
       - logger.log: "Step 4: Resuming LVGL..."
       - lvgl.resume:
-      - delay: 300ms
+      - delay: 100ms
+      # LVGL v9: hardware reset wiped the framebuffer but LVGL's dirty-region
+      # tracker still thinks the screen is clean.  Invalidate the active screen
+      # so LVGL does a full repaint before the backlight comes back on.
+      - lambda: |-
+          lv_obj_invalidate(lv_scr_act());
+          ESP_LOGD("display_reset", "LVGL screen invalidated for full repaint");
+      - delay: 200ms
 
       - logger.log: "Step 5: Turning backlight ON..."
       - output.turn_on: backlight
@@ -367,8 +374,10 @@ interval:
               // Log watchdog check for debugging
               ESP_LOGD("display_watchdog", "Watchdog check: %u seconds since last display update", time_since_update / 1000);
 
-              // If display hasn't updated in 60 seconds, trigger recovery
-              if (time_since_update > 60000) {
+              // If display hasn't updated in 90 seconds, trigger recovery.
+              // The clock renders once per minute (~60 s), so 90 s gives a safe
+              // buffer above that interval and avoids false positives from jitter.
+              if (time_since_update > 90000) {
                 ESP_LOGW("display_watchdog", "Display frozen detected! No updates for %u seconds", time_since_update / 1000);
                 return true;
               }
@@ -388,7 +397,14 @@ interval:
                 }
             - delay: 500ms
             - lvgl.resume:
-            - delay: 300ms
+            - delay: 100ms
+            # LVGL v9: after a hardware reset the framebuffer is wiped but LVGL's
+            # dirty-region tracker still thinks everything is clean.  Invalidating
+            # the active screen forces a full repaint on the next render pass.
+            - lambda: |-
+                lv_obj_invalidate(lv_scr_act());
+                ESP_LOGD("display_watchdog", "LVGL screen invalidated for full repaint");
+            - delay: 200ms
             - output.turn_on: backlight
             - delay: 200ms
             - lambda: |-
@@ -403,12 +419,11 @@ interval:
                 ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE === (Recovery #%d)", recoveries);
 
   # Periodic Display Controller Health Check
-  # The AXS15231 display controller can lose sync even while LVGL continues running
-  # This performs a display refresh cycle to keep the controller in sync
-  # NOTE: We don't call display->setup() here because it tries to re-register the SPI device
-  # which causes "[E][spi:021]: Device already registered" errors. The backlight cycle
-  # and LVGL pause/resume is sufficient for periodic maintenance. For actual problems,
-  # the watchdog and manual recovery button perform full hardware resets.
+  # The AXS15231 display controller can lose sync even while LVGL continues running.
+  # In LVGL v9 (2026.4.0), calling display->update() or doing a pause/resume cycle
+  # while in delegate mode can corrupt the display pipeline and cause black screens.
+  # Instead, we simply invalidate the entire LVGL screen object, which tells LVGL v9
+  # to repaint everything on the next render pass — no backlight flicker, no SPI race.
   - interval: 5min
     then:
       - if:
@@ -421,20 +436,12 @@ interval:
               return true;
           then:
             - logger.log: "=== PERIODIC DISPLAY HEALTH CHECK ==="
-            - output.turn_off: backlight
-            - delay: 200ms
-            - lvgl.pause:
-            - delay: 300ms
-            # Force a display update to refresh the controller state
             - lambda: |-
-                ESP_LOGD("display_health", "Refreshing display controller state...");
-                // Trigger a display update without calling setup()
-                id(lily_display)->update();
-            - delay: 300ms
-            - lvgl.resume:
-            - delay: 200ms
-            - output.turn_on: backlight
-            - delay: 100ms
+                // Force LVGL v9 to repaint the entire screen on the next render pass.
+                // This keeps the AXS15231 controller in sync without disrupting the
+                // LVGL render pipeline (no pause/resume or direct display->update() needed).
+                ESP_LOGD("display_health", "Invalidating full LVGL screen for repaint...");
+                lv_obj_invalidate(lv_scr_act());
             - lambda: |-
                 id(last_display_update_time) = millis();
                 ESP_LOGI("display_health", "=== DISPLAY HEALTH CHECK COMPLETE ===");
