@@ -1,3 +1,16 @@
+---
+# Halo v1 - Air Quality Monitor Metadata
+author: "yashmulgaonkar"
+version: "26.04.25.2142"
+labels:
+  - "air-quality-monitor"
+  - "esphome"
+  - "esp32-s3"
+  - "lvgl"
+  - "weather"
+description: "Air quality monitor with weather display on LilyGo T-Display-Long"
+---
+
 substitutions:
 
   # Home Assistant connection for HTTP API calls
@@ -43,6 +56,10 @@ esphome:
   #           ESP_LOGI("main", "Improv WiFi credentials cleared! YAML WiFi will be used.");
   #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
 
+  # Unified compiler flags (applies to both PlatformIO and native ESP-IDF)
+  # NEW in 2026.6.0 - Future-proofs for native IDF toolchain option
+  build_flags: []
+
   platformio_options:
     upload_speed: 921600
     board_build.flash_mode: qio
@@ -50,7 +67,7 @@ esphome:
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
 
-  min_version: 2026.4.0
+  min_version: 2026.6.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"
