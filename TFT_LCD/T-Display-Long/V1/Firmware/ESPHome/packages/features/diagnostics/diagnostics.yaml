@@ -38,12 +38,6 @@
 # Globals (Diagnostics-specific)
 # ============================================================================
 globals:
-  # Display watchdog - tracks last LVGL update to detect black screen
-  - id: last_display_update_time
-    type: uint32_t
-    restore_value: no
-    initial_value: '0'
-
   # Display watchdog enabled flag
   - id: display_watchdog_enabled
     type: bool
@@ -254,7 +248,6 @@ switch:
     on_turn_on:
       - lambda: |-
           id(display_watchdog_enabled) = true;
-          id(last_display_update_time) = millis();  // Reset timer
       - logger.log: "Display watchdog enabled - will auto-recover from black screens"
     on_turn_off:
       - lambda: 'id(display_watchdog_enabled) = false;'
@@ -315,7 +308,7 @@ button:
           ESP_LOGI("display_reset", "Resetting and re-initializing display hardware...");
           auto *display = id(lily_display);
           if (display != nullptr) {
-            display->setup();  // This re-initializes the display controller completely
+            display->recover();
           }
       - delay: 500ms
 
@@ -336,15 +329,9 @@ button:
 
       - logger.log: "Step 6: Updating watchdog timestamp and recovery counter..."
       - lambda: |-
-          // Update watchdog timestamp
-          id(last_display_update_time) = millis();
-
-          // Increment recovery counter
-          static int recoveries = 0;
-          recoveries++;
-          id(display_recovery_count).publish_state(recoveries);
-
-          ESP_LOGI("display_reset", "=== DISPLAY RECOVERY COMPLETE === (Recovery #%d)", recoveries);
+          id(display_recovery_attempts)++;
+          ESP_LOGI("display_reset", "Recovery requested (attempt #%u); waiting for a confirmed flush",
+                   id(display_recovery_attempts));
 
       - logger.log: "Display recovery complete!"
 
@@ -361,7 +348,7 @@ interval:
           condition:
             lambda: |-
               // Only run watchdog if enabled and boot is complete
-              if (!id(display_watchdog_enabled) || !id(boot_complete)) {
+              if (!id(display_watchdog_enabled) || !id(boot_complete) || id(ota_in_progress)) {
                 ESP_LOGV("display_watchdog", "Watchdog check skipped (enabled=%s, boot_complete=%s)",
                          id(display_watchdog_enabled) ? "true" : "false",
                          id(boot_complete) ? "true" : "false");
@@ -369,6 +356,13 @@ interval:
               }
 
               const uint32_t now = millis();
+              auto *display = id(lily_display);
+              if (display != nullptr && display->get_flush_count() != id(last_display_flush_count)) {
+                id(last_display_flush_count) = display->get_flush_count();
+                id(last_display_update_time) = now;
+                id(display_recovery_attempts) = 0;
+                ESP_LOGD("display_watchdog", "Confirmed display flush #%u", id(last_display_flush_count));
+              }
               const uint32_t time_since_update = now - id(last_display_update_time);
 
               // Log watchdog check for debugging
@@ -377,46 +371,37 @@ interval:
               // If display hasn't updated in 90 seconds, trigger recovery.
               // The clock renders once per minute (~60 s), so 90 s gives a safe
               // buffer above that interval and avoids false positives from jitter.
-              if (time_since_update > 90000) {
+              if (id(last_display_update_time) != 0 && time_since_update > 90000) {
                 ESP_LOGW("display_watchdog", "Display frozen detected! No updates for %u seconds", time_since_update / 1000);
                 return true;
               }
               return false;
           then:
             - logger.log: "=== WATCHDOG: AUTOMATIC DISPLAY RECOVERY TRIGGERED ==="
-            - output.turn_off: backlight
-            - delay: 500ms
-            - lvgl.pause:
-            - delay: 300ms
-            # Properly reset and re-initialize the display controller
-            - lambda: |-
-                ESP_LOGI("display_watchdog", "Resetting and re-initializing display hardware...");
-                auto *display = id(lily_display);
-                if (display != nullptr) {
-                  display->setup();  // This re-initializes the display controller completely
-                }
-            - delay: 500ms
-            - lvgl.resume:
-            - delay: 100ms
-            # LVGL v9: after a hardware reset the framebuffer is wiped but LVGL's
-            # dirty-region tracker still thinks everything is clean.  Invalidating
-            # the active screen forces a full repaint on the next render pass.
-            - lambda: |-
-                lv_obj_invalidate(lv_scr_act());
-                ESP_LOGD("display_watchdog", "LVGL screen invalidated for full repaint");
-            - delay: 200ms
-            - output.turn_on: backlight
-            - delay: 200ms
-            - lambda: |-
-                // Update watchdog timestamp
-                id(last_display_update_time) = millis();
-
-                // Increment recovery counter
-                static int recoveries = 0;
-                recoveries++;
-                id(display_recovery_count).publish_state(recoveries);
-
-                ESP_LOGI("display_watchdog", "=== AUTOMATIC RECOVERY COMPLETE === (Recovery #%d)", recoveries);
+            - if:
+                condition:
+                  lambda: 'return id(display_recovery_attempts) >= 2;'
+                then:
+                  - logger.log: "Display recovery failed repeatedly; rebooting"
+                  - button.press: esp_reboot_button
+                else:
+                  - lambda: |-
+                      id(display_recovery_attempts)++;
+                      ESP_LOGW("display_watchdog", "Hardware recovery attempt #%u", id(display_recovery_attempts));
+                  - output.turn_off: backlight
+                  - delay: 500ms
+                  - lvgl.pause:
+                  - delay: 300ms
+                  - lambda: |-
+                      auto *display = id(lily_display);
+                      if (display != nullptr) display->recover();
+                  - delay: 500ms
+                  - lvgl.resume:
+                  - delay: 100ms
+                  - lambda: 'lv_obj_invalidate(lv_scr_act());'
+                  - delay: 200ms
+                  - output.turn_on: backlight
+                  - delay: 200ms
 
   # Periodic Display Controller Health Check
   # The AXS15231 display controller can lose sync even while LVGL continues running.
@@ -443,8 +428,7 @@ interval:
                 ESP_LOGD("display_health", "Invalidating full LVGL screen for repaint...");
                 lv_obj_invalidate(lv_scr_act());
             - lambda: |-
-                id(last_display_update_time) = millis();
-                ESP_LOGI("display_health", "=== DISPLAY HEALTH CHECK COMPLETE ===");
+                ESP_LOGI("display_health", "Screen invalidated; waiting for confirmed flush");
 
 # ============================================================================
 # Boot Sequence Integration
