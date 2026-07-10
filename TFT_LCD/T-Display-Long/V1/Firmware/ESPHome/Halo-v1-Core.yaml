@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.07.10.1430
+# Version: 26.07.10.1456
 # Last Updated: July 10, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.07.10.1430"
+  version: "26.07.10.1456"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -118,6 +118,7 @@ interval:
           condition:
             lambda: |-
                 if (!id(boot_complete)) return false;
+                if (id(ota_in_progress)) return false;
                 // Only rotate if auto rotation is enabled
                 if (!id(auto_page_rotation_enabled)) return false;
 

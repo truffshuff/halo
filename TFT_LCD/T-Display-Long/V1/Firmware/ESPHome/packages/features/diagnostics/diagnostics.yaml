@@ -410,7 +410,7 @@ interval:
           condition:
             lambda: |-
               // Only run if watchdog is enabled and boot complete
-              if (!id(display_watchdog_enabled) || !id(boot_complete)) return false;
+              if (!id(display_watchdog_enabled) || !id(boot_complete) || id(ota_in_progress)) return false;
 
               ESP_LOGD("display_health", "Performing periodic display refresh cycle");
               return true;
