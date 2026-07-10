@@ -23,6 +23,9 @@ substitutions:
   # Network Configuration
   wifi_ssid: !secret wifihome_ssid
   wifi_password: !secret wifihome_password
+  # Optional alternate network selectable from the device web UI
+  wifi_alt_ssid: !secret my_alt_ssid
+  wifi_alt_password: !secret my_alt_password
 
   # Security
   ota_password: !secret ota_password
@@ -103,6 +106,61 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Halo Hotspot"
+
+select:
+  - platform: template
+    name: "WiFi Target Network"
+    id: wifi_target_network
+    icon: mdi:wifi-cog
+    entity_category: config
+    options:
+      - "YAML Default"
+      - "Alternate"
+    optimistic: true
+    restore_value: true
+    initial_option: "YAML Default"
+    set_action:
+      - logger.log:
+          format: "WiFi target network set to %s"
+          args: ['x.c_str()']
+
+button:
+  - platform: template
+    name: "Apply Selected WiFi"
+    id: apply_selected_wifi
+    icon: mdi:wifi-sync
+    entity_category: config
+    on_press:
+      - if:
+          condition:
+            lambda: 'return id(wifi_target_network).state == "Alternate";'
+          then:
+            - logger.log: "Applying alternate WiFi credentials"
+            - wifi.configure:
+                ssid: !lambda 'return std::string("${wifi_alt_ssid}");'
+                password: !lambda 'return std::string("${wifi_alt_password}");'
+                save: true
+                timeout: 30s
+                on_connect:
+                  - logger.log: "Connected to alternate WiFi credentials"
+                on_error:
+                  - logger.log: "Alternate WiFi failed, restoring YAML default credentials"
+                  - wifi.configure:
+                      ssid: !lambda 'return std::string("${wifi_ssid}");'
+                      password: !lambda 'return std::string("${wifi_password}");'
+                      save: true
+                      timeout: 30s
+          else:
+            - logger.log: "Applying YAML default WiFi credentials"
+            - wifi.configure:
+                ssid: !lambda 'return std::string("${wifi_ssid}");'
+                password: !lambda 'return std::string("${wifi_password}");'
+                save: true
+                timeout: 30s
+                on_connect:
+                  - logger.log: "Connected to YAML default WiFi credentials"
+                on_error:
+                  - logger.log: "YAML default WiFi connection failed"
 
 # logger:
 #   level: DEBUG
