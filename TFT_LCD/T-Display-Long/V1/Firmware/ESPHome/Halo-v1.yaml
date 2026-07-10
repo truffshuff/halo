@@ -80,18 +80,22 @@ dashboard_import:
 ota:
   - platform: esphome
     id: ota_default
+    password: ${ota_password}
     on_begin:
+      - lambda: 'id(ota_in_progress) = true;'
       # Pause BLE scanning during OTA to ensure clean API communication
       - switch.turn_off: ble_scanner_switch
-      - logger.log: "OTA started - BLE scanning paused"
+      - logger.log: "OTA started - low-activity mode enabled, BLE scanning paused"
     on_end:
+      - lambda: 'id(ota_in_progress) = false;'
       # Resume BLE scanning after OTA completes
       - switch.turn_on: ble_scanner_switch
-      - logger.log: "OTA completed - BLE scanning resumed"
+      - logger.log: "OTA completed - low-activity mode disabled, BLE scanning resumed"
     on_error:
+      - lambda: 'id(ota_in_progress) = false;'
       # Resume BLE scanning if OTA fails
       - switch.turn_on: ble_scanner_switch
-      - logger.log: "OTA failed - BLE scanning resumed"
+      - logger.log: "OTA failed - low-activity mode disabled, BLE scanning resumed"
 
 wifi:
   # Reduce WiFi transmission power to prevent brownouts during WiFi connection
