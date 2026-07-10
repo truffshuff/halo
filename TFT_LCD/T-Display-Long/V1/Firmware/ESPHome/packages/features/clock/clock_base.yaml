@@ -207,6 +207,13 @@ script:
           const uint32_t elapsed = now - id(time_update_last_started);
           id(time_update_last_duration) = elapsed;
           const bool rendered = id(time_update_needs_render);
+
+          // mipi_spi does not expose a flush-completion callback. Keep this
+          // heartbeat tied to real application rendering rather than timer
+          // execution so the watchdog still detects a stalled UI pipeline.
+          if (rendered) {
+            id(last_display_update_time) = now;
+          }
           // Update watchdog timer ONLY if we actually rendered something
           if (rendered) {
             id(last_display_update_time) = now;

@@ -308,7 +308,7 @@ button:
           ESP_LOGI("display_reset", "Resetting and re-initializing display hardware...");
           auto *display = id(lily_display);
           if (display != nullptr) {
-            display->recover();
+            display->setup();
           }
       - delay: 500ms
 
@@ -330,7 +330,7 @@ button:
       - logger.log: "Step 6: Updating watchdog timestamp and recovery counter..."
       - lambda: |-
           id(display_recovery_attempts)++;
-          ESP_LOGI("display_reset", "Recovery requested (attempt #%u); waiting for a confirmed flush",
+          ESP_LOGI("display_reset", "Recovery requested (attempt #%u); waiting for a rendering heartbeat",
                    id(display_recovery_attempts));
 
       - logger.log: "Display recovery complete!"
@@ -356,13 +356,6 @@ interval:
               }
 
               const uint32_t now = millis();
-              auto *display = id(lily_display);
-              if (display != nullptr && display->get_flush_count() != id(last_display_flush_count)) {
-                id(last_display_flush_count) = display->get_flush_count();
-                id(last_display_update_time) = now;
-                id(display_recovery_attempts) = 0;
-                ESP_LOGD("display_watchdog", "Confirmed display flush #%u", id(last_display_flush_count));
-              }
               const uint32_t time_since_update = now - id(last_display_update_time);
 
               // Log watchdog check for debugging
@@ -394,7 +387,7 @@ interval:
                   - delay: 300ms
                   - lambda: |-
                       auto *display = id(lily_display);
-                      if (display != nullptr) display->recover();
+                      if (display != nullptr) display->setup();
                   - delay: 500ms
                   - lvgl.resume:
                   - delay: 100ms
@@ -402,6 +395,8 @@ interval:
                   - delay: 200ms
                   - output.turn_on: backlight
                   - delay: 200ms
+                    - lambda: |-
+                      id(last_display_update_time) = millis();
 
   # Periodic Display Controller Health Check
   # The AXS15231 display controller can lose sync even while LVGL continues running.
