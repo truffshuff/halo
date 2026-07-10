@@ -33,7 +33,7 @@ external_components:
   #   ble_improv.yaml  → custom NimBLE stack (truffshuff fork)
   #   ble_esphome.yaml → ESPHome built-in BLE stack (no external components)
   #   ble_stub.yaml    → no BLE
-  - source: github://truffshuff/esphome-components@495dbffa22879f85368718b4f70b50d6b6db85cb # API lifetime-safe sends, buffer synchronization, and safer pairing
+  - source: github://truffshuff/esphome-components@6d83000e4078fefe0607d6ab2cec918361c41c6f # API lifetime-safe sends, buffer synchronization, and safer pairing
     components: [axs15231, sy6970, weather_helpers]
     refresh: always
 
