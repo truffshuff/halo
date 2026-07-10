@@ -395,7 +395,7 @@ interval:
                   - delay: 200ms
                   - output.turn_on: backlight
                   - delay: 200ms
-                    - lambda: |-
+                  - lambda: |-
                       id(last_display_update_time) = millis();
 
   # Periodic Display Controller Health Check
