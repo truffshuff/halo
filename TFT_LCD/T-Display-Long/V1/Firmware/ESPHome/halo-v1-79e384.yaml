@@ -32,8 +32,6 @@ substitutions:
   api_reboot_timeout: "0s"
 
 esphome:
-  includes:
-    - ota_wifi_power.h
   friendly_name: Halo Air Quality Sensor Dev
   name_add_mac_suffix: false
 
@@ -74,19 +72,12 @@ ota:
       # Pause BLE scanning during OTA to ensure clean API communication
       - switch.turn_off: ble_scanner_switch
       - logger.log: "OTA started - BLE scanning paused"
-      - lambda: |-
-          // Normal operation uses 8.5 dBm to reduce brownout risk. Use a
-          // moderate 15 dBm during OTA to improve TCP throughput, then restore
-          // the conservative level when the transfer finishes.
-          halo_set_ota_wifi_power(true);
     on_end:
       # Resume BLE scanning after OTA completes
       - switch.turn_on: ble_scanner_switch
-      - lambda: 'halo_set_ota_wifi_power(false);'
       - logger.log: "OTA completed - BLE scanning resumed"
     on_error:
       # Resume BLE scanning if OTA fails
-      - lambda: 'halo_set_ota_wifi_power(false);'
       - switch.turn_on: ble_scanner_switch
       - logger.log: "OTA failed - BLE scanning resumed"
 
@@ -95,10 +86,9 @@ ota:
 #   disabled: true
 
 wifi:
-  # Reduce WiFi transmission power to prevent brownouts during WiFi connection
-  # ESP32 default is 20dBm which can cause power spikes and crashes
-  # 8.5dBm is sufficient for most home networks and prevents brownout issues
-  output_power: 8.5dB
+  # 15dBm improves OTA TCP throughput while remaining below the ESP32 default
+  # maximum. Reduce this if the device shows brownout symptoms.
+  output_power: 15dB
   # ESPHome 2026.1.0 enables post-connect roaming by default; disable for stationary devices
   post_connect_roaming: false
   use_address: 10.140.80.170
