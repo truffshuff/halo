@@ -133,7 +133,7 @@ button:
     on_press:
       - if:
           condition:
-            lambda: 'return id(wifi_target_network).state == "Alternate";'
+            lambda: 'return id(wifi_target_network).current_option() == "Alternate";'
           then:
             - logger.log: "Applying alternate WiFi credentials"
             - wifi.configure:
