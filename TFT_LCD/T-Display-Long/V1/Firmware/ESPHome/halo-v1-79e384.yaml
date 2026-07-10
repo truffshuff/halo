@@ -126,6 +126,23 @@ select:
 
 button:
   - platform: template
+    name: "Start WiFi Provisioning Portal"
+    id: start_wifi_provisioning_portal
+    icon: mdi:wifi-settings
+    entity_category: config
+    on_press:
+      - logger.log: "Starting WiFi provisioning mode; connect to fallback AP and open http://192.168.4.1"
+      # Trigger a temporary failed connection attempt so fallback AP + captive portal activates.
+      # save: false keeps the currently saved credentials intact.
+      - wifi.configure:
+          ssid: "__HALO_PROVISIONING_MODE__"
+          password: ""
+          save: false
+          timeout: 20s
+          on_error:
+            - logger.log: "Provisioning AP should be active as 'Halo Hotspot'"
+
+  - platform: template
     name: "Apply Selected WiFi"
     id: apply_selected_wifi
     icon: mdi:wifi-sync

@@ -24,6 +24,7 @@
 wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
+  ap_timeout: 15s
   # 0s = never reboot on WiFi disconnect (default is 15min which wipes the
   # offline history ring buffer just like the API reboot timeout did).
   reboot_timeout: 0s
@@ -76,6 +77,8 @@ wifi:
 
 web_server:
   port: 80
+
+captive_portal:
 
 # Note: WiFi signal sensor and IP address sensor are defined in the wifi_status
 # feature package (features/wifi_status/).
