@@ -39,6 +39,8 @@ substitutions:
   api_reboot_timeout: "0s"
 
 esphome:
+  includes:
+    - ota_wifi_power.h
   name: halo-v1
   friendly_name: Halo Air Quality Sensor
   name_add_mac_suffix: true
@@ -83,13 +85,16 @@ ota:
     on_begin:
       # Pause BLE scanning during OTA to ensure clean API communication
       - switch.turn_off: ble_scanner_switch
+      - lambda: 'halo_set_ota_wifi_power(true);'
       - logger.log: "OTA started - BLE scanning paused"
     on_end:
       # Resume BLE scanning after OTA completes
+      - lambda: 'halo_set_ota_wifi_power(false);'
       - switch.turn_on: ble_scanner_switch
       - logger.log: "OTA completed - BLE scanning resumed"
     on_error:
       # Resume BLE scanning if OTA fails
+      - lambda: 'halo_set_ota_wifi_power(false);'
       - switch.turn_on: ble_scanner_switch
       - logger.log: "OTA failed - BLE scanning resumed"
 
