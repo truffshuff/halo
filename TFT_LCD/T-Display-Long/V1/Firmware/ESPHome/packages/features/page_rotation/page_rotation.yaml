@@ -208,8 +208,9 @@ script:
                 id(time_update_last_text).clear();
                 id(weather_last_condition).clear();
 
-                // Force LVGL to invalidate current screen and redraw
+                // Invalidate current screen to schedule a redraw on the next LVGL render pass.
+                // NOTE: lv_refr_now(NULL) was removed here — in LVGL v9 (ESPHome 2026.4.0+)
+                // calling a synchronous render from inside a script lambda while LVGL is in
+                // delegate mode can corrupt the display pipeline and cause black screens.
+                // lv_obj_invalidate is sufficient; LVGL will flush on its own next cycle.
                 lv_obj_invalidate(scr);
-
-                // Force immediate display flush to prevent buffer buildup
-                lv_refr_now(NULL);
