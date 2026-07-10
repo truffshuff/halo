@@ -24,7 +24,6 @@
 wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
-  ap_timeout: 15s
   # 0s = never reboot on WiFi disconnect (default is 15min which wipes the
   # offline history ring buffer just like the API reboot timeout did).
   reboot_timeout: 0s
