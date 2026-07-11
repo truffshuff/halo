@@ -8,13 +8,13 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.07.10.1949
+# Version: 26.07.10.2040
 # Last Updated: July 10, 2026
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.07.10.1949"
+  version: "26.07.10.2040"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -754,7 +754,6 @@ mdns:
 wifi:
   ssid: ${wifi_ssid}
   password: ${wifi_password}
-  min_auth_mode: WPA2  # Explicit for future compatibility
 
   # Reset startup light blink when WiFi disconnects
   # This allows the rainbow effect to restart when connection is lost
