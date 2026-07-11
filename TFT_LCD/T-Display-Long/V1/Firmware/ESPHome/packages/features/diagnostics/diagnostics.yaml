@@ -271,7 +271,7 @@ button:
     name: "Factory Reset ESP"
     id: factory_reset_all
 
-  # Clear Improv WiFi credentials button
+  # Clear Improv WiFi credentials and restore YAML WiFi as saved target
   - platform: template
     name: "Clear Improv WiFi Credentials"
     id: clear_improv_wifi
@@ -284,7 +284,17 @@ button:
           uint8_t dummy = 0;
           pref.save(&dummy);
           ESP_LOGI("main", "Cleared Improv WiFi credentials from NVS");
-      - logger.log: "Improv WiFi credentials cleared. Device will use YAML WiFi config on next boot."
+      # Also overwrite any previously saved runtime credentials (from captive portal/
+      # wifi.configure save:true) so the device returns to YAML defaults.
+      - wifi.configure:
+          ssid: !lambda 'return std::string("${wifi_ssid}");'
+          password: !lambda 'return std::string("${wifi_password}");'
+          save: true
+          timeout: 20s
+          on_connect:
+            - logger.log: "Improv cleared and YAML WiFi credentials restored"
+          on_error:
+            - logger.log: "Improv cleared; failed to connect with YAML WiFi credentials"
 
   # Display recovery button - AGGRESSIVE RESET
   # Use this when display goes black but backlight is still on
