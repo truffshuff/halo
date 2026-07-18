@@ -33,7 +33,7 @@ external_components:
   #   ble_improv.yaml  → custom NimBLE stack (truffshuff fork)
   #   ble_esphome.yaml → ESPHome built-in BLE stack (no external components)
   #   ble_stub.yaml    → no BLE
-  - source: github://truffshuff/esphome-components@af4a33412addfb0e12f0717d387b95ebc728cb47 # Queued NimBLE API responses and deferred callback allocations
+  - source: github://truffshuff/esphome-components@353ce02e6c8c22e2a7f70fd1f4e3e013c051da60 # Fixed -Wformat warnings for uint32_t log args (native ESP-IDF toolchain)
     components: [axs15231, sy6970, weather_helpers]
     refresh: always
 
