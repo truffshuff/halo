@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@353ce02e6c8c22e2a7f70fd1f4e3e013c051da60 # Fixed -Wformat warnings for uint32_t log args (native ESP-IDF toolchain)
+  - source: github://truffshuff/esphome-components@4280ae345affc2e02813cf9a17368f6248ed16c4 # Fixed -Wformat warnings for uint32_t log args (native ESP-IDF toolchain)
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
