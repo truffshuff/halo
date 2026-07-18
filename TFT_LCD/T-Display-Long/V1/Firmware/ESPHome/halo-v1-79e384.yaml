@@ -3,7 +3,8 @@ substitutions:
   name: halo-v1-79e384  # Override Core's default 'halo' name
   # Home Assistant connection for HTTP API calls
   # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
-  ha_url: !secret ha_url  # Example: "http://homeassistant.local:8123"
+  # Temporary override for HA endpoint testing
+  ha_url: "https://halocal.hhut.org"
   ha_token: !secret ha_token  # Your long-lived access token
 
   # 3D Printer — BambuLab device serial prefix used in Home Assistant entity IDs.
@@ -29,6 +30,10 @@ substitutions:
 
   # Security
   ota_password: !secret ota_password
+
+  # Temporary: default WireGuard switch ON for this device
+  # Remove or set to RESTORE_DEFAULT_OFF after testing
+  wireguard_default: "RESTORE_DEFAULT_ON"
 
   # API
   # 0s = never reboot on API disconnect (required for offline history buffering to survive outages)

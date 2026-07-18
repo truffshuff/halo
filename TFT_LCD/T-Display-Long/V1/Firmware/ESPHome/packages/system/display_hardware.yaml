@@ -65,6 +65,13 @@ output:
 # Display Driver - AXS15231 AMOLED
 # ============================================================================
 # LilyGo T-Display-Long AMOLED display (180x640 pixels)
+#
+# NOTE (2026.7.0 breaking change #17405): core `mipi_spi` display drivers now
+# enforce configuration of mandatory components (PSRAM, I/O expanders) for
+# display models that identify a known integrated board. This only affects
+# models with recognized hardware assignments; if `esphome compile` starts
+# failing validation for this display block after upgrading, check the
+# mipi_spi component docs/changelog for what became required for AXS15231.
 # ============================================================================
 display:
   - platform: mipi_spi

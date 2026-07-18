@@ -111,7 +111,7 @@ The project uses ESPHome's `remote_packages` to pull configs from GitHub (`ref: 
 
 | Constraint | Value |
 |-----------|-------|
-| ESPHome minimum version | 2025.11.0 |
+| ESPHome minimum version | 2026.7.0 |
 | Display resolution | 180 × 640 px |
 | ESP32-S3 flash | 16MB |
 | ESP32-S3 PSRAM | 8MB (octal, 80MHz) |
