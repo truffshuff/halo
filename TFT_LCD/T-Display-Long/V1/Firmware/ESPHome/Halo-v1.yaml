@@ -60,14 +60,27 @@ esphome:
   # NEW in 2026.6.0 - Future-proofs for native IDF toolchain option
   build_flags: []
 
-  platformio_options:
-    upload_speed: 921600
-    board_build.flash_mode: qio
-    board_build.psram_type: opi
-    board_build.f_flash: 80000000L
-    board_build.f_cpu: 240000000L
+  # ----------------------------------------------------------------------
+  # PlatformIO toolchain settings (INACTIVE as of 2026.7.0)
+  # ----------------------------------------------------------------------
+  # ESPHome 2026.7.0 flips the ESP32 default build backend from PlatformIO
+  # to native ESP-IDF when no explicit `toolchain:` key is set. This block
+  # only takes effect under `toolchain: platformio`, so as of this upgrade
+  # it is a no-op and left here (commented) purely for easy rollback.
+  #   - flash_mode/flash_frequency moved to esp32: in
+  #     packages/system/esphome_core.yaml (framework-agnostic keys)
+  #   - PSRAM octal/80MHz already declared via the top-level `psram:` component
+  #   - cpu_frequency already explicit under esp32:
+  # To revert to the exact previous PlatformIO build: uncomment this block AND
+  # add `toolchain: platformio` under esp32: in packages/system/esphome_core.yaml.
+  # platformio_options:
+  #   upload_speed: 921600
+  #   board_build.flash_mode: qio
+  #   board_build.psram_type: opi
+  #   board_build.f_flash: 80000000L
+  #   board_build.f_cpu: 240000000L
 
-  min_version: 2026.6.0
+  min_version: 2026.7.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"

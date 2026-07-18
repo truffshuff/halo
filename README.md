@@ -39,7 +39,7 @@ An ESPHome-based firmware for the [LilyGo T-Display-Long](https://www.lilygo.cc/
 
 ### Prerequisites
 
-- [ESPHome](https://esphome.io) 2025.11.0 or newer
+- [ESPHome](https://esphome.io) 2026.7.0 or newer
 - Home Assistant with a Long-Lived Access Token
 - A weather entity in Home Assistant (e.g. `weather.home`)
 

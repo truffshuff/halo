@@ -68,9 +68,20 @@ api:
 esp32:
   board: esp32-s3-devkitc-1
   flash_size: 16MB
+  # Flash mode/frequency migrated here from Halo-v1.yaml's platformio_options.
+  # 2026.7.0 makes native ESP-IDF the default toolchain; board_build.* keys
+  # only apply under toolchain: platformio, so these framework-agnostic
+  # esp32: keys replace them.
+  flash_mode: qio
+  flash_frequency: 80MHz
   cpu_frequency: 240MHz  # Default in 2026.4.0 for ESP32-S3; explicit here for clarity
   # PSRAM-equipped ESP32 r3.0+ can save ~10KB IRAM by disabling older workarounds
   # See changelog: set only if your module reports minimum_chip_revision >= "3.0"
+  # Toolchain: no explicit `toolchain:` set below -> native ESP-IDF (default
+  # since 2026.7.0), which picks up ccache and the shared ~/.cache/esphome/idf
+  # toolchain cache automatically. To roll back to the previous PlatformIO
+  # build, add `toolchain: platformio` here and restore platformio_options in
+  # Halo-v1.yaml (see commented block there).
 
   framework:
     type: esp-idf
