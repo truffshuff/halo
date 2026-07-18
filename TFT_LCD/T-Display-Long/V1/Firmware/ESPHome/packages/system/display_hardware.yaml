@@ -108,7 +108,8 @@ touchscreen:
     on_touch:
       - lambda: |-
           // Validate touch coordinates - filter out spurious/phantom touches
-          if (touch.x < 0 || touch.x > 180 || touch.y < 0 || touch.y > 640) {
+          // (touch.x/y are unsigned, so a `< 0` check is always false and was removed)
+          if (touch.x > 180 || touch.y > 640) {
             ESP_LOGW("touch", "Invalid touch coordinates: x=%d, y=%d - ignoring", touch.x, touch.y);
             return;
           }

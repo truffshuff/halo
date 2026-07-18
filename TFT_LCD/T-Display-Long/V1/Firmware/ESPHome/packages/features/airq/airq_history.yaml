@@ -289,7 +289,7 @@ script:
 
               char entry[240];
               snprintf(entry, sizeof(entry),
-                "{\"ts\":%u,\"q\":%.0f,\"c2\":%.0f,\"n2\":%.2f,\"co\":%.2f,\"h2\":%.2f,"
+                "{\"ts\":%lu,\"q\":%.0f,\"c2\":%.0f,\"n2\":%.2f,\"co\":%.2f,\"h2\":%.2f,"
                 "\"c4\":%.2f,\"et\":%.2f,\"n3\":%.2f,\"p1\":%.1f,\"p25\":%.1f,\"p4\":%.1f,\"p10\":%.1f,"
                 "\"tm\":%.1f,\"vc\":%.0f,\"rh\":%.0f}",
                 ts,
@@ -398,7 +398,7 @@ interval:
               uint32_t elapsed_s = (now_ms - id(aqi_history_last_epoch_millis)) / 1000;
               sample_ts = id(aqi_history_last_epoch) + elapsed_s;
               ESP_LOGD("aqi_history",
-                "SNTP unavailable – dead-reckoned ts=%u (+%us from last sync)",
+                "SNTP unavailable – dead-reckoned ts=%lu (+%lus from last sync)",
                 sample_ts, elapsed_s);
             } else {
               ESP_LOGD("aqi_history", "SNTP not yet valid and no prior reference – skipping");
@@ -507,7 +507,7 @@ interval:
 
           last_sample_ms = now_ms;
           ESP_LOGD("aqi_history",
-                   "Buffered ts=%u  AQI=%.0f CO2=%.0f NO2=%.2f CO=%.2f H2=%.2f "
+                   "Buffered ts=%lu  AQI=%.0f CO2=%.0f NO2=%.2f CO=%.2f H2=%.2f "
                    "CH4=%.2f Eth=%.2f NH3=%.2f PM1=%.1f PM2.5=%.1f PM4=%.1f PM10=%.1f "
                    "Tmp=%.1f VOC=%.0f RH=%.0f  (%d/%d slots)",
                    sample_ts,

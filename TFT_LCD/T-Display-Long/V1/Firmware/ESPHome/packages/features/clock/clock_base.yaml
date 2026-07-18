@@ -154,7 +154,7 @@ script:
                   bool is_pm = now.hour >= 12;
                   int hour_12 = now.hour % 12;
                   if (hour_12 == 0) hour_12 = 12;
-                  char buf[3];
+                  char buf[4];  // sized for 2 digits + sign headroom + NUL to silence -Wformat-truncation
                   if (id(time_format).state) {
                     snprintf(buf, sizeof(buf), "%02d", now.hour);
                   } else {
@@ -166,7 +166,7 @@ script:
                 text: !lambda |-
                   auto now = id(wireguard_enabled).state ? id(sntp_time).now() : id(ha_time).now();
                   if (!now.is_valid()) return std::string("--");
-                  char buf[3];
+                  char buf[4];  // sized for 2 digits + sign headroom + NUL to silence -Wformat-truncation
                   snprintf(buf, sizeof(buf), "%02d", now.minute);
                   return std::string(buf);
             - lvgl.label.update:
