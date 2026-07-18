@@ -30,7 +30,7 @@ lvgl:
           - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
           # Force garbage collection to free up memory before rendering
           - lambda: |-
-              ESP_LOGI("memory", "Before daily forecast page load - Free heap: %d bytes", esp_get_free_heap_size());
+              ESP_LOGI("memory", "Before daily forecast page load - Free heap: %lu bytes", esp_get_free_heap_size());
           # Check if we have data and if it needs refresh
           - if:
               condition:
@@ -40,11 +40,11 @@ lvgl:
                     bool is_stale = (id(weather_daily_last_update) == 0 || time_since_update > 3600000);
 
                     if (is_stale) {
-                    ESP_LOGI("weather", "Daily forecast is stale (age: %u minutes), fetching in background...",
+                    ESP_LOGI("weather", "Daily forecast is stale (age: %lu minutes), fetching in background...",
                              id(weather_daily_last_update) == 0 ? 0 : time_since_update / 60000);
                     return true;
                     } else {
-                    ESP_LOGD("weather", "Daily forecast is fresh (updated %u minutes ago)", time_since_update / 60000);
+                    ESP_LOGD("weather", "Daily forecast is fresh (updated %lu minutes ago)", time_since_update / 60000);
                     return false;
                     }
               then:

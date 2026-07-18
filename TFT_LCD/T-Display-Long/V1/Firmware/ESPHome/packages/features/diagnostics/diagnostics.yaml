@@ -369,13 +369,13 @@ interval:
               const uint32_t time_since_update = now - id(last_display_update_time);
 
               // Log watchdog check for debugging
-              ESP_LOGD("display_watchdog", "Watchdog check: %u seconds since last display update", time_since_update / 1000);
+              ESP_LOGD("display_watchdog", "Watchdog check: %lu seconds since last display update", time_since_update / 1000);
 
               // If display hasn't updated in 90 seconds, trigger recovery.
               // The clock renders once per minute (~60 s), so 90 s gives a safe
               // buffer above that interval and avoids false positives from jitter.
               if (id(last_display_update_time) != 0 && time_since_update > 90000) {
-                ESP_LOGW("display_watchdog", "Display frozen detected! No updates for %u seconds", time_since_update / 1000);
+                ESP_LOGW("display_watchdog", "Display frozen detected! No updates for %lu seconds", time_since_update / 1000);
                 return true;
               }
               return false;

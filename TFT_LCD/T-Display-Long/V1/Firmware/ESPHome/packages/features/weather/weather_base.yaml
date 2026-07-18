@@ -597,7 +597,7 @@ interval:
 
                 // Only fetch if data is stale (older than refresh interval)
                 if (time_since_last_update > ${weather_daily_refresh_interval}) {
-                ESP_LOGI("weather", "Background daily forecast refresh triggered (data age: %d minutes)",
+                ESP_LOGI("weather", "Background daily forecast refresh triggered (data age: %lu minutes)",
                         time_since_last_update / 60);
                 return true;
                 }
@@ -631,7 +631,7 @@ interval:
 
                 // Only fetch if data is stale (older than refresh interval)
                 if (time_since_last_update > ${weather_hourly_refresh_interval}) {
-                ESP_LOGI("weather", "Background hourly forecast refresh triggered (data age: %d minutes)",
+                ESP_LOGI("weather", "Background hourly forecast refresh triggered (data age: %lu minutes)",
                         time_since_last_update / 60);
                 return true;
                 }
@@ -684,9 +684,9 @@ script:
           id(weather_last_duration) = elapsed;
           const bool rendered = id(weather_needs_render);
           if (elapsed > 80) {
-          ESP_LOGW("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          ESP_LOGW("weather_color", "update_weather_icon_color took %lu ms (rendered=%s)", elapsed, rendered ? "true" : "false");
           } else {
-          ESP_LOGD("weather_color", "update_weather_icon_color took %u ms (rendered=%s)", elapsed, rendered ? "true" : "false");
+          ESP_LOGD("weather_color", "update_weather_icon_color took %lu ms (rendered=%s)", elapsed, rendered ? "true" : "false");
           }
           id(weather_needs_render) = false;
 
@@ -718,7 +718,7 @@ script:
       # Feed watchdog before long operation
       - lambda: |-
           App.feed_wdt();
-          ESP_LOGI("weather", "Free heap before daily fetch: %d bytes", esp_get_free_heap_size());
+          ESP_LOGI("weather", "Free heap before daily fetch: %lu bytes", esp_get_free_heap_size());
           ESP_LOGI("weather", "About to call homeassistant.action: weather.get_forecasts");
 
       # Fetch daily forecast using native action
@@ -735,7 +735,7 @@ script:
                   App.feed_wdt();
 
                   ESP_LOGI("weather", "✓ Daily forecast response received via native action");
-                  ESP_LOGI("weather", "Free heap at daily response: %d bytes", esp_get_free_heap_size());
+                  ESP_LOGI("weather", "Free heap at daily response: %lu bytes", esp_get_free_heap_size());
 
                   // Log memory state before JSON parsing
                   ESP_LOGI("memory", "Before JSON parse - Internal RAM free: %d, PSRAM free: %d",
@@ -1129,7 +1129,7 @@ script:
 
       - lambda: |-
           App.feed_wdt();
-          ESP_LOGI("weather", "Free heap before hourly HTTP: %d bytes (internal: %d)",
+          ESP_LOGI("weather", "Free heap before hourly HTTP: %lu bytes (internal: %lu)",
                    esp_get_free_heap_size(), heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
           ESP_LOGI("weather", "Hourly HTTP target: %s/api/services/weather/get_forecasts",
                    "${ha_url}");
