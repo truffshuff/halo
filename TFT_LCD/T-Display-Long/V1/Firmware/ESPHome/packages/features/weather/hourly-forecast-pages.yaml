@@ -33,7 +33,7 @@ lvgl:
           - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
           # Force garbage collection to free up memory before rendering
           - lambda: |-
-              ESP_LOGI("memory", "Before hourly page load - Free heap: %lu bytes", esp_get_free_heap_size());
+              ESP_LOGI("memory", "Before hourly page load - Free heap: %zu bytes", esp_get_free_heap_size());
           # Check if we have data and if it needs refresh
           - if:
               condition:
