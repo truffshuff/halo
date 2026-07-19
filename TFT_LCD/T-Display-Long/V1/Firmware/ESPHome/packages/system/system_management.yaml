@@ -257,7 +257,7 @@ interval:
                 on_response:
                   then:
                     - logger.log:
-                        format: 'HTTP google: status=%d duration=%dms'
+                        format: 'HTTP google: status=%d duration=%lums'
                         args:
                           - response->status_code
                           - response->duration_ms
@@ -280,7 +280,7 @@ interval:
                 on_response:
                   then:
                     - logger.log:
-                        format: 'HTTP cloudflare: status=%d duration=%dms'
+                        format: 'HTTP cloudflare: status=%d duration=%lums'
                         args:
                           - response->status_code
                           - response->duration_ms
