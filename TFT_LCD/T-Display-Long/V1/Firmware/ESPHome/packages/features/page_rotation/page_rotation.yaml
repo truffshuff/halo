@@ -202,7 +202,7 @@ script:
                 }
 
                 // Log current memory state before cleanup
-                ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %lu", esp_get_free_heap_size());
+                ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %zu", esp_get_free_heap_size());
 
                 // Clear all cached strings to free memory
                 id(time_update_last_text).clear();

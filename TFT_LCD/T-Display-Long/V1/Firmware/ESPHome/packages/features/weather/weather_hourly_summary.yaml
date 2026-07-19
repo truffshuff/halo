@@ -566,7 +566,7 @@ lvgl:
           - lambda: 'id(current_page_name) = "hourly_summary_1";'
           - delay: 100ms
           - lambda: |-
-              ESP_LOGI("memory", "Before hourly summary page 1 load - Free heap: %lu bytes", esp_get_free_heap_size());
+              ESP_LOGI("memory", "Before hourly summary page 1 load - Free heap: %zu bytes", esp_get_free_heap_size());
           - if:
               condition:
                 lambda: |-
@@ -1163,7 +1163,7 @@ lvgl:
           - lambda: 'id(current_page_name) = "hourly_summary_2";'
           - delay: 100ms
           - lambda: |-
-              ESP_LOGI("memory", "Before hourly summary page 2 load - Free heap: %lu bytes", esp_get_free_heap_size());
+              ESP_LOGI("memory", "Before hourly summary page 2 load - Free heap: %zu bytes", esp_get_free_heap_size());
           - if:
               condition:
                 lambda: |-

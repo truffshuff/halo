@@ -718,7 +718,7 @@ script:
       # Feed watchdog before long operation
       - lambda: |-
           App.feed_wdt();
-          ESP_LOGI("weather", "Free heap before daily fetch: %lu bytes", esp_get_free_heap_size());
+          ESP_LOGI("weather", "Free heap before daily fetch: %zu bytes", esp_get_free_heap_size());
           ESP_LOGI("weather", "About to call homeassistant.action: weather.get_forecasts");
 
       # Fetch daily forecast using native action
@@ -735,7 +735,7 @@ script:
                   App.feed_wdt();
 
                   ESP_LOGI("weather", "✓ Daily forecast response received via native action");
-                  ESP_LOGI("weather", "Free heap at daily response: %lu bytes", esp_get_free_heap_size());
+                  ESP_LOGI("weather", "Free heap at daily response: %zu bytes", esp_get_free_heap_size());
 
                   // Log memory state before JSON parsing
                   ESP_LOGI("memory", "Before JSON parse - Internal RAM free: %d, PSRAM free: %d",
@@ -1129,7 +1129,7 @@ script:
 
       - lambda: |-
           App.feed_wdt();
-          ESP_LOGI("weather", "Free heap before hourly HTTP: %lu bytes (internal: %lu)",
+          ESP_LOGI("weather", "Free heap before hourly HTTP: %zu bytes (internal: %zu)",
                    esp_get_free_heap_size(), heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
           ESP_LOGI("weather", "Hourly HTTP target: %s/api/services/weather/get_forecasts",
                    "${ha_url}");
