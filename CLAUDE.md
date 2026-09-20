@@ -18,9 +18,10 @@ halo/TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/
 ```
 
 Key files:
-- `Halo-v1.yaml` — main entry point; edit substitutions and enabled packages here
+- `docs/ARCHITECTURE.md`, `docs/MEMORY.md` — read these first
+- `Halo-v1.yaml` — **template**; the starting point users copy. Substitution values are placeholders. It must still validate as shipped.
 - `Halo-v1-Core.yaml` — core LVGL display init and navigation glue
-- `halo-v1-<mac>.yaml` — device-specific overrides
+- `halo-v1-<mac>.yaml` — **a real working device config** (named for the unit's MAC suffix). `halo-v1-79e384.yaml` is the reference example and is authoritative over the template when they disagree.
 - `packages/system/` — required system modules (do not disable)
 - `packages/features/` — optional feature modules (comment/uncomment to toggle)
 - `packages/base/globals.yaml` — must load before all other packages
@@ -73,10 +74,15 @@ The project uses ESPHome's `remote_packages` to pull configs from GitHub (`ref: 
 - The display has a watchdog in `display_hardware.yaml` that forces a redraw if the display appears frozen.
 
 ### Memory Management
-- The ESP32-S3 has 8MB PSRAM. LVGL buffers, WiFi buffers, and LWIP stacks are allocated there.
-- Before adding a new feature, estimate its memory impact and document it in the package header.
+- **Read `TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/docs/MEMORY.md` before changing any buffer size, `sdkconfig_option`, or allocation.** Several values that look wasteful are load-bearing.
+- Internal SRAM is the scarce resource (~320KB usable heap); PSRAM (8MB) is not. The metric that matters is *minimum free internal heap*, not idle free heap.
+- WiFi and lwIP buffers must stay in **internal** SRAM (DMA). `CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP` was tried and reverted — it made internal heap worse.
+- LVGL draw buffers, the NimBLE stack, mbedTLS contexts, JSON pools and image buffers live in PSRAM.
+- New JSON parsing must use the `ArduinoJson::Allocator` PSRAM pattern in `weather_base.yaml`, not `heap_caps_malloc(sizeof(JsonDocument), ...)` + placement new (that only moves ~32 bytes).
+- Never allocate inside a 1s or 100ms interval lambda. Use `static char buf[N]` + `snprintf`, or fixed stack arrays.
+- Before adding a new feature, estimate its memory impact and document it in the package header — and say whether it is flash, internal SRAM or PSRAM.
 - The watchdog timeout is 30 seconds (extended for large JSON parsing in weather). Do not introduce blocking operations longer than this.
-- Disabling features like `weather_hourly.yaml` saves ~7KB — mention this in feature comments.
+- Disabling features like `weather_hourly.yaml` saves ~7KB of flash — mention this in feature comments.
 
 ### WireGuard
 - The WireGuard module (`features/wireguard/wireguard.yaml`) contains server-specific configuration substitutions.
@@ -87,7 +93,8 @@ The project uses ESPHome's `remote_packages` to pull configs from GitHub (`ref: 
 
 ## What Not to Do
 
-- **Do not run `esphome` commands** — there is no device connected in CI or during code review sessions. Compilation requires a valid `secrets.yaml` and ESPHome installation.
+- **Do not run `esphome run`, `esphome upload`, or `esphome logs`** — these touch a physical device. `esphome config` (read-only validation) is fine when an ESPHome install and `secrets.yaml` are present; prefer a pinned version matching `min_version`. Note that `esphome config` does **not** compile lambdas, so it cannot validate embedded C++.
+- **Do not assume local edits under `packages/` are what gets built** — builds pull from GitHub `ref: modular` with `refresh: Always`. Use the local-path harness in `docs/ARCHITECTURE.md` §9 to validate uncommitted changes.
 - **Do not create backup files** — use git instead.
 - **Do not hardcode local network addresses** (e.g., `192.168.x.x`) or device-specific sensor entity IDs in shared package files. Those belong in substitutions within `Halo-v1.yaml` or device-specific overrides.
 - **Do not commit `secrets.yaml`** under any circumstances.
@@ -111,12 +118,15 @@ The project uses ESPHome's `remote_packages` to pull configs from GitHub (`ref: 
 
 | Constraint | Value |
 |-----------|-------|
-| ESPHome minimum version | 2026.7.0 |
+| ESPHome minimum version | 2026.9.0 |
+| Build toolchain | native `esp-idf` (default since 2026.7.0; `platformio` is deprecated, removed 2027.2.0) |
 | Display resolution | 180 × 640 px |
 | ESP32-S3 flash | 16MB |
 | ESP32-S3 PSRAM | 8MB (octal, 80MHz) |
 | CPU frequency | 240MHz |
 | Watchdog timeout | 30 seconds |
-| WiFi TX power | 8.5dBm (brownout prevention) |
-| LVGL buffer | 30% of screen (configurable) |
-| Home Assistant API reboot timeout | 0s (disabled) |
+| WiFi TX power | 15dBm |
+| LVGL buffer | 50% of screen → 1/2-screen buffer in PSRAM (see docs/MEMORY.md §4) |
+| TCP send buffer | 65535 via `network: tcp_send_buffer:` |
+| Home Assistant API reboot timeout | 0s (disabled — preserves the in-RAM AQI history buffer) |
+| WiFi reboot timeout | 0s (same reason) |

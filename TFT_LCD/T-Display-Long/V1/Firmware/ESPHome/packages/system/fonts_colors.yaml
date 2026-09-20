@@ -5,10 +5,19 @@
 # Dependencies: None
 #
 # This module defines:
-#   - Montserrat fonts (9 sizes)
-#   - Material Design Icon fonts (7 sizes)
-#   - Color palette
-#   - Images (logos)
+#   - Montserrat fonts (9 sizes: 10/14/16/18/20/24/28/50/80)
+#   - Material Design Icon fonts (4 sizes: 24/40/80/100)
+#   - Color palette (9 named colors)
+#   - Images (YM logo, fetched at compile time)
+#
+# COST: FLASH, not RAM. ESPHome emits every glyph bitmap as a const array in
+# flash; LVGL reads glyphs directly from flash at render time. Adding a font
+# size costs flash and build time, not free heap.
+#
+# 2026.09: icons_50, icons_28 and icons_20 were removed - nothing in the tree
+# referenced them. That reclaims roughly 20 KB of flash with no visual change.
+# If you add a widget that needs one of those sizes, re-add the font block and
+# copy the glyph list from icons_40.
 # ============================================================================
 
 # ============================================================================
@@ -119,25 +128,6 @@ font:
       ]
 
   - file: "fonts/materialdesignicons-webfont.ttf"
-    id: icons_50
-    size: 50
-    bpp: 4
-    glyphs: [
-      "\U000F0594", # clear-night
-      "\U000F0590", # cloudy
-      "\U000F0591", # fog
-      "\U000F0593", # lightning
-      "\U000F067E", # lightning-rainy
-      "\U000F0595", # partlycloudy
-      "\U000F0597", # rainy
-      "\U000F0598", # snowy
-      "\U000F067F", # snowy-rainy
-      "\U000F0599", # sunny
-      "\U000F059D", # windy
-      "\U000F14E4", # sunny-off
-      ]
-
-  - file: "fonts/materialdesignicons-webfont.ttf"
     id: icons_40
     size: 40
     bpp: 4
@@ -159,44 +149,6 @@ font:
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: icons_24
     size: 24
-    bpp: 4
-    glyphs: [
-      "\U000F0594", # clear-night
-      "\U000F0590", # cloudy
-      "\U000F0591", # fog
-      "\U000F0593", # lightning
-      "\U000F067E", # lightning-rainy
-      "\U000F0595", # partlycloudy
-      "\U000F0597", # rainy
-      "\U000F0598", # snowy
-      "\U000F067F", # snowy-rainy
-      "\U000F0599", # sunny
-      "\U000F059D", # windy
-      "\U000F14E4", # sunny-off
-      ]
-
-  - file: "fonts/materialdesignicons-webfont.ttf"
-    id: icons_20
-    size: 20
-    bpp: 4
-    glyphs: [
-      "\U000F0594", # clear-night
-      "\U000F0590", # cloudy
-      "\U000F0591", # fog
-      "\U000F0593", # lightning
-      "\U000F067E", # lightning-rainy
-      "\U000F0595", # partlycloudy
-      "\U000F0597", # rainy
-      "\U000F0598", # snowy
-      "\U000F067F", # snowy-rainy
-      "\U000F0599", # sunny
-      "\U000F059D", # windy
-      "\U000F14E4", # sunny-off
-      ]
-
-  - file: "fonts/materialdesignicons-webfont.ttf"
-    id: icons_28
-    size: 28
     bpp: 4
     glyphs: [
       "\U000F0594", # clear-night

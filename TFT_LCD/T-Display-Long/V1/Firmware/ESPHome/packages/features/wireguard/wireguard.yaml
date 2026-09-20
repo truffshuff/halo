@@ -62,10 +62,6 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: wg_status_color_needs_render
-    type: bool
-    restore_value: no
-    initial_value: 'false'
 
   # WireGuard VPN IP address tracking
   - id: wg_address_last_text

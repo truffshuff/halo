@@ -73,12 +73,14 @@ sensor:
     id: sys_uptime
     update_interval: 60s
 
-  # WiFi signal strength in dB
-  - platform: wifi_signal
-    name: RSSI
-    id: wifi_signal_db
-    update_interval: 60s
-    entity_category: "diagnostic"
+  # NOTE: the `wifi_signal` sensor (id: wifi_signal_db) used to live here.
+  # It was MOVED to packages/system/networking.yaml in 2026.09 because
+  # Halo-v1-Core.yaml - a required file - references id(wifi_signal_db)
+  # unconditionally. With diagnostics disabled (the default in Halo-v1.yaml)
+  # the config failed to validate with
+  #   "Couldn't find ID 'wifi_signal_db'".
+  # The entity keeps the same name, id and entity_category, so nothing changes
+  # in Home Assistant.
 
   # ============================================================================
   # Display Health Sensors

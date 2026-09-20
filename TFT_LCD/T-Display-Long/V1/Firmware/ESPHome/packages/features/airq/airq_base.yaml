@@ -707,7 +707,10 @@ sensor:
                             - lvgl.label.update:
                                 id: rh_value
                                 text_color: my_red  # Very uncomfortable or potentially hazardous (%)
-    voc:
+    # Renamed from `voc:` in ESPHome 2026.8.0 (esphome#17724); the old key is
+    # deprecated and is removed in 2027.2.0. Sensor name and id are unchanged,
+    # so the Home Assistant entity is unaffected.
+    voc_index:
       name: "SEN55 VOC"
       id: sen55_voc
       algorithm_tuning:

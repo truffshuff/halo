@@ -168,11 +168,6 @@ globals:
     restore_value: no
     initial_value: '0'
 
-  - id: weather_hourly_action_start_time
-    type: unsigned long
-    restore_value: no
-    initial_value: '0'
-
   - id: weather_on_weather_page
     type: bool
     restore_value: no
@@ -407,10 +402,6 @@ sensor:
       then:
         - lambda: |-
             id(weather_current_temp) = x;
-            // Only update display if on weather page
-            if (id(current_page_name) == "weather") {
-              id(sensor_ui_dirty) = true;
-            }
 
   - platform: homeassistant
     id: apparent_temp_sensor
@@ -419,10 +410,6 @@ sensor:
       then:
         - lambda: |-
             id(weather_current_apparent_temp) = x;
-            // Only update display if on weather page
-            if (id(current_page_name) == "weather") {
-              id(sensor_ui_dirty) = true;
-            }
 
   - platform: homeassistant
     id: current_humidity_sensor
@@ -432,34 +419,24 @@ sensor:
       then:
         - lambda: |-
             id(weather_current_humidity) = x;
-            // Only update display if on weather page
-            if (id(current_page_name) == "weather") {
-              id(sensor_ui_dirty) = true;
-            }
 
   # Wind speed sensor from Home Assistant
   - platform: homeassistant
     id: wind_speed_sensor
     entity_id: ${wind_speed_sensor}
-    on_value:
-      then:
-        - lambda: |-
-            // Update display if on weather page
-            if (id(current_page_name) == "weather") {
-              id(sensor_ui_dirty) = true;
-            }
+    # No on_value trigger: this sensor's value is read directly with
+    # id(wind_speed_sensor).state by the lambdas in weather_page.yaml.
+    # Its only trigger used to set the dead `sensor_ui_dirty` flag, so the whole
+    # block was removed in 2026.09 rather than left as an empty lambda.
 
   # Wind direction sensor from Home Assistant
   - platform: homeassistant
     id: wind_direction_sensor
     entity_id: ${wind_direction_sensor}
-    on_value:
-      then:
-        - lambda: |-
-            // Update display if on weather page
-            if (id(current_page_name) == "weather") {
-              id(sensor_ui_dirty) = true;
-            }
+    # No on_value trigger: this sensor's value is read directly with
+    # id(wind_direction_sensor).state by the lambdas in weather_page.yaml.
+    # Its only trigger used to set the dead `sensor_ui_dirty` flag, so the whole
+    # block was removed in 2026.09 rather than left as an empty lambda.
 
 text_sensor:
   # Weather condition from Home Assistant
@@ -500,23 +477,40 @@ text_sensor:
             std::string s = x;
             ESP_LOGI("weather", "Received hourly forecast attribute (%d bytes)", s.length());
 
-            // Parse JSON in PSRAM to avoid internal RAM exhaustion
-            void* json_mem = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM);
-            if (!json_mem) {
-              ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM for hourly attribute!");
-              return;
-            }
-            JsonDocument *doc = new (json_mem) JsonDocument;
+            // ----------------------------------------------------------------
+            // PSRAM-backed JSON parse
+            // ----------------------------------------------------------------
+            // ArduinoJson 7 keeps its growing data pool in a separate
+            // allocation reached through an Allocator; the JsonDocument object
+            // itself is only ~32 bytes. The previous code heap_caps_malloc'd
+            // sizeof(JsonDocument) in PSRAM and placement-new'd into it, which
+            // placed those 32 bytes in PSRAM and left the POOL - the part that
+            // actually grows to tens of KB - on the default allocator. It only
+            // stayed out of internal DRAM because
+            // CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL is set to 512.
+            //
+            // Supplying an allocator puts the pool in PSRAM explicitly, and the
+            // document can then live on the stack with normal RAII - no manual
+            // destructor call and no leak path on early return.
+            struct PsramJsonAllocator : ArduinoJson::Allocator {
+              void *allocate(size_t size) override {
+                return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+              }
+              void deallocate(void *ptr) override { heap_caps_free(ptr); }
+              void *reallocate(void *ptr, size_t new_size) override {
+                return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
+              }
+            };
+            static PsramJsonAllocator psram_json_alloc;
+            JsonDocument doc(&psram_json_alloc);
             App.feed_wdt();
-            DeserializationError err = deserializeJson(*doc, s);
+            DeserializationError err = deserializeJson(doc, s);
             if (err) {
               ESP_LOGE("weather", "Hourly attribute JSON parse failed: %s", err.c_str());
-              doc->~JsonDocument();
-              heap_caps_free(json_mem);
               return;
             }
 
-            JsonArray forecast_array = (*doc).as<JsonArray>();
+            JsonArray forecast_array = doc.as<JsonArray>();
             int count = std::min((int)forecast_array.size(), 24);
             ESP_LOGI("weather", "Parsing %d hourly entries from attribute", count);
 
@@ -559,10 +553,6 @@ text_sensor:
               idx++;
               if (idx % 6 == 0) App.feed_wdt();
             }
-
-            // Cleanup
-            doc->~JsonDocument();
-            heap_caps_free(json_mem);
 
             id(weather_hourly_last_update) = millis();
             id(weather_last_update) = millis();
@@ -1167,31 +1157,46 @@ script:
 
                   ESP_LOGI("weather", "✓ Fallback received %d bytes", body.length());
 
-                  // Parse JSON in PSRAM
-                  void* json_mem = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM);
-                  if (!json_mem) {
-                    ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM for fallback!");
-                    return;
-                  }
-                  JsonDocument *doc = new (json_mem) JsonDocument;
+                  // ----------------------------------------------------------------
+                  // PSRAM-backed JSON parse
+                  // ----------------------------------------------------------------
+                  // ArduinoJson 7 keeps its growing data pool in a separate
+                  // allocation reached through an Allocator; the JsonDocument object
+                  // itself is only ~32 bytes. The previous code heap_caps_malloc'd
+                  // sizeof(JsonDocument) in PSRAM and placement-new'd into it, which
+                  // placed those 32 bytes in PSRAM and left the POOL - the part that
+                  // actually grows to tens of KB - on the default allocator. It only
+                  // stayed out of internal DRAM because
+                  // CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL is set to 512.
+                  //
+                  // Supplying an allocator puts the pool in PSRAM explicitly, and the
+                  // document can then live on the stack with normal RAII - no manual
+                  // destructor call and no leak path on early return.
+                  struct PsramJsonAllocator : ArduinoJson::Allocator {
+                    void *allocate(size_t size) override {
+                      return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+                    }
+                    void deallocate(void *ptr) override { heap_caps_free(ptr); }
+                    void *reallocate(void *ptr, size_t new_size) override {
+                      return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
+                    }
+                  };
+                  static PsramJsonAllocator psram_json_alloc;
+                  JsonDocument doc(&psram_json_alloc);
 
                   App.feed_wdt();
-                  DeserializationError err = deserializeJson(*doc, body);
+                  DeserializationError err = deserializeJson(doc, body);
                   if (err) {
                     ESP_LOGE("weather", "Fallback JSON parse failed: %s", err.c_str());
-                    doc->~JsonDocument();
-                    heap_caps_free(json_mem);
                     return;
                   }
 
                   // HTTP REST API returns: {"service_response": {"weather.hhut": {"forecast": [...]}}}
                   JsonArrayConst forecast_array;
-                  if ((*doc)["service_response"]["${weather_entity_id}"]["forecast"].is<JsonArrayConst>()) {
-                    forecast_array = (*doc)["service_response"]["${weather_entity_id}"]["forecast"];
+                  if (doc["service_response"]["${weather_entity_id}"]["forecast"].is<JsonArrayConst>()) {
+                    forecast_array = doc["service_response"]["${weather_entity_id}"]["forecast"];
                   } else {
                     ESP_LOGE("weather", "Fallback: No forecast array found in response");
-                    doc->~JsonDocument();
-                    heap_caps_free(json_mem);
                     return;
                   }
 
@@ -1230,10 +1235,6 @@ script:
                     idx++;
                     if (idx % 6 == 0) App.feed_wdt();
                   }
-
-                  // Cleanup
-                  doc->~JsonDocument();
-                  heap_caps_free(json_mem);
 
                   id(weather_hourly_last_update) = millis();
                   id(weather_last_update) = millis();

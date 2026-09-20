@@ -79,7 +79,26 @@ web_server:
 
 captive_portal:
 
-# Note: WiFi signal sensor and IP address sensor are defined in the wifi_status
+# ============================================================================
+# WiFi Signal Sensor
+# ============================================================================
+# Defined here, in a REQUIRED module, because Halo-v1-Core.yaml references
+# id(wifi_signal_db) unconditionally in its 1s WiFi-stats interval. It used to
+# live in features/diagnostics/diagnostics.yaml, which is optional and is
+# commented out in the published Halo-v1.yaml - so the default configuration
+# did not validate.
+#
+# Name, id and entity_category are unchanged from the previous definition, so
+# the Home Assistant entity is identical.
+# ============================================================================
+sensor:
+  - platform: wifi_signal
+    name: RSSI
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+# Note: the WiFi IP address text sensor is defined in the wifi_status
 # feature package (features/wifi_status/).
 
 # ============================================================================

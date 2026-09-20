@@ -45,7 +45,9 @@ light:
   - platform: esp32_rmt_led_strip
     name: Halo
     id: rgb_light
-    rgb_order: GRB
+    # Renamed from `rgb_order:` in ESPHome 2026.8.0 (esphome#18474); the old
+    # key is deprecated and is removed in 2027.3.0. Same channel mapping.
+    channel_colors: GRB
     pin: GPIO47
     num_leds: 12
     use_dma: true  # Use DMA for better performance
