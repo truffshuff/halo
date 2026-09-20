@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@37d8a542325339b1d0e525eadbee8e0096d79b1e # Fixed -Wformat warnings for uint32_t log args (native ESP-IDF toolchain)
+  - source: github://truffshuff/esphome-components@69b50f3089ee90e130b0f84696c5e41a8a5e316c # ESPHome 2026.9.0 fix: request_bluetooth() + USE_BLUETOOTH_PROXY_CONNECTIONS
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
