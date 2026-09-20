@@ -74,6 +74,26 @@ external_components:
 # ============================================================================
 esp32:
   framework:
+    # ------------------------------------------------------------------------
+    # REQUIRED since ESPHome 2026.9.0 (esphome#18599)
+    # ------------------------------------------------------------------------
+    # 2026.9.0 excludes the ESP-IDF `bt` component from the build by default
+    # and re-includes it only when a component calls esp32.request_bluetooth().
+    # ESPHome's own esp32_ble does that; the NimBLE components in
+    # truffshuff/esphome-components do not, so the build failed with:
+    #
+    #   nimble_proxy/nimble_proxy.h:12:10: fatal error: esp_bt.h: No such file
+    #   or directory
+    #
+    # Re-including `bt` here restores the header search path. `bt` pulls
+    # esp_coex and esp_wifi back in via its own REQUIRES, so only `bt` is
+    # needed.
+    #
+    # This is a stopgap. The real fix is a request_bluetooth() call in the
+    # fork's nimble_base component; once that ships, this line can be removed.
+    advanced:
+      include_builtin_idf_components: [bt]
+
     sdkconfig_options:
       # Enable NimBLE, disable Bluedroid
       CONFIG_BT_ENABLED: "y"
