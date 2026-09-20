@@ -293,12 +293,25 @@ Recorded because they are easy to rediscover and misdiagnose.
    sensor into `networking.yaml`. The working device file escaped it only because it enables
    diagnostics.
 
-3. **AppDaemon device id does not match this device.**
+3. **The AppDaemon app targets a different unit on purpose.**
    `HomeAssistant/AppDaemon/apps/halo_sensor_history.yaml` sets
    `device_filter: "halo-v1-79e35c"` and the statistic ids in `halo_sensor_history.py` are
-   `sensor.halo_v1_79e35c_*`, but the device file in this repository is `halo-v1-79e384`.
-   With that filter in place, AQI history batches from `halo-v1-79e384` are **silently
-   dropped**. Either there is a second unit, or one of the two identifiers is a typo.
+   `sensor.halo_v1_79e35c_*`, which is neither the device file in this repository
+   (`halo-v1-79e384`) nor the unit currently being built. That is intentional, not a typo:
+   the app exists for a Halo that lives at a remote site and is offline most of the time.
+   When that unit comes back over WireGuard, `api: on_client_connected` in
+   `Halo-v1-Core.yaml` runs `flush_aqi_history`, the device replays its in-RAM ring buffer as
+   `esphome.aqi_history_batch` events, and this app backfills them into the HA recorder so
+   the offline period is not a gap in the statistics.
+
+   This is also *why* `api: reboot_timeout: 0s` and `wifi: reboot_timeout: 0s` are
+   load-bearing (see §8) — a reboot during the outage would discard the very buffer this app
+   exists to drain.
+
+   Two things to know before adding a second offline unit: `device_filter` is configurable
+   per app instance, but the `SENSORS` table in `halo_sensor_history.py` hard-codes the full
+   `sensor.halo_v1_79e35c_*` statistic ids (lines 67+), so a second unit needs its own copy
+   of that list — or the table refactored to take the entity prefix from `device_filter`.
 
 4. **`HomeAssistant/dashbaord.yaml`** is misspelled, and `printer_base.yaml` references it
    under that spelling. Renaming means updating the reference.
