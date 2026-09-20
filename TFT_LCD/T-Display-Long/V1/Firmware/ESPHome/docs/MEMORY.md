@@ -262,12 +262,27 @@ To populate a baseline, record from the diagnostics entities above:
 
 | Metric | Before | After |
 |---|---:|---:|
-| Free internal heap (idle, 24 h) | | |
-| Min free internal heap ever | | |
-| Largest free internal block | | |
-| Heap fragmentation % | | |
-| Free PSRAM | | |
-| Flash / firmware size (from `esphome compile` output) | | |
+| Free internal heap | not measured | **102,551 – 105,363 B** |
+| Free heap, all caps (internal + PSRAM) | not measured | **5,191,127 – 5,211,335 B** |
+| Min free internal heap ever | not measured | not measured |
+| Largest free internal block | not measured | not measured |
+| Heap fragmentation % | not measured | not measured |
+| Firmware size | not measured | **2,374,128 B** |
+
+The "after" figures are from serial logs on device `halo-v1-79e1f8` running the
+2026.09 build (`weather:1122` logs internal and total free heap before each hourly
+fetch). There is no "before" column because the pre-change firmware was never
+instrumented this way — do not read the blanks as zero.
+
+**What this supports:** ~102 KB free internal heap is consistent with the LVGL draw
+buffer living in PSRAM. Had it remained internal at the old `buffer_size: 30%`
+(1/4 screen = 57.6 KB), free internal would sit nearer 45–48 KB. That is corroboration,
+not proof — an A/B at `30%` on the same device would settle it.
+
+**Still missing, and the one that matters most:** `Min Free Heap Ever`
+(`heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL)`). Idle free heap does not tell
+you whether a peak scenario from §6 nearly exhausted internal RAM. Read it from the
+diagnostics entity after 24 h of normal operation.
 
 The expected direction of change is **+~57.6 KB internal heap** from the LVGL buffer move,
 plus a reduction in fragmentation from removing the per-second vector churn in the page
