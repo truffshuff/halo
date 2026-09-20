@@ -178,9 +178,28 @@ esp32:
       # See docs/MEMORY.md "Known hazards" before adding native components.
       CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY: "y"
 
-      # WiFi RX block-ack window. Raised from the default 6 to smooth bursty
-      # inbound traffic (weather JSON, cover-image download).
-      CONFIG_ESP32_WIFI_RX_BA_WIN: "16"
+      # REMOVED 2026.09: CONFIG_ESP32_WIFI_RX_BA_WIN: "16".
+      #
+      # In ESP-IDF's Kconfig, RX_BA_WIN and STATIC_RX_BUFFER_NUM default to 16
+      # *together*, and only when SPIRAM_TRY_ALLOCATE_WIFI_LWIP is enabled:
+      #     default 6  if !(SPIRAM_TRY_ALLOCATE_WIFI_LWIP && !SPIRAM_IGNORE_NOTFOUND)
+      #     default 16 if  (SPIRAM_TRY_ALLOCATE_WIFI_LWIP && !SPIRAM_IGNORE_NOTFOUND)
+      # This project reverted SPIRAM_TRY_ALLOCATE_WIFI_LWIP (see the note above)
+      # but kept RX_BA_WIN at 16, leaving STATIC_RX_BUFFER_NUM at its non-PSRAM
+      # default of 10. Espressif's own guidance on STATIC_RX_BUFFER_NUM says it
+      # "is recommended to set equal or bigger than ESP_WIFI_RX_BA_WIN in order
+      # to achieve better throughput and compatibility with both stations and
+      # APs" - so 10 < 16 is the unsupported half of a pairing.
+      #
+      # Symptoms this produced: healthy RSSI (-58 dBm) and healthy TX
+      # (nimble_proxy send_failed=0) but collapsed *inbound* throughput -
+      # OTA downloads starving to ~0.6 kB/s and hard DNS failures
+      # (getaddrinfo EAI_FAIL) from lost UDP responses.
+      #
+      # Dropping the override restores the matched IDF default of 6.
+      # If inbound throughput ever needs raising, raise BOTH - and note that
+      # each static RX buffer costs ~1.6 KB of INTERNAL RAM, so going to 16
+      # would spend ~9.6 KB of the scarcest resource on this board.
 
       # REMOVED 2026.09 - these were no-ops, verified against the generated
       # sdkconfig and the ESP-IDF 5.5 Kconfig:
