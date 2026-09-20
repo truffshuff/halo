@@ -42,12 +42,6 @@ globals:
     restore_value: yes
     initial_value: '3'
 
-  # WiFi logo visibility state
-  - id: wifi_logo_visible
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
   # WiFi signal strength display tracking
   - id: wifi_signal_last_text
     type: std::string

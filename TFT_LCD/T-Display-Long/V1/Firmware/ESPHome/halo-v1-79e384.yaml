@@ -56,14 +56,15 @@ esphome:
   #           ESP_LOGI("main", "Improv WiFi credentials cleared! YAML WiFi will be used.");
   #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
 
-  platformio_options:
-    upload_speed: 921600
-    board_build.flash_mode: qio
-    board_build.psram_type: opi
-    board_build.f_flash: 80000000L
-    board_build.f_cpu: 240000000L
+  # REMOVED 2026.09: a `platformio_options:` block (upload_speed,
+  # board_build.flash_mode/psram_type/f_flash/f_cpu). The build uses the native
+  # ESP-IDF toolchain, where those keys are inert - verified with
+  # `esphome config`, which resolved the same esp32: settings with and without
+  # them. Flash mode/frequency and CPU frequency now come from the
+  # framework-agnostic esp32: keys in packages/system/esphome_core.yaml, and
+  # PSRAM octal/80MHz from the top-level psram: component there.
 
-  min_version: 2026.6.0
+  min_version: 2026.9.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"
@@ -210,14 +211,16 @@ button:
 #     esp32.preferences: INFO
 
 # ============================================================================
-# HALO V1 - MODULAR CONFIGURATION
+# HALO V1 - WORKING DEVICE CONFIGURATION (MAC suffix 79e384)
 # ============================================================================
-# ✅ PHASE 2 COMPLETE! (2025-11-15)
+# This is a complete, known-good configuration for a real unit - not a
+# template. Halo-v1.yaml is the template; this file is the reference example,
+# and where the two disagree this one reflects what actually runs.
 #
-# All 7 capabilities successfully extracted from Core:
-#   ✅ Clock, AirQ, WiFi Status, WireGuard, Diagnostics, Page Rotation, Weather
-#   ✅ Core file reduced from 8,971 to 1,761 lines (80.4% reduction!)
-#   ✅ All features working perfectly with runtime fixes applied
+# It differs from the template in three ways:
+#   - NimBLE Bluetooth proxy enabled (ble_improv.yaml instead of ble_stub.yaml)
+#   - diagnostics.yaml enabled (heap/PSRAM/fragmentation sensors)
+#   - a fixed use_address and an alternate-WiFi selector
 #
 # CAPABILITY-BASED ORGANIZATION:
 # - Each feature is self-contained (globals, scripts, sensors, pages)
@@ -225,7 +228,7 @@ button:
 # - Clear memory costs documented for each capability
 # - Modular design for easy maintenance and updates
 #
-# See README.md files in each package directory for detailed documentation.
+# See docs/ARCHITECTURE.md and docs/MEMORY.md for detailed documentation.
 # ============================================================================
 
 packages:
@@ -242,10 +245,12 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
 
       # ============================================================================
-      # SYSTEM MODULES (Required - ~238KB total)
+      # SYSTEM MODULES (Required)
       # ============================================================================
       # Core hardware & software - these are essential for basic operation.
       # DO NOT disable unless you know what you're doing.
+      # Sizes below are FLASH unless stated otherwise. Internal SRAM is the
+      # scarce resource on this board; see docs/MEMORY.md.
 
       # Core ESP32 configuration (~5KB)
       # - ESP32-S3 board, PSRAM, external components, logger
@@ -259,8 +264,10 @@ packages:
       # - WiFi configuration, captive portal, WiFi signal sensor
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/networking.yaml
 
-      # Fonts, colors, images (~200KB - fonts are the largest memory consumer)
-      # - 9 Montserrat fonts, 6 Material Design Icon fonts, color palette
+      # Fonts, colors, images (~180KB of FLASH - not heap)
+      # - 9 Montserrat fonts, 4 Material Design Icon fonts, 9 colors, 1 image
+      # - Glyph bitmaps are const arrays in flash that LVGL reads in place.
+      #   Removing a font size saves flash and build time, not free heap.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/fonts_colors.yaml
 
       # System management (~10KB)
@@ -385,14 +392,15 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
       
       # -------------------------
-      # 3D Printer Status (~5KB)
+      # 3D Printer Status (~7KB flash)
       # -------------------------
-      # Provides: Real-time BambuLab printer status page (progress, temps, errors)
-      # Memory: ~5KB
-      # Hardware: None (uses HA API sensor subscriptions)
-      # Requirements: Home Assistant BambuLab integration with entity IDs defined
-      #               in HomeAssistant/dashbaord.yaml
-      # Disable to: Save 5KB if you don't have a 3D printer
+      # Provides: Real-time BambuLab printer status page (progress, temps, errors, cover image)
+      # Memory: ~7KB flash + 64KB PSRAM download buffer + ~39KB PSRAM decoded image
+      # Hardware: None (uses HA API sensor subscriptions + REST for the cover image)
+      # Requirements: Home Assistant BambuLab integration; set printer_device_id above.
+      #               Reference entity list: HomeAssistant/dashbaord.yaml (sic - the
+      #               filename is misspelled in the repository).
+      # Disable to: Save the above if you don't have a 3D printer
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_page.yaml
       
@@ -407,14 +415,9 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/diagnostics/diagnostics.yaml
 
       # ============================================================================
-      # CORE CONFIGURATION (1,761 lines - reduced from 8,971!)
+      # CORE CONFIGURATION (loaded LAST - depends on every feature above)
       # ============================================================================
-      # Minimal core file now contains only:
-      # - LVGL display initialization
-      # - Remaining integration glue
-      # - Navigation coordination
-      # - Legacy components being phased out
-      #
-      # Most functionality has been extracted to capability modules above.
+      # lvgl: block, page navigation, api: triggers, WiFi-stats interval.
+      # See docs/ARCHITECTURE.md.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: always

@@ -11,12 +11,46 @@ labels:
 description: "Air quality monitor with weather display on LilyGo T-Display-Long"
 ---
 
+# ============================================================================
+# THIS FILE IS A TEMPLATE
+# ============================================================================
+# Copy it, rename it for your device, and replace the substitution values
+# below. It is also what `dashboard_import` adopts, so it is the first thing a
+# new user sees.
+#
+# Convention: every substitution carries a concrete placeholder so that the
+# template VALIDATES AS SHIPPED (`esphome config Halo-v1.yaml` succeeds) even
+# before you edit it. Keep it that way - a template that fails validation is a
+# bad first impression, and validation is the only check that runs before a
+# real build.
+#
+# For a complete, known-good configuration of an actual unit, see
+# halo-v1-79e384.yaml (named for that device's MAC suffix). When the two
+# disagree, that file is the one that is actually running.
+#
+# See docs/ARCHITECTURE.md and docs/MEMORY.md.
+# ============================================================================
+
 substitutions:
 
   # Home Assistant connection for HTTP API calls
   # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
   ha_url: !secret ha_url  # Example: "https://homeassistant.local:8123"
   ha_token: !secret ha_token  # Your long-lived access token
+
+  # 3D Printer (printer_base.yaml / printer_page.yaml are enabled below).
+  # REQUIRED whenever the printer package is enabled: every printer entity is
+  # built as sensor.${printer_device_id}_<suffix> at COMPILE time, so leaving
+  # it undefined fails validation with "Invalid character for entity ID: $".
+  # Find yours in Home Assistant: open any BambuLab entity and copy the part
+  # before the first underscore, e.g.
+  #   sensor.h2c_31b8ap5c0301590_print_status -> h2c_31b8ap5c0301590
+  # If you do not have a 3D printer, comment out the two printer package lines
+  # in the packages: list below instead of setting this.
+  # The placeholder below is deliberately obvious rather than a plausible-looking
+  # serial: if you forget to change it, the printer entities show up in the log
+  # as sensor.CHANGE_ME_... instead of silently sitting unavailable.
+  printer_device_id: "CHANGE_ME_bambulab_serial"
 
   # Weather configuration (if enabled below)
   weather_entity_id: "weather.hhut"
@@ -57,30 +91,22 @@ esphome:
   #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
 
   # Unified compiler flags (applies to both PlatformIO and native ESP-IDF)
-  # NEW in 2026.6.0 - Future-proofs for native IDF toolchain option
   build_flags: []
 
   # ----------------------------------------------------------------------
-  # PlatformIO toolchain settings (INACTIVE as of 2026.7.0)
+  # Toolchain note
   # ----------------------------------------------------------------------
-  # ESPHome 2026.7.0 flips the ESP32 default build backend from PlatformIO
-  # to native ESP-IDF when no explicit `toolchain:` key is set. This block
-  # only takes effect under `toolchain: platformio`, so as of this upgrade
-  # it is a no-op and left here (commented) purely for easy rollback.
-  #   - flash_mode/flash_frequency moved to esp32: in
-  #     packages/system/esphome_core.yaml (framework-agnostic keys)
-  #   - PSRAM octal/80MHz already declared via the top-level `psram:` component
-  #   - cpu_frequency already explicit under esp32:
-  # To revert to the exact previous PlatformIO build: uncomment this block AND
-  # add `toolchain: platformio` under esp32: in packages/system/esphome_core.yaml.
-  # platformio_options:
-  #   upload_speed: 921600
-  #   board_build.flash_mode: qio
-  #   board_build.psram_type: opi
-  #   board_build.f_flash: 80000000L
-  #   board_build.f_cpu: 240000000L
+  # This project builds on the native ESP-IDF toolchain, which has been the
+  # ESP32 default since 2026.7.0 (esphome#16910). The `platformio` toolchain is
+  # deprecated and is removed in 2027.2.0, so there is deliberately no
+  # `toolchain:` key and no `platformio_options:` block here - the latter is
+  # silently ignored under the ESP-IDF toolchain.
+  # Flash mode/frequency and CPU frequency are set with the framework-agnostic
+  # esp32: keys in packages/system/esphome_core.yaml.
 
-  min_version: 2026.7.0
+  # 2026.9.0 is required: packages/system/esphome_core.yaml uses the
+  # `network: tcp_send_buffer:` option introduced in that release.
+  min_version: 2026.9.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"
@@ -147,7 +173,7 @@ wifi:
 # settings remain in Halo-v1-Core.yaml, which contains cross-capability
 # components such as LVGL display configuration.
 #
-# See MODULARIZATION_PLAN_V2.md for details on architecture and migration.
+# See docs/ARCHITECTURE.md for the module map, load-order rules and data flow.
 # ============================================================================
 
 packages:
@@ -164,10 +190,12 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/base/globals.yaml
 
       # ============================================================================
-      # SYSTEM MODULES (Required - ~238KB total)
+      # SYSTEM MODULES (Required)
       # ============================================================================
       # Core hardware & software - these are essential for basic operation.
       # DO NOT disable unless you know what you're doing.
+      # Sizes below are FLASH unless stated otherwise. Internal SRAM is the
+      # scarce resource on this board; see docs/MEMORY.md.
 
       # Core ESP32 configuration (~5KB)
       # - ESP32-S3 board, PSRAM, external components, logger
@@ -181,8 +209,10 @@ packages:
       # - WiFi configuration, captive portal, WiFi signal sensor
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/networking.yaml
 
-      # Fonts, colors, images (~200KB - fonts are the largest memory consumer)
-      # - 9 Montserrat fonts, 6 Material Design Icon fonts, color palette
+      # Fonts, colors, images (~180KB of FLASH - not heap)
+      # - 9 Montserrat fonts, 4 Material Design Icon fonts, 9 colors, 1 image
+      # - Glyph bitmaps are const arrays in flash that LVGL reads in place.
+      #   Removing a font size saves flash and build time, not free heap.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/fonts_colors.yaml
 
       # System management (~10KB)
@@ -304,17 +334,19 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
 
       # -------------------------
-      # 3D Printer Status (~6KB)
+      # 3D Printer Status (~7KB flash)
       # -------------------------
       # Provides: Real-time BambuLab printer status page (progress, temps, layer X/Y, errors, cover image)
-      # Memory: ~6KB code + ~38KB PSRAM for cover image buffer
+      # Memory: ~7KB flash + 64KB PSRAM download buffer + ~39KB PSRAM decoded image
+      #         (since ESPHome 2026.9.0 the image decoder also stays allocated
+      #          for the component's lifetime - esphome#18488)
+      # REQUIRES: the printer_device_id substitution at the top of this file.
       # Hardware: None (uses HA API sensor subscriptions + REST for cover image)
       # Requirements: Home Assistant BambuLab integration.
       #   Set printer_device_id substitution to your device's HA entity prefix.
       #   Uses existing ha_url and ha_token substitutions — no extra secrets needed.
       # Disable to: Save 6KB if you don't have a 3D printer
       #
-      # printer_device_id: "h2c_31b8ap5c0301590"  # ← set this in your device file
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_page.yaml
 
@@ -329,14 +361,18 @@ packages:
       # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/diagnostics/diagnostics.yaml
 
       # ============================================================================
-      # CORE CONFIGURATION (1,761 lines - reduced from 8,971!)
+      # CORE CONFIGURATION (loaded LAST - depends on every feature above)
       # ============================================================================
-      # Minimal core file now contains only:
-      # - LVGL display initialization
-      # - Remaining integration glue
-      # - Navigation coordination
-      # - Remaining legacy components (to be removed in future releases)
+      # Halo-v1-Core.yaml contains:
+      # - the lvgl: block (draw buffer, gradients, bottom layer)
+      # - page navigation (1s rotation decision + 100ms page-show dispatch)
+      # - the api: triggers that run on Home Assistant connect/disconnect
+      # - the WiFi-stats interval that drives the WiFi page
       #
-      # Most functionality has been extracted to capability modules above.
+      # NOTE: Core references ids that optional feature packages define (page
+      # rotation globals, WireGuard render flags, computed_halo_aqi, the
+      # wifi_status *_needs_render set). Commenting out page_rotation,
+      # wifi_status, wireguard or airq will fail validation.
+      # See docs/ARCHITECTURE.md "Known gaps".
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always

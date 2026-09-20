@@ -8,13 +8,14 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.07.18.2030
-# Last Updated: July 18, 2026
+# Version: 26.09.20.1647
+# Last Updated: September 20, 2026
+# Baseline: ESPHome 2026.9.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.07.18.2030"
+  version: "26.09.20.1647"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -22,7 +23,7 @@ substitutions:
 # ============================================================================
 # Most components have been extracted to capability modules in packages/.
 # This Core file contains cross-capability components and LVGL display config.
-# See MODULARIZATION_PLAN_V2.md for details.
+# See docs/ARCHITECTURE.md for the module map and load-order rules.
 # ============================================================================
 
 # Note: All switches moved to capability modules (see packages/features/)
@@ -90,24 +91,13 @@ select:
 
 interval:
 
-  # Batched sensor UI update - prevents LVGL cascade rendering
-  # NOTE: Currently unused; `sensor_ui_dirty` is not modified by any active
-  # script or component. The interval is retained for future reference or if
-  # a batched update mechanism is later required.
-  - interval: 2s
-    then:
-      - lambda: |-
-          // Only update if sensors changed since last batch
-          if (id(sensor_ui_dirty)) {
-          const uint32_t now = millis();
-          // Ensure minimum 2s between UI refreshes
-          if ((now - id(last_sensor_ui_update)) >= 2000) {
-            ESP_LOGD("sensor_batch", "Batched sensor UI update triggered");
-            id(sensor_ui_dirty) = false;
-            id(last_sensor_ui_update) = now;
-            // Watchdog timer updated by actual LVGL rendering, not here
-          }
-          }
+  # REMOVED 2026.09: the 2s "batched sensor UI update" interval.
+  # weather_base.yaml did set `sensor_ui_dirty`, but this interval never acted
+  # on it - the body only logged at DEBUG and cleared the flag again. No widget
+  # was ever refreshed by it, so it was pure overhead. The flag, its five write
+  # sites and the last_sensor_ui_update global were removed with it.
+  # Sensor-driven LVGL updates come from each sensor's own on_value trigger and
+  # its *_needs_render flag. See docs/ARCHITECTURE.md "Known gaps".
 
   # Display watchdog and periodic health check intervals moved to features/diagnostics/diagnostics.yaml
 
@@ -128,94 +118,74 @@ interval:
                 // Check if enough time has passed since last rotation
                 if ((now - id(last_auto_rotation_time)) < interval_ms) return false;
 
-                // Build separate parallel arrays for page info
-                std::vector<int> page_orders;
-                std::vector<std::string> page_ids;  // Maps to the page ID in sorted order
+                // Build the rotation order on the stack.
+                //
+                // MEMORY NOTE (2026.09): this used to build a std::vector<int>
+                // plus a std::vector<std::string> on every single tick of a 1s
+                // interval - roughly 16 heap allocate/free pairs per second,
+                // for the entire uptime of the device. That is pure heap churn
+                // and a fragmentation source. Fixed-size stack arrays of
+                // string literals do the same job with zero allocations.
+                // MAX_PAGES must be >= the number of push() calls below.
+                constexpr size_t MAX_PAGES = 8;
+                int page_orders[MAX_PAGES];
+                const char *page_ids[MAX_PAGES];
+                size_t page_count = 0;
 
-                // Collect enabled pages with their orders (use string ID to identify page)
-                // Page IDs: vertical_clock, airq, wifi, weather, hourly_forecast, daily_forecast
+                auto push = [&](bool enabled, int order, const char *id_str) {
+                  if (enabled && page_count < MAX_PAGES) {
+                    page_orders[page_count] = order;
+                    page_ids[page_count] = id_str;
+                    page_count++;
+                  }
+                };
 
-                // Core pages
-                if (id(page_rotation_vertical_clock_enabled)) {
-                page_orders.push_back(id(page_rotation_vertical_clock_order));
-                page_ids.push_back("vertical_clock");
-                }
-                // AirQ page (conditionally available based on AirQ package)
-                // This global is provided by either airq-core.yaml or airq-stubs.yaml
-                if (id(page_rotation_AirQ_enabled)) {
-                page_orders.push_back(id(page_rotation_AirQ_order));
-                page_ids.push_back("airq");
-                }
-                // WiFi page (conditionally available based on WiFi package)
-                // This global is provided by either wifi-core.yaml or wifi-stubs.yaml
-                if (id(page_rotation_wifi_enabled)) {
-                page_orders.push_back(id(page_rotation_wifi_order));
-                page_ids.push_back("wifi");
-                }
-
-                // Weather pages (conditionally available based on weather package)
-                // These globals are provided by either weather-core.yaml or weather-stubs.yaml
-                if (id(page_rotation_weather_enabled)) {
-                page_orders.push_back(id(page_rotation_weather_order));
-                page_ids.push_back("weather");
-                }
-                if (id(page_rotation_hourly_forecast_enabled)) {
-                page_orders.push_back(id(page_rotation_hourly_forecast_order));
-                page_ids.push_back("hourly_forecast");
-                }
-                // Compact hourly summary page
-                if (id(page_rotation_hourly_summary_enabled)) {
-                page_orders.push_back(id(page_rotation_hourly_summary_order));
-                page_ids.push_back("hourly_summary_1");
-                }
-                if (id(page_rotation_daily_forecast_enabled)) {
-                page_orders.push_back(id(page_rotation_daily_forecast_order));
-                page_ids.push_back("daily_forecast");
-                }
-
-                // Printer page (conditionally available based on printer package)
-                // Global provided by features/printer/printer_base.yaml
-                if (id(page_rotation_printer_enabled)) {
-                page_orders.push_back(id(page_rotation_printer_order));
-                page_ids.push_back("printer");
-                }
+                // Each global below is supplied by the matching feature package.
+                // A disabled feature must still define its *_enabled global.
+                push(id(page_rotation_vertical_clock_enabled), id(page_rotation_vertical_clock_order), "vertical_clock");
+                push(id(page_rotation_AirQ_enabled),            id(page_rotation_AirQ_order),            "airq");
+                push(id(page_rotation_wifi_enabled),            id(page_rotation_wifi_order),            "wifi");
+                push(id(page_rotation_weather_enabled),         id(page_rotation_weather_order),         "weather");
+                push(id(page_rotation_hourly_forecast_enabled), id(page_rotation_hourly_forecast_order), "hourly_forecast");
+                push(id(page_rotation_hourly_summary_enabled),  id(page_rotation_hourly_summary_order),  "hourly_summary_1");
+                push(id(page_rotation_daily_forecast_enabled),  id(page_rotation_daily_forecast_order),  "daily_forecast");
+                push(id(page_rotation_printer_enabled),         id(page_rotation_printer_order),         "printer");
 
                 // If no pages are enabled, don't rotate
-                if (page_orders.empty()) {
-                ESP_LOGW("page_rotation", "No pages enabled for rotation");
-                return false;
+                if (page_count == 0) {
+                  ESP_LOGW("page_rotation", "No pages enabled for rotation");
+                  return false;
                 }
 
-                // Sort IDs based on their order numbers (bubble sort for simplicity)
-                for (size_t i = 0; i < page_orders.size(); i++) {
-                for (size_t j = i + 1; j < page_orders.size(); j++) {
-                  if (page_orders[j] < page_orders[i]) {
-                    std::swap(page_orders[i], page_orders[j]);
-                    std::swap(page_ids[i], page_ids[j]);
+                // Insertion sort by order number (page_count <= 8, so this is
+                // cheaper than anything fancier and needs no scratch memory).
+                for (size_t i = 1; i < page_count; i++) {
+                  const int order = page_orders[i];
+                  const char *pid = page_ids[i];
+                  size_t j = i;
+                  while (j > 0 && page_orders[j - 1] > order) {
+                    page_orders[j] = page_orders[j - 1];
+                    page_ids[j] = page_ids[j - 1];
+                    j--;
                   }
-                }
-                }
-
-                // Use a static variable to track position in rotation sequence
-                static int rotation_position = 0;
-
-                // Make sure rotation_position is within bounds
-                if (rotation_position >= page_ids.size()) {
-                rotation_position = 0;
+                  page_orders[j] = order;
+                  page_ids[j] = pid;
                 }
 
-                // Get the next page to show
-                std::string next_page_id = page_ids[rotation_position];
+                // Position within the rotation sequence, preserved across ticks.
+                static size_t rotation_position = 0;
+                if (rotation_position >= page_count) {
+                  rotation_position = 0;
+                }
 
-                // Store the next page ID in current_page_name for the action to use
-                id(current_page_name) = next_page_id;
-
-                // Advance rotation position for next time (wrap around)
-                rotation_position = (rotation_position + 1) % page_ids.size();
-
-                // Show the next page
+                // Log BEFORE advancing. The previous version advanced first and
+                // then indexed back into the array, which printed the order
+                // number of the wrong page.
                 ESP_LOGD("page_rotation", "Rotating to page '%s' (order: %d)",
-                       next_page_id.c_str(), page_orders[rotation_position > 0 ? rotation_position - 1 : page_orders.size() - 1]);
+                         page_ids[rotation_position], page_orders[rotation_position]);
+
+                id(current_page_name) = page_ids[rotation_position];
+                rotation_position = (rotation_position + 1) % page_count;
 
                 id(last_auto_rotation_time) = now;
                 return true;
@@ -380,7 +350,11 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(current_page_name) == "wifi";'
+                        # 2026.09: added the missing `needs_render` guard. Every
+                        # sibling block in this interval had it; this one did
+                        # not, so the RSSI label was re-rendered once a second
+                        # while the WiFi page was visible even when unchanged.
+                        lambda: 'return id(wifi_signal_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.label.update:
                             id: wifi_signal_label
@@ -398,7 +372,8 @@ interval:
                       }
                   - if:
                       condition:
-                        lambda: 'return id(current_page_name) == "wifi";'
+                        # 2026.09: added the missing `needs_render` guard (see above).
+                        lambda: 'return id(wifi_signal_bar_needs_render) && id(current_page_name) == "wifi";'
                       then:
                         - lvgl.bar.update:
                             id: wifi_signal_bar
@@ -458,19 +433,10 @@ interval:
                             text_color: !lambda 'return id(ink_ha_connected).state ? id(my_green) : id(my_gray);'
                         - lambda: 'id(ha_status_needs_render) = false;'
                 else:
-                  # WiFi disconnected - hide WiFi logo on AirQ page (only if AirQ page exists)
-                  # This is guarded to avoid errors in wifi-only mode
-                  # - if:
-                  #     condition:
-                  #       lambda: 'return id(wifi_logo_visible) && id(current_page_name) == "airq";'
-                  #     then:
-                  #       - lvgl.widget.hide:
-                  #           id: ym_image
-                  # - if:
-                  #     condition:
-                  #       lambda: 'return id(wifi_logo_visible);'
-                  #     then:
-                  #       - lambda: 'id(wifi_logo_visible) = false;'
+                  # WiFi disconnected.
+                  # (A commented-out block that hid the YM logo on the AirQ page
+                  # was removed in 2026.09 along with the now-unused
+                  # `wifi_logo_visible` global - it had been dead for months.)
                   # Update disconnected signal text
                   - lambda: |-
                       const std::string new_text = "Signal: --";
@@ -599,11 +565,23 @@ interval:
 # ============================================================================
 api:
   reboot_timeout: ${api_reboot_timeout}  # Set to 0s to disable auto-reboot on API disconnect
-  listen_backlog: 8
-  max_connections: 16
-  max_send_queue: 64  # Increased to handle BLE advertisement bursts
-  # Optimized settings for improved switch responsiveness and connection stability
-  # These reduce latency and ensure faster state updates between device and Home Assistant
+
+  # Connection limits. These bound worst-case INTERNAL DRAM use, because each
+  # accepted connection carries its own lwIP socket buffers plus an API send
+  # buffer. ESPHome's ESP32 defaults are listen_backlog 4 / max_connections 5 /
+  # max_send_queue 8; the values below keep headroom above the defaults without
+  # the previous, unjustified ceilings (8 / 16 / 64).
+  listen_backlog: 4
+  # Real demand is: Home Assistant (1) + `esphome logs` (1) + the occasional
+  # dashboard or second HA instance. 8 is generous; 16 was never reachable.
+  max_connections: 8
+  # Per-connection TCP backlog, used only when the socket send buffer is full.
+  # ESPHome charges 2 KB per slot, so 64 allowed a ~64 KB buffer and, since
+  # 2026.9.0 (esphome#19093), that buffer is KEPT at its high-water mark
+  # instead of being freed after each stall. 16 caps it at ~32 KB while still
+  # being twice the platform default. Raise it only if the log shows dropped
+  # connections during Bluetooth-proxy advertisement bursts.
+  max_send_queue: 16
   on_client_connected:
       - delay: 1s  # Brief delay for API stabilization
       - lambda: 'id(cycleCounter) = 30;'  # Stop startup rainbow animation
@@ -673,8 +651,11 @@ api:
     # - esp32_ble_tracker.stop_scan:
     then:
       - logger.log: "Home Assistant disconnected"
-  
-  services:
+
+  # NOTE: an empty `services:` key used to sit here. `services` is the legacy
+  # name for `actions`, and ESPHome 2026.9.0 changed user-defined action
+  # metadata (esphome#18881). An empty block bought nothing, so it was removed.
+  # To expose a callable action to Home Assistant, add an `actions:` list here.
 
 # Note: Scripts, numbers, and most sensors moved to capability modules (see packages/features/)
 
@@ -687,9 +668,30 @@ lvgl:
     - lily_display
   touchscreens:
     - lily_touch
-  buffer_size: 30%  # Optimized for memory: 30% buffer (~69KB for 180x640@16bit)
-                    # With CONFIG_SPIRAM_USE_MALLOC=y, large allocations use PSRAM automatically
-                    # Trade-off: minimal tearing, stable operation with better free heap
+  # ==========================================================================
+  # LVGL draw buffer - the single largest tunable memory allocation
+  # ==========================================================================
+  # ESPHome quantises this percentage to a fraction of the screen: >=75% -> 1/1,
+  # >=37.5% -> 1/2, >19% -> 1/4, otherwise 1/8. It then picks the heap:
+  # a buffer of 1/4 or 1/8 of the screen is tried in INTERNAL DRAM first
+  # ("small buffer, better performance"), while 1/1 and 1/2 go straight to
+  # PSRAM. (esphome/components/lvgl/lvgl_esphome.cpp, LvglComponent::setup)
+  #
+  # The old value of 30% therefore quantised to 1/4 and put ~57.6 KB in
+  # INTERNAL DRAM - not in PSRAM as the old comment claimed. 50% quantises to
+  # 1/2, so the buffer (180*640/2*2 = 115.2 KB) is allocated from PSRAM and
+  # that internal DRAM is returned to the heap.
+  #
+  # TRADE-OFF: rendering now reads/writes PSRAM instead of DRAM. This board
+  # runs octal PSRAM at 80 MHz with execute_from_psram enabled, and ESPHome
+  # 2026.9.0 added PSRAM DMA for external SPI buffers (esphome#18699), so the
+  # flush path stays on DMA. The display's 5 MHz QSPI data_rate dominates
+  # frame time regardless.
+  #
+  # REVERT: if the display tears, stutters, or fails to allocate, set this back
+  # to 30% and expect ~57.6 KB less free internal heap.
+  # REQUIRES DEVICE TESTING - see docs/MEMORY.md.
+  buffer_size: 50%
   byte_order: big_endian
   color_depth: 16
   
@@ -751,24 +753,12 @@ lvgl:
 mdns:
   disabled: false
 
-wifi:
-  ssid: ${wifi_ssid}
-  password: ${wifi_password}
-
-  # Reset startup light blink when WiFi disconnects
-  # This allows the rainbow effect to restart when connection is lost
-  on_disconnect:
-    - lambda: |-
-        id(cycleCounter) = 0;
-        ESP_LOGI("wifi", "WiFi disconnected - resetting startup blink counter");
-
-  # Ensure startup blink stops when WiFi reconnects
-  on_connect:
-    - lambda: |-
-        if (id(cycleCounter) < 30) {
-        id(cycleCounter) = 30;
-        ESP_LOGI("wifi", "WiFi connected - stopping startup blink");
-        }
+# REMOVED 2026.09: a second `wifi:` block lived here with the same ssid /
+# password / on_connect / on_disconnect as packages/system/networking.yaml.
+# ESPHome merges trigger lists across packages, so BOTH copies of the
+# cycleCounter lambda fired on every connect and disconnect. networking.yaml is
+# now the single owner of the wifi: component (it also holds the WireGuard
+# re-handshake logic that must run on reconnect).
 
 # ============================================================================
 # WireGuard VPN Configuration
@@ -853,8 +843,9 @@ esphome:
   # Functions automatically available via external_components system.
   # ============================================================================
 
-  libraries:
-    # No additional libraries needed - using standard C++ and ESP-IDF
+  # NOTE: an empty `libraries:` key was removed in 2026.09. It is a
+  # PlatformIO-toolchain concept and this build uses the native ESP-IDF
+  # toolchain, so it resolved to an empty list and did nothing.
 
   on_boot:
     # -------------------------------------------------------------------------

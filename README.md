@@ -4,6 +4,13 @@ An ESPHome-based firmware for the [LilyGo T-Display-Long](https://www.lilygo.cc/
 
 > This is a fork of [yashmulgaonkar/halo](https://github.com/yashmulgaonkar/halo) with significant modular refactoring.
 
+**Requires ESPHome 2026.9.0 or newer.**
+
+Further reading:
+
+- [`docs/ARCHITECTURE.md`](TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/docs/ARCHITECTURE.md) — module layout, load order, data flow, display/BLE/network design, known gaps
+- [`docs/MEMORY.md`](TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/docs/MEMORY.md) — what lives in internal SRAM vs PSRAM and why; read before touching any buffer size
+
 ---
 
 ## Hardware
@@ -31,6 +38,8 @@ An ESPHome-based firmware for the [LilyGo T-Display-Long](https://www.lilygo.cc/
 - **BLE Provisioning**: WiFi setup via Bluetooth (3 implementation options)
 - **Page Rotation**: Automatic cycling through enabled pages
 - **LED Effects**: RGB LED driven by weather conditions and AQI
+- **3D Printer Status**: BambuLab print progress, temperatures, layers, cover image
+- **Diagnostics**: Heap / PSRAM / fragmentation sensors, display watchdog
 - **OTA Updates**: Over-the-air firmware updates
 
 ---
@@ -39,7 +48,7 @@ An ESPHome-based firmware for the [LilyGo T-Display-Long](https://www.lilygo.cc/
 
 ### Prerequisites
 
-- [ESPHome](https://esphome.io) 2026.7.0 or newer
+- [ESPHome](https://esphome.io) **2026.9.0 or newer** (the config uses `network: tcp_send_buffer:`, added in that release)
 - Home Assistant with a Long-Lived Access Token
 - A weather entity in Home Assistant (e.g. `weather.home`)
 
@@ -79,6 +88,13 @@ substitutions:
   apparent_temp_sensor: "sensor.your_feels_like_sensor"
   wind_speed_sensor: "sensor.your_wind_speed_sensor"
   wind_direction_sensor: "sensor.your_wind_direction_sensor"
+
+  # Required while the printer packages are enabled (they are, by default).
+  # Every printer entity is built as sensor.${printer_device_id}_<suffix> at
+  # compile time, so leaving the placeholder in place will not work.
+  # If you have no 3D printer, comment out the two printer package lines
+  # in the packages: list instead.
+  printer_device_id: "your_bambulab_serial"
 ```
 
 ### 3. Enable/Disable Features
@@ -113,9 +129,9 @@ On first flash use USB. After that, OTA is available.
 
 ```
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/
-├── Halo-v1.yaml              # Main entry point (edit this for your setup)
+├── Halo-v1.yaml              # TEMPLATE — copy/edit this for your setup
 ├── Halo-v1-Core.yaml         # Core LVGL init, navigation glue
-├── halo-v1-79e384.yaml       # Device-specific override (example)
+├── halo-v1-79e384.yaml       # A real working device config (MAC ...79e384) — reference example
 ├── secrets.yaml              # NOT committed — local credentials only
 ├── fonts/
 │   └── materialdesignicons-webfont.ttf
@@ -136,27 +152,41 @@ TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/
         ├── wifi_status/      # WiFi info page
         ├── wireguard/        # WireGuard VPN
         ├── page_rotation/    # Auto page cycling
+        ├── printer/          # BambuLab 3D printer status page
         └── diagnostics/      # Heap/PSRAM monitoring (dev only)
 ```
+
+Documentation lives in `TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/docs/`.
 
 ---
 
 ## Memory Reference
 
-| Module | RAM Impact |
-|--------|-----------|
-| System (all required) | ~238KB |
-| Fonts & colors | ~200KB |
-| BLE (NimBLE) | ~40KB |
-| BLE stub (no BLE) | ~0KB |
-| Air quality | ~15KB |
-| Weather (base + pages) | ~10KB |
-| Weather hourly (detailed) | +7KB |
-| Clock | ~5KB |
-| WiFi status | ~3KB |
-| WireGuard | ~8KB |
-| Diagnostics | ~5–10KB |
-| Page rotation | ~2KB |
+These are rough per-module costs, **inherited as estimates from the original documentation
+and not independently measured** — treat the *location* column as the reliable part and the
+sizes as indicative. **Read
+[`docs/MEMORY.md`](TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/docs/MEMORY.md) before acting
+on them** — the distinction between flash, internal SRAM and PSRAM matters far more than the
+totals, and internal SRAM is the only one that is actually scarce.
+
+| Module | Cost | Where |
+|--------|------|-------|
+| Fonts & colors | ~180KB (est.) | **Flash.** Glyph bitmaps are `const` arrays read in place by LVGL; this is not heap. Three unreferenced icon fonts were removed in 2026.09. |
+| LVGL draw buffer | ~115KB | **PSRAM** (at `buffer_size: 50%`). Was ~57.6KB of *internal SRAM* at the old `30%`. |
+| BLE (NimBLE) | ~40KB | Mostly **PSRAM** (`CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL`) |
+| BLE stub (no BLE) | ~0KB | — |
+| Printer cover image | 64KB download + ~39KB decoded | **PSRAM** (ESPHome `RAMAllocator` defaults to external-first) |
+| TCP send/receive buffers | up to 2 × 64KB | **Internal SRAM.** The largest tunable consumer — see MEMORY.md §7. |
+| Air quality | ~15KB | code (flash) + small globals |
+| Weather (base + pages) | ~10KB | code (flash); forecast JSON parses in **PSRAM** |
+| Weather hourly (detailed) | +7KB | code (flash), 8 extra LVGL pages |
+| WireGuard | ~8KB | code + session state |
+| Printer (code) | ~7KB | code (flash) |
+| Diagnostics | ~5–10KB | code (flash) |
+| Clock | ~5KB | code (flash) |
+| WiFi status | ~3KB | code (flash) |
+| AQI history buffer | ~2.3KB | **PSRAM**, allocated lazily |
+| Page rotation | ~2KB | code (flash) |
 
 ---
 
@@ -172,11 +202,21 @@ TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/
 
 ## Contributing
 
-This firmware pulls packages from GitHub at build time (`ref: modular`). To develop locally:
+This firmware pulls packages from GitHub at build time (`ref: modular`, `refresh: Always`).
 
-1. Change `url:` in `Halo-v1.yaml` to your fork.
-2. Change `ref:` to your branch.
-3. Or replace `remote_packages:` with `local_packages:` pointing to local paths.
+**Editing a file under `packages/` has no effect until it is committed and pushed** — and
+because of `refresh: Always`, pushing to `modular` goes live on every device on its next
+build. Tag stable points (`git tag v26.09.20`) so devices can pin a known-good `ref:`.
+
+To develop against local files:
+
+1. Change `url:` to your fork and `ref:` to your branch, or
+2. Build a local validation harness that swaps `remote_packages:` for local `!include`s —
+   the exact recipe is in
+   [`docs/ARCHITECTURE.md` §9](TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/docs/ARCHITECTURE.md).
+
+Note that `esphome config` validates structure and IDs but **does not compile lambdas**. Any
+change to embedded C++ needs a real `esphome compile` before it is trusted.
 
 Backup files (`*.bak`, `*.bak[0-9]*`) are excluded by `.gitignore`. Use git history instead.
 
