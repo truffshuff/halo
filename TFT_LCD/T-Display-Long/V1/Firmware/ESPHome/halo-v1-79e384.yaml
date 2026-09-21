@@ -112,8 +112,30 @@ ota:
 #   disabled: true
 
 wifi:
-  # 15dBm improves OTA TCP throughput while remaining below the ESP32 default
-  # maximum. Reduce this if the device shows brownout symptoms.
+  # ==========================================================================
+  # WiFi radio settings - MEASURED, do not "optimise" without re-measuring
+  # ==========================================================================
+  # output_power 15dB is load-bearing, not caution. Measured on halo-v1-79e1f8
+  # (RSSI -48 dBm, noise -96, AP satisfaction 100), same image, same AP:
+  #
+  #   output_power  power_save_mode   OTA prepare   OTA upload    rate
+  #   15dB          default (light)   0.03 s        104.6 s       22.7 kB/s
+  #   default 20dBm none              13.92 s       890.3 s       2.67 kB/s
+  #
+  # 8.5x slower with the "better" radio settings. Note prepare going 0.03s ->
+  # 13.92s: that is a tiny exchange before any bulk data, so the link itself
+  # was degraded, not just throughput. Raising TX power at close range can
+  # desense the AP receiver and raises current draw - the brownout risk this
+  # comment originally warned about.
+  #
+  # power_save_mode is deliberately NOT set (ESP32 default: light). Setting it
+  # to none was tried in the run above and is part of why it regressed. With
+  # BLE coexistence active the arbiter appears to rely on WiFi's sleep windows
+  # to schedule BLE; with PS_NONE, WiFi never yields and BLE preempts instead.
+  # That mechanism is a hypothesis - the 8.5x regression is not.
+  #
+  # Both values changed together in that test, so which one dominates is
+  # unknown. If you need to know, restore both, confirm ~105 s, then change one.
   output_power: 15dB
   # ESPHome 2026.1.0 enables post-connect roaming by default; disable for stationary devices
   post_connect_roaming: false
