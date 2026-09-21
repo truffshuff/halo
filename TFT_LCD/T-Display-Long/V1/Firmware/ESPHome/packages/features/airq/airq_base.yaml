@@ -470,6 +470,7 @@ sensor:
   # Provides baseline temperature, humidity, pressure
   # Pressure reading used for SCD4x CO2 compensation
   - platform: bme280_i2c
+    id: bme280            # component-level id so ota: can component.suspend it
     i2c_id: lily_i2c
     temperature:
       name: "BME280 Temperature"
