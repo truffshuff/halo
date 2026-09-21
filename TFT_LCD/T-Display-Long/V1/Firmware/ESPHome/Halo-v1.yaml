@@ -35,7 +35,12 @@ substitutions:
 
   # Home Assistant connection for HTTP API calls
   # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
-  ha_url: !secret ha_url  # Example: "https://homeassistant.local:8123"
+  # Prefer Home Assistant's IP and port over a reverse-proxy hostname if your
+  # devices sit on an isolated/IoT VLAN: an IP needs no DNS record, no
+  # cross-zone firewall rule and no TLS handshake. http_request is synchronous,
+  # so a name that cannot resolve blocks the main loop ~7s per attempt and can
+  # trip the 30s task watchdog. See halo-v1-79e384.yaml for a worked example.
+  ha_url: !secret ha_url  # e.g. "http://10.0.0.2:8123"
   ha_token: !secret ha_token  # Your long-lived access token
 
   # 3D Printer (printer_base.yaml / printer_page.yaml are enabled below).

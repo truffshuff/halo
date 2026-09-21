@@ -4,7 +4,20 @@ substitutions:
   # Home Assistant connection for HTTP API calls
   # Create a long-lived access token in HA: Profile → Security → Long-Lived Access Tokens
   # Temporary override for HA endpoint testing
-  ha_url: "https://halocal.hhut.org"
+  # Use HA's LAN address, not the nginx hostname. Every Halo lives on the IoT
+  # VLAN (10.140.80.0/24) and so does Home Assistant (10.140.80.2), so this is
+  # an intra-subnet call: no DNS, no zone traversal, no TLS handshake.
+  #
+  # halocal.hhut.org does NOT work from these devices, for two independent
+  # reasons confirmed against the UniFi controller on 2026-09-20:
+  #   1. There are no static DNS records on the controller, and the UnTrusted
+  #      zone may only query the gateway (public resolvers, DoT and DoH are all
+  #      blocked), so the name resolves to nothing -> getaddrinfo EAI_FAIL.
+  #   2. nginx (10.140.40.9) sits in the Protected zone. The only UnTrusted ->
+  #      nginx ALLOW rule is scoped to one client MAC (the old iPad), so even a
+  #      correct IP would be dropped.
+  # Each failed lookup blocks loopTask ~7s; enough of them reboot the device.
+  ha_url: "http://10.140.80.2:8123"
   ha_token: !secret ha_token  # Your long-lived access token
 
   # 3D Printer — BambuLab device serial prefix used in Home Assistant entity IDs.
