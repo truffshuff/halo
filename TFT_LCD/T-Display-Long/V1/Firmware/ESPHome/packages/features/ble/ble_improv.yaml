@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@69b50f3089ee90e130b0f84696c5e41a8a5e316c # ESPHome 2026.9.0 fix: request_bluetooth() + USE_BLUETOOTH_PROXY_CONNECTIONS
+  - source: github://truffshuff/esphome-components@748cd7cf32653c1916acdc503c698a5a5b702714 # ESPHome 2026.9.0 fixes: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
@@ -95,6 +95,31 @@ esp32:
       include_builtin_idf_components: [bt]
 
     sdkconfig_options:
+      # ======================================================================
+      # WiFi/BT coexistence - REQUIRED, do not remove without reading this
+      # ======================================================================
+      # The ESP32-S3 has ONE 2.4 GHz radio shared by WiFi and BLE. Without
+      # software arbitration they collide, and WiFi *reception* collapses while
+      # transmission still looks healthy.
+      #
+      # ESP-IDF sets ESP_COEX_SW_COEXIST_ENABLE "default y" when WiFi and BT
+      # are both on, so this used to be automatic. ESPHome 2026.7.0
+      # (esphome#17008) added a reconciler that sets CONFIG_SW_COEXIST_ENABLE
+      # to False unless a component calls request_software_coexistence() - and
+      # only esp32_ble_tracker does. A NimBLE build therefore lost coexistence
+      # silently on upgrade from 2026.6.x.
+      #
+      # Symptoms: -48 dBm signal, noise -96, AP satisfaction 100, yet 26,195
+      # packets out against 330 in, rx_rate flapping between the 6 Mbps basic
+      # rate and 39 Mbps, OTA downloads starving to ~0.6 kB/s or timing out
+      # during handshake, and getaddrinfo EAI_FAIL on inbound DNS.
+      #
+      # sdkconfig_options wins over the reconciler's set_idf_sdkconfig_default,
+      # so this line overrides it regardless of fork version. It duplicates the
+      # request_software_coexistence() call now in nimble_base; belt and braces
+      # until the fork pin is updated, after which this can be removed.
+      CONFIG_SW_COEXIST_ENABLE: "y"
+
       # Enable NimBLE, disable Bluedroid
       CONFIG_BT_ENABLED: "y"
       CONFIG_BT_NIMBLE_ENABLED: "y"
