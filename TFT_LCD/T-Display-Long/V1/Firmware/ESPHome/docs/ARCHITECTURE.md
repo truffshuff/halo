@@ -201,6 +201,46 @@ defines `ble_scanner_switch`, which OTA and the weather fetch scripts turn off a
 | `ble_improv.yaml` | NimBLE (fork) | Full proxy: `connection_slots`, scan duty tuning, ATT MTU 247. Allocates from PSRAM (`CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL`). |
 | `ble_esphome.yaml` | Bluedroid (upstream) | ESPHome's native `esp32_ble_tracker` + `bluetooth_proxy` + `esp32_improv`. Tracks upstream fixes; uses more internal RAM. |
 
+### WiFi/BT coexistence — do not remove
+
+The ESP32-S3 has **one** 2.4 GHz radio shared between WiFi and BLE. Without software
+arbitration the two collide and WiFi *reception* collapses while transmission still looks
+perfectly healthy — an asymmetry that is very hard to read as a radio problem.
+
+ESP-IDF sets `ESP_COEX_SW_COEXIST_ENABLE` to `default y` whenever WiFi and BT are both
+enabled, so this used to be automatic. ESPHome 2026.7.0 (esphome#17008) replaced that with an
+explicit reconciler that sets `CONFIG_SW_COEXIST_ENABLE` to **False** unless a component calls
+`request_software_coexistence()` — and only `esp32_ble_tracker` does. A NimBLE build therefore
+lost coexistence *silently* when this project moved from 2026.6.x to 2026.9.0.
+
+What that looked like in practice, and why it took so long to find:
+
+| Signal | Reading |
+|---|---|
+| RSSI / noise / AP satisfaction | −48 dBm / −96 dBm / 100 — all excellent |
+| Packets (AP view) | 26,195 transmitted vs **330 received** |
+| `rx_rate` | oscillating between the 6 Mbps basic-rate floor and 39 Mbps |
+| OTA | ~0.6 kB/s, stalling at 18–24 %, or timing out during handshake |
+| DNS | repeated `getaddrinfo` `EAI_FAIL` on inbound responses |
+| Home Assistant API | mostly fine — small, retransmit-tolerant messages |
+
+Every device-side diagnostic looked healthy: free heap ~102 KB, no component exceeding its
+loop budget, `nimble_proxy send_failed=0`. **The fault was only visible from the AP**, in the
+transmit/receive packet asymmetry. If inbound-only symptoms ever reappear, check the
+controller's client stats before touching the firmware.
+
+Fixed in two places, deliberately belt-and-braces:
+
+- `nimble_base` calls `esp32.request_software_coexistence()` (fork commit `748cd7c`)
+- `ble_improv.yaml` sets `CONFIG_SW_COEXIST_ENABLE: "y"` — `sdkconfig_options` wins over the
+  reconciler's `set_idf_sdkconfig_default`, so it holds regardless of fork version
+
+After the fix, the same OTA ran at ~22.7 kB/s (105 s for a 2.37 MB image) with `prepare` at
+0.03 s. That is ~38× the broken figure, but still modest for WiFi — the transfer is lockstep
+(8 KB block, then wait for a one-byte ACK), and `wifi: power_save_mode` is left at the ESP32
+default of `light`, which adds DTIM-interval latency to every one of those ~290 round trips.
+Setting `power_save_mode: none` is the obvious next experiment.
+
 > `ble_esphome.yaml` sets `interval: 1100ms` / `window: 1100ms` — a 100 % scan duty cycle.
 > ESPHome 2026.9.0 (esphome#18725) warns when the scan window exceeds 600 ms with WiFi
 > enabled, and esphome#18356 documents missed advertisements in exactly this regime.
@@ -313,13 +353,37 @@ Recorded because they are easy to rediscover and misdiagnose.
    `sensor.halo_v1_79e35c_*` statistic ids (lines 67+), so a second unit needs its own copy
    of that list — or the table refactored to take the entity prefix from `device_filter`.
 
-4. **`HomeAssistant/dashbaord.yaml`** is misspelled, and `printer_base.yaml` references it
+4. **`sensor.hourly_forecast_esp` does not exist in Home Assistant.**
+   `weather_base.yaml` declares a `homeassistant` text_sensor `hourly_forecast_attr` bound to
+   `sensor.hourly_forecast_esp`, attribute `forecast`. Queried against the live HA instance on
+   2026-09-20, that entity returns *"Entity not found."* So the log line
+   "Hourly fetch deferred: API not yet connected (hourly_forecast_attr will populate on
+   connect)" is misleading — it will never populate, and the HTTP path in
+   `fetch_hourly_forecast_http` is not a fallback but the only route.
+
+   This matters beyond the missing data. The HTTP route pulls the **entire** forecast:
+   `weather.get_forecasts` for `weather.hhut` returns **57,469 bytes**, of which the firmware
+   keeps 24 entries. `http_request` is synchronous, so that whole transfer blocks the main
+   loop. Creating the template sensor in HA — trimmed to the 24 hours and the handful of
+   fields `weather_base.yaml` actually reads — would replace a 57 KB synchronous pull with a
+   push of a few KB over the existing API connection, and remove the loop blocking with it.
+   That is HA-side work, not a firmware change.
+
+5. **All six Halo units share one VLAN, and none of them can resolve `ha_url` by name.**
+   The controller lists `halo-v1-79d6b4` (.82 and .125), `79e1f8` (.104), `79e384` (.170),
+   `79e294` (.242) and `79e35c` (.223) — every one on IoT VLAN 80, `10.140.80.0/24`, the same
+   subnet as Home Assistant at `10.140.80.2`. Use HA's IP, not the reverse-proxy hostname
+   (see §10.4 above and the comment in `halo-v1-79e384.yaml`). Two entries share the hostname
+   `halo-v1-79d6b4` with different MACs, one of which has a non-Espressif OUI — probably a
+   stale controller record worth cleaning up.
+
+6. **`HomeAssistant/dashbaord.yaml`** is misspelled, and `printer_base.yaml` references it
    under that spelling. Renaming means updating the reference.
 
-5. **`__pycache__/halo_sensor_history.cpython-314.pyc` is committed to git.** It should be
+7. **`__pycache__/halo_sensor_history.cpython-314.pyc` is committed to git.** It should be
    removed from tracking and `__pycache__/` added to `.gitignore`.
 
-6. **`*.bak` … `*.bak5` files exist under `packages/features/weather/`.** They are
+8. **`*.bak` … `*.bak5` files exist under `packages/features/weather/`.** They are
    gitignored, so git cannot recover them, but `CLAUDE.md` forbids creating them. They are
    untracked local clutter.
 
