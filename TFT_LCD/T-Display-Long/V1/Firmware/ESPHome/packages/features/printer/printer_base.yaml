@@ -1405,7 +1405,22 @@ image:
     format: PNG
     type: RGB565
     resize: 140x140
-    update_interval: 180s
+    # 600s (was 180s). ESPHome's online_image implements conditional requests
+    # (If-None-Match / If-Modified-Since), but Home Assistant's
+    # /api/image_proxy/ returns neither etag nor last-modified, so the server
+    # can never answer 304 and the FULL ~22 KB image is re-fetched every cycle
+    # whether or not the print changed. Hence the recurring log pair:
+    #   [W][http_request] No header with name etag found
+    #   [W][http_request] No header with name last-modified found
+    #
+    # At 180s that was ~440 KB/hour of pure re-download on a 2.4 GHz channel
+    # measured at 94% utilisation. 600s cuts it by ~70%. A cover image changes
+    # once per print job, so 10 minutes is ample.
+    #
+    # For on-demand instead: set this to `never` and add
+    #   - component.update: printer_cover_image_data
+    # to the print_status sensor's on_value when the job changes.
+    update_interval: 600s
     request_headers:
       Authorization: "Bearer ${ha_token}"
     on_download_finished:
