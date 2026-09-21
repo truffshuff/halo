@@ -95,17 +95,54 @@ ota:
       - lambda: 'id(ota_in_progress) = true;'
       # Pause BLE scanning during OTA to ensure clean API communication
       - switch.turn_off: ble_scanner_switch
-      - logger.log: "OTA started - low-activity mode enabled, BLE scanning paused"
+      # ----------------------------------------------------------------
+      # Quiesce everything that competes with the OTA transfer.
+      # ----------------------------------------------------------------
+      # The transfer is lockstep - 8 KB out, then block on a one-byte ACK,
+      # ~290 times - so anything that stalls the main loop or steals the 2.4
+      # GHz radio multiplies across every round trip.
+      #
+      # Pausing the BLE *scan* alone (above) is not enough: it leaves the I2C
+      # sensors, LVGL repaints and the 180s cover-image download running.
+      # SEN55 alone blocks the I2C bus for 4+ seconds per read.
+      #
+      # component.suspend works on any PollingComponent and is reversed by
+      # component.resume. lvgl.pause stops rendering; the display simply holds
+      # its last frame. The display watchdog is already gated on
+      # ota_in_progress, so it will not fight this.
+      - lvgl.pause:
+      - component.suspend: sen55      # 60s, blocks I2C 4+ seconds per read
+      - component.suspend: scd40      # 30s
+      - component.suspend: mics4514   # 40s
+      - component.suspend: bme280     # 60s
+      - component.suspend: printer_cover_image_data   # 180s, 22 KB HTTP GET
+      - logger.log: "OTA started - device quiesced (BLE scan, LVGL, I2C sensors, cover image)"
     on_end:
       - lambda: 'id(ota_in_progress) = false;'
       # Resume BLE scanning after OTA completes
       - switch.turn_on: ble_scanner_switch
-      - logger.log: "OTA completed - low-activity mode disabled, BLE scanning resumed"
+      # Undo the OTA quiesce. On success the device reboots moments later so
+      # this rarely runs; on failure it is what restores normal operation.
+      - lvgl.resume:
+      - component.resume: sen55
+      - component.resume: scd40
+      - component.resume: mics4514
+      - component.resume: bme280
+      - component.resume: printer_cover_image_data
+      - logger.log: "OTA completed - device resumed"
     on_error:
       - lambda: 'id(ota_in_progress) = false;'
       # Resume BLE scanning if OTA fails
       - switch.turn_on: ble_scanner_switch
-      - logger.log: "OTA failed - low-activity mode disabled, BLE scanning resumed"
+      # Undo the OTA quiesce. On success the device reboots moments later so
+      # this rarely runs; on failure it is what restores normal operation.
+      - lvgl.resume:
+      - component.resume: sen55
+      - component.resume: scd40
+      - component.resume: mics4514
+      - component.resume: bme280
+      - component.resume: printer_cover_image_data
+      - logger.log: "OTA failed - device resumed"
 
 
 # safe_mode:
