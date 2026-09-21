@@ -20,13 +20,35 @@
 # ============================================================================
 http_request:
   useragent: esphome/halo
-  # Keep HTTP calls short to avoid blocking loopTask and tripping task_wdt.
-  # Reduced to 5s so connection failures (e.g. WireGuard not yet up) fail fast
-  # instead of the default ~15s TCP SYN timeout.
-  timeout: 5s
-  buffer_size_rx: 1024  # 1KB RX buffer; smaller to reduce memory pressure
-  buffer_size_tx: 1024  # 1KB transmit buffer for POST requests
+  # WARNING: http_request is SYNCHRONOUS - every call blocks loopTask for its
+  # whole duration. With CONFIG_ESP_TASK_WDT_TIMEOUT_S at 30s, two stacked
+  # failures at this timeout are enough to reboot the device. That is exactly
+  # what happened on 2026-09-20 when ha_url pointed at an unresolvable name:
+  # each attempt burned ~7s in getaddrinfo and the watchdog fired.
+  #
+  # 10s (was 5s): the 5s value was chosen to "fail fast when WireGuard is not
+  # yet up", a condition that no longer applies - WireGuard is off by default.
+  # Measured from a workstation, Home Assistant answers
+  # weather.get_forecasts in 29ms with a 57,469 byte body, so a healthy call
+  # never approaches this; the timeout only bounds failures.
+  timeout: 10s
+
+  # 4096 (was 1024): this is esp_http_client_config_t.buffer_size. The 1KB
+  # value predates the 57 KB hourly-forecast response. A 22 KB cover-image GET
+  # succeeds while the 57 KB forecast POST fails with Code -1 (no status line
+  # parsed), and buffer size is the main dimension in which those two differ.
+  # Cost is ~3 KB, and at >=512 bytes it lands in PSRAM, not internal DRAM.
+  buffer_size_rx: 4096
+  buffer_size_tx: 1024  # requests are small (short JSON body + bearer token)
   verify_ssl: false  # Disable cert verification for local HTTPS (self-signed)
+
+# To diagnose an HTTP failure, uncomment this in your DEVICE yaml for one run.
+# It shows whether the failure is in open, write, or fetch_headers - which is
+# not distinguishable from the Code -1 message alone.
+# logger:
+#   level: DEBUG
+#   logs:
+#     http_request: VERBOSE
 
 # ============================================================================
 # Weather Helpers Component

@@ -8,14 +8,14 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.09.20.2010
+# Version: 26.09.20.2102
 # Last Updated: September 20, 2026
 # Baseline: ESPHome 2026.9.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.09.20.2010"
+  version: "26.09.20.2102"
   device_description: ${name} - v${version}.
   
 # ============================================================================
