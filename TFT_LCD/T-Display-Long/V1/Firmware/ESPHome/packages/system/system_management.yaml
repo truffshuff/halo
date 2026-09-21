@@ -42,13 +42,21 @@ http_request:
   buffer_size_tx: 1024  # requests are small (short JSON body + bearer token)
   verify_ssl: false  # Disable cert verification for local HTTPS (self-signed)
 
-# To diagnose an HTTP failure, uncomment this in your DEVICE yaml for one run.
-# It shows whether the failure is in open, write, or fetch_headers - which is
-# not distinguishable from the Code -1 message alone.
+# To diagnose an HTTP failure, uncomment this in your DEVICE yaml for one run,
+# then put it back. DEBUG gives the response headers and the download progress,
+# which is what you actually need.
+#
+# Use DEBUG, NOT VERBOSE. At VERBOSE the shared WatchdogManager logs twice on
+# every construct/destruct - once per HTTP read and once per OTA block - which
+# produces hundreds of "Adjusting WDT to NNNNNms" lines. UART logging is
+# synchronous and blocking, so those lines land inside the transfer loop.
+# Measured on 2026-09-20: the same OTA took 105s at INFO and 1,173s with
+# http_request at VERBOSE, an 11x slowdown, and a 57 KB HTTP body took 68s to
+# read. VERBOSE does not just make the log noisy, it changes the result.
 # logger:
 #   level: DEBUG
 #   logs:
-#     http_request: VERBOSE
+#     http_request: DEBUG
 
 # ============================================================================
 # Weather Helpers Component
