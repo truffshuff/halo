@@ -33,7 +33,7 @@ external_components:
   #   ble_improv.yaml  → custom NimBLE stack (truffshuff fork)
   #   ble_esphome.yaml → ESPHome built-in BLE stack (no external components)
   #   ble_stub.yaml    → no BLE
-  - source: github://truffshuff/esphome-components@aae2ec8547fca43c0e7e65da38b1bc5699c658ee # 2026.9.0 fixes + diag-line de-dup: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
+  - source: github://truffshuff/esphome-components@578fcf4d872b4ab8b6f81658d67c3877294f0b9b # 2026.9.0 fixes + diag-line de-dup: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
     components: [axs15231, sy6970, weather_helpers]
     refresh: always
 
