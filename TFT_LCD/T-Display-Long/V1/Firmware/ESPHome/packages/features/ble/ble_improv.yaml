@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@748cd7cf32653c1916acdc503c698a5a5b702714 # ESPHome 2026.9.0 fixes: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
+  - source: github://truffshuff/esphome-components@aae2ec8547fca43c0e7e65da38b1bc5699c658ee # 2026.9.0 fixes + diag-line de-dup: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):

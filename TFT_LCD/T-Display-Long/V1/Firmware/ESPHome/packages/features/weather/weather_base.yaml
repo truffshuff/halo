@@ -1097,8 +1097,28 @@ script:
 #          // Always clear the lock when done (success or failure)
 #          id(weather_fetch_lock) = false;
 
-  # Script to fetch HOURLY forecast data via HTTP REST API
-  # Native homeassistant.action always fails; go straight to HTTP.
+  # FALLBACK ONLY - fetch HOURLY forecast over HTTP REST.
+  #
+  # The primary path is the `hourly_forecast_attr` text_sensor above, which
+  # receives a pre-trimmed 24-entry forecast pushed over the API connection.
+  #
+  # An older comment here read "Native homeassistant.action always fails; go
+  # straight to HTTP." The action was not broken - the payload was too big.
+  # weather.get_forecasts for weather.hhut returns ~220 hourly entries
+  # (63,204 bytes measured 2026-09-21), and ESPHome's API carries 16-bit frame
+  # lengths, so a single message cannot exceed 65,535 bytes. The full payload
+  # sat ~2.3 KB under that ceiling: it would fail the moment the provider
+  # extended its horizon, and it left no room for protocol overhead.
+  #
+  # Fixed in Home Assistant, not here: config/templates/halo_hourly_forecast.yaml
+  # publishes the first 24 entries (~6.2 KB) on sensor.hourly_forecast_esp.
+  # Verified on device 2026-09-21: "Received hourly forecast attribute
+  # (6225 bytes)" -> "Parsing 24 hourly entries" -> stored, with no HTTP
+  # fallback triggered.
+  #
+  # This HTTP route stays as a genuine fallback for when that entity is absent.
+  # Remember it is SYNCHRONOUS: a 57 KB pull blocked the main loop ~12s and
+  # could trip the 30s task watchdog.
   - id: fetch_hourly_forecast
     mode: single
     then:
