@@ -52,7 +52,7 @@
 # is the only change required.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@aae2ec8547fca43c0e7e65da38b1bc5699c658ee # 2026.9.0 fixes + diag-line de-dup: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
+  - source: github://truffshuff/esphome-components@578fcf4d872b4ab8b6f81658d67c3877294f0b9b # 2026.9.0 fixes + diag-line de-dup: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
     components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
     refresh: always
     # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
@@ -74,51 +74,26 @@ external_components:
 # ============================================================================
 esp32:
   framework:
-    # ------------------------------------------------------------------------
-    # REQUIRED since ESPHome 2026.9.0 (esphome#18599)
-    # ------------------------------------------------------------------------
-    # 2026.9.0 excludes the ESP-IDF `bt` component from the build by default
-    # and re-includes it only when a component calls esp32.request_bluetooth().
-    # ESPHome's own esp32_ble does that; the NimBLE components in
-    # truffshuff/esphome-components do not, so the build failed with:
-    #
-    #   nimble_proxy/nimble_proxy.h:12:10: fatal error: esp_bt.h: No such file
-    #   or directory
-    #
-    # Re-including `bt` here restores the header search path. `bt` pulls
-    # esp_coex and esp_wifi back in via its own REQUIRES, so only `bt` is
-    # needed.
-    #
-    # This is a stopgap. The real fix is a request_bluetooth() call in the
-    # fork's nimble_base component; once that ships, this line can be removed.
-    advanced:
-      include_builtin_idf_components: [bt]
+    # NOTE: no `advanced: include_builtin_idf_components: [bt]` here any more.
+    # ESPHome 2026.9.0 (esphome#18599) excludes the IDF `bt` component unless a
+    # component calls esp32.request_bluetooth(); nimble_base now does, so the
+    # YAML stopgap is redundant. If you ever pin the fork back before 578fcf4,
+    # put it back or the build fails with "esp_bt.h: No such file or directory".
 
     sdkconfig_options:
-      # ======================================================================
-      # WiFi/BT coexistence - REQUIRED, do not remove without reading this
-      # ======================================================================
-      # The ESP32-S3 has ONE 2.4 GHz radio shared by WiFi and BLE. Without
-      # software arbitration they collide, and WiFi *reception* collapses while
-      # transmission still looks healthy.
+      # NOTE: no `CONFIG_SW_COEXIST_ENABLE: "y"` here any more. nimble_base
+      # calls esp32.request_software_coexistence(), which drives the same
+      # sdkconfig via ESPHome's reconciler.
       #
-      # ESP-IDF sets ESP_COEX_SW_COEXIST_ENABLE "default y" when WiFi and BT
-      # are both on, so this used to be automatic. ESPHome 2026.7.0
-      # (esphome#17008) added a reconciler that sets CONFIG_SW_COEXIST_ENABLE
-      # to False unless a component calls request_software_coexistence() - and
-      # only esp32_ble_tracker does. A NimBLE build therefore lost coexistence
-      # silently on upgrade from 2026.6.x.
-      #
-      # Symptoms: -48 dBm signal, noise -96, AP satisfaction 100, yet 26,195
-      # packets out against 330 in, rx_rate flapping between the 6 Mbps basic
-      # rate and 39 Mbps, OTA downloads starving to ~0.6 kB/s or timing out
-      # during handshake, and getaddrinfo EAI_FAIL on inbound DNS.
-      #
-      # sdkconfig_options wins over the reconciler's set_idf_sdkconfig_default,
-      # so this line overrides it regardless of fork version. It duplicates the
-      # request_software_coexistence() call now in nimble_base; belt and braces
-      # until the fork pin is updated, after which this can be removed.
-      CONFIG_SW_COEXIST_ENABLE: "y"
+      # DO NOT drop that fork call. The ESP32-S3 has ONE 2.4 GHz radio shared
+      # by WiFi and BLE. ESP-IDF defaults ESP_COEX_SW_COEXIST_ENABLE to y, but
+      # ESPHome 2026.7.0 (esphome#17008) overrides it to False unless a
+      # component asks. Without arbitration WiFi *reception* collapses while
+      # transmission looks fine: measured at -48 dBm with noise -96 and AP
+      # satisfaction 100, the device sent 26,195 packets and received 330,
+      # rx_rate flapping between the 6 Mbps basic rate and 39 Mbps, OTA
+      # starving to ~0.6 kB/s, and inbound DNS failing with EAI_FAIL.
+      # See docs/ARCHITECTURE.md section 7.
 
       # Enable NimBLE, disable Bluedroid
       CONFIG_BT_ENABLED: "y"
