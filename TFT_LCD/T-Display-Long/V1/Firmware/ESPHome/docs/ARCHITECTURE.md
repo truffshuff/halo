@@ -353,21 +353,36 @@ Recorded because they are easy to rediscover and misdiagnose.
    `sensor.halo_v1_79e35c_*` statistic ids (lines 67+), so a second unit needs its own copy
    of that list — or the table refactored to take the entity prefix from `device_filter`.
 
-4. **`sensor.hourly_forecast_esp` does not exist in Home Assistant.**
-   `weather_base.yaml` declares a `homeassistant` text_sensor `hourly_forecast_attr` bound to
-   `sensor.hourly_forecast_esp`, attribute `forecast`. Queried against the live HA instance on
-   2026-09-20, that entity returns *"Entity not found."* So the log line
-   "Hourly fetch deferred: API not yet connected (hourly_forecast_attr will populate on
-   connect)" is misleading — it will never populate, and the HTTP path in
-   `fetch_hourly_forecast_http` is not a fallback but the only route.
+4. **RESOLVED 2026-09-21 — the hourly forecast now arrives over the API, not HTTP.**
+   This was a gap: `weather_base.yaml` subscribed to `sensor.hourly_forecast_esp`, which did
+   not exist, so `fetch_hourly_forecast_http` was the only route and pulled the *entire*
+   forecast — **220 entries, 63,204 bytes** — to keep 24, synchronously, blocking the main
+   loop ~12 s per refresh.
 
-   This matters beyond the missing data. The HTTP route pulls the **entire** forecast:
-   `weather.get_forecasts` for `weather.hhut` returns **57,469 bytes**, of which the firmware
-   keeps 24 entries. `http_request` is synchronous, so that whole transfer blocks the main
-   loop. Creating the template sensor in HA — trimmed to the 24 hours and the handful of
-   fields `weather_base.yaml` actually reads — would replace a 57 KB synchronous pull with a
-   push of a few KB over the existing API connection, and remove the loop blocking with it.
-   That is HA-side work, not a firmware change.
+   The reason the native action "always failed" was never a broken action: **ESPHome's API
+   carries 16-bit frame lengths, so one message cannot exceed 65,535 bytes**
+   (`APIBuffer::MAX_SIZE`). At 63.2 KB the payload sat ~2.3 KB under that ceiling — it would
+   break the moment the provider extended its horizon.
+
+   Fixed on the **Home Assistant side**, no firmware change:
+   `config/templates/halo_hourly_forecast.yaml` is a trigger-based template sensor that calls
+   `weather.get_forecasts` and publishes the first 24 entries on the `forecast` attribute of
+   `sensor.hourly_forecast_esp`. Triggers: HA start, `/15`, and the event
+   `halo_hourly_forecast_refresh` for on-demand refresh (a trigger-based template has no state
+   until a trigger fires, so that event is how you populate it after a `template.reload`).
+
+   Two things worth knowing if you touch it:
+
+   - **`| to_json` is belt-and-braces, not load-bearing.** HA renders it, then parses the
+     result back to a native list (`parse_result`), and `homeassistant/components/esphome`
+     sends `str(attr_val)` — Python repr with *single* quotes. ArduinoJson's parser is lenient
+     and accepts that; verified by compiling the exact 6,799-byte wire string against
+     ArduinoJson 7.4.2. Keep `to_json` anyway: a future `None` or boolean field would render
+     as `None`/`True`, which is neither valid JSON nor parseable.
+   - **Renaming that sensor silently breaks the device.** It would simply never receive data.
+
+   Verified on device: "Received hourly forecast attribute (6225 bytes)" → "Parsing 24 hourly
+   entries from attribute" → stored, with no HTTP fallback triggered.
 
 5. **All six Halo units share one VLAN, and none of them can resolve `ha_url` by name.**
    The controller lists `halo-v1-79d6b4` (.82 and .125), `79e1f8` (.104), `79e384` (.170),
