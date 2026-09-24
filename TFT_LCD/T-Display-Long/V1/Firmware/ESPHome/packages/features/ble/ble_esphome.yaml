@@ -15,10 +15,11 @@
 #   - Maintained by the ESPHome project
 #
 # Trade-offs vs ble_improv.yaml (custom NimBLE):
-#   - No connection_slots tuning (ESPHome manages connection count internally)
-#   - No NVS service caching (cache_services not available)
 #   - ble_scanner_switch is a template switch (optimistic), not a native proxy switch
-#   - Bluedroid uses more internal RAM than NimBLE by default
+#   - Bluedroid uses more internal RAM than NimBLE (see MEMORY IMPACT)
+#   - bluetooth_proxy defaults to connection_slots: 3 and cache_services: true
+#     (Bluedroid NVS service cache); ble_improv.yaml runs connection_slots: 1.
+#     Both are tunable on bluetooth_proxy below if needed.
 #
 # Dependencies:
 #   - system/esphome_core.yaml (PSRAM and base configuration)
@@ -30,7 +31,16 @@
 #   - Bluetooth proxy for Home Assistant (built-in ESPHome component)
 #   - Scanner switch to pause/resume BLE scanning (OTA, weather fetches)
 #
-# MEMORY IMPACT: ~40-50KB (Bluedroid stack)
+# MEMORY IMPACT (internal SRAM):
+#   Measured 2026-09-22 on one unit, swapping ble_improv.yaml for this package
+#   *before* the PSRAM options below existed:
+#     Min Free Heap Ever   ~63 KB with ble_improv.yaml (NimBLE, 1 slot)
+#                          ~40 KB with this package    (Bluedroid, 3 slots)
+#   Without help, Bluedroid keeps its host environment tables as static arrays
+#   in internal DRAM. esp32_ble use_psram + CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST
+#   (both below) make them heap allocations and route those to PSRAM. How much
+#   of the ~23 KB that recovers on this board is NOT yet measured.
+#   Flash: Bluedroid is larger than NimBLE; PSRAM: host tables once moved.
 # ============================================================================
 
 # ============================================================================
@@ -64,6 +74,28 @@ esp32:
       CONFIG_BT_GATTC_ENABLE: "y"         # GATT Client (active proxy connections)
 
       CONFIG_BT_RELEASE_IRAM_ON_SLEEP: "n"  # Keep BT memory accessible
+
+      # Bluedroid host allocations go to PSRAM first, internal as fallback.
+      # esp32_ble use_psram (below) sets this only on the original ESP32, on
+      # the claim that BLE-only chips (S3, C3, ...) lack the Kconfig symbol.
+      # That is not true of ESP-IDF 5.5.5: BT_ALLOCATION_FROM_SPIRAM_FIRST
+      # depends only on BT_BLUEDROID_ENABLED, and osi_malloc()/osi_calloc()
+      # use heap_caps_malloc_prefer(SPIRAM, then INTERNAL) on every chip
+      # (components/bt/common/osi/include/osi/allocator.h). So the S3 has to
+      # set it here. Controller memory is unaffected - it stays internal.
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+
+# ============================================================================
+# Bluedroid memory placement
+# ============================================================================
+# use_psram sets CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY on every chip: Bluedroid's
+# host environment tables become heap allocations instead of static arrays in
+# internal DRAM. Combined with ALLOCATION_FROM_SPIRAM_FIRST above, that heap
+# is PSRAM. Needs the psram: component (esphome_core.yaml provides it).
+# dump_config confirms it at boot: "PSRAM BLE allocation: enabled".
+# ============================================================================
+esp32_ble:
+  use_psram: true
 
 # ============================================================================
 # ESPHome Native BLE Tracker

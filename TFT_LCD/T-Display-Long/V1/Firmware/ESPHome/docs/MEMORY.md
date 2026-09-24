@@ -50,6 +50,7 @@ waste — do not lower it to "free" memory.
 | **LVGL draw buffer** | 115.2 KB (exact: 180×640/2×2) | `lvgl: buffer_size: 50%` → ESPHome allocates 1/2-screen buffers straight from PSRAM (§4) |
 | **LVGL object/widget heap** | varies | ESPHome's `lv_malloc_core` uses `MALLOC_CAP_SPIRAM \| MALLOC_CAP_8BIT` first, internal as fallback |
 | **NimBLE stack** | ~40 KB | `CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"` (only with `ble_improv.yaml`) |
+| **Bluedroid host tables** | not yet measured | `esp32_ble: use_psram: true` (→ `BT_BLE_DYNAMIC_ENV_MEMORY`) plus a manual `CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"` (only with `ble_esphome.yaml`). ESPHome sets the second one only on the original ESP32; on the S3 it must be set by hand — see §10 |
 | **mbedTLS contexts** | ~50 KB per TLS session | `CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"`. Without this, `mbedtls_ssl_setup()` / `mbedtls_ctr_drbg_seed()` fail with `-0x7F00` / `-0x0001` against a ~28 KB internal heap. |
 | **ArduinoJson forecast pools** | up to ~40 KB transiently | explicit `ArduinoJson::Allocator` subclass using `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` (§5) |
 | **HTTP response body string** | 32 KB reserved | `std::string::reserve(32768)` ≥ the ALWAYSINTERNAL threshold, so it lands in PSRAM |
@@ -264,9 +265,9 @@ To populate a baseline, record from the diagnostics entities above:
 |---|---:|---:|
 | Free internal heap | not measured | **102,551 – 105,363 B** |
 | Free heap, all caps (internal + PSRAM) | not measured | **5,191,127 – 5,211,335 B** |
-| Min free internal heap ever | not measured | not measured |
+| Min free internal heap ever | not measured | **~63 KB** (NimBLE; see below) |
 | Largest free internal block | not measured | not measured |
-| Heap fragmentation % | not measured | not measured |
+| Heap fragmentation % | not measured | **69.7 %** (72 s uptime) |
 | Firmware size | not measured | **2,374,128 B** |
 
 The "after" figures are from serial logs on device `halo-v1-79e1f8` running the
@@ -279,10 +280,28 @@ buffer living in PSRAM. Had it remained internal at the old `buffer_size: 30%`
 (1/4 screen = 57.6 KB), free internal would sit nearer 45–48 KB. That is corroboration,
 not proof — an A/B at `30%` on the same device would settle it.
 
-**Still missing, and the one that matters most:** `Min Free Heap Ever`
-(`heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL)`). Idle free heap does not tell
-you whether a peak scenario from §6 nearly exhausted internal RAM. Read it from the
-diagnostics entity after 24 h of normal operation.
+**`Min Free Heap Ever`** (`heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL)`) —
+the number that matters, because idle free heap does not tell you whether a peak
+scenario from §6 nearly exhausted internal RAM:
+
+| Reading | Value | Conditions |
+|---|---:|---|
+| `halo-v1-79e1f8`, NimBLE | 66,484 B | 72 s uptime — boot transient only, before any weather refresh |
+| one unit, NimBLE (`ble_improv.yaml`) | ~63 KB | 2026-09-22; uptime not recorded |
+| same unit, Bluedroid (`ble_esphome.yaml`) | ~40 KB | 2026-09-22; before the Bluedroid PSRAM options existed |
+
+**BLE stack comparison.** Swapping NimBLE for ESPHome's native Bluedroid stack cost
+~23 KB of minimum free internal heap. Two things make that larger than the stacks
+alone: the NimBLE build keeps its host in PSRAM (`NIMBLE_MEM_ALLOC_MODE_EXTERNAL`)
+while the Bluedroid package had no equivalent, and `bluetooth_proxy` defaults to 3
+connection slots where `ble_improv.yaml` runs 1. `ble_esphome.yaml` now sets
+`esp32_ble: use_psram: true` and `CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST` to address
+the first; the recovered amount is **not yet measured**. ESPHome 2026.9.0 applies
+`SPIRAM_FIRST` only on the original ESP32, citing a missing Kconfig symbol on
+BLE-only chips — but in ESP-IDF 5.5.5 the symbol depends only on
+`BT_BLUEDROID_ENABLED` and the allocator (`osi/allocator.h`) is chip-independent.
+
+Re-read all three after 24 h of normal operation.
 
 The expected direction of change is **+~57.6 KB internal heap** from the LVGL buffer move,
 plus a reduction in fragmentation from removing the per-second vector churn in the page
