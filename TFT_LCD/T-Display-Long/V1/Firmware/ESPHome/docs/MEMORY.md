@@ -291,6 +291,8 @@ scenario from §6 nearly exhausted internal RAM:
 | same unit, Bluedroid (`ble_esphome.yaml`) | ~40 KB | 2026-09-22; before the Bluedroid PSRAM options existed |
 | `79e1f8`, Bluedroid + PSRAM options | 39,884 B | 2026-09-24, ~25 min uptime; current free 94,127 B |
 | `79d6b4`, NimBLE | 64,340 B | 2026-09-24, same reboot time; current free 103,979 B |
+| `79e1f8`, Bluedroid, scan 320/60 ms | 48,780 – 52,304 B (avg 50.4 KB) | 2026-09-25, eight hourly cycles 22:00–05:00; current free ~94.6 KB |
+| `79d6b4` + `79e384`, NimBLE | 63,220 – 65,300 B (avg 64.4 KB) | same eight cycles; current free ~104 KB |
 
 **BLE stack comparison.** Swapping NimBLE for ESPHome's native Bluedroid stack cost
 ~23 KB of minimum free internal heap. Two things make that larger than the stacks
@@ -319,13 +321,20 @@ Comparing each unit's current free heap with its minimum splits the gap in two:
   during the busiest network period. NimBLE barely moves over the same window. The
   suspected cause was `ble_esphome.yaml` scanning at 100% duty (1100 ms / 1100 ms),
   starving WiFi so that WiFi/lwIP buffers, which must be internal (§2), piled up. The
-  scan was cut to 320 ms / 60 ms to match `ble_improv.yaml` on 2026-09-24; **the
-  effect is not yet measured.**
+  scan was cut to 320 ms / 60 ms to match `ble_improv.yaml` on 2026-09-24.
+  **Measured result: +~10.5 KB.** Across eight hourly cycles the Bluedroid floor rose
+  from ~39.9 KB to 48.8–52.3 KB (avg 50.4 KB), while current free heap stayed at
+  ~94.6 KB — so the gain came entirely from the transient dips, as predicted.
 
-Both units reboot on the hour, so every Min Free Heap Ever reading here covers less
+**Where it stands.** Bluedroid now costs **~14 KB** of Min Free Heap Ever against
+NimBLE (50.4 vs 64.4 KB): the ~10 KB steady part, which ESPHome 2026.9.0 does not
+expose, plus ~4 KB of transient that remains. The leading candidate for the last
+~4 KB is `connection_slots` (3 on Bluedroid, 1 on NimBLE): extra active connections
+would only show as dips while HA holds them. Untested, because cutting slots removes
+proxy functionality.
+
+All units reboot on the hour, so every Min Free Heap Ever reading here covers less
 than 60 minutes of uptime.
-
-Re-read all three after 24 h of normal operation.
 
 The expected direction of change is **+~57.6 KB internal heap** from the LVGL buffer move,
 plus a reduction in fragmentation from removing the per-second vector churn in the page

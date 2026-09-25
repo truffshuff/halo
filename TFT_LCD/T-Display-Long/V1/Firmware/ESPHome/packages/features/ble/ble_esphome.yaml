@@ -48,10 +48,16 @@
 #                      task (BTC 3072 + BTU 8192 vs NimBLE host 8192). Not tunable
 #                      from YAML in ESPHome 2026.9.0.
 #     ~15 KB transient - dips in the first ~5 min after boot, while the network is
-#                      busiest. Suspected cause: the old 100% scan duty cycle
-#                      starving WiFi, whose buffers must stay internal. The scan
-#                      window was cut to match ble_improv.yaml on 2026-09-24;
-#                      the effect is NOT yet measured.
+#                      busiest. Most of it was the old 100% scan duty cycle
+#                      (1100 ms / 1100 ms) starving WiFi, whose buffers must
+#                      stay internal.
+#   2026-09-25, after cutting the scan to 320 ms / 60 ms (matching
+#   ble_improv.yaml), eight full hourly cycles, 22:00-05:00:
+#     Min Free Heap Ever   48,780-52,304 B Bluedroid (avg 50.4 KB)
+#                          63,220-65,300 B NimBLE    (avg 64.4 KB, two units)
+#   The scan change recovered ~10.5 KB. Remaining gap ~14 KB: the ~10 KB steady
+#   part (unchanged) plus ~4 KB of transient. Leading candidate for the last
+#   ~4 KB: connection_slots 3 here vs 1 in ble_improv.yaml (untested).
 #   Flash: Bluedroid image is ~169 KB larger than NimBLE.
 # ============================================================================
 
