@@ -49,7 +49,7 @@ waste — do not lower it to "free" memory.
 |---|---|---|
 | **LVGL draw buffer** | 115.2 KB (exact: 180×640/2×2) | `lvgl: buffer_size: 50%` → ESPHome allocates 1/2-screen buffers straight from PSRAM (§4) |
 | **LVGL object/widget heap** | varies | ESPHome's `lv_malloc_core` uses `MALLOC_CAP_SPIRAM \| MALLOC_CAP_8BIT` first, internal as fallback |
-| **NimBLE stack** | ~40 KB | `CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"` (only with `ble_improv.yaml`) |
+| **NimBLE stack** | ~40 KB | `nimble_base: use_psram: true` → `CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL` (only with `ble_improv.yaml`). Since 2026-09-25 the proxy's event rings and GATT buffers are PSRAM too; static DIRAM dropped 7.0 KB vs the previous fork (build-time, see `ble_improv.yaml`). |
 | **Bluedroid host tables** | no measurable effect | `esp32_ble: use_psram: true` (→ `BT_BLE_DYNAMIC_ENV_MEMORY`) plus a manual `CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"` (only with `ble_esphome.yaml`). ESPHome sets the second one only on the original ESP32; on the S3 it must be set by hand. Moved Min Free Heap Ever 40 KB → 39 KB, i.e. nothing — see §10 |
 | **mbedTLS contexts** | ~50 KB per TLS session | `CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"`. Without this, `mbedtls_ssl_setup()` / `mbedtls_ctr_drbg_seed()` fail with `-0x7F00` / `-0x0001` against a ~28 KB internal heap. |
 | **ArduinoJson forecast pools** | up to ~40 KB transiently | explicit `ArduinoJson::Allocator` subclass using `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` (§5) |

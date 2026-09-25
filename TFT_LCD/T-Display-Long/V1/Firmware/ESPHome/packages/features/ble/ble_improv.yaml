@@ -1,205 +1,176 @@
 # ============================================================================
-# BLE WiFi Provisioning Capability - Custom NimBLE Stack
+# BLE Proxy + Improv - NimBLE Stack
 # ============================================================================
-# Custom NimBLE components + Improv WiFi provisioning
-# Dependencies:
-#   - system/esphome_core.yaml (PSRAM needed for BLE)
-#   - system/networking.yaml (provisions WiFi)
-#
-# This module configures:
-#   - Custom NimBLE Bluetooth stack (from truffshuff/esphome-components)
-#   - Improv WiFi provisioning service
-#   - Bluetooth proxy for Home Assistant (custom nimble_proxy)
-#   - Startup RGB LED blink animation
+# Purpose:
+#   Home Assistant Bluetooth proxy and Improv WiFi provisioning on the NimBLE
+#   stack instead of ESPHome's Bluedroid stack (ble_esphome.yaml).
 #
 # Features:
-#   - Complete GATT service with all 5 Improv characteristics
-#   - BLE advertising as "Halo Improv" with Improv service UUID
-#   - WiFi provisioning flow (receive credentials → connect → send IP)
-#   - Auto-authorization on connection (no button press required)
-#   - Device info response (firmware, version, hardware, name)
-#   - State management and error handling
-#   - connection_slots: tunable active GATT connection count
-#   - cache_services: NVS service caching
-#   - authorized_duration / wifi_timeout on improv
+#   - bluetooth_proxy: ESPHome 2026.9.0's own proxy and connection code
+#     (vendored in truffshuff/esphome-components), so Home Assistant sees the
+#     same protocol behaviour as a Bluedroid proxy: raw advertisements, active
+#     connections, GATT read/write/notify, pairing, cache clear, connection
+#     params, scanner mode switching.
+#   - nimble_tracker: the BLE scanner (esp32_ble_tracker equivalent). Merges
+#     advertisement + scan response into one frame and does no duplicate
+#     filtering, like Bluedroid. Upstream on-device BLE sensors that bind
+#     through ble_device_base (ble_presence, ble_rssi, xiaomi_*, ...) work
+#     against it.
+#   - nimble_improv: Improv WiFi provisioning (esp32_improv equivalent). Runs
+#     only while WiFi needs provisioning - no stored network, or no
+#     connection for wifi_timeout - and stops once provisioned.
+#   - ble_scanner_switch: pause/resume scanning (OTA, weather fetches).
 #
-# Usage:
-#   1. Open https://www.improv-wifi.com/ in Chrome browser
-#   2. Click "Connect device via Improv"
-#   3. Select "Halo Improv" from BLE devices
-#   4. Enter WiFi credentials and provision
+# Dependencies:
+#   - system/esphome_core.yaml (psram: component; PSRAM is required here)
+#   - system/networking.yaml (WiFi; Improv provisions it)
+#   - base/globals.yaml (cycleCounter used by the startup LED effects)
 #
-# Alternative: Use ble_esphome.yaml for ESPHome's built-in BLE stack
-# (fewer features but tracks upstream ESPHome memory improvements)
+# Hardware requirements:
+#   ESP32-S3 radio (BLE 5.0 controller); 8 MB PSRAM.
 #
-# Compatible with standard Improv protocol clients
-# Protocol spec: https://www.improv-wifi.com/
+# Memory usage:
+#   Flash: NimBLE is ~169 KB smaller than Bluedroid (ble_esphome.yaml).
+#   PSRAM: NimBLE host allocations (nimble_base use_psram), the scan event
+#     ring (64 x 44 B), and per connection slot a GATT event ring
+#     (16 x ~530 B), four read buffers (~2 KB) and, only while a connection
+#     is being discovered, a ~10 KB service table.
+#   Internal SRAM: the NimBLE host task stack (8 KB, below) plus the
+#     controller. Build-time, halo-v1-79e384 vs the previous fork (same
+#     ESPHome 2026.9.0 / IDF 5.5.5): static DIRAM 219,531 -> 212,563 B
+#     (-7.0 KB, of which .bss -6.4 KB: the old proxy's in-object event queue
+#     moved to PSRAM); flash 2,371,291 -> 2,366,683 B (-4.6 KB).
+#     Runtime min free internal heap is not measured yet (docs/MEMORY.md has
+#     the previous fork's numbers).
 #
-# MEMORY IMPACT: ~40KB (BLE stack)
+# Alternative: ble_esphome.yaml (ESPHome's Bluedroid stack, no fork needed).
+#
+# Created: 2025 (NimBLE fork); rebuilt 2026-09-25 on the vendored upstream
+# proxy.
 # ============================================================================
 
-# Note: cycleCounter global remains in base/globals.yaml due to load order dependency
-# It's used by both networking.yaml (WiFi events) and this BLE module (LED effects)
-# Since networking.yaml loads before this module, cycleCounter cannot be moved here
-
 # ============================================================================
-# Custom NimBLE External Components
+# External components (truffshuff/esphome-components)
 # ============================================================================
-# The custom NimBLE component set lives in the truffshuff fork.
-# These are NOT needed when using ble_esphome.yaml.
-# esphome_core.yaml only registers the hardware drivers (axs15231, sy6970,
-# weather_helpers); BLE components are declared here so swapping BLE files
-# is the only change required.
+# ble_device_base, bluetooth_connection and bluetooth_proxy override ESPHome's
+# built-in components of the same name with vendored 2026.9.0 copies that
+# carry a small NimBLE patch set; nimble_base / nimble_tracker / nimble_improv
+# provide the stack, scanner and provisioning. None of these are needed with
+# ble_esphome.yaml. Hardware drivers stay in esphome_core.yaml.
+# Pinned by full SHA (branch nimble-bluedroid-parity) so builds are
+# reproducible.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@578fcf4d872b4ab8b6f81658d67c3877294f0b9b # 2026.9.0 fixes + diag-line de-dup: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
-    components: [nimble_base, nimble_improv, nimble_proxy, bluetooth_proxy]
+  - source: github://truffshuff/esphome-components@782d3bab90e83b23483e77b9b4f315c182fc4b73 # NimBLE backend for the upstream 2026.9.0 proxy
+    components:
+      - nimble_base
+      - nimble_tracker
+      - ble_device_base
+      - bluetooth_connection
+      - bluetooth_proxy
+      - nimble_improv
     refresh: always
-    # Compatible with ESP-IDF 5.5.x (ESPHome >= 2026.3.0):
-    # - ble_hs_cfg callbacks now set before nimble_port_init() to prevent race
-    # - nimble_port_freertos_init() guarded for IDF < 5.5 to avoid duplicate task
-    # - WiFi global null-checked in load_saved_credentials_() to prevent crash on boot
-    # - adv_buffer_ allocation deferred to add_advertisement_() (lazy init)
-    #   to avoid crashing during setup() before API globals are ready
-    # - nimble_proxy scanner OFF now blocks forwarding and prevents auto-start on sync
-    # - nimble_base starts host-task fallback if sync does not appear after boot
-    # - nimble_proxy emits periodic discovered/forwarded diagnostic counters
 
 # ============================================================================
-# NimBLE sdkconfig Options
+# NimBLE sdkconfig
 # ============================================================================
-# These options tune the NimBLE stack.  They live here so that switching to
-# ble_esphome.yaml (which sets its own BT sdkconfig) requires no edits to
-# esphome_core.yaml.
+# nimble_base now sets the stack selection (NimBLE on, Bluedroid off),
+# CONFIG_BT_NIMBLE_MAX_CONNECTIONS (sized from the proxy slots + Improv's
+# peripheral link; setting it lower here fails validation) and
+# CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU (517, what Bluedroid offers). It also
+# requests the IDF `bt` component and WiFi/BT software coexistence - see
+# docs/ARCHITECTURE.md section 7 for why coexistence is load-bearing.
+# Only halo-specific tuning stays here.
 # ============================================================================
 esp32:
   framework:
-    # NOTE: no `advanced: include_builtin_idf_components: [bt]` here any more.
-    # ESPHome 2026.9.0 (esphome#18599) excludes the IDF `bt` component unless a
-    # component calls esp32.request_bluetooth(); nimble_base now does, so the
-    # YAML stopgap is redundant. If you ever pin the fork back before 578fcf4,
-    # put it back or the build fails with "esp_bt.h: No such file or directory".
-
     sdkconfig_options:
-      # NOTE: no `CONFIG_SW_COEXIST_ENABLE: "y"` here any more. nimble_base
-      # calls esp32.request_software_coexistence(), which drives the same
-      # sdkconfig via ESPHome's reconciler.
-      #
-      # DO NOT drop that fork call. The ESP32-S3 has ONE 2.4 GHz radio shared
-      # by WiFi and BLE. ESP-IDF defaults ESP_COEX_SW_COEXIST_ENABLE to y, but
-      # ESPHome 2026.7.0 (esphome#17008) overrides it to False unless a
-      # component asks. Without arbitration WiFi *reception* collapses while
-      # transmission looks fine: measured at -48 dBm with noise -96 and AP
-      # satisfaction 100, the device sent 26,195 packets and received 330,
-      # rx_rate flapping between the 6 Mbps basic rate and 39 Mbps, OTA
-      # starving to ~0.6 kB/s, and inbound DNS failing with EAI_FAIL.
-      # See docs/ARCHITECTURE.md section 7.
+      # Bluedroid sub-components off so nothing Bluedroid-only compiles.
+      CONFIG_BT_CLASSIC_ENABLED: "n"
+      CONFIG_BT_SPP_ENABLED: "n"
+      CONFIG_BT_HFP_ENABLE: "n"
+      CONFIG_BT_A2DP_ENABLE: "n"
+      CONFIG_BT_BLUFI_ENABLE: "n"
+      CONFIG_BT_GATTS_ENABLE: "n"
+      CONFIG_BT_GATTC_ENABLE: "n"
 
-      # Enable NimBLE, disable Bluedroid
-      CONFIG_BT_ENABLED: "y"
-      CONFIG_BT_NIMBLE_ENABLED: "y"
-      CONFIG_BT_BLUEDROID_ENABLED: "n"
-
-      # Explicitly disable ALL Bluedroid sub-components to prevent compilation
-      # This fixes "esp_bt_defs.h: No such file or directory" errors
-      CONFIG_BT_BLE_ENABLED: "n"           # Bluedroid BLE (not NimBLE BLE)
-      CONFIG_BT_CLASSIC_ENABLED: "n"       # Classic Bluetooth (BR/EDR)
-      CONFIG_BT_SPP_ENABLED: "n"           # Serial Port Profile
-      CONFIG_BT_HFP_ENABLE: "n"            # Hands-Free Profile
-      CONFIG_BT_A2DP_ENABLE: "n"           # Advanced Audio Distribution Profile
-      CONFIG_BT_BLUFI_ENABLE: "n"          # BluFi WiFi provisioning (causes esp_blufi_api.c errors)
-      CONFIG_BT_GATTS_ENABLE: "n"          # GATT Server (Bluedroid)
-      CONFIG_BT_GATTC_ENABLE: "n"          # GATT Client (Bluedroid)
-
-      # NimBLE tuning (working with nimble_proxy)
-      CONFIG_BT_NIMBLE_MAX_CONNECTIONS: "1"
-      CONFIG_BT_NIMBLE_ROLE_CENTRAL: "y"
-      CONFIG_BT_NIMBLE_ROLE_PERIPHERAL: "y"
-      CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"  # Use PSRAM
-      CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192"  # Correct key (was TASK_STACK_SIZE); 8KB for safety
-      CONFIG_BT_RELEASE_IRAM_ON_SLEEP: "n"            # Keep BT memory accessible
-
-      # Increase ATT MTU (browser commonly negotiates 185/247)
-      CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU: "247"
-      # Allow more concurrent GATT procedures and prep entries
+      CONFIG_BT_NIMBLE_ROLE_CENTRAL: "y"     # proxy connections
+      CONFIG_BT_NIMBLE_ROLE_PERIPHERAL: "y"  # Improv provisioning
+      CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE: "8192"
+      CONFIG_BT_RELEASE_IRAM_ON_SLEEP: "n"
       CONFIG_BT_NIMBLE_GATT_MAX_PROCS: "16"
       CONFIG_BT_NIMBLE_GATT_PREP_WRITE_COUNT: "16"
-      # More CCCDs (we have multiple notifies)
       CONFIG_BT_NIMBLE_MAX_CCCDS: "16"
-      # Keep NimBLE logs informative but lighter during boot stabilization.
-      CONFIG_BT_NIMBLE_LOG_LEVEL: "INFO"
+      # A choice symbol: the int CONFIG_BT_NIMBLE_LOG_LEVEL is derived from it and
+      # rejects a string ("INFO" was silently ignored before).
+      CONFIG_BT_NIMBLE_LOG_LEVEL_INFO: "y"
 
 # ============================================================================
-# NimBLE Base Stack
-# ============================================================================
-# Base NimBLE stack - required before nimble_improv can be used
+# NimBLE stack
 # ============================================================================
 nimble_base:
+  # Host allocations in PSRAM (CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL).
+  use_psram: true
 
 # ============================================================================
-# NimBLE Improv WiFi Provisioning
+# Scanner
 # ============================================================================
-# Staged coexistence mode:
-# - nimble_improv kept enabled with hotfix commit
-# - nimble_proxy re-enabled with conservative load
+# Same timing as ble_esphome.yaml (320 ms / 60 ms, ~19% duty cycle) so the two
+# packages compare like for like. The window drops to connection_scan_window
+# while a proxy connection is up, as on Bluedroid.
+# ============================================================================
+nimble_tracker:
+  id: ble_tracker
+  scan_parameters:
+    active: true
+    interval: 320ms
+    window: 60ms
+    connection_scan_window: 30ms
 
+# ============================================================================
+# Home Assistant Bluetooth proxy
+# ============================================================================
+# connection_slots: 1 keeps the internal-heap budget halo has been running
+# with (docs/MEMORY.md: each slot costs ~4 KB of min free heap on Bluedroid).
+# ============================================================================
+bluetooth_proxy:
+  active: true
+  connection_slots: 1
+
+# ============================================================================
+# Improv WiFi provisioning
+# ============================================================================
+# No authorizer: provisioning is accepted on connection. That is only
+# reachable while WiFi is unprovisioned or has been down for wifi_timeout
+# (the service does not run otherwise), which is esp32_improv's behaviour.
+# ============================================================================
 nimble_improv:
   authorized_duration: 2min
   wifi_timeout: 1min
 
-bluetooth_proxy:
-
-nimble_proxy:
-  id: nimble_proxy_component
-  active: true
-  connection_slots: 1
-  cache_services: false
-  # Active scanning tuned to keep HA's live advertisement view populated.
-  # Units are 0.625ms: 512=320ms interval, 96=60ms window (~18.75% duty cycle).
-  # Standard ESPHome bluetooth_proxy uses 320ms/30ms = 9.4% duty. We use
-  # a 60ms window for higher per-cycle yield while staying well below 100%.
-  scan_active: true
-  scan_interval: 512
-  scan_window: 96
-  # Hardware duplicate filter enabled to reduce buffer pressure and CPU load.
-  # HA deduplicates by (address, raw_data) anyway, so flooding duplicates
-  # at 40/sec provides no benefit over the ~1Hz natural advertisement rate.
-  scan_duplicate_filter: true
-  # Software duplicate cache size. 200 entries covers a typical RF environment
-  # before the ring buffer wraps and allows re-reporting stale devices.
-  scan_duplicate_cache_size: 200
-  # Flush advertisement batches faster to reduce buffer-full drops.
-  advertisement_send_interval_ms: 25
-  # Number of advertisements buffered per API send.
-  advertisement_batch_size: 4
-  # Optional BLE advertising name source (use device name by default).
-  # For Improv advertisements this is compacted to <=8 chars automatically.
-  advertising_name: "${name}"
-
 # ============================================================================
 # BLE Scanner Control Switch
 # ============================================================================
-# System-wide switch to pause/resume BLE scanning
-# Used to reduce API traffic during weather fetches and OTA updates
-# See globals.yaml for usage documentation
+# Pause/resume scanning around OTA updates and weather fetches (see
+# base/globals.yaml). Same shape as ble_esphome.yaml's switch; the tracker
+# starts scanning on boot by itself.
 # ============================================================================
-
 switch:
-  - platform: nimble_proxy
-    nimble_proxy_id: nimble_proxy_component
+  - platform: template
     id: ble_scanner_switch
     name: "BLE Scanner"
     icon: mdi:bluetooth-audio
     restore_mode: RESTORE_DEFAULT_ON
     entity_category: "config"
+    optimistic: true
+    on_turn_on:
+      - nimble_tracker.start_scan:
+          id: ble_tracker
+          continuous: true
+    on_turn_off:
+      - nimble_tracker.stop_scan:
+          id: ble_tracker
 
-# ============================================================================
-# Startup Light Blink Animation
-# ============================================================================
-# Rainbow effect for 30 seconds on startup/WiFi disconnect
-# ============================================================================
-
-# Note: startup_light_blink switch is in packages/system/networking.yaml
-# Note: Startup blink animation intervals are in system/networking.yaml (HA connection check)
-# Note: RGB light component is in features/weather/weather_led_effects.yaml
-# Note: cycleCounter global is in base/globals.yaml (load order dependency)
+# Note: cycleCounter global is in base/globals.yaml (load order dependency).
+# Startup blink animation lives in system/networking.yaml; the RGB light is in
+# features/weather/weather_led_effects.yaml.

@@ -8,14 +8,14 @@
 # Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
 #              Requires secrets file with WiFi, HA, and WireGuard credentials
 #
-# Version: 26.09.25.0622
+# Version: 26.09.25.1959
 # Last Updated: September 25, 2026
 # Baseline: ESPHome 2026.9.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.09.25.0622"
+  version: "26.09.25.1959"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -638,17 +638,14 @@ api:
       - delay: 5s
       - script.execute: flush_aqi_history
 
-      # BLE scanning disabled (using NimBLE instead of Bluedroid)
-      # - delay: 500ms
-      # - esp32_ble_tracker.start_scan:
-      #     continuous: true
+      # BLE scanning needs no start here: the BLE package's tracker scans
+      # from boot (ble_scanner_switch pauses/resumes it).
   # ============================================================================
   # Custom Services (callable from Home Assistant)
   # ============================================================================
 
   on_client_disconnected:
-    # BLE scanning disabled (using NimBLE instead of Bluedroid)
-    # - esp32_ble_tracker.stop_scan:
+    # BLE scanning keeps running; the proxy tears its connections down itself.
     then:
       - logger.log: "Home Assistant disconnected"
 
@@ -805,28 +802,14 @@ mdns:
 # ============================================================================
 
 # ============================================================================
-# NIMBLE BLUETOOTH PROXY
+# BLUETOOTH PROXY / IMPROV
 # ============================================================================
-# Custom NimBLE-based Bluetooth proxy for Home Assistant
-# Uses NimBLE stack instead of Bluedroid for better performance and lower RAM
-# 
-# Benefits:
-# - ~55KB RAM savings vs Bluedroid
-# - Better WiFi coexistence
-# - Lower power consumption
-# - Faster connection handling
+# Configured by the BLE package selected in the device file, not here:
+#   features/ble/ble_improv.yaml   NimBLE: bluetooth_proxy + nimble_tracker + nimble_improv
+#   features/ble/ble_esphome.yaml  Bluedroid: bluetooth_proxy + esp32_ble_tracker + esp32_improv
+#   features/ble/ble_stub.yaml     no BLE
+# Both stacks start scanning on boot on their own; ble_scanner_switch pauses it.
 # ============================================================================
-
-# Stub bluetooth_proxy component (NOT the native ESPHome one)
-# This ONLY provides header files and USE_BLUETOOTH_PROXY define for API types
-# It contains NO Bluedroid code - just enables the protobuf message types
-
-# ESP32 Improv Configuration (Optional)
-# Allows WiFi provisioning via BLE using the Improv standard
-# Useful for initial device setup without hardcoded credentials
-# DISABLED: Requires BLE tracker
-# esp32_improv:
-#   authorizer: none
 
 # API Integration - Dynamic BLE Scanning
 # Automatically start/stop BLE scanning based on Home Assistant connection
