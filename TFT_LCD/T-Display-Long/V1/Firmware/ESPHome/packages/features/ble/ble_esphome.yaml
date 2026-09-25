@@ -6,7 +6,8 @@
 #
 # Stack difference:
 #   ble_esphome.yaml  → Bluedroid (ESP32 default; required by esp32_ble_tracker)
-#   ble_improv.yaml   → NimBLE    (custom components; lower memory footprint)
+#   ble_improv.yaml   → NimBLE    (fork runs this same upstream proxy code on
+#                                  NimBLE; lower memory footprint)
 #
 # Why try this instead of ble_improv.yaml?
 #   - ESPHome's Bluedroid BLE management has received memory improvements
@@ -14,9 +15,8 @@
 #   - Stays in sync with upstream ESPHome BLE fixes automatically
 #   - Maintained by the ESPHome project
 #
-# Trade-offs vs ble_improv.yaml (custom NimBLE):
-#   - ble_scanner_switch is a template switch (optimistic), not a native proxy switch
-#   - Bluedroid uses more internal RAM than NimBLE (see MEMORY IMPACT)
+# Trade-offs vs ble_improv.yaml (NimBLE):
+#   - Bluedroid uses more internal RAM and flash than NimBLE (see MEMORY IMPACT)
 #   - bluetooth_proxy defaults to connection_slots: 3 and cache_services: true
 #     (Bluedroid NVS service cache); ble_improv.yaml runs connection_slots: 1.
 #     Both are tunable on bluetooth_proxy below if needed.
@@ -66,7 +66,7 @@
 # ============================================================================
 # ESPHome's native esp32_ble_tracker and bluetooth_proxy are Bluedroid-based.
 # They include esp_bt_defs.h which is only available when Bluedroid is enabled.
-# (The custom nimble_proxy in ble_improv.yaml is the NimBLE alternative.)
+# (ble_improv.yaml is the NimBLE alternative.)
 #
 # BLE-only (no Classic BR/EDR): Bluedroid + BLE_ENABLED + GATT on,
 # Classic BT features off.
@@ -143,8 +143,9 @@ esp32_ble_tracker:
 # ============================================================================
 # Allows Home Assistant to use this device as a Bluetooth proxy.
 # active: true enables outbound GATT connections (connect to BLE devices).
-# NOTE: connection_slots and cache_services are not available in the native
-# component; ESPHome manages connection limits internally.
+# connection_slots (default 3) and cache_services (default true, Bluedroid's
+# NVS GATT cache) are both available here; each slot costs internal heap
+# (docs/MEMORY.md).
 # ============================================================================
 bluetooth_proxy:
   active: true
@@ -157,7 +158,8 @@ bluetooth_proxy:
 # esp32_improv requires an authorizer binary_sensor — it checks this sensor
 # to decide whether to accept provisioning requests. We define an internal
 # always-on sensor (ble_improv_authorizer) so provisioning is auto-approved
-# on connection, matching the nimble_improv behavior in ble_improv.yaml.
+# on connection (nimble_improv in ble_improv.yaml does the same when it has
+# no authorizer). esp32_improv only runs while WiFi needs provisioning.
 #
 # To require a physical button press instead: replace the template sensor
 # with a real button/GPIO binary_sensor.

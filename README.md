@@ -104,7 +104,7 @@ In `Halo-v1.yaml`, comment or uncomment lines in the `packages:` section to togg
 ```yaml
 # BLE — pick exactly one:
 # - ...ble/ble_esphome.yaml   # ESPHome native Bluedroid
-# - ...ble/ble_improv.yaml    # Custom NimBLE fork (more options)
+# - ...ble/ble_improv.yaml    # NimBLE (fork; upstream proxy code, smaller footprint)
 - ...ble/ble_stub.yaml        # No BLE (saves ~40KB)
 
 # Weather — all optional:

@@ -179,14 +179,18 @@ Declared in two places, deliberately:
 | Where | Components | Why |
 |---|---|---|
 | `system/esphome_core.yaml` | `axs15231`, `sy6970`, `weather_helpers` | hardware drivers + helpers, always needed |
-| `features/ble/ble_improv.yaml` | `nimble_base`, `nimble_improv`, `nimble_proxy`, `bluetooth_proxy` | only needed by the NimBLE variant |
+| `features/ble/ble_improv.yaml` | `nimble_base`, `nimble_tracker`, `ble_device_base`, `bluetooth_connection`, `bluetooth_proxy`, `nimble_improv` | only needed by the NimBLE variant |
 
 Both point at `github://truffshuff/esphome-components@<commit>` pinned by full SHA. Keeping
 the BLE components out of the core file means switching BLE stacks is a one-line change in
 the package list.
 
 `esphome config` reports: *"External components are overriding built-in components:
-axs15231, sy6970"* — expected, that is the point of the fork.
+axs15231, sy6970"* — expected, that is the point of the fork. With `ble_improv.yaml` it also
+lists `ble_device_base`, `bluetooth_connection` and `bluetooth_proxy`: the fork vendors
+ESPHome 2026.9.0's own copies with a small NimBLE patch set (its `components/VENDORED.md`),
+so a NimBLE build runs the upstream proxy code. That is why those three must never be listed
+alongside `ble_esphome.yaml`.
 
 ---
 
@@ -198,7 +202,7 @@ defines `ble_scanner_switch`, which OTA and the weather fetch scripts turn off a
 | Package | Stack | Notes |
 |---|---|---|
 | `ble_stub.yaml` | none | A no-op template switch. Smallest build. **Default in `Halo-v1.yaml`.** |
-| `ble_improv.yaml` | NimBLE (fork) | Full proxy: `connection_slots`, scan duty tuning, ATT MTU 247. Allocates from PSRAM (`CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL`). |
+| `ble_improv.yaml` | NimBLE (fork) | ESPHome 2026.9.0's `bluetooth_proxy` on a NimBLE scanner (`nimble_tracker`) and GATT backend, so HA sees Bluedroid-identical proxy behaviour; `nimble_improv` for provisioning. Host allocations in PSRAM. Parity status and hardware test plan: the fork's `docs/NIMBLE_PARITY.md`. |
 | `ble_esphome.yaml` | Bluedroid (upstream) | ESPHome's native `esp32_ble_tracker` + `bluetooth_proxy` + `esp32_improv`. Tracks upstream fixes; uses more internal RAM. |
 
 ### WiFi/BT coexistence — do not remove
@@ -225,15 +229,15 @@ What that looked like in practice, and why it took so long to find:
 | Home Assistant API | mostly fine — small, retransmit-tolerant messages |
 
 Every device-side diagnostic looked healthy: free heap ~102 KB, no component exceeding its
-loop budget, `nimble_proxy send_failed=0`. **The fault was only visible from the AP**, in the
+loop budget, `nimble_proxy send_failed=0` (the proxy of that time). **The fault was only visible from the AP**, in the
 transmit/receive packet asymmetry. If inbound-only symptoms ever reappear, check the
 controller's client stats before touching the firmware.
 
-Fixed in two places, deliberately belt-and-braces:
-
-- `nimble_base` calls `esp32.request_software_coexistence()` (fork commit `748cd7c`)
-- `ble_improv.yaml` sets `CONFIG_SW_COEXIST_ENABLE: "y"` — `sdkconfig_options` wins over the
-  reconciler's `set_idf_sdkconfig_default`, so it holds regardless of fork version
+Fixed in the fork: `nimble_base` calls `esp32.request_software_coexistence()` whenever WiFi is
+configured (first in commit `748cd7c`). Verify after any fork or ESPHome bump: the generated
+`sdkconfig.<name>` must contain `CONFIG_SW_COEXIST_ENABLE=y`. `nimble_tracker` also prefers
+Bluetooth in the coexistence arbiter while a proxy connection is being made or is up, as
+`esp32_ble_tracker` does.
 
 After the fix, the same OTA ran at ~22.7 kB/s (105 s for a 2.37 MB image) with `prepare` at
 0.03 s. That is ~38× the broken figure, but still modest for WiFi — the transfer is lockstep

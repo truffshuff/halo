@@ -219,7 +219,8 @@ wifi:
 #     wifi: INFO            # Suppress WiFi debug messages
 #     api: INFO             # Keep general API at INFO
 #     api.connection: DEBUG # But enable API connection debug for BLE proxy
-#     nimble_proxy: DEBUG 
+#     bluetooth_proxy: DEBUG
+#     nimble_tracker: DEBUG
 #     nimble_improv: DEBUG
 
 # ============================================================================
@@ -294,14 +295,16 @@ packages:
       #
       # Option 1: ESPHome native BLE stack (Bluedroid-based)
       #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + esp32_improv.
-      #   ESPHome's Bluedroid management has received memory/stability improvements.
       #   No custom external components needed.
-      #   Trade-offs: Bluedroid uses more RAM than NimBLE; no connection_slots/cache_services.
+      #   Trade-offs: Bluedroid costs more internal RAM and flash than NimBLE
+      #   (docs/MEMORY.md). connection_slots and cache_services are available.
       # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_esphome.yaml
       #
-      # Option 2: Custom NimBLE stack (original implementation)
-      #   Full feature set: connection_slots, cache_services, authorized_duration, ATT MTU tuning.
-      #   Requires truffshuff/esphome-components external fork.
+      # Option 2: NimBLE stack (truffshuff/esphome-components)
+      #   Runs ESPHome 2026.9.0's own bluetooth_proxy code on NimBLE, so Home
+      #   Assistant sees the same proxy behaviour as Option 1 with NimBLE's
+      #   smaller internal-RAM and flash footprint. Improv only runs while WiFi
+      #   needs provisioning. Requires the external component fork.
       # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/ble/ble_improv.yaml
       #
       # Option 3: No BLE (stub — saves ~40KB)
