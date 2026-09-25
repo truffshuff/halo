@@ -50,7 +50,7 @@ waste — do not lower it to "free" memory.
 | **LVGL draw buffer** | 115.2 KB (exact: 180×640/2×2) | `lvgl: buffer_size: 50%` → ESPHome allocates 1/2-screen buffers straight from PSRAM (§4) |
 | **LVGL object/widget heap** | varies | ESPHome's `lv_malloc_core` uses `MALLOC_CAP_SPIRAM \| MALLOC_CAP_8BIT` first, internal as fallback |
 | **NimBLE stack** | ~40 KB | `CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL: "y"` (only with `ble_improv.yaml`) |
-| **Bluedroid host tables** | not yet measured | `esp32_ble: use_psram: true` (→ `BT_BLE_DYNAMIC_ENV_MEMORY`) plus a manual `CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"` (only with `ble_esphome.yaml`). ESPHome sets the second one only on the original ESP32; on the S3 it must be set by hand — see §10 |
+| **Bluedroid host tables** | no measurable effect | `esp32_ble: use_psram: true` (→ `BT_BLE_DYNAMIC_ENV_MEMORY`) plus a manual `CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"` (only with `ble_esphome.yaml`). ESPHome sets the second one only on the original ESP32; on the S3 it must be set by hand. Moved Min Free Heap Ever 40 KB → 39 KB, i.e. nothing — see §10 |
 | **mbedTLS contexts** | ~50 KB per TLS session | `CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"`. Without this, `mbedtls_ssl_setup()` / `mbedtls_ctr_drbg_seed()` fail with `-0x7F00` / `-0x0001` against a ~28 KB internal heap. |
 | **ArduinoJson forecast pools** | up to ~40 KB transiently | explicit `ArduinoJson::Allocator` subclass using `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` (§5) |
 | **HTTP response body string** | 32 KB reserved | `std::string::reserve(32768)` ≥ the ALWAYSINTERNAL threshold, so it lands in PSRAM |
@@ -289,6 +289,8 @@ scenario from §6 nearly exhausted internal RAM:
 | `halo-v1-79e1f8`, NimBLE | 66,484 B | 72 s uptime — boot transient only, before any weather refresh |
 | one unit, NimBLE (`ble_improv.yaml`) | ~63 KB | 2026-09-22; uptime not recorded |
 | same unit, Bluedroid (`ble_esphome.yaml`) | ~40 KB | 2026-09-22; before the Bluedroid PSRAM options existed |
+| `79e1f8`, Bluedroid + PSRAM options | 39,884 B | 2026-09-24, ~25 min uptime; current free 94,127 B |
+| `79d6b4`, NimBLE | 64,340 B | 2026-09-24, same reboot time; current free 103,979 B |
 
 **BLE stack comparison.** Swapping NimBLE for ESPHome's native Bluedroid stack cost
 ~23 KB of minimum free internal heap. Two things make that larger than the stacks
@@ -296,10 +298,32 @@ alone: the NimBLE build keeps its host in PSRAM (`NIMBLE_MEM_ALLOC_MODE_EXTERNAL
 while the Bluedroid package had no equivalent, and `bluetooth_proxy` defaults to 3
 connection slots where `ble_improv.yaml` runs 1. `ble_esphome.yaml` now sets
 `esp32_ble: use_psram: true` and `CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST` to address
-the first; the recovered amount is **not yet measured**. ESPHome 2026.9.0 applies
-`SPIRAM_FIRST` only on the original ESP32, citing a missing Kconfig symbol on
-BLE-only chips — but in ESP-IDF 5.5.5 the symbol depends only on
-`BT_BLUEDROID_ENABLED` and the allocator (`osi/allocator.h`) is chip-independent.
+the first. ESPHome 2026.9.0 applies `SPIRAM_FIRST` only on the original ESP32, citing
+a missing Kconfig symbol on BLE-only chips — but in ESP-IDF 5.5.5 the symbol depends
+only on `BT_BLUEDROID_ENABLED` and the allocator (`osi/allocator.h`) is
+chip-independent. **Measured result: no effect** (40 KB → 39 KB). The Bluedroid host
+was not where the internal memory was going.
+
+Comparing each unit's current free heap with its minimum splits the gap in two:
+
+- **~10 KB steady.** Current free heap is ~10 KB lower on Bluedroid. `esp32_ble` keeps
+  an `EventPool` of up to 99 `BLEEvent`s (84 B each per the ELF's DWARF info) allocated
+  with `RAMAllocator<T>::ALLOC_INTERNAL`, so the 512 B ALWAYSINTERNAL threshold and
+  every PSRAM option are bypassed. The pool grows lazily with scan bursts, which is why
+  Bluedroid's current free heap slides from ~100 KB to ~94 KB after boot. It is larger
+  with PSRAM (100 slots) than without (88). Bluedroid also runs two host tasks (BTC
+  3,072 + BTU 8,192 B stack) where NimBLE runs one (8,192 B). None of this is
+  configurable from YAML in ESPHome 2026.9.0.
+- **~15 KB transient.** Min Free Heap Ever falls from 52 KB to 41.5 KB in the first
+  five minutes after boot while current free heap barely moves — repeated deep dips
+  during the busiest network period. NimBLE barely moves over the same window. The
+  suspected cause was `ble_esphome.yaml` scanning at 100% duty (1100 ms / 1100 ms),
+  starving WiFi so that WiFi/lwIP buffers, which must be internal (§2), piled up. The
+  scan was cut to 320 ms / 60 ms to match `ble_improv.yaml` on 2026-09-24; **the
+  effect is not yet measured.**
+
+Both units reboot on the hour, so every Min Free Heap Ever reading here covers less
+than 60 minutes of uptime.
 
 Re-read all three after 24 h of normal operation.
 

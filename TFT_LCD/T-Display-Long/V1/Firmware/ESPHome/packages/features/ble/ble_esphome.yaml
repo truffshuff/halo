@@ -36,11 +36,23 @@
 #   *before* the PSRAM options below existed:
 #     Min Free Heap Ever   ~63 KB with ble_improv.yaml (NimBLE, 1 slot)
 #                          ~40 KB with this package    (Bluedroid, 3 slots)
-#   Without help, Bluedroid keeps its host environment tables as static arrays
-#   in internal DRAM. esp32_ble use_psram + CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST
-#   (both below) make them heap allocations and route those to PSRAM. How much
-#   of the ~23 KB that recovers on this board is NOT yet measured.
-#   Flash: Bluedroid is larger than NimBLE; PSRAM: host tables once moved.
+#   2026-09-24, same comparison with the PSRAM options below in place
+#   (~25 min uptime, both units rebooted at the same time):
+#     Min Free Heap Ever   64,340 B NimBLE  vs  39,884 B Bluedroid
+#     Free heap (current) 103,979 B NimBLE  vs  94,127 B Bluedroid
+#   The PSRAM options made no measurable difference (40 KB -> 39 KB).
+#   The gap splits into two parts:
+#     ~10 KB steady  - esp32_ble's EventPool: up to 99 BLEEvents x 84 B, allocated
+#                      with RAMAllocator ALLOC_INTERNAL (hardcoded, and larger when
+#                      PSRAM is present: 100 vs 88 slots), plus a second Bluedroid
+#                      task (BTC 3072 + BTU 8192 vs NimBLE host 8192). Not tunable
+#                      from YAML in ESPHome 2026.9.0.
+#     ~15 KB transient - dips in the first ~5 min after boot, while the network is
+#                      busiest. Suspected cause: the old 100% scan duty cycle
+#                      starving WiFi, whose buffers must stay internal. The scan
+#                      window was cut to match ble_improv.yaml on 2026-09-24;
+#                      the effect is NOT yet measured.
+#   Flash: Bluedroid image is ~169 KB larger than NimBLE.
 # ============================================================================
 
 # ============================================================================
@@ -104,20 +116,21 @@ esp32_ble:
 # active: true enables active scan (requests scan response packets).
 # Tune interval/window to balance scan coverage vs. power/CPU load.
 # ============================================================================
-# WARNING (ESPHome 2026.9.0): a scan window above 600ms with WiFi enabled now
-# produces a validation warning (esphome#18725), and esphome#18356 documents
-# missed BLE advertisements in exactly this regime on ESP-IDF 5.5.5. The 100%
-# duty cycle below starves WiFi of radio time. If you enable this package,
-# reduce the window first - e.g. interval: 320ms / window: 60ms, which is what
-# features/ble/ble_improv.yaml uses (scan_interval 512 / scan_window 96, in
-# 0.625ms units). The values here are left unchanged only because this package
-# is not the active BLE option and changing them untested would be worse.
+# Scan timing matches features/ble/ble_improv.yaml exactly (scan_interval 512 /
+# scan_window 96 in 0.625 ms units = 320 ms / 60 ms, ~19% duty cycle), so the
+# two BLE packages can be compared like for like.
+#
+# It was 1100 ms / 1100 ms (100% duty). WiFi and BLE share one 2.4 GHz radio;
+# at 100% the scanner claims nearly all airtime, WiFi traffic backs up, and
+# WiFi/lwIP buffers - which must live in internal SRAM - pile up. ESPHome
+# 2026.9.0 also warns about windows above 600 ms with WiFi (esphome#18725), and
+# esphome#18356 documents missed advertisements in that regime on IDF 5.5.5.
 esp32_ble_tracker:
   id: ble_tracker
   scan_parameters:
     active: true
-    interval: 1100ms   # Time between scan windows (duty cycle)
-    window: 1100ms     # How long to listen per interval (100% duty cycle here)
+    interval: 320ms   # Time between scan windows
+    window: 60ms      # How long to listen per interval (~19% duty cycle)
 
 # ============================================================================
 # ESPHome Native Bluetooth Proxy
