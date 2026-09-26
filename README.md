@@ -66,8 +66,7 @@ The template needs these keys:
 |---|---|
 | `wifihome_ssid`, `wifihome_password` | WiFi |
 | `ha_url`, `ha_token` | HTTP calls to Home Assistant (hourly-forecast fallback, printer cover image) |
-| `api_encryption_key` | Native API encryption (`openssl rand -base64 32`) |
-| `ota_password` | OTA updates |
+| `api_encryption_key` | Native API encryption, which also secures OTA uploads (`openssl rand -base64 32`) |
 | `wg_address`, `wg_netmask`, `wg_prikey`, `wg_pubkey`, `wg_shrdkey`, `wg_peerendpt`, `wg_peerport`, `wg_allowed_ips` | WireGuard |
 
 The `wg_*` keys are needed even if you never use WireGuard: the WireGuard package

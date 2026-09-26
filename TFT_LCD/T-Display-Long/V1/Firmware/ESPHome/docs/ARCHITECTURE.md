@@ -294,7 +294,7 @@ Setting `power_save_mode: none` is the obvious next experiment.
 | WiFi | `networking.yaml` owns `wifi:`. `output_power: 15dB` (brownout headroom), `reboot_timeout: 0s`, AP fallback `"Halo Hotspot"` |
 | `network:` | `enable_high_performance: false`, `tcp_send_buffer: 65535` — see MEMORY.md |
 | API | Noise encryption, `reboot_timeout: 0s`, `max_connections: 8` |
-| OTA | `ota: platform: esphome`, port 3232, password auth |
+| OTA | `ota: platform: esphome`, port 3232, `encryption: {}` — Noise-encrypted and authenticated with the API key (no password since 2026.09) |
 | Web server | port 80, version 2 (ESPHome default) |
 | WireGuard | package always loaded today (§10, gap 2); tunnel off by default; full-tunnel capable, gated on a valid SNTP time |
 | mDNS | enabled |

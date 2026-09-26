@@ -52,7 +52,7 @@ The project uses ESPHome's `remote_packages` to pull configs from GitHub (`ref: 
 
 ### Secrets
 - `secrets.yaml` is **never committed**. It is excluded in both `.gitignore` files.
-- All sensitive values (WiFi credentials, HA tokens, WireGuard keys, API keys, OTA passwords) must use `!secret <key>` references.
+- All sensitive values (WiFi credentials, HA tokens, WireGuard keys, API keys) must use `!secret <key>` references.
 - Never hardcode credentials, tokens, or private keys anywhere in committed files.
 - Keep `secrets.yaml.example` in sync when adding or renaming a `!secret` key. Read key *names* from a real `secrets.yaml` with `grep -oE "^[A-Za-z0-9_]+:"` — never print its values.
 

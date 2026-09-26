@@ -41,9 +41,6 @@ substitutions:
   wifi_alt_ssid: !secret my_alt_ssid
   wifi_alt_password: !secret my_alt_password
 
-  # Security
-  ota_password: !secret ota_password
-
   # Default the WireGuard switch ON for this device (wireguard.yaml defaults
   # to RESTORE_DEFAULT_OFF). Only matters until the switch state is restored.
   wireguard_default: "RESTORE_DEFAULT_ON"
@@ -90,7 +87,11 @@ dashboard_import:
 ota:
   - platform: esphome
     id: ota_default
-    password: ${ota_password}
+    # Uploads are Noise-encrypted and authenticated with the api: encryption
+    # key (a bare block inherits it). This replaced the OTA password in
+    # 2026.09: ESPHome 2026.9.0 flags a password alongside an API key as
+    # ~3.5 KB of flash for no added protection, and the two cannot be combined.
+    encryption: {}
     on_begin:
       - lambda: 'id(ota_in_progress) = true;'
       # Pause BLE scanning during OTA to ensure clean API communication
