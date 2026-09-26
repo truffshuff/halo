@@ -37,7 +37,8 @@
 # Memory usage:
 #   Flash: NimBLE is ~169 KB smaller than Bluedroid (ble_esphome.yaml).
 #   PSRAM: NimBLE host allocations (nimble_base use_psram), the scan event
-#     ring (64 x 44 B), and per connection slot a GATT event ring
+#     ring (256 x 48 B = ~12 KB; sized for 2.5 s main-loop stalls such as
+#     the printer image download), and per connection slot a GATT event ring
 #     (16 x ~530 B), four read buffers (~2 KB) and, only while a connection
 #     is being discovered, a ~10 KB service table.
 #   Internal SRAM: the NimBLE host task stack (8 KB, below) plus the
@@ -45,9 +46,11 @@
 #     ESPHome 2026.9.0 / IDF 5.5.5): static DIRAM 219,531 -> 212,563 B
 #     (-7.0 KB, of which .bss -6.4 KB: the old proxy's in-object event queue
 #     moved to PSRAM); flash 2,371,291 -> 2,366,683 B (-4.6 KB).
-#     Runtime min free internal heap is not measured yet (docs/MEMORY.md has
-#     the previous fork's numbers). The five diagnostic sensors add a few
-#     hundred bytes of internal SRAM (entity objects), nothing at runtime.
+#     Runtime, 2026-09-26 overnight (7 h, scanning ~30 reports/s, no proxy
+#     connections): min free internal heap 63,252 B, free heap flat at
+#     ~109 KB. Previous fork averaged ~64.4 KB (docs/MEMORY.md), so the
+#     static saving does not show at the minimum. The five diagnostic
+#     sensors add a few hundred bytes of internal SRAM (entity objects).
 #
 # Alternative: ble_esphome.yaml (ESPHome's Bluedroid stack, no fork needed).
 #
@@ -67,7 +70,7 @@
 # reproducible.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@5c04a76f8f744bd418516b8a878fa341ba00124e # NimBLE backend for the upstream 2026.9.0 proxy
+  - source: github://truffshuff/esphome-components@c0cc734a6bbc84c448f9e5cd92a272e0432cf4a9 # NimBLE backend for the upstream 2026.9.0 proxy
     components:
       - nimble_base
       - nimble_tracker
