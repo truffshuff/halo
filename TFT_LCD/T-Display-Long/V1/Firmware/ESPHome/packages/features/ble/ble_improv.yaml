@@ -49,7 +49,8 @@
 #     Runtime, 2026-09-26 overnight (7 h, scanning ~30 reports/s, no proxy
 #     connections): min free internal heap 63,252 B, free heap flat at
 #     ~109 KB. Previous fork averaged ~64.4 KB (docs/MEMORY.md), so the
-#     static saving does not show at the minimum. The five diagnostic
+#     static saving does not show at the minimum. An open proxy link did not
+#     move free internal heap (~108.8 KB before and during). The five diagnostic
 #     sensors add a few hundred bytes of internal SRAM (entity objects).
 #
 # Alternative: ble_esphome.yaml (ESPHome's Bluedroid stack, no fork needed).
@@ -70,7 +71,7 @@
 # reproducible.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@c0cc734a6bbc84c448f9e5cd92a272e0432cf4a9 # NimBLE backend for the upstream 2026.9.0 proxy
+  - source: github://truffshuff/esphome-components@63c0a684f8e4d36d481f276cb20b6e152f58774c # NimBLE backend for the upstream 2026.9.0 proxy
     components:
       - nimble_base
       - nimble_tracker
