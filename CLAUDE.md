@@ -111,6 +111,7 @@ The firmware depends on HA configuration that is **not in this repo**:
 
 - **Do not run `esphome run`, `esphome upload`, or `esphome logs`** — these touch a physical device. `esphome config` (read-only validation) is fine when an ESPHome install ≥ `min_version` (2026.9.0) and `secrets.yaml` are present; an older install fails the version check before validating anything. `esphome config` does **not** compile lambdas, so it cannot validate embedded C++.
 - **Do not assume local edits under `packages/` are what gets built** — builds pull from GitHub `ref: modular` with `refresh: Always`. Use the local-path harness in `docs/ARCHITECTURE.md` §9 to validate uncommitted changes.
+- For any lambda change, `esphome compile` on the harness (ARCHITECTURE §9 has a generator script) is the real check — it builds only and touches no device. Compile `halo-v1-79e384.yaml` (NimBLE + diagnostics, the widest build) and `esphome config` the template too.
 - For comment/doc-only YAML changes, a cheap proof when `esphome config` isn't available: parse every file with PyYAML (a SafeLoader with `add_multi_constructor('!', ...)` to accept `!secret`/`!lambda`) and compare the parsed structure against `git show HEAD:<file>`. Identical structure = only comments changed. Lambda-internal `//` comments show as a difference; inspect those lines with `git diff -U0`.
 
 ---

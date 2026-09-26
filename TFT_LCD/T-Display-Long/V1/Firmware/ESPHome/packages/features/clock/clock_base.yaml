@@ -312,6 +312,7 @@ number:
     entity_category: "config"
     optimistic: true
     step: 1
+    mode: box
     on_value:
       - lambda: 'id(page_rotation_vertical_clock_order) = (int)x;'
 

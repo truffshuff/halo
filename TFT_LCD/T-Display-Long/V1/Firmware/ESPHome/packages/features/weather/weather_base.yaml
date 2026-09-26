@@ -330,12 +330,13 @@ number:
   - platform: template
     name: "Page Rotation Order: Weather Page"
     id: page_rotation_weather_order_number
-    icon: mdi:sort-numeric-variant
+    icon: mdi:numeric
     entity_category: "config"
     optimistic: true
     min_value: 1
     max_value: 10
     step: 1
+    mode: box
     initial_value: 4
     restore_value: true
     on_value:
@@ -347,12 +348,13 @@ number:
   - platform: template
     name: "Page Rotation Order: Daily Forecast Page"
     id: page_rotation_daily_forecast_order_number
-    icon: mdi:sort-numeric-variant
+    icon: mdi:numeric
     entity_category: "config"
     optimistic: true
     min_value: 1
     max_value: 10
     step: 1
+    mode: box
     initial_value: 5
     restore_value: true
     on_value:
@@ -364,12 +366,13 @@ number:
   - platform: template
     name: "Page Rotation Order: Hourly Forecast Page"
     id: page_rotation_hourly_forecast_order_number
-    icon: mdi:sort-numeric-variant
+    icon: mdi:numeric
     entity_category: "config"
     optimistic: true
     min_value: 1
     max_value: 10
     step: 1
+    mode: box
     initial_value: 6
     restore_value: true
     on_value:
@@ -381,12 +384,13 @@ number:
   - platform: template
     name: "Page Rotation Order: Hourly Summary Page"
     id: page_rotation_hourly_summary_order_number
-    icon: mdi:sort-numeric-variant
+    icon: mdi:numeric
     entity_category: "config"
     optimistic: true
     min_value: 1
     max_value: 10
     step: 1
+    mode: box
     initial_value: 7
     restore_value: true
     on_value:
