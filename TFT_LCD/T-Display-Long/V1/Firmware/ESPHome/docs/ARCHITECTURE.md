@@ -341,7 +341,26 @@ packages:
   p26_core: !include Halo-v1-Core.yaml
 ```
 
-`esphome config <harness>.yaml` now resolves everything from disk. Remember this still does
+This generates the harness copy of an entry file (run it in the scratch directory, with
+`R` pointing at the repository's `ESPHome/` directory):
+
+```bash
+python3 - "$R" <<'EOF'
+import re, sys
+R = sys.argv[1]
+for src in ["halo-v1-79e384.yaml", "Halo-v1.yaml"]:
+    s = open(f"{R}/{src}").read()
+    a = s.index("packages:\n  remote_packages:")
+    tail = s[a:]
+    files = re.findall(r"^\s+- TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/(\S+)\s*$", tail, re.M)
+    block = "packages:\n" + "".join(f"  p{i:02d}: !include {f}\n" for i, f in enumerate(files))
+    end = re.search(r"\n    refresh: \w+\n?", tail).end()
+    open(src, "w").write(s[:a] + block + tail[end:])
+EOF
+```
+
+`esphome config <harness>.yaml` now resolves everything from disk, and
+`esphome compile <harness>.yaml` builds it (it only builds; nothing is uploaded). Remember this still does
 not compile lambdas, and that it needs an ESPHome at or above `min_version` (2026.9.0) —
 an older install stops at the version check before validating anything.
 
