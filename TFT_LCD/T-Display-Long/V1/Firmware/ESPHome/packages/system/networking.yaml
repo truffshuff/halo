@@ -6,7 +6,8 @@
 # This module configures:
 #   - WiFi connection (reboot_timeout: 0s - see Halo-v1-Core.yaml api: notes)
 #   - WireGuard re-handshake on WiFi reconnect
-#   - Web server (port 80) and captive portal (AP fallback)
+#   - Web server (port 80, firmware upload disabled) and captive portal
+#     (AP fallback; still accepts a firmware upload for recovery)
 #   - WiFi signal sensor (id: wifi_signal_db)
 #   - Startup rainbow LED animation and its "Startup Light Blink" switch
 #
@@ -80,6 +81,19 @@ wifi:
 
 web_server:
   port: 80
+  # No firmware upload through the web UI. Its /update endpoint is plain HTTP
+  # with no authentication, so anyone on the network could flash the device;
+  # the ota: esphome platform (entry files) requires the API key instead.
+  # This does not affect the captive portal: in fallback-hotspot mode
+  # ("Halo Hotspot") it still accepts a firmware upload, which is the
+  # recovery path when the device cannot join WiFi.
+  #
+  # ESPHome 2026.9.0 still logs "OTA encryption does not cover the web_server
+  # OTA platform" during validation. Expected: captive_portal auto-loads that
+  # platform, and with ota: false its /update handler only accepts a request
+  # while the captive portal is active (web_server/ota/ota_web_server.cpp,
+  # USE_WEBSERVER_OTA_DISABLED). The validator does not look at this flag.
+  ota: false
 
 captive_portal:
 
