@@ -72,9 +72,6 @@ substitutions:
   wifi_ssid: !secret wifihome_ssid
   wifi_password: !secret wifihome_password
 
-  # Security
-  ota_password: !secret ota_password
-
   # API
   # 0s = never reboot on API disconnect (required for offline history buffering to survive outages)
   api_reboot_timeout: "0s"
@@ -126,7 +123,11 @@ dashboard_import:
 ota:
   - platform: esphome
     id: ota_default
-    password: ${ota_password}
+    # Uploads are Noise-encrypted and authenticated with the api: encryption
+    # key (a bare block inherits it). This replaced the OTA password in
+    # 2026.09: ESPHome 2026.9.0 flags a password alongside an API key as
+    # ~3.5 KB of flash for no added protection, and the two cannot be combined.
+    encryption: {}
     on_begin:
       - lambda: 'id(ota_in_progress) = true;'
       # Pause BLE scanning during OTA to ensure clean API communication

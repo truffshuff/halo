@@ -322,13 +322,16 @@ switch:
       - logger.log: "Hourly summary page disabled in rotation"
 
 # ============================================================================
-# Page Rotation Order Numbers
+# Page Order Numbers
+# Named "Page Order: ..." like every other page since 2026-09-26 (previously
+# "Page Rotation Order: ..."). The rename gave them new HA entities and reset
+# their stored values to the initial_value defaults below.
 # ============================================================================
 
 number:
   # Weather page rotation order
   - platform: template
-    name: "Page Rotation Order: Weather Page"
+    name: "Page Order: Weather Page"
     id: page_rotation_weather_order_number
     icon: mdi:numeric
     entity_category: "config"
@@ -346,7 +349,7 @@ number:
             ESP_LOGI("page_rotation", "Weather page order set to %d", (int)x);
 
   - platform: template
-    name: "Page Rotation Order: Daily Forecast Page"
+    name: "Page Order: Daily Forecast Page"
     id: page_rotation_daily_forecast_order_number
     icon: mdi:numeric
     entity_category: "config"
@@ -364,7 +367,7 @@ number:
             ESP_LOGI("page_rotation", "Daily forecast page order set to %d", (int)x);
 
   - platform: template
-    name: "Page Rotation Order: Hourly Forecast Page"
+    name: "Page Order: Hourly Forecast Page"
     id: page_rotation_hourly_forecast_order_number
     icon: mdi:numeric
     entity_category: "config"
@@ -382,7 +385,7 @@ number:
             ESP_LOGI("page_rotation", "Hourly forecast page order set to %d", (int)x);
 
   - platform: template
-    name: "Page Rotation Order: Hourly Summary Page"
+    name: "Page Order: Hourly Summary Page"
     id: page_rotation_hourly_summary_order_number
     icon: mdi:numeric
     entity_category: "config"
