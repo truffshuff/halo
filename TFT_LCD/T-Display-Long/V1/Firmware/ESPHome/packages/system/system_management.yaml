@@ -7,6 +7,7 @@
 # This module configures:
 #   - Home Assistant API
 #   - Time sources (Home Assistant + SNTP)
+#   - Time Zone select (device page, default America/New_York)
 #   - HTTP request component
 #   - Web server
 #   - System buttons (reboot, factory reset)
@@ -77,10 +78,16 @@ weather_helpers:
 #
 # Note: on_time_sync callbacks are in features/clock/clock_base.yaml
 #       (time_update script is part of the clock feature module)
+#
+# The time zone is set at runtime by the Time Zone select below. Both sources
+# name America/New_York only as the boot value until the select restores.
+# ha_time needs an explicit timezone: without one, Home Assistant 2026.3+
+# pushes its own zone on every time sync and would override the select.
 # ============================================================================
 time:
   - platform: homeassistant
     id: ha_time
+    timezone: America/New_York
   - platform: sntp
     id: sntp_time
     update_interval: 5min
@@ -104,6 +111,148 @@ time:
               - wireguard.enable:
                   id: wg0
               - logger.log: "WireGuard enabled by SNTP sync"
+
+# ============================================================================
+# Time Zone
+# ============================================================================
+# Device-page select for the local time zone. It drives the clock and every
+# weather date/hour label (weather_helpers converts via localtime_r(), which
+# reads the same global zone).
+#
+# The device cannot parse zone names at runtime; ESPHome only accepts a
+# pre-parsed rule. Each row below is what ESPHome's own codegen emits for that
+# IANA name (tzdata via aioesphomeapi.posix_tz), with the POSIX string as a
+# comment. Rows must stay in the same order as `options:`; on_value checks this
+# and logs an error on a mismatch. To add a zone, append to both lists.
+#
+# Memory (measured, ESPHome 2026.9.0): +3 KB flash, mostly the table (static
+# const, stays in flash); +96 bytes of internal SRAM for the select entity.
+# ============================================================================
+select:
+  - platform: template
+    name: "Time Zone"
+    id: time_zone_select
+    icon: mdi:map-clock-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "America/New_York"
+    options:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "America/Anchorage"
+      - "Pacific/Honolulu"
+      - "America/Puerto_Rico"
+      - "America/Halifax"
+      - "America/St_Johns"
+      - "America/Mexico_City"
+      - "America/Bogota"
+      - "America/Sao_Paulo"
+      - "America/Argentina/Buenos_Aires"
+      - "Europe/London"
+      - "Europe/Dublin"
+      - "Europe/Lisbon"
+      - "Europe/Paris"
+      - "Europe/Berlin"
+      - "Europe/Madrid"
+      - "Europe/Rome"
+      - "Europe/Amsterdam"
+      - "Europe/Stockholm"
+      - "Europe/Warsaw"
+      - "Europe/Athens"
+      - "Europe/Helsinki"
+      - "Europe/Istanbul"
+      - "Europe/Moscow"
+      - "Africa/Cairo"
+      - "Africa/Johannesburg"
+      - "Africa/Lagos"
+      - "Asia/Dubai"
+      - "Asia/Karachi"
+      - "Asia/Kolkata"
+      - "Asia/Kathmandu"
+      - "Asia/Bangkok"
+      - "Asia/Singapore"
+      - "Asia/Shanghai"
+      - "Asia/Hong_Kong"
+      - "Asia/Tokyo"
+      - "Asia/Seoul"
+      - "Australia/Perth"
+      - "Australia/Adelaide"
+      - "Australia/Darwin"
+      - "Australia/Brisbane"
+      - "Australia/Sydney"
+      - "Pacific/Auckland"
+      - "UTC"
+    on_value:
+      - lambda: |-
+          using esphome::time::DSTRuleType;
+          constexpr DSTRuleType NONE = DSTRuleType::NONE;
+          constexpr DSTRuleType MWD = DSTRuleType::MONTH_WEEK_DAY;
+          struct Zone {
+            const char *name;
+            esphome::time::ParsedTimezone tz;
+          };
+          // {name, {std_offset, dst_offset, {time, day, type, month, week, dow} start, ... end}}
+          // Offsets are POSIX: seconds west of UTC.
+          static const Zone ZONES[] = {
+            {"America/New_York",               {18000, 14400, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // EST5EDT,M3.2.0,M11.1.0
+            {"America/Chicago",                {21600, 18000, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // CST6CDT,M3.2.0,M11.1.0
+            {"America/Denver",                 {25200, 21600, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // MST7MDT,M3.2.0,M11.1.0
+            {"America/Phoenix",                {25200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // MST7
+            {"America/Los_Angeles",            {28800, 25200, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // PST8PDT,M3.2.0,M11.1.0
+            {"America/Anchorage",              {32400, 28800, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // AKST9AKDT,M3.2.0,M11.1.0
+            {"Pacific/Honolulu",               {36000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // HST10
+            {"America/Puerto_Rico",            {14400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // AST4
+            {"America/Halifax",                {14400, 10800, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // AST4ADT,M3.2.0,M11.1.0
+            {"America/St_Johns",               {12600, 9000, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // NST3:30NDT,M3.2.0,M11.1.0
+            {"America/Mexico_City",            {21600, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // CST6
+            {"America/Bogota",                 {18000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <-05>5
+            {"America/Sao_Paulo",              {10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <-03>3
+            {"America/Argentina/Buenos_Aires", {10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <-03>3
+            {"Europe/London",                  {0, -3600, {3600, 0, MWD, 3, 5, 0}, {7200, 0, MWD, 10, 5, 0}}},  // GMT0BST,M3.5.0/1,M10.5.0
+            {"Europe/Dublin",                  {-3600, 0, {7200, 0, MWD, 10, 5, 0}, {3600, 0, MWD, 3, 5, 0}}},  // IST-1GMT0,M10.5.0,M3.5.0/1
+            {"Europe/Lisbon",                  {0, -3600, {3600, 0, MWD, 3, 5, 0}, {7200, 0, MWD, 10, 5, 0}}},  // WET0WEST,M3.5.0/1,M10.5.0
+            {"Europe/Paris",                   {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Berlin",                  {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Madrid",                  {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Rome",                    {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Amsterdam",               {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Stockholm",               {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Warsaw",                  {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Athens",                  {-7200, -10800, {10800, 0, MWD, 3, 5, 0}, {14400, 0, MWD, 10, 5, 0}}},  // EET-2EEST,M3.5.0/3,M10.5.0/4
+            {"Europe/Helsinki",                {-7200, -10800, {10800, 0, MWD, 3, 5, 0}, {14400, 0, MWD, 10, 5, 0}}},  // EET-2EEST,M3.5.0/3,M10.5.0/4
+            {"Europe/Istanbul",                {-10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+03>-3
+            {"Europe/Moscow",                  {-10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // MSK-3
+            {"Africa/Cairo",                   {-7200, -10800, {0, 0, MWD, 4, 5, 5}, {86400, 0, MWD, 10, 5, 4}}},  // EET-2EEST,M4.5.5/0,M10.5.4/24
+            {"Africa/Johannesburg",            {-7200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // SAST-2
+            {"Africa/Lagos",                   {-3600, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // WAT-1
+            {"Asia/Dubai",                     {-14400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+04>-4
+            {"Asia/Karachi",                   {-18000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // PKT-5
+            {"Asia/Kolkata",                   {-19800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // IST-5:30
+            {"Asia/Kathmandu",                 {-20700, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+0545>-5:45
+            {"Asia/Bangkok",                   {-25200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+07>-7
+            {"Asia/Singapore",                 {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+08>-8
+            {"Asia/Shanghai",                  {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // CST-8
+            {"Asia/Hong_Kong",                 {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // HKT-8
+            {"Asia/Tokyo",                     {-32400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // JST-9
+            {"Asia/Seoul",                     {-32400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // KST-9
+            {"Australia/Perth",                {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // AWST-8
+            {"Australia/Adelaide",             {-34200, -37800, {7200, 0, MWD, 10, 1, 0}, {10800, 0, MWD, 4, 1, 0}}},  // ACST-9:30ACDT,M10.1.0,M4.1.0/3
+            {"Australia/Darwin",               {-34200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // ACST-9:30
+            {"Australia/Brisbane",             {-36000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // AEST-10
+            {"Australia/Sydney",               {-36000, -39600, {7200, 0, MWD, 10, 1, 0}, {10800, 0, MWD, 4, 1, 0}}},  // AEST-10AEDT,M10.1.0,M4.1.0/3
+            {"Pacific/Auckland",               {-43200, -46800, {7200, 0, MWD, 9, 5, 0}, {10800, 0, MWD, 4, 1, 0}}},  // NZST-12NZDT,M9.5.0,M4.1.0/3
+            {"UTC",                            {0, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // UTC0
+          };
+          if (i >= sizeof(ZONES) / sizeof(ZONES[0]) || strcmp(ZONES[i].name, id(time_zone_select).option_at(i)) != 0) {
+            ESP_LOGE("time_zone", "No rule for option %u; time zone unchanged", (unsigned) i);
+            return;
+          }
+          esphome::time::set_global_tz(ZONES[i].tz);
+          ESP_LOGI("time_zone", "Time zone set to %s", ZONES[i].name);
 
 # ---------------------------------------------------------------------------
 # Diagnostics: HTTP-based reachability sensors, SNTP validity sensor,
