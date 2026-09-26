@@ -20,6 +20,10 @@
 #     only while WiFi needs provisioning - no stored network, or no
 #     connection for wifi_timeout - and stops once provisioned.
 #   - ble_scanner_switch: pause/resume scanning (OTA, weather fetches).
+#   - Diagnostic sensors: live proxy connections, connect attempts and
+#     established links since boot, dropped scan reports. HA's history keeps
+#     them, so connections are on record even when nobody watches the
+#     Bluetooth panel.
 #
 # Dependencies:
 #   - system/esphome_core.yaml (psram: component; PSRAM is required here)
@@ -41,7 +45,8 @@
 #     (-7.0 KB, of which .bss -6.4 KB: the old proxy's in-object event queue
 #     moved to PSRAM); flash 2,371,291 -> 2,366,683 B (-4.6 KB).
 #     Runtime min free internal heap is not measured yet (docs/MEMORY.md has
-#     the previous fork's numbers).
+#     the previous fork's numbers). The four diagnostic sensors add a few
+#     hundred bytes of internal SRAM (entity objects), nothing at runtime.
 #
 # Alternative: ble_esphome.yaml (ESPHome's Bluedroid stack, no fork needed).
 #
@@ -61,7 +66,7 @@
 # reproducible.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@782d3bab90e83b23483e77b9b4f315c182fc4b73 # NimBLE backend for the upstream 2026.9.0 proxy
+  - source: github://truffshuff/esphome-components@4e77b91333c6e28e7c559fd8086804c1c7ba44ba # NimBLE backend for the upstream 2026.9.0 proxy
     components:
       - nimble_base
       - nimble_tracker
@@ -147,6 +152,62 @@ bluetooth_proxy:
 nimble_improv:
   authorized_duration: 2min
   wifi_timeout: 1min
+
+# ============================================================================
+# Proxy diagnostics
+# ============================================================================
+# The counters are monotonic since boot, so a connection shorter than the
+# 1 s poll still shows up as an increment. Attempts minus established = connects
+# that failed or were cancelled. The delta filters publish only on change.
+# ============================================================================
+sensor:
+  - platform: template
+    name: "BLE Proxy Active Connections"
+    id: ble_proxy_active_connections
+    icon: mdi:bluetooth-connect
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    state_class: measurement
+    update_interval: 1s
+    lambda: 'return id(ble_tracker).get_active_links();'
+    filters:
+      - delta: 0.5
+
+  - platform: template
+    name: "BLE Proxy Connect Attempts"
+    id: ble_proxy_connect_attempts
+    icon: mdi:bluetooth-settings
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    state_class: total_increasing
+    update_interval: 1s
+    lambda: 'return id(ble_tracker).get_connect_attempts();'
+    filters:
+      - delta: 0.5
+
+  - platform: template
+    name: "BLE Proxy Links Established"
+    id: ble_proxy_links_established
+    icon: mdi:bluetooth-transfer
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    state_class: total_increasing
+    update_interval: 1s
+    lambda: 'return id(ble_tracker).get_links_established();'
+    filters:
+      - delta: 0.5
+
+  - platform: template
+    name: "BLE Scan Reports Dropped"
+    id: ble_scan_reports_dropped
+    icon: mdi:bluetooth-off
+    entity_category: diagnostic
+    accuracy_decimals: 0
+    state_class: total_increasing
+    update_interval: 60s
+    lambda: 'return id(ble_tracker).get_dropped_reports();'
+    filters:
+      - delta: 0.5
 
 # ============================================================================
 # BLE Scanner Control Switch
