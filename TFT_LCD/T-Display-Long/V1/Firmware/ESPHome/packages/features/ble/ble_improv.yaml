@@ -20,10 +20,11 @@
 #     only while WiFi needs provisioning - no stored network, or no
 #     connection for wifi_timeout - and stops once provisioned.
 #   - ble_scanner_switch: pause/resume scanning (OTA, weather fetches).
-#   - Diagnostic sensors: live proxy connections, connect attempts and
-#     established links since boot, dropped scan reports. HA's history keeps
-#     them, so connections are on record even when nobody watches the
-#     Bluetooth panel.
+#   - Diagnostic sensors: advertisements per minute, live proxy connections,
+#     connect attempts and established links since boot, dropped scan
+#     reports. HA's history keeps them, so connections are on record even
+#     when nobody watches the Bluetooth panel. Plus a once-a-minute INFO
+#     stats line in the log.
 #
 # Dependencies:
 #   - system/esphome_core.yaml (psram: component; PSRAM is required here)
@@ -45,7 +46,7 @@
 #     (-7.0 KB, of which .bss -6.4 KB: the old proxy's in-object event queue
 #     moved to PSRAM); flash 2,371,291 -> 2,366,683 B (-4.6 KB).
 #     Runtime min free internal heap is not measured yet (docs/MEMORY.md has
-#     the previous fork's numbers). The four diagnostic sensors add a few
+#     the previous fork's numbers). The five diagnostic sensors add a few
 #     hundred bytes of internal SRAM (entity objects), nothing at runtime.
 #
 # Alternative: ble_esphome.yaml (ESPHome's Bluedroid stack, no fork needed).
@@ -66,7 +67,7 @@
 # reproducible.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@4e77b91333c6e28e7c559fd8086804c1c7ba44ba # NimBLE backend for the upstream 2026.9.0 proxy
+  - source: github://truffshuff/esphome-components@5c04a76f8f744bd418516b8a878fa341ba00124e # NimBLE backend for the upstream 2026.9.0 proxy
     components:
       - nimble_base
       - nimble_tracker
@@ -131,6 +132,10 @@ nimble_tracker:
     interval: 320ms
     window: 60ms
     connection_scan_window: 30ms
+  # One INFO line per minute with scan and connection counters (the old fork's
+  # "Diag counters" line). The logger runs at INFO, which compiles out the
+  # tracker's DEBUG scan/connection lines. 0s turns it off.
+  log_stats_interval: 60s
 
 # ============================================================================
 # Home Assistant Bluetooth proxy
@@ -158,7 +163,9 @@ nimble_improv:
 # ============================================================================
 # The counters are monotonic since boot, so a connection shorter than the
 # 1 s poll still shows up as an increment. Attempts minus established = connects
-# that failed or were cancelled. The delta filters publish only on change.
+# that failed or were cancelled. The delta filters publish only on change, so
+# the connection sensors sit at 0 until HA connects through this unit;
+# Advertisements per Minute is the liveness signal.
 # ============================================================================
 sensor:
   - platform: template
@@ -196,6 +203,24 @@ sensor:
     lambda: 'return id(ble_tracker).get_links_established();'
     filters:
       - delta: 0.5
+
+  - platform: template
+    name: "BLE Advertisements per Minute"
+    id: ble_advertisements_per_minute
+    icon: mdi:bluetooth-audio
+    entity_category: diagnostic
+    unit_of_measurement: "/min"
+    accuracy_decimals: 0
+    state_class: measurement
+    update_interval: 60s
+    # Reports (scan responses included) taken off the controller since the
+    # previous update. The first value after boot covers the time since boot.
+    lambda: |-
+      static uint32_t last = 0;
+      const uint32_t total = id(ble_tracker).get_reports_received();
+      const uint32_t delta = total - last;
+      last = total;
+      return delta;
 
   - platform: template
     name: "BLE Scan Reports Dropped"
