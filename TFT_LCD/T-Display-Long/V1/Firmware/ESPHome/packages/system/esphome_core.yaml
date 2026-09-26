@@ -33,9 +33,15 @@ external_components:
   #   ble_improv.yaml  → custom NimBLE stack (truffshuff fork)
   #   ble_esphome.yaml → ESPHome built-in BLE stack (no external components)
   #   ble_stub.yaml    → no BLE
-  - source: github://truffshuff/esphome-components@578fcf4d872b4ab8b6f81658d67c3877294f0b9b # 2026.9.0 fixes + diag-line de-dup: request_bluetooth(), request_software_coexistence(), USE_BLUETOOTH_PROXY_CONNECTIONS
-    components: [axs15231, sy6970, weather_helpers]
-    refresh: always
+  #
+  # axs15231: only its touchscreen platform is used (the display is core
+  #   mipi_spi). The fork adds the single-finger phantom-touch filter and the
+  #   panel's axis mapping, which core's axs15231 touchscreen lacks.
+  # weather_helpers: header-only formatting/parsing for the weather pages.
+  # sy6970 is not listed: nothing configures the PMIC. If it is ever needed,
+  #   use core's sy6970 and set input_current_limit (core defaults to 500 mA).
+  - source: github://truffshuff/esphome-components@5791c6be6cf27653a30ce8c5e0b4d0c02324d520
+    components: [axs15231, weather_helpers]
 
 # ============================================================================
 # PSRAM Configuration

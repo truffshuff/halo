@@ -71,7 +71,7 @@
 # reproducible.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@63c0a684f8e4d36d481f276cb20b6e152f58774c # NimBLE backend for the upstream 2026.9.0 proxy
+  - source: github://truffshuff/esphome-components@5791c6be6cf27653a30ce8c5e0b4d0c02324d520 # NimBLE backend for the upstream 2026.9.0 proxy
     components:
       - nimble_base
       - nimble_tracker
@@ -79,7 +79,6 @@ external_components:
       - bluetooth_connection
       - bluetooth_proxy
       - nimble_improv
-    refresh: always
 
 # ============================================================================
 # NimBLE sdkconfig
