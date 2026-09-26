@@ -21,6 +21,8 @@
 #   - system/display_hardware.yaml (Display, LVGL)
 #   - system/fonts_colors.yaml (color palette, fonts)
 #   - page_rotation/page_rotation.yaml (current_page_name global)
+#   - features/printer/printer_page.yaml (every printer_* label and the cover
+#     image widget - enable the two files together)
 #   - Home Assistant integration with BambuLab addon (entities listed below)
 #
 # SUBSTITUTIONS REQUIRED (set in your device file or Halo-v1.yaml):
@@ -70,7 +72,10 @@
 #   ha_url    — already required for weather; e.g. http://homeassistant.local:8123
 #   ha_token  — long-lived access token, already required for weather
 #
-# MEMORY USAGE: ~7KB (extra ~38KB PSRAM for decoded cover image buffer)
+# MEMORY USAGE: ~7KB flash, plus in PSRAM the online_image download buffer
+#   and the ~39KB decoded 140x140 RGB565 cover image (since ESPHome 2026.9.0
+#   the decoder also stays allocated - esphome#18488). Cover image polled
+#   every 600 s.
 # ============================================================================
 
 # ============================================================================
@@ -338,7 +343,7 @@ number:
     restore_value: true
     initial_value: 8
     min_value: 1
-    max_value: 8
+    max_value: 10
     entity_category: "config"
     optimistic: true
     step: 1
@@ -403,7 +408,7 @@ sensor:
                   value: !lambda 'return (int)id(printer_progress_bar_last_value);'
               - lambda: 'id(printer_progress_needs_render) = false;'
 
-  # --- Remaining Time (minutes, numeric) ---
+  # --- Remaining Time (hours, float - e.g. 1.3667 = 1h 22m) ---
   - platform: homeassistant
     id: printer_remaining_sensor
     entity_id: sensor.${printer_device_id}_remaining_time
@@ -441,7 +446,7 @@ sensor:
                   id: printer_remaining_label
                   text: !lambda 'return id(printer_remaining_last_text);'
 
-  # --- Right Nozzle Temperature ---
+  # --- Active Nozzle Temperature ---
   - platform: homeassistant
     id: printer_nozzle_temp
     entity_id: sensor.${printer_device_id}_nozzle_temperature

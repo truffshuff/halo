@@ -1,7 +1,6 @@
 # ============================================================================
 # Weather Daily - Daily Forecast Display
 # ============================================================================
-# Part of modular refactoring
 #
 # This module provides the daily forecast display scripts:
 #   - update_daily_forecast_display script (updates all 10 days)
@@ -16,14 +15,14 @@
 #   - weather_forecast_* globals (from weather_base)
 #
 # Notes:
-#   - Displays 10-day forecast with high/low temps, conditions, precipitation
+#   - Fills days 2-10 (index 1-9) of the 10-day forecast; today is on the
+#     weather page. Shows high/low temps, conditions, precipitation
 #   - Only updates when on daily forecast page to reduce SPI traffic
 #   - Uses weather_helpers namespace for formatting
 #   - Day headers use parse_forecast_date() without an offset, which converts in
 #     the device time zone per date. Daily entries arrive as local midnight in
 #     UTC (e.g. "2026-09-26T04:00:00Z"), so today's fixed offset would put the
-#     days after a DST change on the previous date. Needs the weather_helpers
-#     commit that added that overload.
+#     days after a DST change on the previous date.
 # ============================================================================
 
 script:

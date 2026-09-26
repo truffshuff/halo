@@ -3,7 +3,14 @@
 # =============================================================================
 #
 # This package contains the RGB LED strip configuration with weather-based
-# and AQI-based color effects.
+# and AQI-based color effects, and - for historical reasons - the "Display
+# Backlight" light entity (id: display_backlight) on the GPIO1 backlight
+# output from system/display_hardware.yaml.
+#
+# NOT OPTIONAL TODAY: rgb_light is referenced by system/networking.yaml
+# (startup animation), Halo-v1-Core.yaml (LED Effect select) and
+# features/airq/airq_base.yaml (AQI Color), so commenting this package out
+# fails validation. See docs/ARCHITECTURE.md "Known gaps" #2.
 #
 # Effects included:
 #   - Weather Condition (colors based on current weather)
@@ -12,8 +19,10 @@
 #   - Standard effects (rainbow, color wipe, scan, etc.)
 #
 # Dependencies:
-#   - packages/base/globals.yaml (weather_current_condition, current_page_name)
-#   - Computed AQI sensor (computed_halo_aqi)
+#   - features/weather/weather_base.yaml (weather_current_condition)
+#   - features/airq/airq_base.yaml (computed_halo_aqi, for Auto Context)
+#   - system/display_hardware.yaml (backlight output)
+#   - base/globals.yaml (display_backlight_is_on)
 #
 # Hardware:
 #   - WS2812 RGB LED strip on GPIO47

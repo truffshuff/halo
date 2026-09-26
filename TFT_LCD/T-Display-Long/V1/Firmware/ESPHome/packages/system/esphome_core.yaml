@@ -4,10 +4,13 @@
 # Core ESP32 hardware and ESPHome configuration
 # Dependencies: None
 # This module configures:
-#   - ESP32-S3 board, PSRAM, CPU frequency
-#   - ESPHome framework configuration
-#   - Memory management (PSRAM, stack sizes)
+#   - ESP32-S3 board, PSRAM, CPU frequency, flash mode
+#   - ESP-IDF framework options and every heap/lwIP/watchdog sdkconfig value
+#   - external_components for the hardware drivers (axs15231, weather_helpers)
+#   - api: encryption key and the network: (lwIP) component
 #   - Logger (base level INFO; device YAML can override with higher verbosity)
+#
+# Read docs/MEMORY.md before changing any value in this file.
 # ============================================================================
 
 # ============================================================================
@@ -28,8 +31,9 @@ logger:
 # MUST be defined early so other modules can use these components
 # ============================================================================
 external_components:
-  # Hardware drivers only. BLE components (nimble_base, nimble_proxy, etc.)
-  # are declared in whichever BLE package is active:
+  # Hardware drivers only. BLE components (nimble_base, nimble_tracker, the
+  # vendored bluetooth_proxy, etc.) are declared in whichever BLE package is
+  # active:
   #   ble_improv.yaml  → custom NimBLE stack (truffshuff fork)
   #   ble_esphome.yaml → ESPHome built-in BLE stack (no external components)
   #   ble_stub.yaml    → no BLE
@@ -40,6 +44,9 @@ external_components:
   # weather_helpers: header-only formatting/parsing for the weather pages.
   # sy6970 is not listed: nothing configures the PMIC. If it is ever needed,
   #   use core's sy6970 and set input_current_limit (core defaults to 500 mA).
+  # Pinned by full SHA. The pin here and the one in features/ble/ble_improv.yaml
+  # should move together; a new commit in the fork does nothing until both are
+  # repinned and pushed.
   - source: github://truffshuff/esphome-components@5791c6be6cf27653a30ce8c5e0b4d0c02324d520
     components: [axs15231, weather_helpers]
 
@@ -47,11 +54,9 @@ external_components:
 # PSRAM Configuration
 # ============================================================================
 # ESP32-S3 has 8MB external PSRAM (Pseudo Static RAM) for expanded memory.
-# This is critical for memory-intensive operations:
-#   - BLE/Bluetooth operations
-#   - LVGL graphics buffers
-#   - 125+ weather sensor entities
-#   - Large HTTP response buffering
+# docs/MEMORY.md section 3 lists what lives there: the LVGL draw buffer, the
+# NimBLE host, mbedTLS contexts, JSON pools, image buffers and the AQI
+# history ring buffer.
 #
 # mode: octal - Uses 8 data lines for maximum bandwidth
 # speed: 80MHz - Highest stable speed (120MHz can cause instability with BLE)
@@ -59,7 +64,10 @@ external_components:
 psram:
   mode: octal
   speed: 80MHz
-  ignore_not_found: false  # Enable larger WiFi buffers
+  # false = PSRAM is mandatory: boot fails if it is not found. ESPHome then
+  # treats PSRAM as guaranteed when it sizes buffers, which is why
+  # enable_high_performance must stay false below.
+  ignore_not_found: false
 
 # ============================================================================
 # Home Assistant API - transport security only
@@ -85,9 +93,11 @@ api:
 # override this project used through 2026.8. It is the supported knob and is
 # range-checked (2880-65535) at validation time.
 #
-# WHY 65535: the Bluetooth proxy (features/ble/ble_improv.yaml) bursts
-# advertisement batches, and the hourly weather fetch pulls a ~20 KB JSON body.
-# Smaller values reproduced "Cannot send message because of TCP buffer space".
+# WHY 65535: this is the SEND side. The Bluetooth proxy (either BLE package)
+# bursts advertisement batches to Home Assistant over the API, and the AQI
+# history flush sends ~30 KB events. Smaller values reproduced "Cannot send
+# message because of TCP buffer space". (Inbound payloads such as forecasts
+# are governed by CONFIG_LWIP_TCP_WND_DEFAULT below.)
 #
 # MEMORY COST: this is *internal* DRAM - lwIP pbufs are not PSRAM-capable.
 # The cost is only paid while a connection actually has data in flight, but it
@@ -124,9 +134,9 @@ esp32:
   # original ESP32 and would be rejected on this board.)
   # Toolchain: no explicit `toolchain:` set below -> native ESP-IDF (default
   # since 2026.7.0), which picks up ccache and the shared ~/.cache/esphome/idf
-  # toolchain cache automatically. To roll back to the previous PlatformIO
-  # build, add `toolchain: platformio` here and restore platformio_options in
-  # Halo-v1.yaml (see commented block there).
+  # toolchain cache automatically. The PlatformIO toolchain is deprecated and
+  # removed in 2027.2.0; the old platformio_options block is in git history
+  # (removed 2026.09) if a rollback on an older ESPHome is ever needed.
 
   framework:
     type: esp-idf
@@ -219,8 +229,10 @@ esp32:
       # ========================================================================
       # Network Configuration
       # ========================================================================
-      # TCP receive window. Sized for the largest inbound payload: the hourly
-      # weather forecast (~20 KB JSON) and the 140x140 printer cover image.
+      # TCP receive window. Sized for the largest inbound payloads: the
+      # hourly-forecast HTTP fallback (the full forecast, ~57-63 KB; normally
+      # the ~6 KB API attribute is used instead) and the ~22 KB printer cover
+      # image.
       # 65535 is the ceiling without TCP window scaling, which is only enabled
       # by high-performance networking (deliberately disabled above).
       # This is internal DRAM. Lower it together with tcp_send_buffer if the
@@ -243,7 +255,9 @@ esp32:
       # ========================================================================
       # Watchdog
       # ========================================================================
-      # 30s (default 5s). The hourly-forecast JSON parse and the LVGL page
-      # repaint that follows it are the long poles. Lambdas on that path call
-      # App.feed_wdt() explicitly; this headroom covers the rest.
+      # 30s (default 5s). The long poles are synchronous http_request calls
+      # (hourly-forecast fallback, the optional reachability probes in
+      # system_management.yaml), JSON parses, the AQI history flush and the
+      # LVGL repaints that follow. Lambdas on those paths call App.feed_wdt()
+      # explicitly; this headroom covers the rest.
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"

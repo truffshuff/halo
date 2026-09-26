@@ -5,7 +5,14 @@
 # Dependencies:
 #   - system/esphome_core.yaml
 #   - system/fonts_colors.yaml
-#   - system/system_management.yaml (time sources)
+#   - system/system_management.yaml (ha_time, sntp_time)
+#   - features/clock/clock_page.yaml (vclock_* labels)
+#   - features/airq/airq_page.yaml (timeVal label on the AirQ page)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     last_auto_rotation_time)
+#   - features/wireguard/wireguard.yaml (wireguard_enabled selects SNTP over
+#     HA time while the tunnel is up)
+#   - base/globals.yaml (boot_complete, last_display_update_time)
 #
 # This module configures:
 #   - Clock globals (colon blink, time update tracking)
@@ -21,13 +28,13 @@
 #   - Multi-page time display (clock, airq pages)
 #   - Page rotation integration
 #   - Performance tracking
+#   - Display-watchdog heartbeat (last_display_update_time; see time_update)
 #
-# MEMORY IMPACT: ~5KB
+# MEMORY IMPACT: ~5KB flash
 # ============================================================================
 
-# Note: Time source on_time_sync callbacks have been removed from
-# system/system_management.yaml. The clock intervals (2s) handle time updates
-# instead of relying on time sync events.
+# Note: the clock does not use on_time_sync. The 1 s interval below runs
+# time_update, which re-renders only when the formatted time changes.
 
 # ============================================================================
 # Clock Globals
@@ -208,15 +215,19 @@ script:
           id(time_update_last_duration) = elapsed;
           const bool rendered = id(time_update_needs_render);
 
-          // mipi_spi does not expose a flush-completion callback. Keep this
-          // heartbeat tied to real application rendering rather than timer
-          // execution so the watchdog still detects a stalled UI pipeline.
+          // Display-watchdog heartbeat. mipi_spi does not expose a
+          // flush-completion callback, so the heartbeat is tied to real
+          // application rendering rather than timer execution: it only moves
+          // when the time text changed (about once a minute), which lets the
+          // watchdog detect a stalled UI pipeline. A render also proves any
+          // earlier recovery worked, so the recovery counter starts over:
+          // the watchdog only reboots after consecutive failed recoveries.
           if (rendered) {
             id(last_display_update_time) = now;
-          }
-          // Update watchdog timer ONLY if we actually rendered something
-          if (rendered) {
-            id(last_display_update_time) = now;
+            if (id(display_recovery_attempts) != 0) {
+              ESP_LOGI("time_update", "Rendering resumed; display recovery counter reset");
+              id(display_recovery_attempts) = 0;
+            }
             ESP_LOGV("time_update", "Display watchdog updated (rendered)");
           }
 
@@ -297,7 +308,7 @@ number:
     restore_value: true
     initial_value: 1
     min_value: 1
-    max_value: 7
+    max_value: 10
     entity_category: "config"
     optimistic: true
     step: 1

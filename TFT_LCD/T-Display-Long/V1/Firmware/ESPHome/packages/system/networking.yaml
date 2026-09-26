@@ -1,21 +1,25 @@
 # ============================================================================
 # Networking Configuration
 # ============================================================================
-# WiFi base configuration (without WireGuard)
-# Dependencies: system/esphome_core.yaml
+# WiFi base configuration
 #
 # This module configures:
-#   - WiFi connection
-#   - Captive portal (AP fallback)
-#   - WiFi signal sensor
+#   - WiFi connection (reboot_timeout: 0s - see Halo-v1-Core.yaml api: notes)
+#   - WireGuard re-handshake on WiFi reconnect
+#   - Web server (port 80) and captive portal (AP fallback)
+#   - WiFi signal sensor (id: wifi_signal_db)
+#   - Startup rainbow LED animation and its "Startup Light Blink" switch
 #
-# CREDENTIALS: Stored in device YAML as substitutions or secrets.yaml
-#   wifi_ssid: "YourNetworkName"
-#   wifi_password: "YourNetworkPassword"
+# Dependencies (this required module reaches into optional ones):
+#   - system/system_management.yaml   ink_ha_connected, sntp_time
+#   - features/wireguard/wireguard.yaml   wireguard_enabled, wg0
+#   - features/weather/weather_led_effects.yaml   rgb_light
+#   - base/globals.yaml   boot_complete, cycleCounter
+#   See docs/ARCHITECTURE.md "Known gaps" #2.
 #
-# SECURITY: WiFi credentials are stored in plaintext in compiled firmware
-#           Use WPA2/WPA3 encryption on your access point
-#           Consider using secrets file for sensitive deployments
+# CREDENTIALS: the entry file's wifi_ssid / wifi_password substitutions, which
+# read !secret wifihome_ssid / wifihome_password (see secrets.yaml.example).
+# They are compiled into the firmware image in plain text.
 # ============================================================================
 
 # ============================================================================
@@ -53,7 +57,7 @@ wifi:
     # disable then re-enable so the component performs a fresh handshake
     # initiation with a current timestamp.  Stale timestamps are rejected by
     # the server (WireGuard replay-protection window), which is the likely
-    # reason tunnels don't reconnect after long outages even after power cycles.
+    # reason tunnels didn't reconnect after long outages.
     - if:
         condition:
           lambda: 'return id(boot_complete) && id(wireguard_enabled).state;'

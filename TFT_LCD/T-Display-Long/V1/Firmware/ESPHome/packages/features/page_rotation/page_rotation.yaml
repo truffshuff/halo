@@ -11,15 +11,21 @@
 #   - Touch event integration (resets rotation timer)
 #
 # ARCHITECTURE NOTE:
-#   This module provides MASTER controls only. Individual page rotation
-#   switches and order numbers remain in their capability modules:
+#   This module owns current_page_name, the rotation interval, the "Default
+#   Page at Boot" select and page_transition_cleanup. Per-page enable
+#   switches and order numbers are spread out:
 #   - Clock: features/clock/clock_base.yaml
-#   - AirQ: features/airq/airq_base.yaml
+#   - AirQ: HERE (the switch and order number); the globals are in
+#     features/airq/airq_base.yaml
 #   - WiFi: features/wifi_status/wifi_page_base.yaml
-#   - Weather: Halo-v1-Core.yaml (now handled by features/weather)
+#   - Weather (4 page types): features/weather/weather_base.yaml
+#   - Printer: features/printer/printer_base.yaml
+#   The "Auto Page Rotation" master switch is in
+#   features/diagnostics/diagnostics.yaml, so a build without diagnostics
+#   has no HA toggle for it (rotation still runs; the global defaults on).
 #
-#   The actual rotation logic (interval that cycles pages) remains in
-#   Halo-v1-Core.yaml as it needs to orchestrate across all pages.
+#   The rotation logic itself (1 s decision + 100 ms page-show dispatch) is
+#   in Halo-v1-Core.yaml because it orchestrates across all pages.
 #
 # HARDWARE REQUIRED:
 #   - Display with LVGL (for page switching)
@@ -28,9 +34,12 @@
 # DEPENDENCIES:
 #   - system/esphome_core.yaml (ESP32 config)
 #   - system/display_hardware.yaml (Display, touchscreen)
-#   - All page modules that participate in rotation
+#   - features/airq/airq_base.yaml (page_rotation_AirQ_* globals)
+#   - features/clock/clock_base.yaml (time_update, time_update_last_text)
+#   - features/weather/weather_base.yaml (weather_last_condition, cleared by
+#     page_transition_cleanup)
 #
-# MEMORY USAGE: ~1KB
+# MEMORY USAGE: ~1KB flash
 #
 # Created: 2025-11-14 (module extraction)
 # ============================================================================
@@ -41,7 +50,9 @@
 globals:
   # Current page tracking using string name
   # Possible values: "vertical_clock", "airq", "wifi", "weather",
-  #                  "hourly_forecast", "hourly_summary_1", "hourly_summary_2", "daily_forecast"
+  #                  "hourly_forecast", "hourly_summary_1", "hourly_summary_2",
+  #                  "daily_forecast", "printer"
+  # Writing a new value makes Halo-v1-Core.yaml's 100 ms interval show that page.
   - id: current_page_name
     type: std::string
     restore_value: no
@@ -72,11 +83,10 @@ globals:
     initial_value: '0'
 
   # Last touch time tracking
-  # Records timestamp (milliseconds) of last touchscreen interaction
-  # Used to reset auto-rotation timer when user touches the display
+  # Written by the printer page's nav button only; nothing reads it (the
+  # rotation timer is last_auto_rotation_time above).
   # Must be unsigned long to match millis() return type and avoid
-  # signed overflow after ~24.8 days of uptime (millis() overflow bug
-  # class fixed in ESPHome 2026.3.0 codebase correctness sweep).
+  # signed overflow after ~24.8 days of uptime.
   - id: last_touch_time
     type: unsigned long
     initial_value: '0'
@@ -107,15 +117,16 @@ number:
           args: ['(int)x']
 
   # AirQ page rotation order
-  # Controls the position of AirQ page in the rotation sequence (1-8)
+  # Controls the position of AirQ page in the rotation sequence (1-10).
+  # initial_value matches page_rotation_AirQ_order's default (2).
   - platform: template
     name: "Page Order: AirQ Page"
     id: page_order_AirQ
     icon: mdi:numeric
     restore_value: true
-    initial_value: 1
+    initial_value: 2
     min_value: 1
-    max_value: 8
+    max_value: 10
     entity_category: "config"
     optimistic: true
     step: 1
@@ -159,23 +170,33 @@ switch:
 
 # Note: Auto Page Rotation master switch is in diagnostics.yaml
 # Note: Individual page switches for Clock, WiFi, Weather are in their respective capability modules
+# Note: every page's order number accepts 1-10, and the shipped defaults are
+#       clock 1, AirQ 2, WiFi 3, weather 4, daily 5, hourly 6, hourly summary 7,
+#       printer 8. Equal numbers rotate in declaration order (see
+#       Halo-v1-Core.yaml). Keep each number's initial_value equal to its
+#       global's initial_value.
 
 # ============================================================================
 # Select Components
 # ============================================================================
 select:
-  # Default page to display at boot
-  # Allows user to choose which page appears when device starts
+  # Default page to display at boot, applied by Halo-v1-Core.yaml's on_boot
+  # once Home Assistant connects (the clock shows until then). The option
+  # strings are matched there, so rename both together. restore_value keeps
+  # the option's index: append new options, never reorder.
   - platform: template
     name: "Default Page at Boot"
     id: default_page_select_boot
     optimistic: true
     options:
       - "Vertical Clock"
-      # Uncomment based on enabled features:
-      # - "AirQ"          # if airq_enabled
-      # - "WiFi"          # if wifi_enabled
-      - "Weather"       # if weather_enabled
+      - "Weather"
+      - "AirQ"
+      - "WiFi"
+      - "Daily Forecast"
+      - "Hourly Forecast"
+      - "Hourly Summary"
+      - "3D Printer"
     initial_option: "Vertical Clock"
     restore_value: true
 
@@ -183,8 +204,9 @@ select:
 # Script Components
 # ============================================================================
 script:
-  # Page transition cleanup script
-  # Frees memory and refreshes display when transitioning between pages
+  # Page transition cleanup script, run from every page's on_load.
+  # Clears the cached clock and weather-condition text so the next update
+  # re-renders on the new page, and invalidates the screen for a full repaint.
   - id: page_transition_cleanup
     mode: queued  # Queue executions instead of warning about duplicates
     max_runs: 2   # Allow up to 2 queued runs
@@ -204,7 +226,8 @@ script:
                 // Log current memory state before cleanup
                 ESP_LOGD("lvgl", "Page transition cleanup - Free heap: %lu", esp_get_free_heap_size());
 
-                // Clear all cached strings to free memory
+                // Clear cached text so the next update sees a change and
+                // re-renders on the page now showing.
                 id(time_update_last_text).clear();
                 id(weather_last_condition).clear();
 

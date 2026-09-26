@@ -74,8 +74,9 @@ packages:
 `refresh: Always` is set, a push is live on every device on its next build. See §9 for how
 to validate local edits before pushing.
 
-Load order is significant — ESPHome merges packages in list order, and an `id:` must be
-defined before it is referenced:
+Load order is significant — ESPHome merges packages in list order: later packages extend
+lists and override keys set earlier, and LVGL pages appear (and `lvgl.page.next` cycles
+through them) in merge order. Keep the documented order:
 
 ```
 packages/base/globals.yaml          shared globals — MUST be first
@@ -87,7 +88,8 @@ packages/system/*                   required; the device does not boot without t
   fonts_colors.yaml                 fonts, colors, images  (flash cost, not RAM)
   system_management.yaml            http_request, time, weather_helpers, status sensors
         ↓
-packages/features/*                 optional; each is meant to be commentable
+packages/features/*                 meant to be optional; today only diagnostics and
+                                    the BLE choice actually are (§10, gap 2)
         ↓
 Halo-v1-Core.yaml                   LVGL config, page navigation, API triggers — LAST
 ```
@@ -121,21 +123,34 @@ package that the template has commented out.
    BME280
 
  Home Assistant ──► homeassistant sensor/text_sensor platforms ──► globals ──► LVGL
-   weather.*            (push, over the API connection)
+   weather.*, current-condition sensors   (push, over the API connection)
+   sensor.hourly_forecast_esp[forecast]   (hourly forecast, 24 entries, ~6 KB)
    sensor.<printer>_*
 
- Home Assistant ──► http_request POST /api/services/weather/get_forecasts
-   (pull, ~20 KB JSON, parsed into fixed-size global arrays — see §5)
+ Device ──► homeassistant.action weather.get_forecasts (type: daily, capture_response)
+   (request/response over the API; 10 entries parsed into fixed-size global arrays)
 
- Home Assistant ──► image: platform: online_image (printer cover, 180 s poll)
+ Device ──► http_request POST /api/services/weather/get_forecasts (type: hourly)
+   (FALLBACK ONLY, when the hourly attribute is stale: synchronous, ~57-63 KB)
+
+ Home Assistant ──► image: platform: online_image (printer cover, 600 s poll)
+
+ Device ──► esphome.aqi_history_batch events (AQI history replay on reconnect)
 ```
 
 Two distinct paths reach Home Assistant, and the difference matters:
 
-- **Native API** (port 6053, Noise-encrypted) — push both ways, used for all entity state.
-- **HTTP REST** (`${ha_url}` + `${ha_token}`) — pull only, used for forecast fetches and the
-  printer cover image, because `homeassistant.action` with `capture_response` proved
-  unreliable for the forecast payload. The relevant weather scripts go straight to HTTP.
+- **Native API** (port 6053, Noise-encrypted) — push both ways; used for all entity state,
+  the hourly forecast attribute, the daily `weather.get_forecasts` call and the AQI history
+  events. One API message cannot exceed 65,535 bytes (§10, gap 4), which is why the full
+  hourly forecast does not travel this way. The daily call needs **"Allow the device to
+  perform Home Assistant actions"** enabled for the device in HA.
+- **HTTP REST** (`${ha_url}` + `${ha_token}`) — pull only, used for the printer cover image
+  and the hourly-forecast fallback. `http_request` is synchronous: every call blocks the
+  main loop for its duration.
+
+The Home Assistant side of the hourly path — a trigger-based template sensor publishing
+`sensor.hourly_forecast_esp` — is not in this repository; the README has an equivalent.
 
 ---
 
@@ -158,8 +173,14 @@ LVGL v9 (ESPHome 2026.4.0+) drives an `mipi_spi` display.
 - **Rotation order ties**: as of 2026.09 the sort is a stable insertion sort. If two pages
   are given the *same* order number, they now rotate in declaration order (clock, airq, wifi,
   weather, hourly, hourly-summary, daily, printer). The previous selection sort was unstable
-  and the resulting order was arbitrary. Shipped defaults are 1–8 with no ties, so this only
-  shows up if a user sets two pages to the same number in Home Assistant.
+  and the resulting order was arbitrary. Shipped defaults are 1–8 with no ties (clock, AirQ,
+  WiFi, weather, daily, hourly, hourly summary, printer), and every order number accepts
+  1–10. The HA number entities copy their restored value into the globals at boot, so a
+  number's `initial_value` must match its global's.
+
+- **Default page**: Core's `on_boot` shows the clock, then sets `current_page_name` from the
+  "Default Page at Boot" select. The 100 ms interval switches to it once HA first connects
+  (`boot_complete`), and the rotation timer restarts at that moment.
 
 - **Rendering discipline**: every widget that updates frequently has a paired
   `*_last_text` / `*_needs_render` global. The rule is: compute the new string, compare, and
@@ -168,7 +189,11 @@ LVGL v9 (ESPHome 2026.4.0+) drives an `mipi_spi` display.
   redundant repaints are expensive.
 
 - **Watchdog**: `features/diagnostics/diagnostics.yaml` watches `last_display_update_time`
-  and forces a hardware recovery if flushes stop. Only active when diagnostics is enabled.
+  and forces a hardware recovery if it is older than 90 s. `mipi_spi` has no flush-complete
+  callback, so that timestamp is a *rendering* heartbeat set by the clock's `time_update`
+  when the time text changes (about once a minute). A trigger hard-resets the panel; each
+  render resets the recovery counter, so the watchdog reboots only after two consecutive
+  recoveries fail. Only active when diagnostics is enabled.
 
 ---
 
@@ -181,9 +206,15 @@ Declared in two places, deliberately:
 | `system/esphome_core.yaml` | `axs15231`, `weather_helpers` | touchscreen driver + weather helpers, always needed |
 | `features/ble/ble_improv.yaml` | `nimble_base`, `nimble_tracker`, `ble_device_base`, `bluetooth_connection`, `bluetooth_proxy`, `nimble_improv` | only needed by the NimBLE variant |
 
-Both point at `github://truffshuff/esphome-components@<commit>` pinned by full SHA. Keeping
-the BLE components out of the core file means switching BLE stacks is a one-line change in
-the package list.
+Both point at `github://truffshuff/esphome-components@<commit>` pinned by full SHA, and
+the two pins should always name the same commit. A change pushed to the fork does nothing
+until both pins are moved and this repository is pushed. Keeping the BLE components out of
+the core file means switching BLE stacks is a one-line change in the package list.
+
+`weather_helpers` is header-only: `system_management.yaml` lists `weather_helpers:` so the
+header is copied into the build, and the weather lambdas call `weather_helpers::…`
+directly. It converts forecast timestamps with `localtime_r()`, so the Time Zone select in
+`system_management.yaml` drives every forecast date and hour label.
 
 `esphome config` reports: *"External components are overriding built-in components:
 axs15231"* — expected, that is the point of the fork. Only its touchscreen platform is used
@@ -248,10 +279,11 @@ After the fix, the same OTA ran at ~22.7 kB/s (105 s for a 2.37 MB image) with `
 default of `light`, which adds DTIM-interval latency to every one of those ~290 round trips.
 Setting `power_save_mode: none` is the obvious next experiment.
 
-> `ble_esphome.yaml` sets `interval: 1100ms` / `window: 1100ms` — a 100 % scan duty cycle.
+> `ble_esphome.yaml` used `interval: 1100ms` / `window: 1100ms` — a 100 % scan duty cycle.
 > ESPHome 2026.9.0 (esphome#18725) warns when the scan window exceeds 600 ms with WiFi
 > enabled, and esphome#18356 documents missed advertisements in exactly this regime.
-> If you switch to that package, reduce the window first.
+> Since 2026-09-24 both BLE packages scan at 320 ms / 60 ms; that change recovered
+> ~10.5 KB of minimum free heap on Bluedroid (MEMORY.md §10).
 
 ---
 
@@ -264,7 +296,7 @@ Setting `power_save_mode: none` is the obvious next experiment.
 | API | Noise encryption, `reboot_timeout: 0s`, `max_connections: 8` |
 | OTA | `ota: platform: esphome`, port 3232, password auth |
 | Web server | port 80, version 2 (ESPHome default) |
-| WireGuard | optional; full-tunnel capable, gated on a valid SNTP time |
+| WireGuard | package always loaded today (§10, gap 2); tunnel off by default; full-tunnel capable, gated on a valid SNTP time |
 | mDNS | enabled |
 
 Two `reboot_timeout: 0s` settings are **load-bearing, not laziness**: the AQI offline history
@@ -310,7 +342,8 @@ packages:
 ```
 
 `esphome config <harness>.yaml` now resolves everything from disk. Remember this still does
-not compile lambdas.
+not compile lambdas, and that it needs an ESPHome at or above `min_version` (2026.9.0) —
+an older install stops at the version check before validating anything.
 
 ---
 
@@ -327,18 +360,33 @@ Recorded because they are easy to rediscover and misdiagnose.
    on page show), not when an individual sensor arrives. If live per-sensor updates are
    wanted, that is a **new feature**, not a regression.
 
-2. **`Halo-v1-Core.yaml` breaks the modularity contract.**
-   Core is a required file but references 44 ids that only optional feature packages define —
-   page-rotation globals, WireGuard render flags, `computed_halo_aqi`, the wifi_status
-   `*_needs_render` set. Commenting out `wireguard.yaml`, `page_rotation.yaml`,
-   `wifi_status/*` or `airq_base.yaml` will fail validation with "Couldn't find ID". Only the
-   BLE packages have a real stub. Fixing this properly means either stub packages for each
-   feature or moving the consuming logic out of Core; both are larger refactors.
+2. **Feature packages are not actually optional.**
+   The goal is that any line under `packages/features/` can be commented out. Today only
+   `diagnostics.yaml` and the choice of BLE package can. Everything else is referenced by
+   a required file or by another feature, and fails validation with "Couldn't find ID":
+
+   | Referenced from | Ids it needs from "optional" packages |
+   |---|---|
+   | `Halo-v1-Core.yaml` rotation + page-show chain | every page (`vertical_clock_page`, `AirQ_page`, `wifi_page`, `weather_forecast_page`, `hourly_forecast_page`, `hourly_summary_page_1/2`, `daily_forecast_page`, `printer_page`) and every `page_rotation_*_enabled/_order` global |
+   | `Halo-v1-Core.yaml` api / LED / WiFi-stats | `flush_aqi_history` (airq_history), `computed_halo_aqi` (airq_base), `rgb_light` (weather_led_effects), the wifi_status label and `*_needs_render` set, the `wg_*` render globals (wireguard) |
+   | `system/networking.yaml` | `wireguard_enabled`, `wg0` (wireguard), `rgb_light` (weather_led_effects) |
+   | `system/system_management.yaml` | `wireguard_enabled`, `wireguard_enabled_sensor`, `wg0`, `wg_status_connected_state` |
+   | `system/display_hardware.yaml` | `last_auto_rotation_time` (page_rotation) |
+   | `features/weather/weather_base.yaml` | scripts in weather_page, weather_daily and weather_hourly |
+   | `features/wifi_status/wifi_page.yaml` ↔ `wireguard.yaml` | each needs the other's ids |
+   | `features/clock/clock_base.yaml` | `wireguard_enabled`, `timeVal` (airq_page) |
+
+   Two more wrinkles: `weather_led_effects.yaml` also hosts the "Display Backlight" light
+   (GPIO1, unrelated to the RGB LED), and `airq_base.yaml` / `airq_page.yaml` must be enabled
+   together (the base's triggers update the page's labels), as must the printer pair.
+
+   Fixing this properly means either stub packages for each feature (as `ble_stub.yaml`
+   does for BLE) or moving the cross-cutting logic into the owning package; both are larger
+   refactors. Until then, hide an unwanted page with its **Page Rotation: …** switch.
    `wifi_signal_db` was the one case that broke the **template's own default feature
    selection** — diagnostics is commented out in `Halo-v1.yaml`, so a new user hit
    "Couldn't find ID 'wifi_signal_db'" before changing anything. It was fixed by moving the
-   sensor into `networking.yaml`. The working device file escaped it only because it enables
-   diagnostics.
+   sensor into `networking.yaml`.
 
 3. **The AppDaemon app targets a different unit on purpose.**
    `HomeAssistant/AppDaemon/apps/halo_sensor_history.yaml` sets
@@ -395,19 +443,44 @@ Recorded because they are easy to rediscover and misdiagnose.
    The controller lists `halo-v1-79d6b4` (.82 and .125), `79e1f8` (.104), `79e384` (.170),
    `79e294` (.242) and `79e35c` (.223) — every one on IoT VLAN 80, `10.140.80.0/24`, the same
    subnet as Home Assistant at `10.140.80.2`. Use HA's IP, not the reverse-proxy hostname
-   (see §10.4 above and the comment in `halo-v1-79e384.yaml`). Two entries share the hostname
+   (see the `ha_url` comment in `halo-v1-79e384.yaml`). Two entries share the hostname
    `halo-v1-79d6b4` with different MACs, one of which has a non-Espressif OUI — probably a
    stale controller record worth cleaning up.
 
 6. **`HomeAssistant/dashbaord.yaml`** is misspelled, and `printer_base.yaml` references it
    under that spelling. Renaming means updating the reference.
 
-7. **`__pycache__/halo_sensor_history.cpython-314.pyc` is committed to git.** It should be
-   removed from tracking and `__pycache__/` added to `.gitignore`.
+7. **RESOLVED 2026-09-26 — `__pycache__/*.pyc` was committed to git.** It was removed from
+   tracking and `__pycache__/` added to the root `.gitignore`.
 
-8. **`*.bak` … `*.bak5` files exist under `packages/features/weather/`.** They are
-   gitignored, so git cannot recover them, but `CLAUDE.md` forbids creating them. They are
-   untracked local clutter.
+8. **`*.bak` … `*.bak5` files exist under `packages/features/weather/`** in at least one
+   working copy. They are gitignored, so git cannot recover them, but `CLAUDE.md` forbids
+   creating them. They are untracked local clutter; delete them by hand.
+
+9. **RESOLVED 2026-09-26 — "Default Page at Boot" did nothing.** Core mapped the select to a
+   `default_page_index` global that nothing read, and the select offered only two pages. The
+   boot hook now sets `current_page_name` (§5) and the select lists every rotating page.
+
+10. **RESOLVED 2026-09-26 — the display watchdog's recovery counter never reset**, so the
+    third recovery since boot always rebooted, even if earlier ones had worked. The clock's
+    render heartbeat now clears it.
+
+11. **RESOLVED 2026-09-26 — AQI above 300 used the 2012 EPA table**, so 225.5–250.4 µg/m³
+    computed to less than 300. `airq_base.yaml` now converts once with the full 2024 table
+    (rounded, as the EPA specifies) and the label and banner read `computed_halo_aqi`.
+
+12. **RESOLVED 2026-09-26 — page-order numbers were inconsistent** (ranges of 1–7, 1–8 or
+    1–10; clock and AirQ both defaulted to 1). All accept 1–10 and default to 1–8.
+
+13. **Dead diagnostic entities.** `Display Refresh Count` and `Weather Icon Update Duration`
+    (diagnostics.yaml) and `Time Update Duration` (clock_base.yaml) are internal template
+    sensors that nothing publishes. `last_touch_time` (page_rotation.yaml) is written but
+    never read.
+
+14. **Weather condition normalization is now redundant for icons.** `weather_base.yaml`
+    rewrites `pouring`/`hail`/`lightning`/`windy-variant` onto other conditions while
+    "waiting for a weather_helpers fix". That fix has landed — `get_weather_icon()` maps all
+    four — so the rewrite now only changes the condition text shown ("Pouring" → "Rainy").
 
 ---
 

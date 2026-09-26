@@ -4,10 +4,10 @@
 # Vertical clock display with large time and date
 #
 # Dependencies:
-#   - base/globals.yaml (time_update_last_text, colon_blink_state, current_page_name, etc.)
-#   - Hardware: Display, touchscreen, time sources (sntp_time, ha_time)
-#   - Switches: time_format, wireguard_enabled
-#   - Scripts: page_transition_cleanup, time_update, update_colon_widget (in Core)
+#   - features/clock/clock_base.yaml (time_update script, time_update_force_render)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     last_auto_rotation_time)
+#   - system/fonts_colors.yaml (montserrat_80/50/24, my_white, my_gray)
 #
 # Features:
 #   - Large vertical time display (hours, colon, minutes)

@@ -1,7 +1,6 @@
 # ============================================================================
 # Weather Hourly - Hourly Forecast Display Scripts
 # ============================================================================
-# Part of modular refactoring
 #
 # This module provides the hourly forecast display scripts:
 #   - 8 update scripts for hourly forecast pages (3 hours per page, 24 hours total)
@@ -23,6 +22,8 @@
 #   - Displays temperature, apparent temp, condition, precipitation probability
 #   - Only updates when on hourly forecast page to reduce SPI traffic
 #   - Uses lazy loading - pages update on navigation
+#   - update_hourly_page_1 is also called by weather_base.yaml after new
+#     hourly data arrives, so weather_base needs this file loaded
 # ============================================================================
 
 script:

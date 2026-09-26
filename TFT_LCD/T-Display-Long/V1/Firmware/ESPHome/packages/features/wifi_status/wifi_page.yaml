@@ -4,10 +4,12 @@
 # Network status and diagnostics display
 #
 # Dependencies:
-#   - base/globals.yaml (current_page_name, wifi_signal_needs_render, wifi_ssid_needs_render, etc.)
-#   - Hardware: Display, touchscreen, WiFi hardware
-#   - Scripts: page_transition_cleanup (in Core)
-#   - Substitutions: version
+#   - features/wifi_status/wifi_page_base.yaml (wifi_* / ha_status_* render globals)
+#   - features/wireguard/wireguard.yaml (wg_* render globals for the VPN
+#     labels - this page cannot be built without WireGuard today)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     page_transition_cleanup)
+#   - Substitutions: version (from Halo-v1-Core.yaml)
 #
 # Features:
 #   - WiFi network SSID display

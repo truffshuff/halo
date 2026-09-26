@@ -50,8 +50,10 @@ substitutions:
   # Find yours in Home Assistant: open any BambuLab entity and copy the part
   # before the first underscore, e.g.
   #   sensor.h2c_31b8ap5c0301590_print_status -> h2c_31b8ap5c0301590
-  # If you do not have a 3D printer, comment out the two printer package lines
-  # in the packages: list below instead of setting this.
+  # If you do not have a 3D printer, leave this placeholder and turn off the
+  # "Page Rotation: 3D Printer Page" switch in HA. Commenting out the printer
+  # packages does not work yet: Halo-v1-Core.yaml's page navigation
+  # references printer_page (docs/ARCHITECTURE.md "Known gaps" #2).
   # The placeholder below is deliberately obvious rather than a plausible-looking
   # serial: if you forget to change it, the printer entities show up in the log
   # as sensor.CHANGE_ME_... instead of silently sitting unavailable.
@@ -95,7 +97,7 @@ esphome:
   #           ESP_LOGI("main", "Improv WiFi credentials cleared! YAML WiFi will be used.");
   #           ESP_LOGW("main", "REMEMBER: Remove this on_boot code from YAML after this boot!");
 
-  # Unified compiler flags (applies to both PlatformIO and native ESP-IDF)
+  # Extra compiler flags (none needed; kept as the place to add them)
   build_flags: []
 
   # ----------------------------------------------------------------------
@@ -137,7 +139,7 @@ ota:
       # GHz radio multiplies across every round trip.
       #
       # Pausing the BLE *scan* alone (above) is not enough: it leaves the I2C
-      # sensors, LVGL repaints and the 180s cover-image download running.
+      # sensors, LVGL repaints and the 600s cover-image download running.
       # SEN55 alone blocks the I2C bus for 4+ seconds per read.
       #
       # component.suspend works on any PollingComponent and is reversed by
@@ -149,7 +151,7 @@ ota:
       - component.suspend: scd40      # 30s
       - component.suspend: mics4514   # 40s
       - component.suspend: bme280     # 60s
-      - component.suspend: printer_cover_image_data   # 180s, 22 KB HTTP GET
+      - component.suspend: printer_cover_image_data   # 600s, 22 KB HTTP GET
       - logger.log: "OTA started - device quiesced (BLE scan, LVGL, I2C sensors, cover image)"
     on_end:
       - lambda: 'id(ota_in_progress) = false;'
@@ -283,10 +285,16 @@ packages:
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/system/system_management.yaml
 
       # ============================================================================
-      # FEATURE MODULES (Optional - Pick what you need!)
+      # FEATURE MODULES
       # ============================================================================
-      # Each feature is self-contained. Comment out lines to disable features.
-      # Memory savings are cumulative - disable multiple features to save more!
+      # The goal is that each feature can be commented out. TODAY ONLY TWO
+      # CHOICES ARE SAFE: diagnostics.yaml on/off, and which ONE of the three
+      # BLE packages to load. Every other feature package is referenced by
+      # Halo-v1-Core.yaml's page navigation or by a required module, so
+      # commenting it out fails validation with "Couldn't find ID". To hide a
+      # page you don't want, turn off its "Page Rotation: ..." switch in HA.
+      # The "Disable to:" notes below describe the intended savings once the
+      # dependency is fixed. See docs/ARCHITECTURE.md "Known gaps" #2.
 
       # -------------------------
       # BLE WiFi Provisioning (pick one)
@@ -327,13 +335,19 @@ packages:
       # Provides: CO2, PM2.5, VOC, Temperature, Humidity, AQI calculation
       # Memory: ~15KB
       # Hardware: SCD40, SEN55, MICS4514, BME280 sensors (ALL required)
-      # Disable to: Save 15KB if sensors not present
+      # Disable to: not possible today without editing Core and the LED
+      # packages (they reference computed_halo_aqi); see ARCHITECTURE.md
+      # "Known gaps" #2.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_page.yaml
 
-      # AQI offline history buffer (~2.3KB RAM, optional) - ~1KB code
-      # Stores AQI readings while HA is unreachable; replays them on reconnect.
-      # Remove this line to disable the feature and reclaim the 2.3 KB RAM.
+      # AQI offline history buffer (optional) - ~1KB code; PSRAM allocated only
+      # once HA goes offline: 64 B per sample, ~270 KB at the default 3 days @
+      # 60 s (up to ~1.26 MB), sized from HA number entities.
+      # Stores air-quality readings while HA is unreachable; replays them on
+      # reconnect (consumer: HomeAssistant/AppDaemon/apps/halo_sensor_history.py).
+      # To remove it, also delete the flush_aqi_history lines in
+      # Halo-v1-Core.yaml's api: on_client_connected.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/airq/airq_history.yaml
 
       # -------------------------
@@ -345,6 +359,11 @@ packages:
       # Disable to: Save memory (biggest savings: disable weather_hourly = 7KB!)
 
       # Weather base (REQUIRED for any weather features) - ~8KB
+      # Needs Home Assistant setup: the device must be allowed to perform HA
+      # actions (daily forecast), and sensor.hourly_forecast_esp must exist
+      # (hourly forecast) - see README "Home Assistant setup".
+      # It calls scripts from weather_page, weather_daily and weather_hourly,
+      # so those three must stay enabled with it for now.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_base.yaml
 
       # Current conditions page (Recommended) - ~2KB
@@ -364,7 +383,9 @@ packages:
       # 24-hour summary - 2 pages (Optional) - ~1.5KB
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_hourly_summary.yaml
 
-      # Weather-based LED effects (Optional) - ~0.5KB
+      # RGB LED effects + the Display Backlight entity - ~0.5KB
+      # NOT optional today: networking.yaml, Core and airq_base reference its
+      # rgb_light (docs/ARCHITECTURE.md "Known gaps" #2).
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/weather/weather_led_effects.yaml
 
       # -------------------------
@@ -383,19 +404,23 @@ packages:
       # Provides: Encrypted VPN tunnel to home network
       # Memory: ~8KB
       # Hardware: None
-      # Requirements: WireGuard server configured
-      # Disable to: Save 8KB if you don't use VPN
-      # IMPORTANT: Edit wireguard.yaml with your server details before enabling!
+      # Requirements: the wg_* secrets (secrets.yaml.example). Placeholders
+      #   are fine while the "Enable WireGuard" switch is off (the default).
+      # NOT optional today: networking, system_management, the clock and the
+      #   WiFi page reference its ids (docs/ARCHITECTURE.md "Known gaps" #2).
+      #   Without a VPN, leave the switch off.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/wireguard/wireguard.yaml
 
       # -------------------------
       # Page Rotation (~2KB)
       # -------------------------
-      # Provides: Automatic page rotation through enabled pages
+      # Provides: current_page_name, rotation interval and AirQ rotation
+      # controls, page_transition_cleanup, "Default Page at Boot" select
       # Memory: ~2KB
       # Hardware: None
-      # Disable to: Save 2KB, but lose auto-rotation (manual navigation still works)
-      # IMPORTANT: Must be loaded AFTER all page modules!
+      # NOT optional today: nearly every page and Core reference its ids
+      # (docs/ARCHITECTURE.md "Known gaps" #2). To stop rotating, turn off
+      # the "Auto Page Rotation" switch (diagnostics.yaml) instead.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/page_rotation/page_rotation.yaml
 
       # -------------------------
@@ -410,7 +435,7 @@ packages:
       # Requirements: Home Assistant BambuLab integration.
       #   Set printer_device_id substitution to your device's HA entity prefix.
       #   Uses existing ha_url and ha_token substitutions — no extra secrets needed.
-      # Disable to: Save 6KB if you don't have a 3D printer
+      # Disable to: Save ~7KB flash if you don't have a 3D printer
       #
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_base.yaml
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/printer/printer_page.yaml
@@ -422,7 +447,9 @@ packages:
       # Memory: ~5-10KB
       # Hardware: None
       # Useful for: Debugging, development, monitoring device health
-      # Disable to: Save 5-10KB in production deployments
+      # Disable to: Save 5-10KB in production deployments. Note it also hosts
+      #   the Auto Page Rotation switch, the ESP Reboot / Factory Reset /
+      #   Recover Display buttons and the display watchdog.
       # - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/packages/features/diagnostics/diagnostics.yaml
 
       # ============================================================================
@@ -434,10 +461,10 @@ packages:
       # - the api: triggers that run on Home Assistant connect/disconnect
       # - the WiFi-stats interval that drives the WiFi page
       #
-      # NOTE: Core references ids that optional feature packages define (page
-      # rotation globals, WireGuard render flags, computed_halo_aqi, the
-      # wifi_status *_needs_render set). Commenting out page_rotation,
-      # wifi_status, wireguard or airq will fail validation.
-      # See docs/ARCHITECTURE.md "Known gaps".
+      # NOTE: Core references ids from every feature package except
+      # diagnostics and the BLE choice: each page, its page_rotation_*
+      # globals, WireGuard render flags, computed_halo_aqi, rgb_light,
+      # flush_aqi_history and the wifi_status *_needs_render set.
+      # See docs/ARCHITECTURE.md "Known gaps" #2.
       - TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/Halo-v1-Core.yaml
     refresh: Always

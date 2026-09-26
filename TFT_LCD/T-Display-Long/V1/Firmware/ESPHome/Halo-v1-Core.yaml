@@ -3,19 +3,30 @@
 # ============================================================================
 # ESP32-S3 Air Quality Monitor with LVGL Display
 #
-# Hardware: LilyGo T-Display-Long (ESP32-S3, 180x640 AMOLED display)
-# Features: Air quality monitoring, weather display, WiFi stats, WireGuard VPN
-# Dependencies: Requires device-specific file (e.g., halo-v1-79e384.yaml)
-#              Requires secrets file with WiFi, HA, and WireGuard credentials
+# Purpose: cross-capability glue, loaded LAST in the package list:
+#   - the lvgl: block (draw buffer, gradients, bottom layer)
+#   - page navigation (1 s rotation decision + 100 ms page-show dispatch)
+#   - the api: block and its on_client_connected/disconnected triggers
+#   - the 1 s WiFi-stats interval that drives the WiFi page
+#   - the LED Effect select and the boot-time default page
 #
-# Version: 26.09.26.1532
+# Hardware: LilyGo T-Display-Long (ESP32-S3, 180x640 AMOLED display)
+# Dependencies: every package in the entry file (Halo-v1.yaml or
+#   halo-v1-<mac>.yaml) except diagnostics.yaml and the BLE choice. The
+#   rotation list and the page-show chain below name every page and its
+#   page_rotation_* globals, and the api:/LED/WiFi blocks reach into airq,
+#   airq_history, weather_led_effects, wifi_status and wireguard - so no
+#   feature package can be commented out yet. See docs/ARCHITECTURE.md
+#   "Known gaps" #2.
+#
+# Version: 26.09.26.1609
 # Last Updated: September 26, 2026
 # Baseline: ESPHome 2026.9.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.09.26.1532"
+  version: "26.09.26.1609"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -47,8 +58,10 @@ select:
       - "AQI Color"
       - "Weather Condition"
       - "Auto Context"
-      # Note: "AQI Color" requires airq-core.yaml to be enabled. When disabled (airq-stubs), selecting it safely turns light off
-      # Note: "Weather Condition" and "Auto Context" require weather-core.yaml to be enabled. When disabled, selecting them safely turns light off
+      # "AQI Color" reads computed_halo_aqi (features/airq/airq_base.yaml).
+      # "Weather Condition" and "Auto Context" are addressable_lambda effects
+      # defined on rgb_light in features/weather/weather_led_effects.yaml.
+      # Both packages must be loaded: this select references their ids.
     initial_option: "None"
     restore_value: true
     optimistic: true
@@ -190,9 +203,9 @@ interval:
                 id(last_auto_rotation_time) = now;
                 return true;
           then:
-            # Note: Core no longer shows pages - device files must handle this
-            # The rotation logic above sets current_page_name, but device files
-            # must implement their own interval to actually show the pages
+            # The condition above only picks the page and writes
+            # current_page_name. The 100 ms interval below notices the change
+            # and issues the lvgl.page.show.
             - logger.log:
                 format: "Core: Rotation scheduled to page '%s'"
                 args: ['id(current_page_name).c_str()']
@@ -201,7 +214,12 @@ interval:
   # Note: Colon blink interval moved to features/clock/clock_base.yaml
   # Note: Weather refresh intervals moved to features/weather/weather_base.yaml
 
-  - interval: 100ms  # Check frequently for page index changes
+  # Page-show dispatch. lvgl.page.show needs a literal page id (it cannot take
+  # a lambda), so this maps current_page_name to a page through a nested
+  # if/else chain. Anything that sets current_page_name - rotation, the HA
+  # "Go to ... Page" buttons, WireGuard's jump to AirQ - is shown from here.
+  # "hourly_summary_2" is only set by the summary page's own nav button.
+  - interval: 100ms
     then:
       - if:
           condition:
@@ -497,9 +515,11 @@ interval:
                             id: wifi_ip_label
                             text: !lambda 'return id(wifi_ip_last_text);'
                         - lambda: 'id(wifi_ip_needs_render) = false;'
-                  # WireGuard display updates (wg_address_label, wg_handshake_label, wg_status_label)
-                  # are now handled by on_value callbacks in packages/features/wireguard/wireguard.yaml
-                  # The interval below just renders them when on the wifi page
+                  # WireGuard labels are normally rendered by the on_value/on_state
+                  # triggers in features/wireguard/wireguard.yaml and by the WiFi
+                  # page's on_load. These four blocks sit in the WiFi-DISCONNECTED
+                  # branch only: they flush any pending WireGuard text while the
+                  # WiFi page is showing and WiFi is down.
                   - if:
                       condition:
                         lambda: 'return id(wg_status_needs_render) && id(current_page_name) == "wifi";'
@@ -557,11 +577,17 @@ interval:
 # ============================================================================
 # Handles communication with Home Assistant for sensors, switches, and services
 #
-# reboot_timeout: 0s - CRITICAL SETTING
+# reboot_timeout: 0s - CRITICAL SETTING (value comes from the
+# api_reboot_timeout substitution in the entry file)
 #   Disables automatic device reboot when HA connection is lost
-#   WHY: During HA restarts or network issues, device should keep running
-#        and attempt reconnection rather than rebooting repeatedly
+#   WHY: the AQI offline history ring buffer (features/airq/airq_history.yaml)
+#        lives in RAM and a reboot wipes it - during exactly the outages it
+#        exists to cover. networking.yaml sets wifi: reboot_timeout: 0s for
+#        the same reason. See docs/ARCHITECTURE.md section 8.
 #   RISK: If API breaks, device won't auto-recover without manual intervention
+#
+# The encryption key is declared in system/esphome_core.yaml; every other api:
+# key lives here.
 # ============================================================================
 api:
   reboot_timeout: ${api_reboot_timeout}  # Set to 0s to disable auto-reboot on API disconnect
@@ -586,6 +612,9 @@ api:
       - delay: 1s  # Brief delay for API stabilization
       - lambda: 'id(cycleCounter) = 30;'  # Stop startup rainbow animation
       - lambda: 'id(boot_complete) = true;'  # Enable normal operation
+      # Start the rotation interval now, so the default page (or whatever is
+      # showing) gets a full interval before the first rotation.
+      - lambda: 'id(last_auto_rotation_time) = millis();'
 
       # ========================================================================
       # Restore User LED Effect Selection
@@ -640,9 +669,6 @@ api:
 
       # BLE scanning needs no start here: the BLE package's tracker scans
       # from boot (ble_scanner_switch pauses/resumes it).
-  # ============================================================================
-  # Custom Services (callable from Home Assistant)
-  # ============================================================================
 
   on_client_disconnected:
     # BLE scanning keeps running; the proxy tears its connections down itself.
@@ -653,10 +679,11 @@ api:
   # name for `actions`, and ESPHome 2026.9.0 changed user-defined action
   # metadata (esphome#18881). An empty block bought nothing, so it was removed.
   # To expose a callable action to Home Assistant, add an `actions:` list here.
+  # (features/airq/airq_base.yaml still declares its two CO2/SEN55 actions
+  # under the legacy `services:` name.)
 
-# Note: Scripts, numbers, and most sensors moved to capability modules (see packages/features/)
-
-# Note: Sensors moved to capability modules (see packages/features/)
+# Scripts, numbers, switches and sensors live in the capability modules
+# under packages/.
 
 lvgl:
   id: lvgl_main
@@ -713,38 +740,25 @@ lvgl:
         - color: 0x00FF00  # Green - strong signal
           position: 255
 
-  # IMPORTANT: Pages are modularized into separate package files
-  # Base components (globals, hardware) live in packages/base/
-  # Simple feature pages (clock, airq, wifi) are under packages/pages/
-  # Weather-related pages and LED effects reside in packages/weather/
-
-  # ============================================================================
-  # LVGL Pages - Weather Pages
-  # ============================================================================
-  # HOURLY FORECAST PAGES: moved to packages/weather/hourly-forecast-pages.yaml
-  # DAILY FORECAST PAGES: moved to packages/weather/daily-forecast-pages.yaml
-  # (pages: defined in modular package files - no pages: key here to avoid overriding)
+  # PAGES: every page is declared by its feature package under
+  # packages/features/<feature>/ and merged into this lvgl: block. There is
+  # deliberately no pages: key here. Pages appear - and lvgl.page.next cycles
+  # through them - in package load order.
 
 # ============================================================================
-# BUTTON SECTION MOVED TO packages/features/diagnostics/diagnostics.yaml
+# Buttons
 # ============================================================================
-# All diagnostic buttons have been extracted to the diagnostics module:
-# - ESP Reboot
-# - Factory Reset ESP
-# - Clear Improv WiFi Credentials
-# - Recover Display (Hard Reset)
+# ESP Reboot, Factory Reset ESP, Clear Improv WiFi Credentials and Recover
+# Display (Hard Reset) live in features/diagnostics/diagnostics.yaml, so a
+# build without diagnostics has none of them.
 # ============================================================================
 
 # ============================================================================
-# WiFi Configuration
+# WiFi
 # ============================================================================
-# CREDENTIALS: Define in device-specific file (e.g., halo-v1-79e384.yaml)
-#   wifi_ssid: "YourNetworkName"
-#   wifi_password: "YourNetworkPassword"
-#
-# SECURITY: WiFi credentials are stored in plaintext in compiled firmware
-#           Use WPA2/WPA3 encryption on your access point
-#           Consider using secrets file for sensitive deployments
+# system/networking.yaml owns the wifi: component. Credentials come from the
+# entry file's wifi_ssid / wifi_password substitutions, which read
+# secrets.yaml (see secrets.yaml.example).
 # ============================================================================
 
 mdns:
@@ -758,47 +772,25 @@ mdns:
 # re-handshake logic that must run on reconnect).
 
 # ============================================================================
-# WireGuard VPN Configuration
+# WireGuard VPN
 # ============================================================================
-# Provides encrypted tunnel to home network when away from home WiFi
-#
-# CREDENTIALS: Stored in secrets.yaml (never commit to git!)
-#   wg_address: VPN IP address (e.g., 10.6.0.3)
-#   wg_netmask: VPN subnet mask - NOTE: In WireGuard, netmask behavior is inverse!
-#               - 0.0.0.0 = ALL traffic routes through VPN tunnel (full tunnel)
-#               - 255.255.255.0 = Only VPN subnet traffic routes through tunnel (split tunnel)
-#               Default: 0.0.0.0 to ensure all traffic is encrypted when VPN is active
-#   wg_prikey: Device private key (generate with: wg genkey)
-#   wg_peerport: VPN server port (typically 51820)
-#   wg_peerendpt: VPN server hostname or IP
-#   wg_pubkey: VPN server public key
-#   wg_shrdkey: Pre-shared key for additional security (optional)
-#
-# ALLOWED IPs: Traffic destined for these networks goes through VPN tunnel
-#   192.168.1.0/24: Home LAN
-#   10.6.0.1/32: VPN server gateway
-#   10.6.0.2/32: Additional VPN peer (optional)
-#
-# KEEPALIVE: 25s - Maintains NAT mappings for reliable connection
-# require_connection_to_proceed: false - Device boots even if VPN fails
+# Configured in features/wireguard/wireguard.yaml. Its header lists the
+# secrets it needs; secrets.yaml.example has placeholders for all of them.
 # ============================================================================
-# WireGuard configuration has been moved to packages/features/wireguard/wireguard.yaml
 
 # ============================================================================
-# ESPHome Boot Sequence Configuration
+# Boot sequence
 # ============================================================================
-# ESPHOME BOOT PRIORITIES (higher numbers run first):
-#   800-900: Very early init (before WiFi/components)
-#   600-700: Component initialization
-#   250:     WiFi connection
-#   100:     Sensor setup
-#   50:      Application logic
-#   -100:    Late initialization (after everything loaded)
+# on_boot priority is ESPHome's setup priority: a hook runs once every
+# component at or above that priority has finished setup(). For reference,
+# ESPHome's setup_priority constants are HARDWARE 800, DATA 600, PROCESSOR
+# 400, BLUETOOTH 350, WIFI 250, AFTER_WIFI 200, AFTER_CONNECTION 100,
+# LATE -100.
 #
-# Our boot stages:
-#   1. Priority 800: Show initial page before components load
-#   2. Priority 50: Enable WireGuard after BLE stabilizes (20s delay)
-#   3. Priority -100: Set default page and complete boot
+# Hooks in this configuration:
+#   priority 50   features/wireguard/wireguard.yaml - wait 20 s, then enable
+#                 WireGuard once SNTP is valid (2 min timeout)
+#   priority -100 below - resolve the default page and show the clock
 # ============================================================================
 
 # ============================================================================
@@ -808,23 +800,17 @@ mdns:
 #   features/ble/ble_improv.yaml   NimBLE: bluetooth_proxy + nimble_tracker + nimble_improv
 #   features/ble/ble_esphome.yaml  Bluedroid: bluetooth_proxy + esp32_ble_tracker + esp32_improv
 #   features/ble/ble_stub.yaml     no BLE
-# Both stacks start scanning on boot on their own; ble_scanner_switch pauses it.
+# Both stacks start scanning on boot on their own and keep scanning whether
+# or not Home Assistant is connected; ble_scanner_switch pauses it (OTA,
+# weather fetches).
 # ============================================================================
-
-# API Integration - Dynamic BLE Scanning
-# Automatically start/stop BLE scanning based on Home Assistant connection
-# This saves power and reduces heap usage when HA is disconnected
 
 esphome:
   name: ${name}
 
-  # ============================================================================
-  # C++ Helper Functions - Reusable Code to Reduce Duplication
-  # ============================================================================
-  # weather_helpers component (declared at line 860) provides reusable formatting
-  # functions to eliminate code duplication in weather forecast display scripts.
-  # Functions automatically available via external_components system.
-  # ============================================================================
+  # The weather_helpers:: functions used by the weather lambdas come from the
+  # header-only weather_helpers external component, declared in
+  # system/esphome_core.yaml and instantiated in system/system_management.yaml.
 
   # NOTE: an empty `libraries:` key was removed in 2026.09. It is a
   # PlatformIO-toolchain concept and this build uses the native ESP-IDF
@@ -832,46 +818,46 @@ esphome:
 
   on_boot:
     # -------------------------------------------------------------------------
-    # Boot Stage 2: WireGuard Delayed Start (Priority 50)
+    # Default page (priority -100, after every component's setup)
     # -------------------------------------------------------------------------
-    # WireGuard boot hook has been moved to packages/features/wireguard/wireguard.yaml
-
-    # -------------------------------------------------------------------------
-    # Boot Stage 3: Default Page Selection (Priority -100)
-    # -------------------------------------------------------------------------
-    # Runs last after all components initialized
-    # Reads user's default page preference and navigates to it
-    # Note: RGB light control is handled by startup_light_blink interval
+    # Shows the clock, then sets current_page_name from the "Default Page at
+    # Boot" select (features/page_rotation/page_rotation.yaml). The 100 ms
+    # page-show interval switches to that page once boot_complete is set
+    # (first HA connection), and api: on_client_connected restarts the
+    # rotation timer so the page stays up for one full rotation interval.
+    # The startup RGB animation is driven by the intervals in
+    # system/networking.yaml, not from here.
     - priority: -100
       then:
         - logger.log: "Boot sequence starting (priority -100)"
         - delay: 2s  # Extra delay to avoid early LVGL page-switch race at boot
 
-        # Map user's text selection to page index number
-        - lambda: |-
-            auto choice = id(default_page_select_boot).current_option();
-            // Core pages
-            if (choice == "Vertical Clock") {
-            id(default_page_index) = 0;  // vertical_clock_page
-            } else if (choice == "AirQ") {  // Comment out if AirQ disabled
-            id(default_page_index) = 1;  // AirQ_page
-            } else if (choice == "WiFi") {
-            id(default_page_index) = 2;  // wifi_page
-            // Weather page mappings (comment out if weather packages are disabled)
-            } else if (choice == "Weather") {
-            id(default_page_index) = 3;  // weather_forecast_page
-            } else if (choice == "Daily Forecast") {
-            id(default_page_index) = 4;  // daily_forecast_page
-            } else if (choice == "Hourly Forecast") {
-            id(default_page_index) = 5;  // hourly_forecast_page
-            } else {
-            id(default_page_index) = 0;  // Default to vertical clock if unknown
-            }
-        - logger.log:
-            format: "Setting default page (index: %d)"
-            args: ['id(default_page_index)']
-        # Note: Boot sequence only handles Vertical Clock in Core
-        # Device files should override on_boot to handle their specific pages
-        - logger.log: "Boot: Showing Vertical Clock page (Core default)"
+        # The clock is the page shown until Home Assistant connects. Show it
+        # first: its on_load writes current_page_name, which the lambda below
+        # then overrides with the default page.
+        - logger.log: "Boot: Showing Vertical Clock page"
         - lvgl.page.show: vertical_clock_page
+
+        # Map the select's option to a page name the 100 ms interval knows.
+        - lambda: |-
+            static const struct { const char *option; const char *page; } DEFAULT_PAGES[] = {
+              {"Vertical Clock", "vertical_clock"},
+              {"Weather", "weather"},
+              {"AirQ", "airq"},
+              {"WiFi", "wifi"},
+              {"Daily Forecast", "daily_forecast"},
+              {"Hourly Forecast", "hourly_forecast"},
+              {"Hourly Summary", "hourly_summary_1"},
+              {"3D Printer", "printer"},
+            };
+            const char *page = "vertical_clock";
+            const auto choice = id(default_page_select_boot).current_option();
+            for (const auto &entry : DEFAULT_PAGES) {
+              if (choice == entry.option) {
+                page = entry.page;
+                break;
+              }
+            }
+            id(current_page_name) = page;
+            ESP_LOGI("boot", "Default page: %s (shown once Home Assistant connects)", page);
         - logger.log: "Boot sequence complete"

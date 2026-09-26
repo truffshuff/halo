@@ -29,7 +29,7 @@
 # Dependencies:
 #   - system/esphome_core.yaml (psram: component; PSRAM is required here)
 #   - system/networking.yaml (WiFi; Improv provisions it)
-#   - base/globals.yaml (cycleCounter used by the startup LED effects)
+#   - truffshuff/esphome-components, pinned below by SHA
 #
 # Hardware requirements:
 #   ESP32-S3 radio (BLE 5.0 controller); 8 MB PSRAM.
@@ -68,7 +68,8 @@
 # provide the stack, scanner and provisioning. None of these are needed with
 # ble_esphome.yaml. Hardware drivers stay in esphome_core.yaml.
 # Pinned by full SHA (branch nimble-bluedroid-parity) so builds are
-# reproducible.
+# reproducible. Keep this pin and the one in system/esphome_core.yaml on the
+# same commit.
 # ============================================================================
 external_components:
   - source: github://truffshuff/esphome-components@5791c6be6cf27653a30ce8c5e0b4d0c02324d520 # NimBLE backend for the upstream 2026.9.0 proxy
@@ -144,7 +145,10 @@ nimble_tracker:
 # Home Assistant Bluetooth proxy
 # ============================================================================
 # connection_slots: 1 keeps the internal-heap budget halo has been running
-# with (docs/MEMORY.md: each slot costs ~4 KB of min free heap on Bluedroid).
+# with. Extra slots are the leading (untested) explanation for the last ~4 KB
+# of min-free-heap gap between the Bluedroid package (3 slots) and this one
+# (docs/MEMORY.md section 10). nimble_base sizes
+# CONFIG_BT_NIMBLE_MAX_CONNECTIONS from this plus Improv's link.
 # ============================================================================
 bluetooth_proxy:
   active: true
@@ -260,6 +264,6 @@ switch:
       - nimble_tracker.stop_scan:
           id: ble_tracker
 
-# Note: cycleCounter global is in base/globals.yaml (load order dependency).
-# Startup blink animation lives in system/networking.yaml; the RGB light is in
-# features/weather/weather_led_effects.yaml.
+# Note: the startup blink animation lives in system/networking.yaml and the
+# RGB light in features/weather/weather_led_effects.yaml; neither depends on
+# which BLE package is loaded.

@@ -13,7 +13,9 @@
 #   - OTA operation state (ota_in_progress)
 #   - Display backlight state (display_backlight_is_on)
 #   - Display flush health (last_display_update_time, display_recovery_attempts)
-#   - Default page configuration (default_page_index)
+#
+# REMOVED 2026-09-26: default_page_index. The boot hook in Halo-v1-Core.yaml
+# now writes current_page_name directly.
 #
 # REMOVED 2026.09 (dead state, no remaining consumer anywhere in the tree):
 #   - display_flush_count, last_display_flush_count - never read
@@ -52,21 +54,11 @@ globals:
   # Startup light blink cycle counter
   # Tracks how many 1-second intervals have passed during startup LED animation
   # Used to stop rainbow effect after 30 seconds and turn off light
-  # NOTE: Shared between networking.yaml (WiFi events) and ble_improv.yaml (LED effects)
-  # Cannot be moved to BLE module due to load order dependency with networking module
+  # Written by system/networking.yaml (WiFi events and the blink intervals) and
+  # by Halo-v1-Core.yaml (set to 30 on API connect to end the animation).
   - id: cycleCounter
     type: int
     restore_value: no
-    initial_value: '0'
-
-  # ============================================================================
-  # Page Configuration
-  # ============================================================================
-
-  # Default page to show on startup
-  - id: default_page_index
-    type: int
-    restore_value: yes
     initial_value: '0'
 
   # ============================================================================
@@ -91,13 +83,20 @@ globals:
     restore_value: no
     initial_value: 'true'
 
-  # Updated only after the display driver completes a flush.
+  # Rendering heartbeat for the display watchdog (diagnostics.yaml).
+  # mipi_spi exposes no flush-complete callback, so this is set by
+  # features/clock/clock_base.yaml's time_update whenever it re-renders the
+  # time text (about once a minute), and by the watchdog after a recovery.
   - id: last_display_update_time
     type: uint32_t
     restore_value: no
     initial_value: '0'
 
-  # Consecutive hardware recovery attempts since the last successful flush.
+  # Consecutive display hardware recovery attempts (automatic and manual)
+  # since the last successful render. Incremented by
+  # features/diagnostics/diagnostics.yaml, whose watchdog reboots once two
+  # recoveries in a row have not brought rendering back; reset to 0 by
+  # features/clock/clock_base.yaml's time_update when it renders.
   - id: display_recovery_attempts
     type: uint8_t
     restore_value: no

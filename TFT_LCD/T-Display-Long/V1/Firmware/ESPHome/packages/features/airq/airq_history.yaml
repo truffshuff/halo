@@ -1,71 +1,69 @@
 # ============================================================================
 # AQI History Buffer
 # ============================================================================
-# Stores AQI readings in RAM while Home Assistant is unreachable, then
-# replays the full buffer to HA when the connection is restored so that
-# recorder history stays accurate across outages.
+# Stores AQI and 14 other air-quality readings in PSRAM while Home Assistant
+# is unreachable, then replays the full buffer to HA when the connection is
+# restored so that recorder history stays accurate across outages.
+# The buffer does not survive a reboot - which is why the API and WiFi
+# reboot timeouts are 0s (Halo-v1-Core.yaml, system/networking.yaml).
 #
 # ARCHITECTURE:
-#   - Ring buffer of (unix timestamp, AQI float) pair arrays allocated in
-#     PSRAM on first use (lazy init), pointed to by globals.
-#   - A periodic interval samples id(computed_halo_aqi) when HA is offline.
-#   - On HA reconnect, script flush_aqi_history serialises the buffer and
-#     fires batched HA events that an automation can consume to backfill
-#     recorder.import_statistics.
+#   - Ring buffer of (unix timestamp, 15 sensor floats) slots, allocated in
+#     PSRAM on first use (lazy init) and reached through pointer globals.
+#   - A 10 s interval samples the air-quality sensors at the configured
+#     sample interval, but only while HA is offline (ink_ha_connected off).
+#   - On HA reconnect, Halo-v1-Core.yaml's api: on_client_connected runs
+#     flush_aqi_history, which replays the buffer as batched HA events and
+#     then clears it.
 #
-# BUFFER SIZING (fully runtime-configurable via HA entities):
-#   BUF_SIZE = max_days × 86400 ÷ sample_interval_s  (computed each tick)
-#   Each entry stores 15 sensors (float[15]) + 1 timestamp (uint32_t) = 64 bytes
-#   Default : 3 days × 86400 ÷ 60 s = 4 320 entries ≈  270 KB PSRAM
-#   Max     : 7 days × 86400 ÷ 30 s = 20 160 entries ≈ 1260 KB PSRAM
+# BUFFER SIZING (runtime-configurable via the two HA number entities):
+#   slots = max_days x 86400 / sample_interval_s, clamped to [60, 20160]
+#   Each slot is 15 floats + 1 uint32 timestamp = 64 bytes of PSRAM.
+#   Default : 3 days @ 60 s =  4,320 slots ~=  270 KB PSRAM
+#   Max     : 7 days @ 30 s = 20,160 slots ~= 1.26 MB PSRAM
+#   Nothing is allocated until the first offline sample.
 #
 #   When either setting changes the PSRAM arrays are freed, reallocated at
 #   the new size, and the ring buffer is cleared.  This is logged as a WARN.
 #
-# FLUSH EVENTS (batched to stay within the 64 KB LWIP TCP send buffer):
+# FLUSH EVENTS:
+#   Batches of 200 entries. An entry is ~155 bytes of JSON (240 max), so a
+#   batch is ~31 KB (48 KB worst case) - under the 65,535-byte limit on one
+#   ESPHome API message (docs/ARCHITECTURE.md Known gaps #4) and the 64 KB
+#   tcp_send_buffer. A full default buffer flushes as ~22 events.
 #   Each batch fires one event:
 #     Event name : esphome.aqi_history_batch
 #     Event data :
-#       device    – ESPHome device name (substituted at compile time)
-#       count     – number of entries in THIS batch (string)
-#       total     – total entries being flushed in this reconnect (string)
-#       batch     – 0-based batch index (string)
-#       readings  – compact JSON array, e.g.
-#                   [{"ts":1700000000,"aqi":42},{"ts":1700000300,"aqi":45},…]
+#       device    - ESPHome device name (${name}, substituted at compile time)
+#       count     - number of entries in THIS batch (string)
+#       total     - total entries being flushed in this reconnect (string)
+#       batch     - 0-based batch index (string)
+#       readings  - compact JSON array, one object per sample:
+#                   {"ts":1700000000,"q":42,"c2":612,"n2":0.02,"co":1.23,
+#                    "h2":0.12,"c4":1.50,"et":0.30,"n3":0.20,"p1":1.2,
+#                    "p25":2.3,"p4":2.9,"p10":3.1,"tm":22.4,"vc":101,"rh":45}
+#                   q=AQI c2=CO2 n2=NO2 co=CO h2=H2 c4=CH4 et=ethanol
+#                   n3=NH3 p1/p25/p4/p10=PM tm=SEN55 temp (degC) vc=VOC index
+#                   rh=SEN55 humidity. A sensor with no reading is sent as 0.
 #
-# HOME ASSISTANT SIDE (sample automation in automation.yaml / scripts.yaml):
+# HOME ASSISTANT SIDE:
+#   HomeAssistant/AppDaemon/apps/halo_sensor_history.py consumes these events:
+#   it imports hourly statistics over HA's WebSocket API and writes the
+#   per-minute states into the recorder database. Its SENSORS table maps the
+#   keys above to entity ids, and its device_filter selects the unit (see
+#   docs/ARCHITECTURE.md Known gaps #3). recorder.import_statistics is no
+#   longer callable as an HA service, so a plain automation cannot do this.
 #
-#   alias: "Halo – ingest offline AQI history"
-#   trigger:
-#     - platform: event
-#       event_type: esphome.aqi_history_batch
-#   action:
-#     - service: recorder.import_statistics
-#       data:
-#         statistic_id: sensor.halo_computed_aqi
-#         source: recorder
-#         unit_of_measurement: ""
-#         has_mean: true
-#         has_sum: false
-#         stats: >
-#           {% set readings = trigger.event.data.readings | from_json %}
-#           {% set ns = namespace(result=[]) %}
-#           {% for r in readings %}
-#             {% set dt = r.ts | timestamp_custom('%Y-%m-%dT%H:%M:%S+00:00', false) %}
-#             {% set ns.result = ns.result + [
-#                 {"start": dt, "mean": r.aqi | float,
-#                  "min": r.aqi | float, "max": r.aqi | float}
-#             ] %}
-#           {% endfor %}
-#           {{ ns.result }}
-#
-# WIRING (required in Halo-v1-Core.yaml api.on_client_connected):
+# WIRING (already in Halo-v1-Core.yaml api: on_client_connected):
 #   - delay: 5s            # give API time to stabilise before heavy send
 #   - script.execute: flush_aqi_history
+#   Remove those two lines if you remove this package.
 #
 # DEPENDENCIES:
-#   - features/airq/airq_base.yaml           (id: computed_halo_aqi)
+#   - features/airq/airq_base.yaml           (computed_halo_aqi and the 14
+#                                             sensor ids sampled below)
 #   - system/system_management.yaml          (id: ink_ha_connected, id: sntp_time)
+#   - base/globals.yaml                      (boot_complete)
 #
 # Created: 2026-02-22
 # ============================================================================
@@ -75,8 +73,8 @@
 # ============================================================================
 globals:
   # Pointer to PSRAM-allocated float array used as a flat 2D matrix:
-  #   values[(size_t)slot * 12 + sensor_idx]
-  # 12 sensors per slot (indexes 0-11):
+  #   values[(size_t)slot * 15 + sensor_idx]
+  # 15 sensors per slot (indexes 0-14):
   #   0=AQI  1=CO2  2=NO2  3=CO   4=H2   5=CH4
   #   6=Ethanol  7=NH3  8=PM1.0  9=PM2.5  10=PM4.0  11=PM10.0
   #   12=Temp(°C)  13=VOC  14=RH(%)
@@ -157,7 +155,7 @@ number:
 
   # How many days of offline AQI readings to retain in the ring buffer.
   # BUF_SIZE = max_days × 86400 ÷ sample_interval_s (computed at runtime).
-  # Memory   = BUF_SIZE × 8 B in PSRAM  (max: 7 d @ 30 s = 157.5 KB).
+  # Memory   = BUF_SIZE × 64 B in PSRAM  (default 270 KB; max: 7 d @ 30 s = 1.26 MB).
   # Changing this value triggers a buffer reallocation and clears stored history.
   - platform: template
     name: "AQI History: Max Coverage (days)"
@@ -222,13 +220,14 @@ script:
   # ---------------------------------------------------------------------------
   # Serialises the ring buffer in chronological order and fires one or more
   # HA events (batches of BATCH_SIZE entries) so each event payload stays
-  # comfortably within the 64 KB LWIP TCP send buffer.
+  # under the 65,535-byte API message limit and the 64 KB tcp_send_buffer.
   #
   #   4 320 entries x ~155 chars (15 sensors) ~= 670 KB total
-  #   Batched at 200 entries               ~=  31 KB per event (~22 events worst-case)
+  #   Batched at 200 entries               ~=  31 KB per event (~22 events for a full default buffer)
   #
-  # std::string and the ring buffer arrays both live in PSRAM (ESP-IDF
-  # CONFIG_SPIRAM_USE_MALLOC=y ensures large heap allocations go there).
+  # The ring buffer is explicitly in PSRAM (heap_caps_malloc). The per-batch
+  # std::string lands there too: it is far above the 512-byte
+  # CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL threshold (docs/MEMORY.md).
   # App.feed_wdt() is called every iteration to prevent watchdog resets
   # during the build loop (30 s WDT timeout configured in esphome_core.yaml).
   # ---------------------------------------------------------------------------
@@ -236,7 +235,7 @@ script:
     mode: single        # Do not re-enter if already running
     then:
       - lambda: |-
-          const uint16_t BATCH_SIZE = 200;  // 12 sensors x ~130 chars ~= 26 KB/event; within 64 KB TCP buffer
+          const uint16_t BATCH_SIZE = 200;  // ~155 B/entry ~= 31 KB/event (48 KB worst case); under the 64 KB API limit
           const uint8_t  NS         = 15;   // sensors per slot: aqi,co2,no2,co,h2,ch4,eth,nh3,pm1,pm25,pm4,pm10,tm,vc,rh
           uint16_t BUF_SIZE = id(aqi_history_buf_size);  // runtime-configured allocation size
 
@@ -276,7 +275,7 @@ script:
           while (sent < count) {
             uint16_t batch_count = (count - sent < BATCH_SIZE) ? (count - sent) : BATCH_SIZE;
 
-            // Build JSON array for this batch (all 12 sensors per entry)
+            // Build JSON array for this batch (all 15 values per entry)
             std::string json;
             json.reserve((size_t)batch_count * 165 + 4);
             json += '[';
@@ -411,7 +410,7 @@ interval:
           //
           // BUF_SIZE is computed from the two user-configurable settings:
           //   needed = max_days × 86400 ÷ sample_interval_s
-          //   clamped to [60, 20160]  (20160 = 7 d @ 30 s = ~157 KB PSRAM)
+          //   clamped to [60, 20160]  (20160 = 7 d @ 30 s = ~1.26 MB PSRAM at 64 B/slot)
           //
           // If either setting changed since the last allocation the old arrays
           // are freed, the ring state is reset, and new arrays are allocated.
@@ -419,7 +418,8 @@ interval:
           // than silently serving stale data from a stale index.
           //
           // heap_caps_malloc(MALLOC_CAP_SPIRAM) explicitly targets external PSRAM,
-          // keeping the ~33–158 KB arrays out of the limited internal heap.
+          // keeping the arrays (4 KB to 1.26 MB, 270 KB at the defaults) out
+          // of the limited internal heap.
           // ---------------------------------------------------------------------------
           uint16_t needed_size = (uint16_t)(
             id(aqi_history_max_days).state * 86400.0f / id(aqi_history_sample_interval).state
@@ -480,7 +480,7 @@ interval:
               (int)((size_t)BUF_SIZE * (NS * sizeof(float) + sizeof(uint32_t))));
           }
 
-          // Write to ring buffer (12 sensors per slot, flat 2D layout)
+          // Write to ring buffer (15 values per slot, flat 2D layout)
           uint16_t head = id(aqi_history_head);
           float *vs = id(aqi_history_values) + (size_t)head * NS;
           auto safe = [](float v) -> float { return std::isnan(v) ? 0.0f : v; };

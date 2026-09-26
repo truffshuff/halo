@@ -6,6 +6,10 @@
 #
 # OPTIONAL: set device_filter to your ESPHome device name to ignore events
 # from other devices (useful if you have multiple Halo units).
+#
+# The entity ids the app writes are hard-coded in the SENSORS table in
+# halo_sensor_history.py (sensor.halo_v1_79e35c_*). For a different unit,
+# edit that table as well as device_filter.
 # ============================================================================
 halo_sensor_history:
   module: halo_sensor_history

@@ -1,7 +1,6 @@
 # ============================================================================
 # Weather Page - Main Weather Display
 # ============================================================================
-# Part of modular refactoring
 #
 # This module provides the main current weather page including:
 #   - LVGL weather forecast page with gauge and wind compass
@@ -16,12 +15,16 @@
 # Required IDs from other modules:
 #   - current_page_name (from page_rotation)
 #   - weather_* globals (from weather_base)
-#   - wind_speed_sensor, wind_direction_sensor (from sensors)
+#   - wind_speed_sensor, wind_direction_sensor, fetch_daily_forecast,
+#     update_weather_icon_color (from weather_base)
+#   - page_transition_cleanup (from page_rotation)
 #   - time: component with a timezone (system_management.yaml); weather_helpers
 #     converts forecast times via localtime_r(), which ESPHome's time uses
 #
 # Notes:
 #   - Page automatically refreshes data if stale on load
+#   - Live values repaint when update_weather_display runs (page load, after a
+#     daily fetch), not on each sensor change - docs/ARCHITECTURE.md Known gaps #1
 #   - Includes temperature gauge with color gradient
 #   - Displays wind compass with direction indicator
 #   - Shows high/low temps, precipitation chance, current conditions
