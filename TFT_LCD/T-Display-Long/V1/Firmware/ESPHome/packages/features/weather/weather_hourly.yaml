@@ -15,7 +15,8 @@
 # Required IDs from other modules:
 #   - current_page_name (from page_rotation)
 #   - weather_hourly_* globals (from weather_base)
-#   - sntp_time (from system_management.yaml)
+#   - time: component with a timezone (system_management.yaml); weather_helpers
+#     converts forecast times via localtime_r(), which ESPHome's time uses
 #
 # Notes:
 #   - Each script updates 3 hours of forecast data
@@ -36,10 +37,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[0].empty()) return std::string("Hour +1");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +1");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[0], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[0]));
       
       - lvgl.label.update:
           id: lbl_hourly_hour1_icon
@@ -100,10 +98,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[1].empty()) return std::string("Hour +2");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +2");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[1], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[1]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour2_icon
@@ -164,10 +159,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[2].empty()) return std::string("Hour +3");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +3");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[2], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[2]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour3_icon
@@ -235,10 +227,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[3].empty()) return std::string("Hour +4");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +4");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[3], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[3]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour4_icon
@@ -298,10 +287,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[4].empty()) return std::string("Hour +5");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +5");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[4], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[4]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour5_icon
@@ -361,10 +347,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[5].empty()) return std::string("Hour +6");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +6");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[5], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[5]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour6_icon
@@ -432,10 +415,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[6].empty()) return std::string("Hour +7");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +7");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[6], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[6]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour7_icon
@@ -495,10 +475,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[7].empty()) return std::string("Hour +8");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +8");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[7], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[7]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour8_icon
@@ -558,10 +535,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[8].empty()) return std::string("Hour +9");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +9");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[8], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[8]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour9_icon
@@ -629,10 +603,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[9].empty()) return std::string("Hour +10");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +10");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[9], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[9]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour10_icon
@@ -692,10 +663,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[10].empty()) return std::string("Hour +11");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +11");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[10], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[10]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour11_icon
@@ -755,10 +723,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[11].empty()) return std::string("Hour +12");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +12");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[11], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[11]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour12_icon
@@ -826,10 +791,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[12].empty()) return std::string("Hour +13");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +13");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[12], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[12]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour13_icon
@@ -889,10 +851,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[13].empty()) return std::string("Hour +14");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +14");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[13], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[13]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour14_icon
@@ -952,10 +911,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[14].empty()) return std::string("Hour +15");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +15");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[14], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[14]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour15_icon
@@ -1023,10 +979,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[15].empty()) return std::string("Hour +16");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +16");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[15], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[15]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour16_icon
@@ -1086,10 +1039,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[16].empty()) return std::string("Hour +17");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +17");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[16], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[16]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour17_icon
@@ -1149,10 +1099,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[17].empty()) return std::string("Hour +18");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +18");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[17], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[17]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour18_icon
@@ -1223,10 +1170,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[18].empty()) return std::string("Hour +19");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +19");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[18], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[18]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour19_icon
@@ -1286,10 +1230,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[19].empty()) return std::string("Hour +20");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +20");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[19], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[19]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour20_icon
@@ -1349,10 +1290,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[20].empty()) return std::string("Hour +21");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +21");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[20], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[20]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour21_icon
@@ -1424,10 +1362,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[21].empty()) return std::string("Hour +22");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +22");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[21], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[21]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour22_icon
@@ -1487,10 +1422,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[22].empty()) return std::string("Hour +23");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +23");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[22], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[22]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour23_icon
@@ -1550,10 +1482,7 @@ script:
           text: !lambda |-
             using namespace weather_helpers;
             if (id(weather_hourly_datetime)[23].empty()) return std::string("Hour +24");
-            auto now = id(sntp_time).now();
-            if (!now.is_valid()) return std::string("Hour +24");
-            int hour = convert_to_local_hour(id(weather_hourly_datetime)[23], now.timezone_offset());
-            return format_hour(hour);
+            return format_hour(convert_to_local_hour(id(weather_hourly_datetime)[23]));
 
       - lvgl.label.update:
           id: lbl_hourly_hour24_icon

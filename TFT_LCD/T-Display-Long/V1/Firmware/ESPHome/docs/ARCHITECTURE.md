@@ -33,7 +33,7 @@ needs a real `esphome compile`.
 | Internal SRAM | ~512 KB total; the portion reaching the heap after the WiFi/BLE stacks load is smaller — read it from the `Free Heap` diagnostic sensor rather than assuming a figure |
 | Display | 180 × 640 AMOLED, AXS15231, **quad SPI** |
 | Touch | AXS15231 capacitive, interrupt-driven on GPIO11 |
-| PMIC | SY6970 |
+| PMIC | SY6970 (not configured by the firmware) |
 | RGB LED | 12 × WS2812 on GPIO47, RMT driver, DMA enabled |
 
 **Internal SRAM is the scarce resource. PSRAM is not.** That single fact drives most of the
@@ -178,7 +178,7 @@ Declared in two places, deliberately:
 
 | Where | Components | Why |
 |---|---|---|
-| `system/esphome_core.yaml` | `axs15231`, `sy6970`, `weather_helpers` | hardware drivers + helpers, always needed |
+| `system/esphome_core.yaml` | `axs15231`, `weather_helpers` | touchscreen driver + weather helpers, always needed |
 | `features/ble/ble_improv.yaml` | `nimble_base`, `nimble_tracker`, `ble_device_base`, `bluetooth_connection`, `bluetooth_proxy`, `nimble_improv` | only needed by the NimBLE variant |
 
 Both point at `github://truffshuff/esphome-components@<commit>` pinned by full SHA. Keeping
@@ -186,7 +186,10 @@ the BLE components out of the core file means switching BLE stacks is a one-line
 the package list.
 
 `esphome config` reports: *"External components are overriding built-in components:
-axs15231, sy6970"* — expected, that is the point of the fork. With `ble_improv.yaml` it also
+axs15231"* — expected, that is the point of the fork. Only its touchscreen platform is used
+(the display is core `mipi_spi`); the fork keeps the panel's axis mapping and the
+single-finger filter for LilyGo's phantom-touch issue. `sy6970` is not listed: nothing
+configures the PMIC, and core now ships its own `sy6970`. With `ble_improv.yaml` it also
 lists `ble_device_base`, `bluetooth_connection` and `bluetooth_proxy`: the fork vendors
 ESPHome 2026.9.0's own copies with a small NimBLE patch set (its `components/VENDORED.md`),
 so a NimBLE build runs the upstream proxy code. That is why those three must never be listed

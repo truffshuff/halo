@@ -16,7 +16,8 @@
 # Required IDs from other modules:
 #   - current_page_name (from page_rotation)
 #   - weather_hourly_* globals (from weather_base)
-#   - sntp_time (from system_management.yaml)
+#   - time: component with a timezone (system_management.yaml); weather_helpers
+#     converts forecast times via localtime_r(), which ESPHome's time uses
 #
 # Notes:
 #   - Each page shows 12 hours in a compact column format
@@ -36,9 +37,7 @@ script:
           id: lbl_sum1_hour1_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[0],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[0]);
       - lvgl.label.update:
           id: lbl_sum1_hour1_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[0]);'
@@ -57,9 +56,7 @@ script:
           id: lbl_sum1_hour2_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[1],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[1]);
       - lvgl.label.update:
           id: lbl_sum1_hour2_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[1]);'
@@ -78,9 +75,7 @@ script:
           id: lbl_sum1_hour3_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[2],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[2]);
       - lvgl.label.update:
           id: lbl_sum1_hour3_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[2]);'
@@ -99,9 +94,7 @@ script:
           id: lbl_sum1_hour4_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[3],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[3]);
       - lvgl.label.update:
           id: lbl_sum1_hour4_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[3]);'
@@ -120,9 +113,7 @@ script:
           id: lbl_sum1_hour5_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[4],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[4]);
       - lvgl.label.update:
           id: lbl_sum1_hour5_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[4]);'
@@ -141,9 +132,7 @@ script:
           id: lbl_sum1_hour6_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[5],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[5]);
       - lvgl.label.update:
           id: lbl_sum1_hour6_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[5]);'
@@ -162,9 +151,7 @@ script:
           id: lbl_sum1_hour7_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[6],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[6]);
       - lvgl.label.update:
           id: lbl_sum1_hour7_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[6]);'
@@ -183,9 +170,7 @@ script:
           id: lbl_sum1_hour8_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[7],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[7]);
       - lvgl.label.update:
           id: lbl_sum1_hour8_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[7]);'
@@ -204,9 +189,7 @@ script:
           id: lbl_sum1_hour9_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[8],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[8]);
       - lvgl.label.update:
           id: lbl_sum1_hour9_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[8]);'
@@ -225,9 +208,7 @@ script:
           id: lbl_sum1_hour10_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[9],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[9]);
       - lvgl.label.update:
           id: lbl_sum1_hour10_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[9]);'
@@ -246,9 +227,7 @@ script:
           id: lbl_sum1_hour11_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[10],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[10]);
       - lvgl.label.update:
           id: lbl_sum1_hour11_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[10]);'
@@ -267,9 +246,7 @@ script:
           id: lbl_sum1_hour12_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[11],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[11]);
       - lvgl.label.update:
           id: lbl_sum1_hour12_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[11]);'
@@ -299,9 +276,7 @@ script:
           id: lbl_sum2_hour13_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[12],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[12]);
       - lvgl.label.update:
           id: lbl_sum2_hour13_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[12]);'
@@ -320,9 +295,7 @@ script:
           id: lbl_sum2_hour14_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[13],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[13]);
       - lvgl.label.update:
           id: lbl_sum2_hour14_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[13]);'
@@ -341,9 +314,7 @@ script:
           id: lbl_sum2_hour15_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[14],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[14]);
       - lvgl.label.update:
           id: lbl_sum2_hour15_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[14]);'
@@ -362,9 +333,7 @@ script:
           id: lbl_sum2_hour16_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[15],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[15]);
       - lvgl.label.update:
           id: lbl_sum2_hour16_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[15]);'
@@ -383,9 +352,7 @@ script:
           id: lbl_sum2_hour17_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[16],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[16]);
       - lvgl.label.update:
           id: lbl_sum2_hour17_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[16]);'
@@ -404,9 +371,7 @@ script:
           id: lbl_sum2_hour18_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[17],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[17]);
       - lvgl.label.update:
           id: lbl_sum2_hour18_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[17]);'
@@ -425,9 +390,7 @@ script:
           id: lbl_sum2_hour19_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[18],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[18]);
       - lvgl.label.update:
           id: lbl_sum2_hour19_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[18]);'
@@ -446,9 +409,7 @@ script:
           id: lbl_sum2_hour20_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[19],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[19]);
       - lvgl.label.update:
           id: lbl_sum2_hour20_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[19]);'
@@ -467,9 +428,7 @@ script:
           id: lbl_sum2_hour21_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[20],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[20]);
       - lvgl.label.update:
           id: lbl_sum2_hour21_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[20]);'
@@ -488,9 +447,7 @@ script:
           id: lbl_sum2_hour22_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[21],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[21]);
       - lvgl.label.update:
           id: lbl_sum2_hour22_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[21]);'
@@ -509,9 +466,7 @@ script:
           id: lbl_sum2_hour23_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[22],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[22]);
       - lvgl.label.update:
           id: lbl_sum2_hour23_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[22]);'
@@ -530,9 +485,7 @@ script:
           id: lbl_sum2_hour24_time
           text: !lambda |-
             using namespace weather_helpers;
-            auto now = id(sntp_time).now();
-            return format_hourly_summary_time(id(weather_hourly_datetime)[23],
-                                             now.is_valid() ? now.timezone_offset() : 0);
+            return format_hourly_summary_time(id(weather_hourly_datetime)[23]);
       - lvgl.label.update:
           id: lbl_sum2_hour24_icon
           text: !lambda 'return weather_helpers::format_hourly_summary_icon(id(weather_hourly_condition)[23]);'
