@@ -9,12 +9,16 @@
 #   - forecast_days_8_9_page
 #   - forecast_day_10_page
 #
-# These pages display the 9-day weather forecast with navigation between them.
+# These pages show days 2-10 of the 10-day forecast (today is on the main
+# weather page), with navigation between them. Only daily_forecast_page is in
+# the auto-rotation; the rest are reached by tapping.
 #
 # Dependencies:
-#   - packages/base/globals.yaml (weather forecast arrays)
-#   - Weather fetch scripts (for data)
-#   - update_daily_forecast_display script
+#   - features/weather/weather_base.yaml (weather_forecast_* arrays,
+#     weather_daily_last_update, fetch_daily_forecast)
+#   - features/weather/weather_daily.yaml (update_daily_forecast_display)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     page_transition_cleanup)
 #
 # =============================================================================
 
@@ -28,7 +32,7 @@ lvgl:
           - script.execute: page_transition_cleanup
           - lambda: 'id(current_page_name) = "daily_forecast";'
           - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
-          # Force garbage collection to free up memory before rendering
+          # Log free heap before rendering (diagnostic only)
           - lambda: |-
               ESP_LOGI("memory", "Before daily forecast page load - Free heap: %lu bytes", esp_get_free_heap_size());
           # Check if we have data and if it needs refresh

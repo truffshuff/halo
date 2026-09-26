@@ -4,10 +4,12 @@
 # Comprehensive air quality monitoring display
 #
 # Dependencies:
-#   - base/globals.yaml (current_page_name, time_update_last_text, airq_wifi_stat_connected_state, etc.)
-#   - base/sensors.yaml (co2, no2, co, h2, ch4, ethanol, nh3, pm sensors, computed_halo_aqi, etc.)
-#   - Hardware: Display, touchscreen, various gas and particulate sensors
-#   - Scripts: page_transition_cleanup, time_update (in Core)
+#   - features/airq/airq_base.yaml (co2, no2, co, h2, ch4, ethanol, nh3, pm_*
+#     sensors, airq_wifi_stat_connected_state - enable the two files together)
+#   - features/clock/clock_base.yaml (time_update, time_update_last_text)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     page_transition_cleanup)
+#   - system/fonts_colors.yaml (fonts, colors, ym_logo)
 #
 # Features:
 #   - Header with logo, time, and WiFi status
@@ -57,8 +59,9 @@ lvgl:
                   id: wifi_stat
                   text_color: my_red
               - lambda: 'id(airq_wifi_stat_connected_state) = false;'
-        # Force immediate update of all sensor values on page load
-        # DISABLED - CO2 sensor disabled due to I2C errors
+        # Repaint every sensor value that already has a state, so the page is
+        # current on load instead of waiting for each sensor's next reading
+        # (SEN55 reads only once a minute).
         - if:
             condition:
               lambda: 'return id(co2).has_state();'
@@ -228,23 +231,24 @@ lvgl:
             condition:
               lambda: 'return id(computed_halo_aqi).has_state();'
             then:
+              # Same text and colours as the pm_2_5 trigger in airq_base.yaml.
               - lvgl.label.update:
                   id: aqi_value
                   text: !lambda |-
+                    if (id(pm_2_5).state > 325.4f) return "EVAC";
                     static char buffer[10];
-                    snprintf(buffer, sizeof(buffer), "%d", (int)id(computed_halo_aqi).state);
+                    snprintf(buffer, sizeof(buffer), " %d", (int)id(computed_halo_aqi).state);
                     return buffer;
               - lvgl.widget.update:
                   id: aqi_widget
                   bg_color: !lambda |-
-                    float aqi = id(computed_halo_aqi).state;
-                    if (aqi <= 50) return id(my_green);
-                    else if (aqi <= 100) return id(my_yellow);
-                    else if (aqi <= 150) return id(my_orange);
-                    else if (aqi <= 200) return id(my_red);
-                    // For purple (300) and maroon (>300), use hex since they're not defined
-                    else if (aqi <= 300) return lv_color_hex(0x800080);
-                    else return lv_color_hex(0x800000);
+                    const float aqi = id(computed_halo_aqi).state;
+                    if (aqi <= 50) return lv_color_hex(0x76fa76);        // Green
+                    else if (aqi <= 100) return lv_color_hex(0xFFFF00);  // Yellow
+                    else if (aqi <= 150) return lv_color_hex(0xFFA500);  // Orange
+                    else if (aqi <= 200) return lv_color_hex(0xFF0000);  // Red
+                    else if (aqi <= 300) return lv_color_hex(0x800080);  // Purple
+                    else return lv_color_hex(0x800000);                  // Maroon
         - logger.log: "Forced sensor UI update on AirQ page load"
       widgets:
         # Header: Logo, Time, WiFi Status

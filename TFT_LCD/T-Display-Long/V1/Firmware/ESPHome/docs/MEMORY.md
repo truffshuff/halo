@@ -53,10 +53,10 @@ waste — do not lower it to "free" memory.
 | **Bluedroid host tables** | no measurable effect | `esp32_ble: use_psram: true` (→ `BT_BLE_DYNAMIC_ENV_MEMORY`) plus a manual `CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"` (only with `ble_esphome.yaml`). ESPHome sets the second one only on the original ESP32; on the S3 it must be set by hand. Moved Min Free Heap Ever 40 KB → 39 KB, i.e. nothing — see §10 |
 | **mbedTLS contexts** | ~50 KB per TLS session | `CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"`. Without this, `mbedtls_ssl_setup()` / `mbedtls_ctr_drbg_seed()` fail with `-0x7F00` / `-0x0001` against a ~28 KB internal heap. |
 | **ArduinoJson forecast pools** | up to ~40 KB transiently | explicit `ArduinoJson::Allocator` subclass using `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` (§5) |
-| **HTTP response body string** | 32 KB reserved | `std::string::reserve(32768)` ≥ the ALWAYSINTERNAL threshold, so it lands in PSRAM |
+| **HTTP response body string** | 32 KB reserved, grows to ~60 KB | hourly-forecast HTTP fallback only; `std::string::reserve(32768)` ≥ the ALWAYSINTERNAL threshold, so it lands in PSRAM |
 | **`online_image` download buffer** | 64 KB | ESPHome's `RAMAllocator` defaults to *external first, internal fallback* |
 | **Decoded printer cover image** | ~39 KB (140×140 RGB565) | same `RAMAllocator` default |
-| **AQI history ring buffer** | ~2.3 KB | explicit `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` in `airq_history.yaml`, allocated lazily |
+| **AQI history ring buffer** | 64 B per sample: ~270 KB at the default 3 days @ 60 s, up to ~1.26 MB | explicit `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` in `airq_history.yaml`, allocated on the first offline sample. Earlier docs said ~2.3 KB; that was never right for the 15-sensor layout |
 | **`.bss` segment** | varies | `CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"` |
 | **Instructions and rodata** | — | `execute_from_psram: true` (`CONFIG_SPIRAM_FETCH_INSTRUCTIONS` + `CONFIG_SPIRAM_RODATA`) — also what allows the display to keep drawing during an OTA flash write |
 
@@ -170,9 +170,11 @@ Idle free heap is not the number to watch. These are the moments that actually f
 2. **TLS handshake to Home Assistant.** ~50 KB across `mbedtls_ssl_setup()` and
    `mbedtls_ctr_drbg_seed()`. This is the failure that `CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC`
    was added to fix; symptoms are `-0x7F00` / `-0x0001`.
-3. **Hourly forecast fetch.** 32 KB response string + ArduinoJson pool + 24 forecast entries
-   written into global arrays, all while the BLE scanner is paused. Watchdog is at 30 s for
-   this path.
+3. **Hourly forecast.** Normally a ~6 KB attribute pushed over the API and parsed with a
+   PSRAM ArduinoJson pool — small. The peak is the **HTTP fallback** (only when
+   `sensor.hourly_forecast_esp` is missing or stale): a ~60 KB response string plus its
+   ArduinoJson pool, read synchronously while the BLE scanner is paused, with the TCP
+   receive window full. Watchdog is at 30 s for this path.
 4. **Printer cover image download.** 64 KB download buffer + ~39 KB decoded image. Since
    ESPHome 2026.9.0 (esphome#18488) the image **decoder stays allocated for the component's
    lifetime** instead of being freed after decode — a new, persistent cost in this release.
@@ -191,12 +193,12 @@ If free internal heap gets tight, change these one at a time and measure.
 | Setting | Where | Current | Internal-RAM effect |
 |---|---|---|---|
 | `network: tcp_send_buffer` | `system/esphome_core.yaml` | 65535 | **Largest tunable.** Try 32768, then 16384. Watch for "TCP buffer" warnings. |
-| `CONFIG_LWIP_TCP_WND_DEFAULT` | `system/esphome_core.yaml` | 65535 | Receive window. Sized for the ~20 KB forecast JSON; 32768 is likely still fine. |
+| `CONFIG_LWIP_TCP_WND_DEFAULT` | `system/esphome_core.yaml` | 65535 | Receive window. Sized for the hourly HTTP fallback (~60 KB) and the ~22 KB cover image; with the HA-side hourly sensor in place, 32768 is likely fine. |
 | `api: max_send_queue` | `Halo-v1-Core.yaml` | 16 | 2 KB per slot → ~32 KB ceiling, retained at high-water mark since 2026.9.0. |
 | `api: max_connections` | `Halo-v1-Core.yaml` | 8 | Bounds concurrent per-connection buffers. ESPHome's ESP32 default is 5. |
 | `lvgl: buffer_size` | `Halo-v1-Core.yaml` | 50% | 30% moves ~57.6 KB **back into** internal DRAM. Only go this way for display problems. |
 | `ble_stub.yaml` instead of `ble_improv.yaml` | package list | — | Removes the whole BLE stack (~40 KB, mostly PSRAM) and its API traffic. |
-| `weather_hourly.yaml` removed | package list | enabled | Removes the largest forecast path and its 8 UI pages. |
+| AQI history size | HA number entities | 3 days @ 60 s | PSRAM only (~270 KB), so it does not help internal SRAM. |
 
 **Do not** lower `CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL` or raise
 `CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL` to chase free heap — the first removes the guard rail
@@ -255,11 +257,11 @@ Method:
 
 ## 10. Measurement status
 
-No before/after device measurements are recorded here. The changes in the 2026.09
-modernization were validated by `esphome config` against ESPHome 2026.9.0 and by static
-analysis of the ESPHome 2026.9.0 allocator source; **they have not been run on hardware.**
+There is no *before* baseline: the pre-2026.09 firmware was never instrumented, so the
+modernization's effect is inferred from source, not A/B-measured. The 2026.09 build itself
+has since run on hardware, and the figures below are from those units.
 
-To populate a baseline, record from the diagnostics entities above:
+Current readings, from the diagnostics entities above:
 
 | Metric | Before | After |
 |---|---:|---:|

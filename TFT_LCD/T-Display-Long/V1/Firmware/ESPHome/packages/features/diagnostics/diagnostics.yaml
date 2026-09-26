@@ -4,13 +4,17 @@
 # Provides comprehensive system diagnostics and health monitoring
 #
 # FEATURES:
-#   - Memory monitoring (heap, PSRAM, DMA, fragmentation)
+#   - Memory monitoring (heap, PSRAM, DMA, fragmentation) - docs/MEMORY.md 9
 #   - Display health monitoring and automatic recovery
-#   - System status (uptime, WiFi signal, online status)
-#   - Performance metrics (display refresh rate, update duration)
+#   - Uptime sensor (the RSSI sensor is in system/networking.yaml and the
+#     Online sensor in system/system_management.yaml)
 #   - System control (restart, factory reset, WiFi credential clearing)
 #   - Automatic display watchdog (black screen recovery)
 #   - Periodic display controller health checks
+#   - The "Auto Page Rotation" master switch (page_rotation.yaml has the rest)
+#
+# Disabling this package also removes the ESP Reboot / Factory Reset /
+# Recover Display buttons and the Auto Page Rotation switch from HA.
 #
 # HARDWARE REQUIRED:
 #   - ESP32-S3 with PSRAM (built-in)
@@ -22,14 +26,17 @@
 #   - system/display_hardware.yaml (Display controller, backlight)
 #   - system/networking.yaml (WiFi for online status)
 #
-# MEMORY USAGE: ~5KB
+# MEMORY USAGE: ~5KB flash
 #
 # WATCHDOG FEATURES:
 #   - Automatic black screen recovery (checks every 30s)
-#   - Triggers if no display updates for 60s
-#   - Periodic health check every 5 minutes
-#   - Recovery counter tracking
-#   - Manual recovery button for immediate reset
+#   - Triggers if the rendering heartbeat (last_display_update_time, set by
+#     the clock's time_update) is older than 90s
+#   - A trigger hard-resets the panel; if two recoveries in a row do not
+#     bring rendering back, the next trigger reboots. The counter
+#     (display_recovery_attempts) resets whenever the clock renders.
+#   - Periodic full-screen invalidate every 5 minutes
+#   - Manual recovery button for immediate reset (also counts as an attempt)
 #
 # Created: 2025-11-14 (module extraction)
 # ============================================================================
@@ -86,7 +93,8 @@ sensor:
   # Display Health Sensors
   # ============================================================================
 
-  # Display refresh rate monitor
+  # Display refresh rate monitor. Internal and never published - a
+  # placeholder with no writer today.
   - platform: template
     name: "Display Refresh Count"
     id: display_refresh_counter
@@ -118,7 +126,8 @@ sensor:
   # Performance Monitoring Sensors
   # ============================================================================
 
-  # Weather icon update duration (internal diagnostic)
+  # Weather icon update duration (internal diagnostic). Never published:
+  # update_weather_icon_color logs its duration instead.
   - platform: template
     name: "Weather Icon Update Duration"
     id: weather_icon_duration_sensor

@@ -30,9 +30,9 @@
 #
 # Dependencies:
 #   - features/printer/printer_base.yaml  (all globals & sensor subscriptions)
-#   - base/globals.yaml                   (current_page_name, last_touch_time)
+#   - page_rotation/page_rotation.yaml    (current_page_name, last_touch_time,
+#                                          page_transition_cleanup)
 #   - system/fonts_colors.yaml            (montserrat fonts, color palette)
-#   - Core scripts: page_transition_cleanup
 # ============================================================================
 
 # ============================================================================

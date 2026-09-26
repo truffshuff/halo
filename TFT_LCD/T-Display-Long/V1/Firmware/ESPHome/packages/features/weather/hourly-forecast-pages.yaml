@@ -13,11 +13,15 @@
 #   - hourly_forecast_page_8 (Hours 22-24)
 #
 # These pages display detailed hourly weather forecasts with navigation.
+# Only hourly_forecast_page is in the auto-rotation; pages 2-8 are reached by
+# tapping.
 #
 # Dependencies:
-#   - packages/base/globals.yaml (hourly weather arrays)
-#   - Weather fetch scripts (for data)
-#   - update_hourly_page_* scripts
+#   - features/weather/weather_base.yaml (weather_hourly_* arrays,
+#     weather_fetch_lock, fetch_hourly_forecast)
+#   - features/weather/weather_hourly.yaml (update_hourly_page_1..8)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     page_transition_cleanup)
 #
 # =============================================================================
 
@@ -31,7 +35,7 @@ lvgl:
           - script.execute: page_transition_cleanup
           - lambda: 'id(current_page_name) = "hourly_forecast";'
           - delay: 100ms  # Increased delay to allow memory to stabilize after cleanup
-          # Force garbage collection to free up memory before rendering
+          # Log free heap before rendering (diagnostic only)
           - lambda: |-
               ESP_LOGI("memory", "Before hourly page load - Free heap: %lu bytes", esp_get_free_heap_size());
           # Check if we have data and if it needs refresh

@@ -2,19 +2,21 @@
 # Display Hardware Configuration
 # ============================================================================
 # Display, touchscreen, SPI/I2C buses, backlight
-# Dependencies: system/esphome_core.yaml
+# Dependencies: system/esphome_core.yaml (axs15231 external component);
+#   features/page_rotation/page_rotation.yaml (last_auto_rotation_time, reset
+#   by on_touch)
 #
 # This module configures:
-#   - SPI and I2C buses
-#   - Display driver (AXS15231 AMOLED)
-#   - Touchscreen driver
-#   - Backlight PWM output and light control
-#   - External components
-#   - Display watchdog system
+#   - Quad-SPI display bus and the two I2C buses (sensors, touch)
+#   - Display: core mipi_spi, model AXS15231 (AMOLED, 180x640)
+#   - Touchscreen: the fork's axs15231 platform (interrupt-driven)
+#   - Backlight OUTPUT (plain GPIO1). The "Display Backlight" light entity on
+#     top of it is in features/weather/weather_led_effects.yaml.
+#
+# Not here, despite the name: the display watchdog and "Recover Display"
+# button (features/diagnostics/diagnostics.yaml), and the external_components
+# declaration for axs15231 (system/esphome_core.yaml).
 # ============================================================================
-
-# Note: External components are declared in system/esphome_core.yaml; they
-# must be loaded early so all other modules can reference these drivers.
 
 # ============================================================================
 # SPI Bus Configuration
@@ -58,8 +60,11 @@ output:
     id: backlight
     inverted: false
 
-# Note: The backlight light component is defined in weather/weather-led-effects.yaml
-# since it also controls the RGB LED on the same output pin.
+# Note: the "Display Backlight" light entity (id: display_backlight, a binary
+# light on this output) is defined in features/weather/weather_led_effects.yaml
+# for historical reasons - it is unrelated to the RGB LED, which is on GPIO47.
+# Removing that package removes the backlight entity; the output here still
+# works. See docs/ARCHITECTURE.md "Known gaps".
 
 # ============================================================================
 # Display Driver - AXS15231 AMOLED
@@ -91,11 +96,11 @@ display:
 # ============================================================================
 # Touchscreen Driver - AXS15231
 # ============================================================================
-# Touchscreen configuration optimized for responsiveness:
-# - Fast 50ms polling for immediate touch detection
-# - Interrupt pin for hardware-triggered events
-# - Coordinate validation to reject invalid touches
-# - Auto-rotation reset on touch for better UX
+# - Interrupt-driven (GPIO11); update_interval: never, so no polling
+# - The fork's driver reports single-finger touches only, which filters the
+#   phantom touches the panel produces when the backlight turns off
+# - on_touch rejects out-of-range coordinates and resets the auto-rotation
+#   timer so a page the user is reading is not rotated away
 # ============================================================================
 touchscreen:
   - platform: axs15231
@@ -119,13 +124,10 @@ touchscreen:
           id(last_auto_rotation_time) = millis();
           ESP_LOGD("touch", "Auto-rotation timer reset");
 
-# Note: weather_helpers C++ functions are declared in system/system_management.yaml
-# (early load required before any feature module references the namespace).
-
-# Note: Display watchdog globals (last_display_update_time, display_watchdog_enabled,
-# display_backlight_is_on) are defined in packages/base/globals.yaml.
-
-# Note: display_backlight_active binary sensor is defined in Halo-v1-Core.yaml.
-
-# Note: Display watchdog interval and recover button are defined in
-# features/diagnostics/diagnostics.yaml.
+# Where the rest of the display plumbing lives:
+#   - last_display_update_time, display_recovery_attempts and
+#     display_backlight_is_on: packages/base/globals.yaml
+#   - display_watchdog_enabled, the "Display Backlight Active" binary sensor,
+#     the watchdog intervals and the "Recover Display" button:
+#     features/diagnostics/diagnostics.yaml
+#   - the lvgl: block that drives lily_display / lily_touch: Halo-v1-Core.yaml

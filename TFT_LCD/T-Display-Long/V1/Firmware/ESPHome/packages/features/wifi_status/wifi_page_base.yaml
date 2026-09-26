@@ -16,13 +16,18 @@
 #
 # DEPENDENCIES:
 #   - system/esphome_core.yaml (ESP32 config)
-#   - system/networking.yaml (WiFi configuration)
+#   - system/networking.yaml (WiFi configuration, wifi_signal_db)
 #   - system/fonts_colors.yaml (UI colors)
+#   - features/wifi_status/wifi_page.yaml (wifi_page)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     last_auto_rotation_time)
 #
-# MEMORY USAGE: ~3KB
+# MEMORY USAGE: ~3KB flash
 #
-# NOTE: WiFi signal sensor is defined in system/networking.yaml
-#       This module only provides the page controls and navigation
+# NOTE: WiFi signal sensor is defined in system/networking.yaml.
+#       The 1 s interval that fills this page's labels is in
+#       Halo-v1-Core.yaml and reads the *_last_text / *_needs_render globals
+#       declared here, so Core fails validation without this package.
 #
 # Created: 2025-11-14 (module extraction)
 # ============================================================================
@@ -124,15 +129,17 @@ switch:
 # Number Components
 # ============================================================================
 number:
-  # WiFi page order in rotation sequence (1-7)
+  # WiFi page order in rotation sequence (1-10). on_value copies the
+  # (restored) number into the global at boot, so initial_value must match
+  # the global's default (3).
   - platform: template
     name: "Page Order: WiFi Page"
     id: page_order_wifi
     icon: mdi:numeric
     restore_value: true
-    initial_value: 2
+    initial_value: 3
     min_value: 1
-    max_value: 7
+    max_value: 10
     entity_category: "config"
     optimistic: true
     step: 1

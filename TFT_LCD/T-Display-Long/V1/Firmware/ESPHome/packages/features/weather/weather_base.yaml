@@ -1,35 +1,52 @@
 # ============================================================================
 # Weather Base - Core Weather Infrastructure
 # ============================================================================
-# Part of modular refactoring
 #
 # This module provides the core weather capability infrastructure including:
 #   - Global weather data storage (current conditions, daily/hourly forecasts)
-#   - Weather fetch scripts (HTTP-based Home Assistant integration)
-#   - Weather page rotation switches and configuration
-#   - Weather refresh intervals and automation
-#   - Weather navigation buttons
-#   - Weather icon color management
+#   - Current-condition sensors subscribed from Home Assistant
+#   - Forecast fetch scripts and their refresh intervals
+#   - Weather page rotation switches and order numbers (all 4 weather page types)
+#   - "Refresh Weather Data" button and the weather icon color script
+#
+# HOW FORECASTS ARRIVE:
+#   Daily  - fetch_daily_forecast calls weather.get_forecasts with
+#            homeassistant.action + capture_response over the native API.
+#            REQUIRES the "Allow the device to perform Home Assistant
+#            actions" option on this device in HA's ESPHome integration.
+#   Hourly - pushed by HA: the hourly_forecast_attr text_sensor subscribes to
+#            the `forecast` attribute of sensor.hourly_forecast_esp, a
+#            trigger-based template sensor that must exist in Home Assistant
+#            (README "Home Assistant setup"). fetch_hourly_forecast_http is
+#            only a fallback for when that sensor is missing or stale: it is
+#            synchronous and pulls the whole forecast (~57-63 KB).
 #
 # Dependencies:
-#   - packages/base/globals.yaml (for page rotation globals like current_page_name)
-#   - packages/system/esphome_core.yaml and system_management.yaml (http_request, time)
-#   - packages/system/display_hardware.yaml (for LVGL display)
-#   - packages/features/page_rotation/page_rotation.yaml (for page rotation system)
+#   - system/system_management.yaml (http_request, weather_helpers, time)
+#   - system/display_hardware.yaml (for LVGL display)
+#   - features/page_rotation/page_rotation.yaml (current_page_name)
+#   - the selected BLE package (ble_scanner_switch, paused during fetches)
+#   - features/weather/weather_page.yaml (update_weather_display,
+#     lbl_weather_forecast_condition_icon), weather_daily.yaml
+#     (update_daily_forecast_display) and weather_hourly.yaml
+#     (update_hourly_page_1): this file calls their scripts, so those
+#     packages are not independently optional today - see
+#     docs/ARCHITECTURE.md "Known gaps" #2.
 #
 # Required Substitutions:
 #   - weather_entity_id: Home Assistant weather entity (e.g., weather.hhut)
-#   - ha_url: Home Assistant URL (e.g., https://homeassistant.local:8123)
-#   - ha_token: Long-lived access token for Home Assistant
+#   - current_temp_sensor, apparent_temp_sensor, wind_speed_sensor,
+#     wind_direction_sensor: HA sensor entity ids for the current conditions
+#   - ha_url: Home Assistant URL (HTTP fallback only; prefer HA's LAN IP)
+#   - ha_token: Long-lived access token for Home Assistant (HTTP fallback only)
 #   - weather_daily_refresh_interval: Daily forecast refresh interval in seconds (e.g., 3600)
-#   - weather_hourly_refresh_interval: Hourly forecast refresh interval in seconds (e.g., 900)
+#   - weather_hourly_refresh_interval: Hourly staleness check in seconds (e.g., 900)
 #
 # Notes:
-#   - Uses HTTP-based weather fetch due to ESPHome 2025.10.3 incompatibility
-#     with HA 2025.10.x's weather.get_forecasts action format
-#   - JSON documents are allocated in PSRAM to prevent internal RAM pressure
-#   - Separate fetch scripts for daily and hourly forecasts for better efficiency
+#   - JSON pools are allocated in PSRAM (ArduinoJson Allocator, docs/MEMORY.md 5)
 #   - Weather data is cached and only refreshed when stale
+#
+# MEMORY USAGE: ~8KB flash; forecast JSON parsing is transient PSRAM.
 # ============================================================================
 
 globals:
@@ -199,7 +216,8 @@ globals:
     restore_value: yes
     initial_value: 'true'
 
-  # Weather page rotation order (1-7, lower numbers show first)
+  # Weather page rotation order (lower numbers show first). The HA number
+  # entities below allow 1-10 and set these at boot from their restored values.
   - id: page_rotation_weather_order
     type: int
     restore_value: yes
@@ -447,11 +465,17 @@ text_sensor:
       then:
         - lambda: |-
             id(weather_current_condition) = x;
-            // PATCH: Normalize conditions to match supported icon set (waiting for upstream weather_helpers fix)
+            // Normalize conditions onto the icon set (the same mapping is
+            // repeated for the hourly and daily arrays below):
             // - POSSIBLY_RAINY_DAY/NIGHT: 'pouring' -> 'rainy' (low probability rain)
             // - POSSIBLY_SLEET_DAY/NIGHT + SLEET: 'hail' -> 'snowy-rainy' (mixed precipitation)
             // - THUNDERSTORM: 'lightning' -> 'lightning-rainy' (lightning with rain)
             // - WINDY: 'windy-variant' -> 'windy' (standard HA condition)
+            // The weather_helpers fix this was waiting for has landed:
+            // get_weather_icon() and get_weather_icon_color() now map all four
+            // raw conditions themselves, so this normalization is redundant for
+            // the icons. It still changes the condition text shown (e.g.
+            // "Pouring" becomes "Rainy"), so remove it only deliberately.
             {
               std::string& cond = id(weather_current_condition);
               if (cond == "pouring") cond = "rainy";
@@ -524,7 +548,7 @@ text_sensor:
                 id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"].as<float>();
               if (hour["condition"].is<const char*>()) {
                 id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
-                // PATCH: Normalize conditions to match supported icon set
+                // Normalize conditions (see the current-condition sensor above)
                 std::string& cond = id(weather_hourly_condition)[idx];
                 if (cond == "pouring") cond = "rainy";
                 else if (cond == "hail") cond = "snowy-rainy";
@@ -569,7 +593,8 @@ text_sensor:
 
 interval:
   # Auto-refresh DAILY forecast periodically (independent of which page is displayed)
-  # Checks every hour if data is stale (>60 min) and refreshes if needed
+  # Runs every weather_daily_refresh_interval and refreshes if the data is
+  # older than that interval (pages also fetch on load when stale).
   - interval: ${weather_daily_refresh_interval}s
     then:
       - if:
@@ -597,7 +622,10 @@ interval:
             - script.execute: fetch_daily_forecast
 
   # Auto-refresh HOURLY forecast periodically (independent of which page is displayed)
-  # Checks every 15 minutes if data is stale (>15 min) and refreshes if needed
+  # Runs every weather_hourly_refresh_interval. HA normally keeps the data
+  # fresh by pushing sensor.hourly_forecast_esp (hourly_forecast_attr above,
+  # which updates weather_hourly_last_update), so this only fires the HTTP
+  # fallback when that push has gone stale.
   - interval: ${weather_hourly_refresh_interval}s
     then:
       - if:
@@ -681,12 +709,14 @@ script:
           id(weather_needs_render) = false;
 
   # ============================================================================
-  # TESTING: ESPHome 2025.11.2 native weather.get_forecasts action
+  # DAILY forecast: native weather.get_forecasts action (the production path)
   # ============================================================================
-  # Testing if ESPHome 2025.11.2 has fixed the homeassistant.action with
-  # capture_response compatibility with HA 2025.10.x's weather.get_forecasts.
-  #
-  # If this works, we can remove the HTTP-based workaround below.
+  # homeassistant.action with capture_response over the API. It began as a
+  # test on ESPHome 2025.11.2 and replaced the HTTP daily fetch. The daily
+  # payload is small (10 entries), so the 65,535-byte API message limit that
+  # rules this out for the full hourly forecast does not apply.
+  # Needs "Allow the device to perform Home Assistant actions" enabled for
+  # this device in HA; without it on_error fires.
   # ============================================================================
 
   # Script to fetch DAILY forecast data via native HA action
@@ -820,7 +850,7 @@ script:
 
                       if (day["condition"].is<const char*>()) {
                         id(weather_forecast_condition)[idx] = day["condition"].as<std::string>();
-                        // PATCH: Normalize conditions to match supported icon set
+                        // Normalize conditions (see the current-condition sensor above)
                         std::string& cond = id(weather_forecast_condition)[idx];
                         if (cond == "pouring") cond = "rainy";
                         else if (cond == "hail") cond = "snowy-rainy";
@@ -840,7 +870,7 @@ script:
                       if (idx == 0) {
                         if (day["condition"].is<const char*>()) {
                           id(weather_current_condition) = day["condition"].as<std::string>();
-                          // PATCH: Normalize conditions to match supported icon set
+                          // Normalize conditions (see the current-condition sensor above)
                           std::string& cond = id(weather_current_condition);
                           if (cond == "pouring") cond = "rainy";
                           else if (cond == "hail") cond = "snowy-rainy";
@@ -888,214 +918,11 @@ script:
           // Always clear the lock when done
           id(weather_fetch_lock) = false;
 
-  # ============================================================================
-  # COMMENTED OUT: HTTP-based workaround (kept for rollback if needed)
-  # ============================================================================
-  # # Script to fetch DAILY forecast data via HA REST API
-  # - id: fetch_daily_forecast_http
-  #   mode: single
-  #   then:
-  #     - lambda: |-
-  #         // Ensure lock is set
-  #         id(weather_fetch_lock) = true;
-  #
-  #     - logger.log: "Fetching daily forecast from Home Assistant via HTTP..."
-  #
-  #     # Feed watchdog before long operation
-  #     - lambda: |-
-  #         App.feed_wdt();
-  #         ESP_LOGI("weather", "Free heap before daily fetch: %d bytes", esp_get_free_heap_size());
-  #         ESP_LOGD("main", "Fetching daily forecast from Home Assistant via HTTP...");
-  #     # Fetch daily forecast
-  #     - http_request.post:
-  #         url: !lambda |-
-  #           return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
-  #         request_headers:
-  #           Content-Type: application/json
-  #           Authorization: !lambda |-
-  #             return "Bearer ${ha_token}";
-  #         body: !lambda |-
-  #           return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"daily\"}";
-  #         on_response:
-#            then:
-#              - lambda: |-
-#                  // Feed watchdog at start of processing
-#                  App.feed_wdt();
-
-#                  ESP_LOGI("weather", "Free heap at daily response: %d bytes", esp_get_free_heap_size());
-
-#                  // Guard against unexpectedly large payloads (>32KB)
-#                  if (response->content_length > 32768) {
-#                  ESP_LOGE("weather", "Daily forecast too large: %d bytes", (int)response->content_length);
-#                  // Drain the body without storing to keep connection sane
-#                  uint8_t drain_buf[256];
-#                  while (response->get_bytes_read() < response->content_length) {
-#                    int r = response->read(drain_buf, sizeof(drain_buf));
-#                    if (r <= 0) break;
-#                    App.feed_wdt();
-#                  }
-#                  return;
-#                  }
-
-#                  // Read response body first (for both success and error cases)
-#                  std::string body_str;
-#                  // Reserve a smaller amount to reduce fragmentation
-#                  size_t reserve_sz = response->content_length;
-#                  if (reserve_sz > 12288) reserve_sz = 12288; // cap to 12KB for daily
-#                  body_str.reserve(reserve_sz);
-#                  uint8_t buffer[256];  // Smaller buffer
-#                  while (response->get_bytes_read() < response->content_length) {
-#                  int read_len = response->read(buffer, sizeof(buffer));
-#                  if (read_len > 0) {
-#                    // Cap body accumulation to 24KB for safety
-#                    if (body_str.size() + (size_t)read_len > 24576) {
-#                      ESP_LOGW("weather", "Daily body truncated at %u bytes", (unsigned)body_str.size());
-#                      break;
-#                    }
-#                    body_str.append((char*)buffer, read_len);
-#                  }
-#                  // Feed watchdog during long reads
-#                  if (body_str.length() % 4096 == 0) {
-#                    App.feed_wdt();
-#                  }
-#                  }
-
-#                  // response is already provided by ESPHome http_request
-#                  if (response->status_code != 200) {
-#                  ESP_LOGE("weather", "✗ Daily forecast HTTP failed: %d", response->status_code);
-#                  ESP_LOGE("weather", "Error response body: %s", body_str.c_str());
-#                  return;
-#                  }
-
-#                  ESP_LOGI("weather", "✓ Daily forecast HTTP response received (%d bytes)", body_str.length());
-#                  ESP_LOGI("weather", "Free heap before daily JSON parse: %d bytes", esp_get_free_heap_size());
-
-#                  // Feed watchdog before JSON parsing
-#                  App.feed_wdt();
-
-#                  // Log memory state before JSON parsing (PSRAM vs Internal RAM)
-#                  ESP_LOGI("memory", "Before JSON parse - Internal RAM free: %d, PSRAM free: %d",
-#                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-#                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-
-#                  // CRITICAL: Allocate JsonDocument explicitly from PSRAM to avoid internal RAM pressure
-#                  // Using heap_caps_malloc with MALLOC_CAP_SPIRAM forces allocation to PSRAM
-#                  // This keeps the 60KB+ JSON buffer out of limited internal RAM
-#                  void* json_buffer = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-#                  if (json_buffer == nullptr) {
-#                  ESP_LOGE("weather", "Failed to allocate JSON buffer in PSRAM!");
-#                  return;
-#                  }
-#                  JsonDocument *doc = new (json_buffer) JsonDocument;  // Placement new in PSRAM
-
-#                  DeserializationError error = deserializeJson(
-#                    *doc, body_str, DeserializationOption::NestingLimit(10));
-
-#                  if (error) {
-#                  ESP_LOGE("weather", "JSON parse error: %s", error.c_str());
-#                  doc->~JsonDocument();  // Call destructor
-#                  heap_caps_free(json_buffer);  // Free PSRAM
-#                  return;
-#                  }
-
-#                  // Response format: {"service_response": {"weather.hhut": {"forecast": [...]}}}
-#                  const char *entity_key = "${weather_entity_id}";
-
-#                  if (!(*doc)["service_response"].is<JsonObject>()) {
-#                  ESP_LOGE("weather", "No 'service_response' key in response");
-#                  doc->~JsonDocument();
-#                  heap_caps_free(json_buffer);
-#                  return;
-#                  }
-
-#                  JsonObject service_response = (*doc)["service_response"];
-
-#                  if (!service_response[entity_key].is<JsonObject>()) {
-#                  ESP_LOGE("weather", "Entity '%s' not found in service_response", entity_key);
-#                  doc->~JsonDocument();
-#                  heap_caps_free(json_buffer);
-#                  return;
-#                  }
-
-#                  JsonObject entity_data = service_response[entity_key];
-
-#                  if (!entity_data["forecast"].is<JsonArray>()) {
-#                  ESP_LOGW("weather", "No 'forecast' key in daily response");
-#                  doc->~JsonDocument();
-#                  heap_caps_free(json_buffer);
-#                  return;
-#                  }
-
-#                  JsonArray forecast_array = entity_data["forecast"];
-#                  int day_count = std::min((int)forecast_array.size(), 10);
-#                  ESP_LOGI("weather", "Found %d days of forecast data", day_count);
-
-#                  // Feed watchdog before processing loop
-#                  App.feed_wdt();
-
-#                  for (int i = 0; i < day_count; i++) {
-#                  JsonObject day = forecast_array[i];
-
-#                  // Feed watchdog every 3 days to prevent timeout during processing
-#                  if (i > 0 && i % 3 == 0) {
-#                    App.feed_wdt();
-#                  }
-
-#                  if (day["temperature"].is<float>()) {
-#                    id(weather_forecast_temp_high)[i] = day["temperature"].as<float>();
-#                  }
-
-#                  if (day["templow"].is<float>()) {
-#                    id(weather_forecast_temp_low)[i] = day["templow"].as<float>();
-#                  }
-
-#                  if (day["condition"].is<const char*>()) {
-#                    id(weather_forecast_condition)[i] = day["condition"].as<std::string>();
-#                  }
-
-#                  if (day["precipitation_probability"].is<float>()) {
-#                    id(weather_forecast_precip_prob)[i] = day["precipitation_probability"].as<float>();
-#                  }
-
-#                  if (day["datetime"].is<const char*>()) {
-#                    id(weather_forecast_datetime)[i] = day["datetime"].as<std::string>();
-#                  }
-
-#                  // Extract "current" weather from today's forecast (day 0)
-#                  if (i == 0) {
-#                    if (day["condition"].is<const char*>()) {
-#                      id(weather_current_condition) = day["condition"].as<std::string>();
-#                      ESP_LOGI("weather", "Current condition from forecast: %s", id(weather_current_condition).c_str());
-#                    }
-#                  }
-#                  }
-#                  ESP_LOGI("weather", "✓ Daily forecast stored successfully");
-
-#                  // Clean up PSRAM-allocated JSON document
-#                  doc->~JsonDocument();  // Call destructor
-#                  heap_caps_free(json_buffer);  // Free PSRAM buffer
-
-#                  ESP_LOGI("weather", "Free heap after parse - Internal: %d, PSRAM: %d",
-#                         heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-#                         heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
-
-#                  // Update daily forecast timestamp
-#                  id(weather_daily_last_update) = millis();
-#                  id(weather_last_update) = millis();  // Keep for backward compatibility
-
-#              # Small delay to allow memory cleanup
-#              - delay: 100ms
-
-#              # Update display after fetching (with delays to prevent SPI contention)
-#              - script.execute: update_weather_display
-#              - delay: 50ms
-#              - script.execute: update_weather_icon_color
-#              - delay: 50ms
-#              - script.execute: update_daily_forecast_display
-
-#      - lambda: |-
-#          // Always clear the lock when done (success or failure)
-#          id(weather_fetch_lock) = false;
+  # The old HTTP-based daily fetch (fetch_daily_forecast_http) was removed in
+  # 2026.09 - it had been commented out since the native action above became
+  # the daily path. It is in git history (weather_base.yaml at commit
+  # 6d0a13e4 or earlier) if a rollback is ever needed; note it used the
+  # placement-new JsonDocument pattern that docs/MEMORY.md section 5 retires.
 
   # FALLBACK ONLY - fetch HOURLY forecast over HTTP REST.
   #
@@ -1112,6 +939,8 @@ script:
   #
   # Fixed in Home Assistant, not here: config/templates/halo_hourly_forecast.yaml
   # publishes the first 24 entries (~6.2 KB) on sensor.hourly_forecast_esp.
+  # That HA file is not in this repository; the README's "Home Assistant
+  # setup" section has an equivalent template.
   # Verified on device 2026-09-21: "Received hourly forecast attribute
   # (6225 bytes)" -> "Parsing 24 hourly entries" -> stored, with no HTTP
   # fallback triggered.
@@ -1277,170 +1106,6 @@ script:
       - lambda: |-
           id(weather_fetch_lock) = false;
           ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP fallback) END ===");
-
-  # OLD: HTTP-based hourly fetch kept for rollback (commented out)
-  #  - id: fetch_hourly_forecast_http
-  #    mode: single
-  #    then:
-  #      - lambda: |-
-  #          id(weather_fetch_lock) = true;
-  #          id(weather_hourly_retry_count) = 0;
-  #          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP) START ===");
-  #
-  #      # Pause BLE to reduce network congestion
-  #      - switch.turn_off: ble_scanner_switch
-  #      - delay: 500ms  # Brief pause for queue flush
-  #
-  #      - logger.log: "→ Fetching hourly forecast via HTTP REST API..."
-  #
-  #      - lambda: |-
-  #          App.feed_wdt();
-  #          ESP_LOGI("weather", "Free heap: %d bytes", esp_get_free_heap_size());
-  #
-  #      # HTTP POST to Home Assistant REST API
-  #      - http_request.post:
-  #          url: !lambda |-
-  #            return "${ha_url}/api/services/weather/get_forecasts?return_response=true";
-  #          request_headers:
-  #            Content-Type: application/json
-  #            Authorization: !lambda |-
-  #              return "Bearer ${ha_token}";
-  #          body: !lambda |-
-  #            return "{\"entity_id\":\"${weather_entity_id}\",\"type\":\"hourly\"}";
-  #          on_response:
-  #            then:
-  #              - lambda: |-
-  #                  App.feed_wdt();
-  #                  ESP_LOGI("weather", "HTTP Status: %d", response->status_code);
-  #
-  #                  if (response->status_code != 200) {
-  #                    ESP_LOGE("weather", "✗ HTTP request failed with status %d", response->status_code);
-  #                    return;
-  #                  }
-  #
-  #                  // Read response body
-  #                  std::string body;
-  #                  body.reserve(20480);  // Reserve 20KB for response
-  #                  uint8_t buf[512];
-  #                  while (response->get_bytes_read() < response->content_length) {
-  #                    int len = response->read(buf, sizeof(buf));
-  #                    if (len > 0) {
-  #                      body.append((char*)buf, len);
-  #                      if (body.length() % 4096 == 0) App.feed_wdt();
-  #                    }
-  #                  }
-  #
-  #                  ESP_LOGI("weather", "✓ Received %d bytes", body.length());
-  #
-  #                  // Parse JSON in PSRAM
-  #                  void* json_mem = heap_caps_malloc(sizeof(JsonDocument), MALLOC_CAP_SPIRAM);
-  #                  if (!json_mem) {
-  #                    ESP_LOGE("weather", "Failed to allocate JSON buffer!");
-  #                    return;
-  #                  }
-  #                  JsonDocument *doc = new (json_mem) JsonDocument;
-  #
-  #                  App.feed_wdt();
-  #                  DeserializationError err = deserializeJson(*doc, body);
-  #                  if (err) {
-  #                    ESP_LOGE("weather", "JSON parse failed: %s", err.c_str());
-  #                    doc->~JsonDocument();
-  #                    heap_caps_free(json_mem);
-  #                    return;
-  #                  }
-  #
-  #                  // HTTP REST API returns: {"service_response": {"weather.hhut": {"forecast": [...]}}}
-  #                  JsonArrayConst forecast_array;
-  #                  if ((*doc)["service_response"]["${weather_entity_id}"]["forecast"].is<JsonArrayConst>()) {
-  #                    forecast_array = (*doc)["service_response"]["${weather_entity_id}"]["forecast"];
-  #                  } else {
-  #                    ESP_LOGE("weather", "No forecast array found in response");
-  #                    doc->~JsonDocument();
-  #                    heap_caps_free(json_mem);
-  #                    return;
-  #                  }
-  #
-  #                  // Extract data (only first 24 hours, all fields)
-  #                  int count = std::min((int)forecast_array.size(), 24);
-  #                  ESP_LOGI("weather", "Processing %d hours...", count);
-  #
-  #                  int idx = 0;
-  #                  for (JsonObjectConst hour : forecast_array) {
-  #                    if (idx >= 24) break;
-  #
-  #                    // Core fields
-  #                    if (hour["temperature"].is<float>())
-  #                      id(weather_hourly_temp)[idx] = hour["temperature"];
-  #                    if (hour["apparent_temperature"].is<float>())
-  #                      id(weather_hourly_apparent_temp)[idx] = hour["apparent_temperature"];
-  #                    if (hour["condition"].is<const char*>())
-  #                      id(weather_hourly_condition)[idx] = hour["condition"].as<std::string>();
-  #                    if (hour["precipitation_probability"].is<float>())
-  #                      id(weather_hourly_precip_prob)[idx] = hour["precipitation_probability"];
-  #                    if (hour["datetime"].is<const char*>())
-  #                      id(weather_hourly_datetime)[idx] = hour["datetime"].as<std::string>();
-  #
-  #                    // Additional fields
-  #                    if (hour["humidity"].is<float>())
-  #                      id(weather_hourly_humidity)[idx] = hour["humidity"];
-  #                    if (hour["precipitation"].is<float>())
-  #                      id(weather_hourly_precipitation)[idx] = hour["precipitation"];
-  #                    if (hour["pressure"].is<float>())
-  #                      id(weather_hourly_pressure)[idx] = hour["pressure"];
-  #                    if (hour["uv_index"].is<float>())
-  #                      id(weather_hourly_uv_index)[idx] = hour["uv_index"];
-  #                    if (hour["wind_speed"].is<float>())
-  #                      id(weather_hourly_wind_speed)[idx] = hour["wind_speed"];
-  #                    if (hour["wind_bearing"].is<float>())
-  #                      id(weather_hourly_wind_bearing)[idx] = hour["wind_bearing"];
-  #
-  #                    idx++;
-  #                    if (idx % 6 == 0) App.feed_wdt();
-  #                  }
-  #
-  #                  // Cleanup
-  #                  doc->~JsonDocument();
-  #                  heap_caps_free(json_mem);
-  #
-  #                  id(weather_hourly_last_update) = millis();
-  #                  id(weather_last_update) = millis();
-  #                  ESP_LOGI("weather", "✓ Hourly forecast complete!");
-  #
-  #              - delay: 100ms
-  #              - if:
-  #                  condition:
-  #                    lambda: 'return id(current_page_name) == "hourly_forecast";'
-  #                  then:
-  #                    - script.execute: update_hourly_page_1
-  #
-  #          on_error:
-  #            then:
-  #              - lambda: |-
-  #                  // Increment retry counter and log error
-  #                  id(weather_hourly_retry_count)++;
-  #                  ESP_LOGE("weather", "Hourly forecast HTTP request ERROR (attempt %d)", id(weather_hourly_retry_count));
-  #              - if:
-  #                  condition:
-  #                    lambda: 'return id(weather_hourly_retry_count) < 3;'
-  #                  then:
-  #                    - delay: 3s
-  #                    - lambda: |-
-  #                        // Clear lock and retry with backoff
-  #                        id(weather_fetch_lock) = false;
-  #                    - lambda: |-
-  #                        ESP_LOGI("weather", "Retrying hourly forecast fetch (attempt %d)...", id(weather_hourly_retry_count));
-  #                    - script.execute: fetch_hourly_forecast
-  #                  else:
-  #                    - lambda: |-
-  #                        ESP_LOGE("weather", "Hourly forecast fetch retries exhausted (attempts=%d)", id(weather_hourly_retry_count));
-  #                        id(weather_hourly_retry_count) = 0;
-  #                        id(weather_fetch_lock) = false;
-  #
-  #      # Resume BLE
-  #      - switch.turn_on: ble_scanner_switch
-  #      - lambda: |-
-  #          id(weather_fetch_lock) = false;
-  #          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP) END ===");
 
   # Transitional helper script that triggers both forecast fetches.
   # Retained for compatibility with existing automation; prefer calling

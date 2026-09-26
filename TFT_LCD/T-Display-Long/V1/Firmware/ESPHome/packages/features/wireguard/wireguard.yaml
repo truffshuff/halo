@@ -18,19 +18,42 @@
 # DEPENDENCIES:
 #   - system/esphome_core.yaml (ESP32 config)
 #   - system/networking.yaml (WiFi must be connected first)
+#   - system/system_management.yaml (sntp_time)
+#   - features/wifi_status/wifi_page.yaml (wg_*_label widgets)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     auto_page_rotation_enabled, last_auto_rotation_time)
 #
-# MEMORY USAGE: ~8KB
+# EFFECTIVELY REQUIRED TODAY: system/networking.yaml, system_management.yaml,
+# features/clock/clock_base.yaml, the WiFi page and Halo-v1-Core.yaml all
+# reference ids declared here, so commenting this package out fails
+# validation (docs/ARCHITECTURE.md "Known gaps" #2). To run without a VPN,
+# keep the package and leave the "Enable WireGuard" switch off (the default).
+# The secrets below must still exist; placeholders are fine while it is off.
+#
+# MEMORY USAGE: ~8KB flash
 #
 # CONFIGURATION REQUIRED:
-#   Secrets file must define:
+#   Secrets file must define (see secrets.yaml.example):
 #   - wg_address: VPN IP address (e.g., "10.1.0.2")
 #   - wg_netmask: VPN subnet mask (e.g., "255.255.255.0")
 #   - wg_prikey: Device private key
 #   - wg_peerport: Server port (e.g., 51820)
 #   - wg_peerendpt: Server endpoint (hostname or IP)
 #   - wg_pubkey: Server public key
-#   - wg_shrdkey: Pre-shared key (for additional security)
+#   - wg_shrdkey: Pre-shared key (required as written: it is a !secret)
 #   - wg_allowed_ips: Allowed VPN routes (e.g., "0.0.0.0/0")
+#
+# SUBSTITUTIONS:
+#   - wireguard_default: restore_mode of the "Enable WireGuard" switch
+#     (RESTORE_DEFAULT_OFF here; an entry file can override it)
+#
+# BEHAVIOUR NOTES:
+#   - Boot: enabled from on_boot (priority 50) after 20 s, once SNTP is valid.
+#   - First SNTP sync: system_management.yaml enables it if boot timed out.
+#   - WiFi reconnect: networking.yaml does disable -> enable to force a fresh
+#     handshake (docs/ARCHITECTURE.md section 8).
+#   - Tunnel drop while enabled: auto rotation pauses and the AirQ page is
+#     shown until the tunnel returns.
 #
 # Created: 2025-11-14 (module extraction)
 # ============================================================================

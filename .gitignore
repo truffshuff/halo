@@ -3,3 +3,4 @@
 TFT_LCD/T-Display-Long/V1/Firmware/ESPHome/secrets.yaml
 *.bak
 *.bak[0-9]*
+__pycache__/

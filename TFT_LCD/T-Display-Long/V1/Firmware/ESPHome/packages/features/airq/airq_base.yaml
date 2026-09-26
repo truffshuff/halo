@@ -8,7 +8,7 @@
 #   - MICS-4514: Multi-gas sensor (NO2, CO, H2, CH4, Ethanol, NH3)
 #   - BME280: Temperature, humidity, pressure (baseline for other sensors)
 #   - SEN55: Particulate matter (PM1.0, PM2.5, PM4.0, PM10.0), VOC, NOx
-#   - Computed AQI: US EPA Air Quality Index from PM2.5
+#   - Computed AQI: US EPA Air Quality Index from PM2.5 (2024 breakpoints)
 #
 # FEATURES:
 #   - Real-time air quality monitoring with color-coded thresholds
@@ -29,8 +29,17 @@
 #   - system/esphome_core.yaml (ESP32 config)
 #   - system/display_hardware.yaml (I2C bus)
 #   - system/fonts_colors.yaml (colors for UI)
+#   - features/airq/airq_page.yaml (every *_value label the on_value triggers
+#     update - the two files must be enabled together)
+#   - features/weather/weather_led_effects.yaml (rgb_light, for "AQI Color")
+#   - Halo-v1-Core.yaml (led_effect_select)
+#   - features/page_rotation/page_rotation.yaml (current_page_name,
+#     last_auto_rotation_time)
 #
-# MEMORY USAGE: ~15KB
+# The AirQ page-rotation switch and order number are in page_rotation.yaml;
+# only their globals are here.
+#
+# MEMORY USAGE: ~15KB flash
 #
 # Created: 2025-11-14 (module extraction)
 # ============================================================================
@@ -513,69 +522,51 @@ sensor:
                 static char buffer[10];
                 snprintf(buffer, sizeof(buffer), "%.01f", x);
                 return buffer;
-          - lvgl.label.update:
-              id: aqi_value
-              text: !lambda |-
-                float val = x; // PM2.5 value
-                float aqi = 0.0;
-
-                if (val <= 9.0) {
-                  aqi = ((50.0 - 0.0) / (9.0 - 0.0)) * (val - 0.0) + 0.0;
-                } else if (val <= 35.4) {
-                  aqi = ((100.0 - 51.0) / (35.4 - 9.1)) * (val - 9.1) + 51.0;
-                } else if (val <= 55.4) {
-                  aqi = ((150.0 - 101.0) / (55.4 - 35.5)) * (val - 35.5) + 101.0;
-                } else if (val <= 125.4) {
-                  aqi = ((200.0 - 151.0) / (125.4 - 55.5)) * (val - 55.5) + 151.0;
-                } else if (val <= 225.4) {
-                  aqi = ((300.0 - 201.0) / (225.4 - 125.5)) * (val - 125.5) + 201.0;
-                } else if (val <= 500.4) {
-                  aqi = ((500.0 - 301.0) / (500.4 - 250.5)) * (val - 250.5) + 301.0;
-                } else {
-                  return "EVAC";
+          # US EPA AQI from PM2.5, 2024 breakpoints (the 2024 PM NAAQS revision:
+          # 0-9.0 / 9.1-35.4 / 35.5-55.4 / 55.5-125.4 / 125.5-225.4 / 225.5-325.4).
+          # Computed once and published on computed_halo_aqi; the label, the
+          # banner colour, the "AQI Color" LED effect and the AQI history all
+          # read that. Above 325.4 ug/m3 is beyond the index: published as 500
+          # and shown as "EVAC".
+          - lambda: |-
+              if (std::isnan(x)) return;
+              struct Segment { float c_lo, c_hi, i_lo, i_hi; };
+              static const Segment SEGMENTS[] = {
+                {0.0f, 9.0f, 0, 50},        {9.1f, 35.4f, 51, 100},
+                {35.5f, 55.4f, 101, 150},   {55.5f, 125.4f, 151, 200},
+                {125.5f, 225.4f, 201, 300}, {225.5f, 325.4f, 301, 500},
+              };
+              float aqi = 500.0f;
+              for (const auto &seg : SEGMENTS) {
+                if (x <= seg.c_hi) {
+                  // A reading between two segments (e.g. 9.05) belongs to the upper one.
+                  const float c = std::max(x, seg.c_lo);
+                  aqi = (seg.i_hi - seg.i_lo) / (seg.c_hi - seg.c_lo) * (c - seg.c_lo) + seg.i_lo;
+                  break;
                 }
-
-                static char buffer[10];
-                snprintf(buffer, sizeof(buffer), " %d", (int)aqi);
-                return buffer;
-
-          - lvgl.widget.update:
-              id: aqi_widget
-              bg_color: !lambda |-
-                float val = x; // PM2.5 value
-                float aqi = 0.0;
-
-                if (val <= 9.0) {
-                  aqi = ((50.0 - 0.0) / (9.0 - 0.0)) * (val - 0.0) + 0.0;
-                } else if (val <= 35.4) {
-                  aqi = ((100.0 - 51.0) / (35.4 - 9.1)) * (val - 9.1) + 51.0;
-                } else if (val <= 55.4) {
-                  aqi = ((150.0 - 101.0) / (55.4 - 35.5)) * (val - 35.5) + 101.0;
-                } else if (val <= 125.4) {
-                  aqi = ((200.0 - 151.0) / (125.4 - 55.5)) * (val - 55.5) + 151.0;
-                } else if (val <= 225.4) {
-                  aqi = ((300.0 - 201.0) / (225.4 - 125.5)) * (val - 125.5) + 201.0;
-                } else if (val <= 500.4) {
-                  aqi = ((500.0 - 301.0) / (500.4 - 250.5)) * (val - 250.5) + 301.0;
-                } else {
-                  aqi = 500.0;
-                }
-                id(computed_halo_aqi).publish_state((int)aqi);
-
-                // Return color based on AQI
-                if (aqi <= 50) {
-                  return lv_color_hex(0x76fa76); // Green
-                } else if (aqi <= 100) {
-                  return lv_color_hex(0xFFFF00); // Yellow
-                } else if (aqi <= 150) {
-                  return lv_color_hex(0xFFA500); // Orange
-                } else if (aqi <= 200) {
-                  return lv_color_hex(0xFF0000); // Red
-                } else if (aqi <= 300) {
-                  return lv_color_hex(0x800080); // Purple
-                } else {
-                  return lv_color_hex(0x800000); // Maroon
-                }
+              }
+              id(computed_halo_aqi).publish_state(roundf(aqi));
+          - if:
+              condition:
+                lambda: 'return !std::isnan(x);'
+              then:
+                - lvgl.label.update:
+                    id: aqi_value
+                    text: !lambda |-
+                      if (x > 325.4f) return "EVAC";
+                      static char buffer[10];
+                      snprintf(buffer, sizeof(buffer), " %d", (int) id(computed_halo_aqi).state);
+                      return buffer;
+                - lvgl.widget.update:
+                    id: aqi_widget
+                    bg_color: !lambda |-
+                      const float aqi = id(computed_halo_aqi).state;
+                      if (aqi <= 50) return lv_color_hex(0x76fa76);        // Green
+                      else if (aqi <= 100) return lv_color_hex(0xFFFF00);  // Yellow
+                      else if (aqi <= 150) return lv_color_hex(0xFFA500);  // Orange
+                      else if (aqi <= 200) return lv_color_hex(0xFF0000);  // Red
+                      else if (aqi <= 300) return lv_color_hex(0x800080);  // Purple
+                      else return lv_color_hex(0x800000);                  // Maroon
 
     pm_4_0:
       name: "PM <4µm Weight concentration"
@@ -840,11 +831,16 @@ button:
 # ============================================================================
 # API Services
 # ============================================================================
+# `services:` / `service:` are ESPHome's legacy names for `actions:` /
+# `action:`; they still validate. In Home Assistant each appears as
+# esphome.<device_name>_<action>, with the device name's dashes turned into
+# underscores - e.g. esphome.halo_v1_79e384_calibrate_co2_value.
+# ============================================================================
 api:
   services:
     # Custom CO2 calibration value
     # Allows setting arbitrary calibration value via Home Assistant
-    # USAGE: esphome.halo_calibrate_co2_value co2_ppm=400
+    # USAGE: esphome.<device_name>_calibrate_co2_value  co2_ppm: 400
     - service: calibrate_co2_value
       variables:
         co2_ppm: float
@@ -855,7 +851,7 @@ api:
 
     # SEN55 Fan Cleaning
     # Runs fan at high speed for 10 seconds to remove dust from sensor
-    # USAGE: esphome.halo_sen55_clean
+    # USAGE: esphome.<device_name>_sen55_clean
     - service: sen55_clean
       then:
         - sen5x.start_fan_autoclean: sen55

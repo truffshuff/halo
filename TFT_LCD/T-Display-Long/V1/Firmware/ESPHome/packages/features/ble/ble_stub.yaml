@@ -1,11 +1,20 @@
-# BLE Stub Package
-# Purpose: Lightweight placeholder to satisfy references to BLE-related IDs
-# (e.g., `ble_scanner_switch`) when you intentionally omit the full
-# BLE implementation (`ble_improv.yaml` or `ble_esphome.yaml`). This avoids
-# compile-time errors from missing IDs while keeping behavior inert.
-
-# Usage: In your `Halo-v1.yaml` packages list, replace the active BLE package
-# with this file to disable Bluetooth proxy functionality entirely.
+# ============================================================================
+# BLE Stub - no Bluetooth
+# ============================================================================
+# Purpose:
+#   Lightweight placeholder for builds without Bluetooth. It defines
+#   ble_scanner_switch, which the OTA hooks and the weather fetch scripts turn
+#   off and on around their work, as a no-op template switch.
+#
+# Usage:
+#   In your entry file's packages list, enable this file INSTEAD of
+#   ble_improv.yaml or ble_esphome.yaml (exactly one of the three).
+#
+# Dependencies: None
+# Hardware requirements: None
+# Memory usage: none beyond the switch entity; removes the whole BLE stack
+#   (NimBLE ~40 KB, mostly PSRAM; Bluedroid more, see docs/MEMORY.md).
+# ============================================================================
 
 switch:
   - platform: template

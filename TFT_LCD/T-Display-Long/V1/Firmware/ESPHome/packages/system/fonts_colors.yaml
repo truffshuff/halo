@@ -2,7 +2,9 @@
 # Fonts and Colors Configuration
 # ============================================================================
 # Shared UI resources (fonts, colors, images)
-# Dependencies: None
+# Dependencies: fonts/materialdesignicons-webfont.ttf (in this repo);
+#   Montserrat from Google Fonts and the YM logo URL are fetched at COMPILE
+#   time, so the first build needs internet access.
 #
 # This module defines:
 #   - Montserrat fonts (9 sizes: 10/14/16/18/20/24/28/50/80)
@@ -24,15 +26,18 @@
 # Font Definitions
 # ============================================================================
 # Fonts are defined with various sizes for different UI elements across pages.
-# bpp: 4 provides anti-aliasing for smooth text rendering on TFT display.
+# bpp: 4 gives 16-level anti-aliasing on the AMOLED panel.
 #
-# OPTIMIZATION: All fonts use the same comprehensive glyph set.
-# This improves ESPHome's font caching and reduces duplicate rasterization.
-# Flash savings: ~30-50KB compared to unique glyph sets per font.
+# Every Montserrat size carries the same glyph string, for simplicity: any
+# label can use any size. Each size still rasterizes its own copy of every
+# glyph, so flash grows with (sizes x glyphs); trimming the set for the large
+# sizes (e.g. montserrat_80 only renders the clock's digits and ':') is the way
+# to save flash here. A character missing from the set renders as nothing -
+# add it here before using it in a label.
 # ============================================================================
 
-# Comprehensive glyph set used by all Montserrat fonts
-# Includes: uppercase, lowercase, digits, common punctuation, degree symbol
+# Glyph set shared by all Montserrat fonts:
+# uppercase, lowercase, digits, space , . : - > / ° % "
 font:
   - file: "gfonts://Montserrat"
     id: montserrat_80

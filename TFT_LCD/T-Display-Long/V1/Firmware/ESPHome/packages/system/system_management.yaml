@@ -1,23 +1,34 @@
 # ============================================================================
 # System Management Configuration
 # ============================================================================
-# System control, updates, factory reset, time sources
-# Dependencies: system/esphome_core.yaml
+# HTTP client, time sources, time zone, and network reachability diagnostics
 #
 # This module configures:
-#   - Home Assistant API
-#   - Time sources (Home Assistant + SNTP)
+#   - http_request (used by the weather fallback and the reachability probes;
+#     the printer cover image uses it through online_image)
+#   - weather_helpers (header-only external component)
+#   - Time sources (Home Assistant + SNTP) and WireGuard enable on first SNTP sync
 #   - Time Zone select (device page, default America/New_York)
-#   - HTTP request component
-#   - Web server
-#   - System buttons (reboot, factory reset)
-#   - System sensors (uptime, online status)
+#   - "Online" status binary sensor (id: ink_ha_connected)
+#   - SNTP / HTTP / API reachability diagnostics and their enable switches
+#
+# Not here: the api: block (Halo-v1-Core.yaml; encryption key in
+# esphome_core.yaml), web_server (networking.yaml), and the reboot / factory
+# reset buttons and uptime sensor (features/diagnostics/diagnostics.yaml).
+#
+# Dependencies:
+#   - system/esphome_core.yaml (weather_helpers external component)
+#   - features/wireguard/wireguard.yaml (wireguard_enabled, wireguard_enabled_sensor,
+#     wg0, wg_status_connected_state) - a required module reaching into an
+#     optional one; see docs/ARCHITECTURE.md "Known gaps" #2.
 # ============================================================================
 
 # ============================================================================
 # HTTP Request Component
 # ============================================================================
-# Declared early because Core scripts use the http_request.post action.
+# Used by the hourly-forecast HTTP fallback (features/weather/weather_base.yaml),
+# the Google/Cloudflare reachability probes below, and the printer cover image
+# (online_image).
 # ============================================================================
 http_request:
   useragent: esphome/halo
@@ -35,7 +46,8 @@ http_request:
   timeout: 10s
 
   # 4096 (was 1024): this is esp_http_client_config_t.buffer_size. The 1KB
-  # value predates the 57 KB hourly-forecast response. A 22 KB cover-image GET
+  # value predates the 57 KB hourly-forecast response (today only the HTTP
+  # fallback fetches that; the normal path is an API attribute). A 22 KB cover-image GET
   # succeeds while the 57 KB forecast POST fails with Code -1 (no status line
   # parsed), and buffer size is the main dimension in which those two differ.
   # Cost is ~3 KB, and at >=512 bytes it lands in PSRAM, not internal DRAM.
@@ -62,22 +74,27 @@ http_request:
 # ============================================================================
 # Weather Helpers Component
 # ============================================================================
-# Provides C++ helper functions for weather icon and condition calculations.
-# Declared early to ensure the weather_helpers namespace is available before
-# any feature module references it in lambda functions.
+# Header-only helpers (weather_helpers::...) for the weather pages: icon and
+# colour per condition, timestamp parsing in the device time zone, and value
+# formatting. The component is fetched by external_components in
+# esphome_core.yaml; listing it here is what copies the header into the build.
+# It sits in this required module so a build with every weather package
+# commented out still compiles.
 # ============================================================================
 weather_helpers:
 
 # ============================================================================
 # Time Sources
 # ============================================================================
-# Declared early because the WireGuard component requires a valid time source
-# before it can establish a tunnel. Dual sources for reliability:
-#   - Home Assistant (preferred; accurate to HA system clock)
-#   - SNTP fallback (used when HA is unavailable)
+# WireGuard needs a valid clock before it can establish a tunnel (its
+# handshake carries a timestamp). Two sources:
+#   - Home Assistant: used by the clock while WireGuard is off
+#   - SNTP: used by the clock while WireGuard is on (HA may only be reachable
+#     through the tunnel), by WireGuard, and by the AQI history timestamps
 #
-# Note: on_time_sync callbacks are in features/clock/clock_base.yaml
-#       (time_update script is part of the clock feature module)
+# The clock does not use on_time_sync; features/clock/clock_base.yaml
+# re-renders from a 1 s interval. The only on_time_sync hook is SNTP's
+# WireGuard enable below.
 #
 # The time zone is set at runtime by the Time Zone select below. Both sources
 # name America/New_York only as the boot value until the select restores.
@@ -424,9 +441,10 @@ interval:
           condition:
             # Skip the HTTP probe when WireGuard is enabled but not yet
             # connected.  If wg_allowed_ips routes all traffic through the
-            # tunnel (0.0.0.0/0), outbound HTTP hangs for the full 30 s
-            # timeout while WireGuard is offline, blocking the event loop
-            # long enough to trigger a watchdog reboot.
+            # tunnel (0.0.0.0/0), outbound HTTP hangs for the full
+            # http_request timeout while WireGuard is offline, blocking the
+            # event loop; stacked with other stalls that can trip the 30 s
+            # task watchdog.
             lambda: 'return id(diag_check_google_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
           then:
             - http_request.get:

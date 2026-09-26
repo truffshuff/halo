@@ -1,7 +1,6 @@
 # ============================================================================
 # Weather Hourly Summary - 24-Hour Summary Pages
 # ============================================================================
-# Part of modular refactoring
 #
 # This module provides the hourly summary pages showing 24 hours of forecast:
 #   - Hourly Summary Page 1 (hours 1-12)

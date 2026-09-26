@@ -2,7 +2,19 @@
 halo_sensor_history.py – AppDaemon app
 =======================================
 Listens for ``esphome.aqi_history_batch`` events fired by the Halo device
-and backfills all 12 sensor statistics into the Home Assistant recorder DB.
+(``flush_aqi_history`` in packages/features/airq/airq_history.yaml, run when
+the device reconnects to HA) and backfills all 15 sensors into the Home
+Assistant recorder, two ways:
+
+- hourly long-term statistics, over the WebSocket API
+  (``recorder/import_statistics``), and
+- per-minute state rows, written straight into the recorder's SQLite database
+  so the History panel shows full resolution. This bypasses HA's recorder and
+  depends on its schema (see ``_import_via_sqlite``); it needs the database
+  file to be reachable from AppDaemon and is skipped when it is not.
+
+This app targets the offline remote unit (halo-v1-79e35c), not the device in
+this repository: see docs/ARCHITECTURE.md "Known gaps" #3.
 
 WHY WEBSOCKET DIRECTLY?
     ``recorder.import_statistics`` was removed as a HA *service call* in HA
