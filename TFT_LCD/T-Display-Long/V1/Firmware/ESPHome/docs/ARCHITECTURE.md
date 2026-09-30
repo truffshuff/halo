@@ -501,6 +501,18 @@ Recorded because they are easy to rediscover and misdiagnose.
     "waiting for a weather_helpers fix". That fix has landed — `get_weather_icon()` maps all
     four — so the rewrite now only changes the condition text shown ("Pouring" → "Rainy").
 
+15. **The display watchdog cannot see a black screen that LVGL keeps "rendering".** Seen
+    once on 2026-09-29 (unit 79e35c, moments after its first Home Assistant connection over
+    WireGuard): panel black, backlight on, `Display Last Update` 7 s, no warnings at INFO,
+    and "Recover Display (Hard Reset)" did not bring it back. It cleared after a reboot and
+    has not recurred. The heartbeat is the clock's text change, so the watchdog stays
+    satisfied and never escalates to its reboot; only a manual "ESP Reboot" recovers.
+    The `[E][spi:020] Device already registered` line the button logs is harmless:
+    `mipi_spi`'s `setup()` re-registers with the SPI bus, gets the existing delegate back,
+    and still toggles the reset pin and re-sends the init sequence. No memory leaks per
+    press either — with no display lambda, codegen picks `MipiSpi`, not `MipiSpiBuffer`,
+    so `setup()` allocates nothing.
+
 ---
 
 ## 11. Design decisions worth not undoing
