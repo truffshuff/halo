@@ -13,6 +13,7 @@
 #   - OTA operation state (ota_in_progress)
 #   - Display backlight state (display_backlight_is_on)
 #   - Display flush health (last_display_update_time, display_recovery_attempts)
+#   - Home Assistant reachability over WireGuard (ha_http_blocked)
 #
 # REMOVED 2026-09-26: default_page_index. The boot hook in Halo-v1-Core.yaml
 # now writes current_page_name directly.
@@ -101,6 +102,21 @@ globals:
     type: uint8_t
     restore_value: no
     initial_value: '0'
+
+  # ============================================================================
+  # Home Assistant Reachability
+  # ============================================================================
+
+  # True while HA can only be reached through WireGuard and neither the tunnel
+  # nor the API is up, so an HTTP call to ha_url would block the main loop for
+  # the full 10 s timeout. Written every 5 s by features/wireguard/wireguard.yaml;
+  # read by features/weather/weather_base.yaml (hourly HTTP fallback) and
+  # features/printer/printer_base.yaml (cover image). Lives here so those two
+  # packages do not depend on the WireGuard one.
+  - id: ha_http_blocked
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 # ============================================================================
 # BLE Scanner Control

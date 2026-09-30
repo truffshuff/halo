@@ -18,7 +18,8 @@
 # DEPENDENCIES:
 #   - system/esphome_core.yaml (ESP32 config)
 #   - system/networking.yaml (WiFi must be connected first)
-#   - system/system_management.yaml (sntp_time)
+#   - system/system_management.yaml (sntp_time, ink_ha_connected)
+#   - base/globals.yaml (boot_complete, ha_http_blocked - written here)
 #   - features/wifi_status/wifi_page.yaml (wg_*_label widgets)
 #   - features/page_rotation/page_rotation.yaml (current_page_name,
 #     auto_page_rotation_enabled, last_auto_rotation_time)
@@ -46,14 +47,24 @@
 # SUBSTITUTIONS:
 #   - wireguard_default: restore_mode of the "Enable WireGuard" switch
 #     (RESTORE_DEFAULT_OFF here; an entry file can override it)
+#   - wg_handshake_max_age: seconds after the last handshake at which the
+#     tunnel counts as down (180, WireGuard's REJECT_AFTER_TIME)
 #
 # BEHAVIOUR NOTES:
 #   - Boot: enabled from on_boot (priority 50) after 20 s, once SNTP is valid.
 #   - First SNTP sync: system_management.yaml enables it if boot timed out.
 #   - WiFi reconnect: networking.yaml does disable -> enable to force a fresh
 #     handshake (docs/ARCHITECTURE.md section 8).
+#   - "WireGuard Status" is judged here from the handshake age, not taken
+#     from the library, whose peer-up flag stays ON forever once a rekeyed
+#     tunnel dies (docs/ARCHITECTURE.md "Known gaps" #16).
 #   - Tunnel drop while enabled: auto rotation pauses and the AirQ page is
 #     shown until the tunnel returns.
+#   - No handshake for 3 min with WiFi up: WireGuard is restarted, which also
+#     re-resolves a hostname endpoint. Backs off 3 -> 6 -> 12 -> 24 -> 30 min.
+#   - ha_http_blocked (base/globals.yaml) is set while HA is only reachable
+#     through the tunnel and neither the tunnel nor the API is up, so the
+#     weather and printer packages skip HTTP calls that would block ~10 s.
 #
 # Created: 2025-11-14 (module extraction)
 # ============================================================================
@@ -67,6 +78,10 @@ substitutions:
   wg_peerendpt: !secret wg_peerendpt  # WireGuard server endpoint (hostname or IP)
   wg_peerport: !secret wg_peerport    # WireGuard server port
   wireguard_default: "RESTORE_DEFAULT_OFF"
+  # Normal operation rekeys every 120 s (REKEY_AFTER_TIME), so a healthy
+  # tunnel's handshake is never older than ~125 s; 180 s is where WireGuard
+  # itself stops using a session key.
+  wg_handshake_max_age: "180"
 
 # ============================================================================
 # Global Variables
@@ -122,6 +137,23 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+
+  # Tunnel-health watchdog (interval at the end of this file).
+  # millis() when the tunnel was first seen unhealthy while enabled; 0 = healthy
+  - id: wg_unhealthy_since
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  # millis() of the last watchdog restart; 0 = none yet
+  - id: wg_last_restart
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  # Wait before the next restart: 3 min, doubling to 30 min, reset on recovery
+  - id: wg_restart_backoff
+    type: uint32_t
+    restore_value: no
+    initial_value: '180000'
 
 # ============================================================================
 # WireGuard VPN Configuration
@@ -181,60 +213,70 @@ switch:
 # Binary Sensor Components
 # ============================================================================
 binary_sensor:
-  # WireGuard connection status and enabled state
+  # Tunnel status, judged from the handshake age. This replaces the wireguard
+  # platform's `status:` sub-sensor (same name, so the Home Assistant entity is
+  # unchanged): the library reports the peer up whenever it still holds a
+  # current OR previous session key, and after the first rekey the previous
+  # key never expires, so the old sensor stayed "Connected" indefinitely once
+  # the tunnel died (observed 2026-09-29: 20 min with no handshake;
+  # docs/ARCHITECTURE.md "Known gaps" #16). Published by the health interval
+  # at the end of this file; no lambda, so nothing runs per loop.
+  - platform: template
+    name: "WireGuard Status"
+    id: wireguard_status
+    device_class: connectivity  # what the platform's status: sensor defaulted to
+    on_state:
+      then:
+        - lambda: |-
+            // x == true when connected
+            ESP_LOGI("wireguard", "Status changed: %s", x ? "Connected" : "Disconnected");
+            id(wg_status_connected_state) = x;
+            std::string status_text = "Status: ";
+            if (x) {
+              status_text += "Connected";
+            } else {
+              // If the switch is off, show Disabled; otherwise show Disconnected
+              status_text += (id(wireguard_enabled).state ? "Disconnected" : "Disabled");
+            }
+            if (status_text != id(wg_status_last_text)) {
+              id(wg_status_last_text) = status_text;
+              id(wg_status_needs_render) = true;
+            }
+        - if:
+            condition:
+              lambda: 'return id(wg_status_needs_render) && id(current_page_name) == "wifi";'
+            then:
+              - lvgl.label.update:
+                  id: wg_status_label
+                  text: !lambda 'return id(wg_status_last_text);'
+              - lambda: 'id(wg_status_needs_render) = false;'
+        # WireGuard disconnected while enabled: pause rotation and jump to AirQ page
+        - if:
+            condition:
+              lambda: 'return !x && id(wireguard_enabled).state && id(boot_complete);'
+            then:
+              - lambda: |-
+                  ESP_LOGI("wireguard", "WireGuard disconnected - pausing page rotation and switching to AirQ");
+                  if (id(auto_page_rotation_enabled)) {
+                    id(wg_paused_page_rotation) = true;
+                    id(auto_page_rotation_enabled) = false;
+                  }
+                  id(current_page_name) = "airq";
+        # WireGuard reconnected: resume rotation only if we paused it
+        - if:
+            condition:
+              lambda: 'return x && id(wg_paused_page_rotation);'
+            then:
+              - lambda: |-
+                  ESP_LOGI("wireguard", "WireGuard reconnected - resuming page rotation");
+                  id(wg_paused_page_rotation) = false;
+                  id(auto_page_rotation_enabled) = true;
+                  id(last_auto_rotation_time) = millis();
+
+  # Whether the WireGuard component is enabled (the library reports this one
+  # correctly)
   - platform: wireguard
     wireguard_id: wg0
-    status:
-      name: "WireGuard Status"
-      id: wireguard_status
-      on_state:
-        then:
-          - lambda: |-
-              // x == true when connected
-              ESP_LOGI("wireguard", "Status changed: %s", x ? "Connected" : "Disconnected");
-              id(wg_status_connected_state) = x;
-              std::string status_text = "Status: ";
-              if (x) {
-                status_text += "Connected";
-              } else {
-                // If the switch is off, show Disabled; otherwise show Disconnected
-                status_text += (id(wireguard_enabled).state ? "Disconnected" : "Disabled");
-              }
-              if (status_text != id(wg_status_last_text)) {
-                id(wg_status_last_text) = status_text;
-                id(wg_status_needs_render) = true;
-              }
-          - if:
-              condition:
-                lambda: 'return id(wg_status_needs_render) && id(current_page_name) == "wifi";'
-              then:
-                - lvgl.label.update:
-                    id: wg_status_label
-                    text: !lambda 'return id(wg_status_last_text);'
-                - lambda: 'id(wg_status_needs_render) = false;'
-          # WireGuard disconnected while enabled: pause rotation and jump to AirQ page
-          - if:
-              condition:
-                lambda: 'return !x && id(wireguard_enabled).state && id(boot_complete);'
-              then:
-                - lambda: |-
-                    ESP_LOGI("wireguard", "WireGuard disconnected - pausing page rotation and switching to AirQ");
-                    if (id(auto_page_rotation_enabled)) {
-                      id(wg_paused_page_rotation) = true;
-                      id(auto_page_rotation_enabled) = false;
-                    }
-                    id(current_page_name) = "airq";
-          # WireGuard reconnected: resume rotation only if we paused it
-          - if:
-              condition:
-                lambda: 'return x && id(wg_paused_page_rotation);'
-              then:
-                - lambda: |-
-                    ESP_LOGI("wireguard", "WireGuard reconnected - resuming page rotation");
-                    id(wg_paused_page_rotation) = false;
-                    id(auto_page_rotation_enabled) = true;
-                    id(last_auto_rotation_time) = millis();
-
     enabled:
       name: "WireGuard Enabled"
       id: wireguard_enabled_sensor
@@ -279,7 +321,9 @@ sensor:
                 if (!now.is_valid()) {
                   snprintf(time_str, sizeof(time_str), "Handshake: \nTime not synced");
                 } else {
-                  int seconds = (int)(now.timestamp - (time_t)x);
+                  // x is a float: at ~1.79e9 its step is 128 s, so the age
+                  // would jump in 2-minute steps. Ask the component instead.
+                  int seconds = (int)(now.timestamp - id(wg0).get_latest_handshake());
                   if (seconds < 0) seconds = 0;
                   int minutes = seconds / 60;
                   int hours = minutes / 60;
@@ -421,3 +465,74 @@ esphome:
                     - logger.log: "SNTP did not sync within 2min; will not enable WireGuard at boot (on_time_sync will retry)"
             else:
               - logger.log: "WireGuard switch is OFF, not enabling at boot"
+
+# ============================================================================
+# Tunnel Health and Recovery Watchdog
+# ============================================================================
+# Every 5 s:
+#   1. Publish "WireGuard Status": connected only while the library still has
+#      a session AND the last handshake is under wg_handshake_max_age seconds
+#      old. get_latest_handshake() is exact; the latest_handshake sensor is a
+#      float, which at ~1.79e9 has a 128 s step - too coarse for 180 s.
+#   2. Set ha_http_blocked (base/globals.yaml): the switch is on, the tunnel
+#      is down and the HA API is not connected, so ha_url is unreachable and
+#      each HTTP call to it would block the main loop for the 10 s timeout.
+#      The API term keeps a unit at home working: there HA is on the LAN and
+#      connects whether or not the tunnel is up.
+#   3. If the tunnel has been down for the backoff time with WiFi up, restart
+#      WireGuard. A restart also re-resolves a hostname endpoint, the only way
+#      to recover once it resolved to the wrong address (observed 2026-09-29:
+#      a split-horizon DNS answer pointed it at an internal host).
+#      esp_wireguard 0.4.5 teardown frees the netif, UDP pcb and timer, so
+#      restarts do not leak; the backoff only limits churn during an outage.
+#
+# MEMORY: 3 uint32_t globals + one template binary sensor (internal SRAM,
+# well under 1 KB); no allocation in the interval.
+# ============================================================================
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          const bool switch_on = id(wireguard_enabled).state;
+          bool healthy = false;
+          if (switch_on && id(wg0).is_peer_up()) {
+            const time_t hs = id(wg0).get_latest_handshake();
+            const time_t now = ::time(nullptr);
+            // 1546300800 = 2019-01-01, the validity floor ESPTime::is_valid() uses
+            healthy = hs > 0 && now > 1546300800 && (now - hs) < ${wg_handshake_max_age};
+          }
+          id(wireguard_status).publish_state(healthy);  // on_state fires only on change
+
+          id(ha_http_blocked) = switch_on && !healthy && !id(ink_ha_connected).state;
+
+          if (healthy || !switch_on) {
+            if (healthy && id(wg_unhealthy_since) != 0) {
+              ESP_LOGI("wg_watchdog", "Tunnel healthy again; restart backoff reset");
+            }
+            id(wg_unhealthy_since) = 0;
+            id(wg_restart_backoff) = 180000;
+          } else if (id(wg_unhealthy_since) == 0) {
+            id(wg_unhealthy_since) = millis();
+          }
+      - if:
+          condition:
+            and:
+              - wifi.connected:
+              - lambda: |-
+                  if (id(wg_unhealthy_since) == 0 || !id(wg0).is_enabled()) return false;
+                  if (!id(sntp_time).now().is_valid()) return false;  // cannot handshake without time
+                  const uint32_t now = millis();
+                  return now - id(wg_unhealthy_since) >= id(wg_restart_backoff) &&
+                         (id(wg_last_restart) == 0 || now - id(wg_last_restart) >= id(wg_restart_backoff));
+          then:
+            - lambda: |-
+                const uint32_t next = std::min<uint32_t>(id(wg_restart_backoff) * 2, 1800000);
+                ESP_LOGW("wg_watchdog", "Tunnel down for %us with WiFi up; restarting WireGuard (next attempt in %us)",
+                         (unsigned) ((millis() - id(wg_unhealthy_since)) / 1000), (unsigned) (next / 1000));
+                id(wg_last_restart) = millis();
+                id(wg_restart_backoff) = next;
+            - wireguard.disable:
+                id: wg0
+            - delay: 500ms
+            - wireguard.enable:
+                id: wg0
