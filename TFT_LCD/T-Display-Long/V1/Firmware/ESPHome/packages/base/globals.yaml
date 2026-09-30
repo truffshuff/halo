@@ -52,10 +52,10 @@ globals:
     initial_value: 'false'
 
   # Startup light blink cycle counter
-  # Tracks how many 1-second intervals have passed during startup LED animation
-  # Used to stop rainbow effect after 30 seconds and turn off light
-  # Written by system/networking.yaml (WiFi events and the blink intervals) and
-  # by Halo-v1-Core.yaml (set to 30 on API connect to end the animation).
+  # Counts the 1-second ticks (0 -> 30) during which the offline rainbow is
+  # re-asserted; the effect itself stays on until HA connects.
+  # Written by system/networking.yaml (WiFi events and the blink interval) and
+  # by Halo-v1-Core.yaml (0 on API disconnect, 30 on API connect).
   - id: cycleCounter
     type: int
     restore_value: no

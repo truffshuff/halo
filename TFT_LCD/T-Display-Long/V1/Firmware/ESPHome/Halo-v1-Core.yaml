@@ -19,14 +19,14 @@
 #   feature package can be commented out yet. See docs/ARCHITECTURE.md
 #   "Known gaps" #2.
 #
-# Version: 26.09.26.1623
-# Last Updated: September 26, 2026
+# Version: 26.09.29.2010
+# Last Updated: September 29, 2026
 # Baseline: ESPHome 2026.9.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.09.26.1623"
+  version: "26.09.29.2010"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -674,6 +674,12 @@ api:
     # BLE scanning keeps running; the proxy tears its connections down itself.
     then:
       - logger.log: "Home Assistant disconnected"
+      # Restart the offline rainbow (networking.yaml intervals), as at boot.
+      # WiFi on_disconnect alone misses this: the API times out after WiFi is
+      # back, and on_connect has already set the counter to 30. Any client
+      # counts here, but the interval also needs ink_ha_connected off, so an
+      # `esphome logs` disconnect while HA stays connected does nothing.
+      - lambda: 'id(cycleCounter) = 0;'
 
   # NOTE: an empty `services:` key used to sit here. `services` is the legacy
   # name for `actions`, and ESPHome 2026.9.0 changed user-defined action

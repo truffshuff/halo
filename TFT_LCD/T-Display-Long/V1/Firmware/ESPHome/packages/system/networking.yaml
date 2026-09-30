@@ -138,13 +138,18 @@ switch:
 # ============================================================================
 # Startup Light Blink Animation
 # ============================================================================
-# Rainbow effect runs for 30 seconds when not connected to Home Assistant.
-# Uses cycleCounter global (packages/base/globals.yaml) and the
-# startup_light_blink switch defined above in this file.
-# Controlled by WiFi connection state and HA API connection state.
+# Rainbow effect while not connected to Home Assistant: at boot, and again
+# after every HA disconnect. The interval re-asserts the effect for up to 30 s
+# (cycleCounter 0 -> 30); the effect then stays on until Halo-v1-Core.yaml's
+# api: on_client_connected restores the user's LED effect. Nothing turns it
+# off earlier - a second "turn off at >30" interval could never fire (the
+# counter tops out at 30) and was removed; see b63bb58e.
+#
+# cycleCounter (packages/base/globals.yaml) is reset to 0 by WiFi
+# on_disconnect (above) and api: on_client_disconnected (Core), and set to 30
+# by WiFi on_connect and api: on_client_connected.
 # ============================================================================
 interval:
-  # First interval: Turn on rainbow effect for first 30 seconds
   - interval: 1s
     then:
       - if:
@@ -157,19 +162,4 @@ interval:
             - light.turn_on:
                 id: rgb_light
                 effect: "Addressable Rainbow"
-            - lambda: 'id(cycleCounter) += 1;'
-
-  # Second interval: Turn off light after 30 seconds
-  - interval: 1s
-    then:
-      - if:
-          condition:
-            - binary_sensor.is_off: ink_ha_connected
-            - lambda: 'return id(cycleCounter) > 30;'
-            - lambda: 'return id(cycleCounter) < 31;'
-            - switch.is_on: startup_light_blink
-
-          then:
-            - light.turn_off:
-                id: rgb_light
             - lambda: 'id(cycleCounter) += 1;'
