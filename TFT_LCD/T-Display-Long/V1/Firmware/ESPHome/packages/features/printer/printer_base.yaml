@@ -21,6 +21,8 @@
 #   - system/display_hardware.yaml (Display, LVGL)
 #   - system/fonts_colors.yaml (color palette, fonts)
 #   - page_rotation/page_rotation.yaml (current_page_name global)
+#   - base/globals.yaml (ha_http_blocked: pauses the cover image poll while HA
+#     is unreachable over a down WireGuard tunnel; ota_in_progress)
 #   - features/printer/printer_page.yaml (every printer_* label and the cover
 #     image widget - enable the two files together)
 #   - Home Assistant integration with BambuLab addon (entities listed below)
@@ -82,6 +84,13 @@
 # Global Variables
 # ============================================================================
 globals:
+  # True while the cover image poll is suspended because ha_http_blocked
+  # (interval at the end of this file)
+  - id: printer_image_suspended
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   # Page rotation configuration
   - id: page_rotation_printer_enabled
     type: bool
@@ -1444,3 +1453,34 @@ image:
       - logger.log:
           level: WARN
           format: "Failed to download printer cover image — verify ha_url and ha_token substitutions"
+
+# ============================================================================
+# Pause the Cover Image While Home Assistant Is Unreachable
+# ============================================================================
+# online_image downloads synchronously, so with HA behind a down WireGuard
+# tunnel each 600 s poll blocked the main loop for the full 10 s http_request
+# timeout (seen 2026-09-29). ha_http_blocked (base/globals.yaml) is kept
+# current by features/wireguard/wireguard.yaml. Suspend on the rising edge;
+# on the falling edge resume and fetch at once, since the job may have changed
+# while offline. Left alone during OTA, which suspends/resumes it itself.
+# ============================================================================
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(ha_http_blocked) && !id(printer_image_suspended) && !id(ota_in_progress);'
+          then:
+            - component.suspend: printer_cover_image_data
+            - lambda: |-
+                id(printer_image_suspended) = true;
+                ESP_LOGI("printer", "Cover image polling paused: Home Assistant unreachable (WireGuard down)");
+      - if:
+          condition:
+            lambda: 'return !id(ha_http_blocked) && id(printer_image_suspended) && !id(ota_in_progress);'
+          then:
+            - component.resume: printer_cover_image_data
+            - lambda: |-
+                id(printer_image_suspended) = false;
+                ESP_LOGI("printer", "Cover image polling resumed");
+            - component.update: printer_cover_image_data

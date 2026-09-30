@@ -315,6 +315,29 @@ replay protection. `networking.yaml` therefore does an explicit `disable` → 50
 yet valid at boot, enable on first successful sync only (repeated re-initialisation churns
 memory badly enough to trip the watchdog).
 
+### Tunnel health and watchdog restart
+
+"WireGuard Status" is a template sensor published every 5 s by `wireguard.yaml`, not the
+wireguard platform's `status:` (which never goes false after a rekey; §10 gap 16). It is ON
+only while `wg0.is_peer_up()` **and** `get_latest_handshake()` is under 180 s old; a healthy
+tunnel rekeys every 120 s. Read the handshake from the component, not the
+`latest_handshake` sensor: that sensor is a `float`, whose step at ~1.79e9 is 128 s.
+
+The same interval restarts WireGuard (`disable` → 500 ms → `enable`) once the tunnel has
+been down for 3 min with WiFi up, backing off 3 → 6 → 12 → 24 → 30 min and resetting on
+recovery. Besides forcing a fresh handshake, a restart is what re-resolves a hostname
+endpoint. `esp_wireguard_connect()` looks it up on every start, and nothing else does, so
+an endpoint that resolved to the wrong address stays wrong until a restart. That happened on
+2026-09-29 with a split-horizon answer. Restarts are not the churn described above: that was
+repeated `enable` without `disable`. esp_wireguard 0.4.5's teardown
+(`wireguardif_shutdown`/`_fini`) frees the UDP pcb, timer and device state.
+
+It also maintains `ha_http_blocked` (`base/globals.yaml`): switch on, tunnel down, API not
+connected. `weather_base.yaml` skips the hourly HTTP fallback and `printer_base.yaml`
+suspends the cover-image poll while it is set, because each of those calls would otherwise
+block the main loop for the 10 s HTTP timeout. The API term keeps a unit at home unaffected:
+there HA connects over the LAN whether or not the tunnel is up.
+
 ---
 
 ## 9. Validating local edits
@@ -512,6 +535,20 @@ Recorded because they are easy to rediscover and misdiagnose.
     and still toggles the reset pin and re-sends the init sequence. No memory leaks per
     press either — with no display lambda, codegen picks `MipiSpi`, not `MipiSpiBuffer`,
     so `setup()` allocates nothing.
+
+16. **WORKED AROUND 2026-09-29 — the wireguard library never reports a rekeyed tunnel down.**
+    In droscy/esp_wireguard 0.4.5, still the version ESPHome pins, a peer counts as up while
+    `curr_keypair` *or* `prev_keypair` is valid. `wireguardif_tmr` destroys the current key
+    after `REJECT_AFTER_TIME` (180 s). The previous key is only cleared by
+    `should_reset_peer()`, and that checks `curr_keypair.valid`, so once the current key is
+    gone the previous one is never expired. Any tunnel that has rekeyed once, which is every
+    2 minutes, therefore stays "Connected" until a new handshake succeeds. Unit 79e35c
+    showed "Remote peer is online" for 20 min with the handshake stuck at 20:38:39.
+    Retries continue meanwhile (`should_send_initiation` fires while `curr_keypair` is
+    invalid), so recovery itself works. `wireguard.yaml` no longer uses the platform's
+    `status:` and judges the tunnel by handshake age (§8, "Tunnel health and watchdog
+    restart"). The upstream fix would be to expire `prev_keypair` in `wireguardif_tmr`, or to
+    test it in `should_reset_peer()`; not reported yet.
 
 ---
 

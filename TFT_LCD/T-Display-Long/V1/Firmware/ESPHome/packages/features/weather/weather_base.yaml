@@ -23,6 +23,8 @@
 #
 # Dependencies:
 #   - system/system_management.yaml (http_request, weather_helpers, time)
+#   - base/globals.yaml (ha_http_blocked: skips the hourly HTTP fallback while
+#     HA is unreachable over a down WireGuard tunnel)
 #   - system/display_hardware.yaml (for LVGL display)
 #   - features/page_rotation/page_rotation.yaml (current_page_name)
 #   - the selected BLE package (ble_scanner_switch, paused during fetches)
@@ -958,7 +960,20 @@ script:
   - id: fetch_hourly_forecast
     mode: single
     then:
-      - script.execute: fetch_hourly_forecast_http
+      # ha_http_blocked (base/globals.yaml, set by features/wireguard): HA is
+      # only reachable through a tunnel that is down, so the POST could only
+      # time out - blocking the main loop 10 s per attempt, about once per page
+      # rotation cycle while offline (seen 2026-09-29). Release the lock the
+      # callers took; the next stale check retries.
+      - if:
+          condition:
+            lambda: 'return id(ha_http_blocked);'
+          then:
+            - lambda: |-
+                id(weather_fetch_lock) = false;
+                ESP_LOGW("weather", "Hourly HTTP fallback skipped: Home Assistant unreachable (WireGuard down)");
+          else:
+            - script.execute: fetch_hourly_forecast_http
 
   # HTTP script for hourly forecasts
   - id: fetch_hourly_forecast_http
