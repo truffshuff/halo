@@ -1,0 +1,435 @@
+# ============================================================================
+# 3D Printer Status Page Module
+# ============================================================================
+# LVGL display page for BambuLab printer monitoring
+#
+# Layout (180 x 640 AMOLED, portrait, y=0 at screen centre):
+#
+#   y: -295  Printer name  (from HA sensor, default "3D Printer")
+#   y: -270  Status label  (color-coded: green/orange/red/teal/gray)
+#   y: -249  Current stage (e.g. "Printing", "Heatbed Preheating")
+#   y: -229  Error banner  (empty when OK, red "! PRINT ERROR !" or "! HMS ERROR !")
+#   y: -205  Task / file name (truncated to ~22 chars)
+#   y: -175  Progress bar  (160 x 12 px, green fill)
+#   y: -148  Progress %    (large, centred)
+#   y: -112  Remaining time
+#   y:  -87  Estimated end time (HH:MM)
+#   y:  -57  "Temperatures" section header
+#   y:  -38  Active nozzle actual/target (Active: 218/220°)
+#   y:  -19  Right nozzle actual/target  (R: 218/220°)
+#   y:    0  Left nozzle actual/target   (L: 218/220°)
+#   y:  +19  Bed temperature             (Bed: 45/55°)
+#   y:  +38  Chamber temperature
+#   y:  +57  Current layer (X/Y format when total layers known)
+#   y:    0  Invisible nav tap zone (top-right, 180×150) → lvgl.page.next
+#   y: +170  Cover image (140×140 thumbnail fetched from HA image entity)
+#   y: +252  "── AMS ──" section header
+#   y: +270  AMS A  (22°  45%  ▶ active  |  DRY 45m  |  idle)
+#   y: +288  AMS B  (same format)
+#   y: +306  AMS HT (same format)
+#
+# Dependencies:
+#   - features/printer/printer_base.yaml  (all globals & sensor subscriptions)
+#   - page_rotation/page_rotation.yaml    (current_page_name, last_touch_time,
+#                                          page_transition_cleanup)
+#   - system/fonts_colors.yaml            (montserrat fonts, color palette)
+# ============================================================================
+
+# ============================================================================
+# LVGL Page Definition
+# ============================================================================
+lvgl:
+  pages:
+    # -------------------------------------------------------------------------
+    # Printer Status Page
+    # -------------------------------------------------------------------------
+    - id: printer_page
+      bg_color: 0x000000
+      bg_opa: COVER
+      scrollbar_mode: "OFF"
+      on_load:
+        - script.execute: page_transition_cleanup
+        - lambda: 'id(current_page_name) = "printer";'
+        # Restore all cached values immediately so labels are never stale
+        # when the page is visited while data hasn't changed since last visit.
+        - if:
+            condition:
+              lambda: 'return !id(printer_status_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_status_label
+                  text: !lambda 'return id(printer_status_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_error_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_error_label
+                  text: !lambda 'return id(printer_error_last_text);'
+                  text_color: my_red
+        - if:
+            condition:
+              lambda: 'return !id(printer_task_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_task_label
+                  text: !lambda 'return id(printer_task_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_progress_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_progress_label
+                  text: !lambda 'return id(printer_progress_last_text);'
+              - lvgl.bar.update:
+                  id: printer_progress_bar
+                  value: !lambda 'return (int)id(printer_progress_bar_last_value);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_remaining_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_remaining_label
+                  text: !lambda 'return id(printer_remaining_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_endtime_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_endtime_label
+                  text: !lambda 'return id(printer_endtime_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_nozzle_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_nozzle_label
+                  text: !lambda 'return id(printer_nozzle_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_right_nozzle_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_right_nozzle_label
+                  text: !lambda 'return id(printer_right_nozzle_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_left_nozzle_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_left_nozzle_label
+                  text: !lambda 'return id(printer_left_nozzle_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_bed_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_bed_label
+                  text: !lambda 'return id(printer_bed_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_chamber_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_chamber_label
+                  text: !lambda 'return id(printer_chamber_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_layer_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_layer_label
+                  text: !lambda 'return id(printer_layer_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_name_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_name_label
+                  text: !lambda 'return id(printer_name_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(printer_stage_last_text).empty();'
+            then:
+              - lvgl.label.update:
+                  id: printer_stage_label
+                  text: !lambda 'return id(printer_stage_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(ams_a_last_text).empty() && id(ams_a_last_text) != "A: --";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_a_label
+                  text: !lambda 'return id(ams_a_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(ams_b_last_text).empty() && id(ams_b_last_text) != "B: --";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_b_label
+                  text: !lambda 'return id(ams_b_last_text);'
+        - if:
+            condition:
+              lambda: 'return !id(ams_ht_last_text).empty() && id(ams_ht_last_text) != "HT: --";'
+            then:
+              - lvgl.label.update:
+                  id: printer_ams_ht_label
+                  text: !lambda 'return id(ams_ht_last_text);'
+        # Refresh cover image widget if a valid image has already been downloaded.
+        # Guard with printer_image_ready to skip calling lvgl.image.update before
+        # the first download completes (avoids a no-op render with empty pixel data).
+        - if:
+            condition:
+              lambda: 'return id(printer_image_ready);'
+            then:
+              - lvgl.image.update:
+                  id: printer_cover_image_widget
+                  src: printer_cover_image_data
+
+      widgets:
+        # ── Printer name (from HA; falls back to "3D Printer" until sensor fires) ─
+        - label:
+            id: printer_name_label
+            text: "3D Printer"
+            align: CENTER
+            x: 0
+            y: -295
+            text_font: montserrat_20
+            text_color: my_teal
+            text_align: CENTER
+
+        # ── Print status (color-coded; updated by printer_base on_value) ──────
+        - label:
+            id: printer_status_label
+            text: "Status: --"
+            align: CENTER
+            x: 0
+            y: -270
+            text_font: montserrat_18
+            text_color: my_gray
+            text_align: CENTER
+
+        # ── Current stage (e.g. "Printing", "Heatbed Preheating", "Idle") ─────
+        - label:
+            id: printer_stage_label
+            text: ""
+            align: CENTER
+            x: 0
+            y: -249
+            text_font: montserrat_14
+            text_color: my_gray
+            text_align: CENTER
+
+        # ── Error / HMS alert banner (empty string = invisible) ────────────────
+        - label:
+            id: printer_error_label
+            text: ""
+            align: CENTER
+            x: 0
+            y: -229
+            text_font: montserrat_14
+            text_color: my_red
+            text_align: CENTER
+
+        # ── Current task / file name (scrolls if text overflows) ─────────────
+        - label:
+            id: printer_task_label
+            text: "--"
+            align: CENTER
+            x: 0
+            y: -205
+            width: 170
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: LEFT
+            long_mode: SCROLL_CIRCULAR
+
+        # ── Progress bar (0–100, green fill on dark grey track) ───────────────
+        - bar:
+            id: printer_progress_bar
+            align: CENTER
+            x: 0
+            y: -175
+            width: 160
+            height: 12
+            min_value: 0
+            max_value: 100
+            value: 0
+            bg_color: my_gray
+            indicator:
+              bg_color: my_green
+
+        # ── Progress percentage ────────────────────────────────────────────────
+        - label:
+            id: printer_progress_label
+            text: "0%"
+            align: CENTER
+            x: 0
+            y: -148
+            text_font: montserrat_18
+            text_color: my_white
+            text_align: CENTER
+
+        # ── Remaining time (blank when printer is idle) ───────────────────────
+        - label:
+            id: printer_remaining_label
+            text: ""
+            align: CENTER
+            x: 0
+            y: -112
+            text_font: montserrat_14
+            text_color: my_orange
+            text_align: CENTER
+
+        # ── Estimated end time ─────────────────────────────────────────────────
+        - label:
+            id: printer_endtime_label
+            text: "Done: --"
+            align: CENTER
+            x: 0
+            y: -87
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        # ── Temperature section header ─────────────────────────────────────────
+        - label:
+            text: "Temperatures"
+            align: CENTER
+            x: 0
+            y: -57
+            text_font: montserrat_14
+            text_color: my_teal
+            text_align: CENTER
+
+        # ── Active Nozzle (whichever is currently in use; actual/target) ────────
+        - label:
+            id: printer_nozzle_label
+            text: "Active: --"
+            align: LEFT_MID
+            x: 10
+            y: -38
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Right Nozzle (dedicated right nozzle; actual/target) ──────────────
+        - label:
+            id: printer_right_nozzle_label
+            text: "R: --"
+            align: LEFT_MID
+            x: 10
+            y: -19
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Left Nozzle (actual/target) ────────────────────────────────────────
+        - label:
+            id: printer_left_nozzle_label
+            text: "L: --"
+            align: LEFT_MID
+            x: 10
+            y: 0
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Bed ────────────────────────────────────────────────────────────────
+        - label:
+            id: printer_bed_label
+            text: "Bed: --"
+            align: LEFT_MID
+            x: 10
+            y: +19
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Chamber ────────────────────────────────────────────────────────────
+        - label:
+            id: printer_chamber_label
+            text: "Chamber: --"
+            align: LEFT_MID
+            x: 10
+            y: +38
+            text_font: montserrat_14
+            text_color: my_white
+
+        # ── Layer counter ──────────────────────────────────────────────────────
+        - label:
+            id: printer_layer_label
+            text: "Layer: --"
+            align: CENTER
+            x: 0
+            y: +57
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        # ── Navigation tap zone (top-right corner, invisible) ─────────────────
+        # Mirrors the AirQ page pattern: transparent obj covering the top-right
+        # quadrant so users can tap anywhere there to advance to the next page.
+        - obj:
+            id: nav_button_printer
+            align: TOP_RIGHT
+            x: 0
+            y: 0
+            width: 180
+            height: 150
+            bg_opa: 0
+            border_width: 0
+            clickable: true
+            on_release:
+              - lambda: |-
+                  id(last_touch_time) = millis();
+                  id(last_auto_rotation_time) = millis();
+              - lvgl.page.next:
+                  animation: OUT_LEFT
+                  time: 300ms
+
+        # ── Cover image (thumbnail of the model being printed) ─────────────────
+        - image:
+            id: printer_cover_image_widget
+            src: printer_cover_image_data
+            align: CENTER
+            x: 0
+            y: +170
+
+        # ── AMS / AMS HT status section ─────────────────────────────────────────
+        # Shows temp, humidity, active (▶), and drying status per unit.
+        # Format: "A: 22°  45%  ▶"  /  "A: 22°  45%  DRY 45m"  /  "A: 22°  45%"
+        - label:
+            text: "-- AMS --"
+            align: CENTER
+            x: 0
+            y: +252
+            text_font: montserrat_14
+            text_color: my_teal
+            text_align: CENTER
+
+        - label:
+            id: printer_ams_a_label
+            text: "A: --"
+            align: CENTER
+            x: 0
+            y: +270
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        - label:
+            id: printer_ams_b_label
+            text: "B: --"
+            align: CENTER
+            x: 0
+            y: +288
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER
+
+        - label:
+            id: printer_ams_ht_label
+            text: "HT: --"
+            align: CENTER
+            x: 0
+            y: +306
+            text_font: montserrat_14
+            text_color: my_white
+            text_align: CENTER

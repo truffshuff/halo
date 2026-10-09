@@ -1,0 +1,227 @@
+# ============================================================================
+# Fonts and Colors Configuration
+# ============================================================================
+# Shared UI resources (fonts, colors, images)
+# Dependencies: fonts/materialdesignicons-webfont.ttf (in this repo);
+#   Montserrat from Google Fonts and the YM logo URL are fetched at COMPILE
+#   time, so the first build needs internet access.
+#
+# This module defines:
+#   - Montserrat fonts (9 sizes: 10/14/16/18/20/24/28/50/80)
+#   - Material Design Icon fonts (4 sizes: 24/40/80/100)
+#   - Color palette (9 named colors)
+#   - Images (YM logo, fetched at compile time)
+#
+# COST: FLASH, not RAM. ESPHome emits every glyph bitmap as a const array in
+# flash; LVGL reads glyphs directly from flash at render time. Adding a font
+# size costs flash and build time, not free heap.
+#
+# 2026.09: icons_50, icons_28 and icons_20 were removed - nothing in the tree
+# referenced them. That reclaims roughly 20 KB of flash with no visual change.
+# If you add a widget that needs one of those sizes, re-add the font block and
+# copy the glyph list from icons_40.
+# ============================================================================
+
+# ============================================================================
+# Font Definitions
+# ============================================================================
+# Fonts are defined with various sizes for different UI elements across pages.
+# bpp: 4 gives 16-level anti-aliasing on the AMOLED panel.
+#
+# Every Montserrat size carries the same glyph string, for simplicity: any
+# label can use any size. Each size still rasterizes its own copy of every
+# glyph, so flash grows with (sizes x glyphs); trimming the set for the large
+# sizes (e.g. montserrat_80 only renders the clock's digits and ':') is the way
+# to save flash here. A character missing from the set renders as nothing -
+# add it here before using it in a label.
+# ============================================================================
+
+# Glyph set shared by all Montserrat fonts:
+# uppercase, lowercase, digits, space , . : - > / ° % "
+font:
+  - file: "gfonts://Montserrat"
+    id: montserrat_80
+    size: 80
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_50
+    size: 50
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_28
+    size: 28
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_24
+    size: 24
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_20
+    size: 20
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_18
+    size: 18
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_16
+    size: 16
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_14
+    size: 14
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "gfonts://Montserrat"
+    id: montserrat_10
+    size: 10
+    bpp: 4
+    glyphs: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.:->/°%"'
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_100
+    size: 100
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_80
+    size: 80
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      "\U000F07D0", # home-assistant icon
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_40
+    size: 40
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_24
+    size: 24
+    bpp: 4
+    glyphs: [
+      "\U000F0594", # clear-night
+      "\U000F0590", # cloudy
+      "\U000F0591", # fog
+      "\U000F0593", # lightning
+      "\U000F067E", # lightning-rainy
+      "\U000F0595", # partlycloudy
+      "\U000F0597", # rainy
+      "\U000F0598", # snowy
+      "\U000F067F", # snowy-rainy
+      "\U000F0599", # sunny
+      "\U000F059D", # windy
+      "\U000F14E4", # sunny-off
+      ]
+
+# ============================================================================
+# Image Resources
+# ============================================================================
+# NOTE (2026.7.0): migrated from the deprecated top-level `image:` shorthand
+# to the explicit `platform: file` form ahead of its 2027.1.0 removal.
+image:
+  - platform: file
+    file: https://yashmulgaonkar.github.io/assets/YM.png
+    id: ym_logo
+    resize: 25x25
+    type: RGB565
+    transparency: alpha_channel
+
+# ============================================================================
+# Color Palette
+# ============================================================================
+# Standard colors used across all UI pages
+# ============================================================================
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_gray
+    red: 50%
+    green: 50%
+    blue: 50%
+  - id: my_orange
+    red: 100%
+    green: 50%
+    blue: 0%
+  - id: my_teal
+    red: 0%
+    green: 100%
+    blue: 100%
+  - id: my_white
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: my_black
+    red: 0%
+    green: 0%
+    blue: 0%

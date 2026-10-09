@@ -1,0 +1,498 @@
+# ============================================================================
+# System Management Configuration
+# ============================================================================
+# HTTP client, time sources, time zone, and network reachability diagnostics
+#
+# This module configures:
+#   - http_request (used by the weather fallback and the reachability probes;
+#     the printer cover image uses it through online_image)
+#   - weather_helpers (header-only external component)
+#   - Time sources (Home Assistant + SNTP) and WireGuard enable on first SNTP sync
+#   - Time Zone select (device page, default America/New_York)
+#   - "Online" status binary sensor (id: ink_ha_connected)
+#   - SNTP / HTTP / API reachability diagnostics and their enable switches
+#
+# Not here: the api: block (Halo-v1-Core.yaml; encryption key in
+# esphome_core.yaml), web_server (networking.yaml), and the reboot / factory
+# reset buttons and uptime sensor (features/diagnostics/diagnostics.yaml).
+#
+# Dependencies:
+#   - system/esphome_core.yaml (weather_helpers external component)
+#   - features/wireguard/wireguard.yaml (wireguard_enabled, wireguard_enabled_sensor,
+#     wg0, wg_status_connected_state) - a required module reaching into an
+#     optional one; see docs/ARCHITECTURE.md "Known gaps" #2.
+# ============================================================================
+
+# ============================================================================
+# HTTP Request Component
+# ============================================================================
+# Used by the hourly-forecast HTTP fallback (features/weather/weather_base.yaml),
+# the Google/Cloudflare reachability probes below, and the printer cover image
+# (online_image).
+# ============================================================================
+http_request:
+  useragent: esphome/halo
+  # WARNING: http_request is SYNCHRONOUS - every call blocks loopTask for its
+  # whole duration. With CONFIG_ESP_TASK_WDT_TIMEOUT_S at 30s, two stacked
+  # failures at this timeout are enough to reboot the device. That is exactly
+  # what happened on 2026-09-20 when ha_url pointed at an unresolvable name:
+  # each attempt burned ~7s in getaddrinfo and the watchdog fired.
+  #
+  # 10s (was 5s): the 5s value was chosen to "fail fast when WireGuard is not
+  # yet up", a condition that no longer applies - WireGuard is off by default.
+  # Measured from a workstation, Home Assistant answers
+  # weather.get_forecasts in 29ms with a 57,469 byte body, so a healthy call
+  # never approaches this; the timeout only bounds failures.
+  timeout: 10s
+
+  # 4096 (was 1024): this is esp_http_client_config_t.buffer_size. The 1KB
+  # value predates the 57 KB hourly-forecast response (today only the HTTP
+  # fallback fetches that; the normal path is an API attribute). A 22 KB cover-image GET
+  # succeeds while the 57 KB forecast POST fails with Code -1 (no status line
+  # parsed), and buffer size is the main dimension in which those two differ.
+  # Cost is ~3 KB, and at >=512 bytes it lands in PSRAM, not internal DRAM.
+  buffer_size_rx: 4096
+  buffer_size_tx: 1024  # requests are small (short JSON body + bearer token)
+  verify_ssl: false  # Disable cert verification for local HTTPS (self-signed)
+
+# To diagnose an HTTP failure, uncomment this in your DEVICE yaml for one run,
+# then put it back. DEBUG gives the response headers and the download progress,
+# which is what you actually need.
+#
+# Use DEBUG, NOT VERBOSE. At VERBOSE the shared WatchdogManager logs twice on
+# every construct/destruct - once per HTTP read and once per OTA block - which
+# produces hundreds of "Adjusting WDT to NNNNNms" lines. UART logging is
+# synchronous and blocking, so those lines land inside the transfer loop.
+# Measured on 2026-09-20: the same OTA took 105s at INFO and 1,173s with
+# http_request at VERBOSE, an 11x slowdown, and a 57 KB HTTP body took 68s to
+# read. VERBOSE does not just make the log noisy, it changes the result.
+# logger:
+#   level: DEBUG
+#   logs:
+#     http_request: DEBUG
+
+# ============================================================================
+# Weather Helpers Component
+# ============================================================================
+# Header-only helpers (weather_helpers::...) for the weather pages: icon and
+# colour per condition, timestamp parsing in the device time zone, and value
+# formatting. The component is fetched by external_components in
+# esphome_core.yaml; listing it here is what copies the header into the build.
+# It sits in this required module so a build with every weather package
+# commented out still compiles.
+# ============================================================================
+weather_helpers:
+
+# ============================================================================
+# Time Sources
+# ============================================================================
+# WireGuard needs a valid clock before it can establish a tunnel (its
+# handshake carries a timestamp). Two sources:
+#   - Home Assistant: used by the clock while WireGuard is off
+#   - SNTP: used by the clock while WireGuard is on (HA may only be reachable
+#     through the tunnel), by WireGuard, and by the AQI history timestamps
+#
+# The clock does not use on_time_sync; features/clock/clock_base.yaml
+# re-renders from a 1 s interval. The only on_time_sync hook is SNTP's
+# WireGuard enable below.
+#
+# The time zone is set at runtime by the Time Zone select below. Both sources
+# name America/New_York only as the boot value until the select restores.
+# ha_time needs an explicit timezone: without one, Home Assistant 2026.3+
+# pushes its own zone on every time sync and would override the select.
+# ============================================================================
+time:
+  - platform: homeassistant
+    id: ha_time
+    timezone: America/New_York
+  - platform: sntp
+    id: sntp_time
+    update_interval: 5min
+    timezone: America/New_York
+    # servers:
+    #   - 10.140.80.1
+    #   - time.cloudflare.com
+    #   - time1.google.com
+    on_time_sync:
+      then:
+        # Only enable WireGuard on the *first* successful SNTP sync (i.e. the
+        # fallback path for when the boot-sequence wait_until timed out before
+        # SNTP was ready).  Subsequent syncs (every 5 min) must NOT call
+        # wireguard.enable again - repeated reinitialisation causes memory
+        # churn that eventually triggers a watchdog reboot in offline mode.
+        - if:
+            condition:
+              lambda: 'return id(wireguard_enabled).state && !id(wireguard_enabled_sensor).state;'
+            then:
+              - logger.log: "SNTP synchronized - WireGuard switch ON but not yet active, enabling"
+              - wireguard.enable:
+                  id: wg0
+              - logger.log: "WireGuard enabled by SNTP sync"
+
+# ============================================================================
+# Time Zone
+# ============================================================================
+# Device-page select for the local time zone. It drives the clock and every
+# weather date/hour label (weather_helpers converts via localtime_r(), which
+# reads the same global zone).
+#
+# The device cannot parse zone names at runtime; ESPHome only accepts a
+# pre-parsed rule. Each row below is what ESPHome's own codegen emits for that
+# IANA name (tzdata via aioesphomeapi.posix_tz), with the POSIX string as a
+# comment. Rows must stay in the same order as `options:`; on_value checks this
+# and logs an error on a mismatch. To add a zone, append to both lists.
+#
+# Memory (measured, ESPHome 2026.9.0): +3 KB flash, mostly the table (static
+# const, stays in flash); +96 bytes of internal SRAM for the select entity.
+# ============================================================================
+select:
+  - platform: template
+    name: "Time Zone"
+    id: time_zone_select
+    icon: mdi:map-clock-outline
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: "America/New_York"
+    options:
+      - "America/New_York"
+      - "America/Chicago"
+      - "America/Denver"
+      - "America/Phoenix"
+      - "America/Los_Angeles"
+      - "America/Anchorage"
+      - "Pacific/Honolulu"
+      - "America/Puerto_Rico"
+      - "America/Halifax"
+      - "America/St_Johns"
+      - "America/Mexico_City"
+      - "America/Bogota"
+      - "America/Sao_Paulo"
+      - "America/Argentina/Buenos_Aires"
+      - "Europe/London"
+      - "Europe/Dublin"
+      - "Europe/Lisbon"
+      - "Europe/Paris"
+      - "Europe/Berlin"
+      - "Europe/Madrid"
+      - "Europe/Rome"
+      - "Europe/Amsterdam"
+      - "Europe/Stockholm"
+      - "Europe/Warsaw"
+      - "Europe/Athens"
+      - "Europe/Helsinki"
+      - "Europe/Istanbul"
+      - "Europe/Moscow"
+      - "Africa/Cairo"
+      - "Africa/Johannesburg"
+      - "Africa/Lagos"
+      - "Asia/Dubai"
+      - "Asia/Karachi"
+      - "Asia/Kolkata"
+      - "Asia/Kathmandu"
+      - "Asia/Bangkok"
+      - "Asia/Singapore"
+      - "Asia/Shanghai"
+      - "Asia/Hong_Kong"
+      - "Asia/Tokyo"
+      - "Asia/Seoul"
+      - "Australia/Perth"
+      - "Australia/Adelaide"
+      - "Australia/Darwin"
+      - "Australia/Brisbane"
+      - "Australia/Sydney"
+      - "Pacific/Auckland"
+      - "UTC"
+    on_value:
+      - lambda: |-
+          using esphome::time::DSTRuleType;
+          constexpr DSTRuleType NONE = DSTRuleType::NONE;
+          constexpr DSTRuleType MWD = DSTRuleType::MONTH_WEEK_DAY;
+          struct Zone {
+            const char *name;
+            esphome::time::ParsedTimezone tz;
+          };
+          // {name, {std_offset, dst_offset, {time, day, type, month, week, dow} start, ... end}}
+          // Offsets are POSIX: seconds west of UTC.
+          static const Zone ZONES[] = {
+            {"America/New_York",               {18000, 14400, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // EST5EDT,M3.2.0,M11.1.0
+            {"America/Chicago",                {21600, 18000, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // CST6CDT,M3.2.0,M11.1.0
+            {"America/Denver",                 {25200, 21600, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // MST7MDT,M3.2.0,M11.1.0
+            {"America/Phoenix",                {25200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // MST7
+            {"America/Los_Angeles",            {28800, 25200, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // PST8PDT,M3.2.0,M11.1.0
+            {"America/Anchorage",              {32400, 28800, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // AKST9AKDT,M3.2.0,M11.1.0
+            {"Pacific/Honolulu",               {36000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // HST10
+            {"America/Puerto_Rico",            {14400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // AST4
+            {"America/Halifax",                {14400, 10800, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // AST4ADT,M3.2.0,M11.1.0
+            {"America/St_Johns",               {12600, 9000, {7200, 0, MWD, 3, 2, 0}, {7200, 0, MWD, 11, 1, 0}}},  // NST3:30NDT,M3.2.0,M11.1.0
+            {"America/Mexico_City",            {21600, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // CST6
+            {"America/Bogota",                 {18000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <-05>5
+            {"America/Sao_Paulo",              {10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <-03>3
+            {"America/Argentina/Buenos_Aires", {10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <-03>3
+            {"Europe/London",                  {0, -3600, {3600, 0, MWD, 3, 5, 0}, {7200, 0, MWD, 10, 5, 0}}},  // GMT0BST,M3.5.0/1,M10.5.0
+            {"Europe/Dublin",                  {-3600, 0, {7200, 0, MWD, 10, 5, 0}, {3600, 0, MWD, 3, 5, 0}}},  // IST-1GMT0,M10.5.0,M3.5.0/1
+            {"Europe/Lisbon",                  {0, -3600, {3600, 0, MWD, 3, 5, 0}, {7200, 0, MWD, 10, 5, 0}}},  // WET0WEST,M3.5.0/1,M10.5.0
+            {"Europe/Paris",                   {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Berlin",                  {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Madrid",                  {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Rome",                    {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Amsterdam",               {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Stockholm",               {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Warsaw",                  {-3600, -7200, {7200, 0, MWD, 3, 5, 0}, {10800, 0, MWD, 10, 5, 0}}},  // CET-1CEST,M3.5.0,M10.5.0/3
+            {"Europe/Athens",                  {-7200, -10800, {10800, 0, MWD, 3, 5, 0}, {14400, 0, MWD, 10, 5, 0}}},  // EET-2EEST,M3.5.0/3,M10.5.0/4
+            {"Europe/Helsinki",                {-7200, -10800, {10800, 0, MWD, 3, 5, 0}, {14400, 0, MWD, 10, 5, 0}}},  // EET-2EEST,M3.5.0/3,M10.5.0/4
+            {"Europe/Istanbul",                {-10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+03>-3
+            {"Europe/Moscow",                  {-10800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // MSK-3
+            {"Africa/Cairo",                   {-7200, -10800, {0, 0, MWD, 4, 5, 5}, {86400, 0, MWD, 10, 5, 4}}},  // EET-2EEST,M4.5.5/0,M10.5.4/24
+            {"Africa/Johannesburg",            {-7200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // SAST-2
+            {"Africa/Lagos",                   {-3600, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // WAT-1
+            {"Asia/Dubai",                     {-14400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+04>-4
+            {"Asia/Karachi",                   {-18000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // PKT-5
+            {"Asia/Kolkata",                   {-19800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // IST-5:30
+            {"Asia/Kathmandu",                 {-20700, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+0545>-5:45
+            {"Asia/Bangkok",                   {-25200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+07>-7
+            {"Asia/Singapore",                 {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // <+08>-8
+            {"Asia/Shanghai",                  {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // CST-8
+            {"Asia/Hong_Kong",                 {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // HKT-8
+            {"Asia/Tokyo",                     {-32400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // JST-9
+            {"Asia/Seoul",                     {-32400, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // KST-9
+            {"Australia/Perth",                {-28800, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // AWST-8
+            {"Australia/Adelaide",             {-34200, -37800, {7200, 0, MWD, 10, 1, 0}, {10800, 0, MWD, 4, 1, 0}}},  // ACST-9:30ACDT,M10.1.0,M4.1.0/3
+            {"Australia/Darwin",               {-34200, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // ACST-9:30
+            {"Australia/Brisbane",             {-36000, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // AEST-10
+            {"Australia/Sydney",               {-36000, -39600, {7200, 0, MWD, 10, 1, 0}, {10800, 0, MWD, 4, 1, 0}}},  // AEST-10AEDT,M10.1.0,M4.1.0/3
+            {"Pacific/Auckland",               {-43200, -46800, {7200, 0, MWD, 9, 5, 0}, {10800, 0, MWD, 4, 1, 0}}},  // NZST-12NZDT,M9.5.0,M4.1.0/3
+            {"UTC",                            {0, 0, {0, 0, NONE, 0, 0, 0}, {0, 0, NONE, 0, 0, 0}}},  // UTC0
+          };
+          if (i >= sizeof(ZONES) / sizeof(ZONES[0]) || strcmp(ZONES[i].name, id(time_zone_select).option_at(i)) != 0) {
+            ESP_LOGE("time_zone", "No rule for option %u; time zone unchanged", (unsigned) i);
+            return;
+          }
+          esphome::time::set_global_tz(ZONES[i].tz);
+          ESP_LOGI("time_zone", "Time zone set to %s", ZONES[i].name);
+
+# ---------------------------------------------------------------------------
+# Diagnostics: HTTP-based reachability sensors, SNTP validity sensor,
+# periodic diagnostic logging (helps troubleshoot NTP/DNS reachability)
+# ---------------------------------------------------------------------------
+
+# Diagnostic globals (set by interval actions)
+globals:
+  - id: diag_http_google_ok
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: diag_http_cloudflare_ok
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: diag_api_connected
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  # Diagnostics enable flags (toggleable via UI switches)
+  - id: diag_check_sntp_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: diag_check_google_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: diag_check_cloudflare_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true' 
+
+# Template binary sensors for diagnostics
+binary_sensor:
+  # Home Assistant API connection status (event-driven, real-time).
+  # Required by: networking.yaml, Halo-v1-Core.yaml, airq_history.yaml
+  # Defined here (required module) so it is available even when
+  # features/diagnostics/diagnostics.yaml is disabled.
+  - platform: status
+    name: Online
+    id: ink_ha_connected
+
+  # Template binary sensor exposing SNTP validity (published from diagnostics interval)
+  - platform: template
+    name: "SNTP Time Valid"
+    id: sntp_time_valid_sensor
+    lambda: "return id(sntp_time).now().is_valid();"
+
+  - platform: template
+    name: "HTTP: google.com reachable"
+    id: http_google_reachable
+    lambda: "return id(diag_http_google_ok);"
+
+  - platform: template
+    name: "HTTP: cloudflare.com reachable"
+    id: http_cloudflare_reachable
+    lambda: "return id(diag_http_cloudflare_ok);"
+
+  - platform: template
+    name: "Home Assistant API Connected"
+    id: homeassistant_api_connected
+    lambda: "return id(diag_api_connected);"
+
+# Diagnostic control switches (allow enabling/disabling individual checks)
+switch:
+  - platform: template
+    name: "Diag: SNTP checks"
+    id: diag_check_sntp
+    icon: mdi:clock-check-outline
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: "diagnostic"
+    on_turn_on:
+      - lambda: 'id(diag_check_sntp_enabled) = true;'
+    on_turn_off:
+      - lambda: 'id(diag_check_sntp_enabled) = false;'
+
+  - platform: template
+    name: "Diag: Google HTTP check"
+    id: diag_check_google
+    icon: mdi:web
+    optimistic: true
+    # DEFAULT OFF: http_request is synchronous; each check blocks the event loop for
+    # 12-18s (DNS + TCP) causing watchdog warnings. Enable only for targeted debugging.
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: "diagnostic"
+    on_turn_on:
+      - lambda: 'id(diag_check_google_enabled) = true;'
+    on_turn_off:
+      - lambda: 'id(diag_check_google_enabled) = false;'
+
+  - platform: template
+    name: "Diag: Cloudflare HTTP check"
+    id: diag_check_cloudflare
+    icon: mdi:domain
+    optimistic: true
+    # DEFAULT OFF: same reason as Google check above.
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: "diagnostic"
+    on_turn_on:
+      - lambda: 'id(diag_check_cloudflare_enabled) = true;'
+    on_turn_off:
+      - lambda: 'id(diag_check_cloudflare_enabled) = false;'
+
+# Optional numeric sensor exposing SNTP epoch for debugging
+sensor:
+  - platform: template
+    name: "SNTP Timestamp"
+    id: sntp_time_timestamp
+    lambda: "return (float)id(sntp_time).now().timestamp;"
+
+# Periodic diagnostic checks and logs
+interval:
+  # Fast interval: API connection check and sensor state publishing
+  - interval: 60s
+    then:
+      # Check API connection state and log/warn if WireGuard connected but API is not
+      - if:
+          condition:
+            - api.connected:
+          then:
+            - lambda: |-
+                id(diag_api_connected) = true;
+            - logger.log: "API connected"
+          else:
+            - lambda: |-
+                id(diag_api_connected) = false;
+            - logger.log: "API disconnected"
+            - if:
+                condition:
+                  lambda: 'return id(wg_status_connected_state);'
+                then:
+                  - logger.log: "⚠ WireGuard connected but API disconnected - HA may not be reaching device over VPN"
+
+      # Publish template sensor/binary states so they stay current without per-component polling
+      - binary_sensor.template.publish:
+          id: sntp_time_valid_sensor
+          state: !lambda 'return id(sntp_time).now().is_valid();'
+      - binary_sensor.template.publish:
+          id: homeassistant_api_connected
+          state: !lambda 'return id(diag_api_connected);'
+      - sensor.template.publish:
+          id: sntp_time_timestamp
+          state: !lambda 'return (float)id(sntp_time).now().timestamp;'
+
+  # Slow interval: SNTP and network HTTP diagnostic checks
+  - interval: 5min
+    then:
+      - if:
+          condition:
+            lambda: 'return id(diag_check_sntp_enabled);'
+          then:
+            - lambda: |-
+                bool sntp_ok = id(sntp_time).now().is_valid();
+                ESP_LOGI("sntp_diag", "SNTP valid=%s, ts=%u", sntp_ok ? "yes" : "no", (unsigned)id(sntp_time).now().timestamp);
+
+      - if:
+          condition:
+            lambda: 'return id(diag_check_google_enabled) || id(diag_check_cloudflare_enabled);'
+          then:
+            - lambda: |-
+                ESP_LOGI("net_diag", "HTTP google=%s, cloudflare=%s",
+                         id(diag_http_google_ok) ? "reachable" : "unreachable",
+                         id(diag_http_cloudflare_ok) ? "reachable" : "unreachable");
+
+      - if:
+          condition:
+            # Skip the HTTP probe when WireGuard is enabled but not yet
+            # connected.  If wg_allowed_ips routes all traffic through the
+            # tunnel (0.0.0.0/0), outbound HTTP hangs for the full
+            # http_request timeout while WireGuard is offline, blocking the
+            # event loop; stacked with other stalls that can trip the 30 s
+            # task watchdog.
+            lambda: 'return id(diag_check_google_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
+          then:
+            - http_request.get:
+                # Plain HTTP to avoid TLS/mbedtls overhead; this is a connectivity check only.
+                # google.com/generate_204 returns 204 over HTTP as well as HTTPS.
+                url: http://www.google.com/generate_204
+                on_response:
+                  then:
+                    - logger.log:
+                        format: 'HTTP google: status=%d duration=%lums'
+                        args:
+                          - response->status_code
+                          - response->duration_ms
+                    - lambda: |-
+                        id(diag_http_google_ok) = true;
+                on_error:
+                  then:
+                    - logger.log: 'HTTP google test failed (network/DNS unreachable)'
+                    - lambda: |-
+                        id(diag_http_google_ok) = false;
+
+      - if:
+          condition:
+            # Same guard as the Google check above.
+            lambda: 'return id(diag_check_cloudflare_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
+          then:
+            - http_request.get:
+                # Plain HTTP - Cloudflare's CDN IPs serve on port 80; avoids TLS blocking.
+                url: http://1.1.1.1/
+                on_response:
+                  then:
+                    - logger.log:
+                        format: 'HTTP cloudflare: status=%d duration=%lums'
+                        args:
+                          - response->status_code
+                          - response->duration_ms
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = true;
+                on_error:
+                  then:
+                    - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = false;
+
+      # Publish HTTP reachability sensor states after checks complete
+      - binary_sensor.template.publish:
+          id: http_google_reachable
+          state: !lambda 'return id(diag_http_google_ok);'
+      - binary_sensor.template.publish:
+          id: http_cloudflare_reachable
+          state: !lambda 'return id(diag_http_cloudflare_ok);'

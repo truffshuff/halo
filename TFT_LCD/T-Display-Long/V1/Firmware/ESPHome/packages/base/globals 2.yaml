@@ -1,0 +1,140 @@
+# ============================================================================
+# Global Variables - Shared System State
+# ============================================================================
+# System-level global variables shared across multiple modules
+# Dependencies: None (loaded first)
+#
+# This file contains ONLY globals that are truly shared across multiple modules
+# or are fundamental to system operation. Feature-specific globals have been
+# moved to their respective feature files.
+#
+# CONTENTS:
+#   - Startup/boot state (boot_complete flag, cycleCounter for LED animation)
+#   - OTA operation state (ota_in_progress)
+#   - Display backlight state (display_backlight_is_on)
+#   - Display flush health (last_display_update_time, display_recovery_attempts)
+#   - Home Assistant reachability over WireGuard (ha_http_blocked)
+#
+# REMOVED 2026-09-26: default_page_index. The boot hook in Halo-v1-Core.yaml
+# now writes current_page_name directly.
+#
+# REMOVED 2026.09 (dead state, no remaining consumer anywhere in the tree):
+#   - display_flush_count, last_display_flush_count - never read
+#   - sensor_ui_dirty, last_sensor_ui_update - weather_base.yaml set the dirty
+#     flag, but the 2s batching interval in Halo-v1-Core.yaml that consumed it
+#     only logged and cleared it; it never refreshed any widget. See
+#     docs/ARCHITECTURE.md "Known gaps" for what this means for the weather
+#     page's live temperature labels.
+#
+# GLOBALS MOVED TO FEATURE FILES (complete):
+#   - Clock → features/clock/clock_base.yaml
+#   - Page Rotation → features/page_rotation/page_rotation.yaml
+#   - Weather → features/weather/weather_base.yaml
+#   - WireGuard → features/wireguard/wireguard.yaml
+#   - AirQ → features/airq/airq_base.yaml
+#   - WiFi Status → features/wifi_status/wifi_page_base.yaml
+#   - Diagnostics → features/diagnostics/diagnostics.yaml
+# ============================================================================
+
+globals:
+
+  # ============================================================================
+  # Startup/Boot State
+  # ============================================================================
+
+  # Boot completion flag
+  # Set to true after the first Home Assistant API client connects.
+  # Guards page rotation, watchdog, WireGuard cycling and LED effect selection
+  # so they don't fire during the startup sequence.
+  # Required by: networking.yaml, Halo-v1-Core.yaml, page_rotation.yaml, diagnostics.yaml
+  - id: boot_complete
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # Startup light blink cycle counter
+  # Counts the 1-second ticks (0 -> 30) during which the offline rainbow is
+  # re-asserted; the effect itself stays on until HA connects.
+  # Written by system/networking.yaml (WiFi events and the blink interval) and
+  # by Halo-v1-Core.yaml (0 on API disconnect, 30 on API connect).
+  - id: cycleCounter
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+  # ============================================================================
+  # OTA Operations
+  # ============================================================================
+
+  # Flag to indicate OTA firmware update in progress
+  # Prevents page rotation and other operations during critical updates
+  - id: ota_in_progress
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # ============================================================================
+  # Display State Management
+  # ============================================================================
+
+  # Display backlight state tracking
+  # Used to prevent redundant backlight on/off commands
+  - id: display_backlight_is_on
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  # Rendering heartbeat for the display watchdog (diagnostics.yaml).
+  # mipi_spi exposes no flush-complete callback, so this is set by
+  # features/clock/clock_base.yaml's time_update whenever it re-renders the
+  # time text (about once a minute), and by the watchdog after a recovery.
+  - id: last_display_update_time
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+  # Consecutive display hardware recovery attempts (automatic and manual)
+  # since the last successful render. Incremented by
+  # features/diagnostics/diagnostics.yaml, whose watchdog reboots once two
+  # recoveries in a row have not brought rendering back; reset to 0 by
+  # features/clock/clock_base.yaml's time_update when it renders.
+  - id: display_recovery_attempts
+    type: uint8_t
+    restore_value: no
+    initial_value: '0'
+
+  # ============================================================================
+  # Home Assistant Reachability
+  # ============================================================================
+
+  # True while HA can only be reached through WireGuard and neither the tunnel
+  # nor the API is up, so an HTTP call to ha_url would block the main loop for
+  # the full 10 s timeout. Written every 5 s by features/wireguard/wireguard.yaml;
+  # read by features/weather/weather_base.yaml (hourly HTTP fallback) and
+  # features/printer/printer_base.yaml (cover image). Lives here so those two
+  # packages do not depend on the WireGuard one.
+  - id: ha_http_blocked
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+# ============================================================================
+# BLE Scanner Control
+# ============================================================================
+# System-wide switch to control BLE scanning. Pausing BLE scanning reduces
+# API traffic and prevents buffer overflow during operations that require
+# clean API communication.
+#
+# Automatically paused during:
+#   - Weather forecast fetches (daily and hourly)
+#   - OTA firmware updates
+#
+# Can also be manually controlled from Home Assistant or used in custom automations.
+#
+# Usage:
+#   Pause: - switch.turn_off: ble_scanner_switch
+#   Resume: - switch.turn_on: ble_scanner_switch
+#
+# NOTE: The switch itself is defined by the selected BLE package
+# (ble_improv.yaml, ble_esphome.yaml or ble_stub.yaml).
+# ============================================================================
