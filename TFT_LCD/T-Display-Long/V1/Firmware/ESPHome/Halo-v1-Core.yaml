@@ -19,14 +19,14 @@
 #   feature package can be commented out yet. See docs/ARCHITECTURE.md
 #   "Known gaps" #2.
 #
-# Version: 26.10.25.1621
+# Version: 26.10.25.1633
 # Last Updated: October 25, 2026
 # Baseline: ESPHome 2026.10.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.10.25.1621"
+  version: "26.10.25.1633"
   device_description: ${name} - v${version}.
   
 # ============================================================================

@@ -9,6 +9,8 @@ Baseline: **ESPHome 2026.9.0**, ESP-IDF 5.5.x, native `esp-idf` toolchain, for t
 measurements in §10. The build now requires 2026.10.0, which moves the NVS cache to PSRAM
 (§3) and keeps more codegen tables (font glyphs, the `mipi_spi` init sequence, select
 options, HA action fields) in flash. None of that has been measured on hardware yet.
+`esp32: framework: advanced: flash_chip: winbond` (2026.10.0) links only the Winbond flash
+driver: build-time static internal RAM 212,579 → 208,615 B (−3,964 B, `halo-v1-79e384.yaml`).
 
 ---
 

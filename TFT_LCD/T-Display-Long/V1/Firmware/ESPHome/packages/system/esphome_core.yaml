@@ -152,13 +152,19 @@ esp32:
       # breaks the precondition (PSRAM made optional, or nvs_encryption
       # added) fails validation instead of silently giving the 10 KB back.
       nvs_cache_in_psram: true
-      # NOT SET: flash_chip (2026.10.0, esphome#19217). Naming the flash
-      # vendor drops the other SPI flash drivers: 2-3 KB of IRAM, which is
-      # internal SRAM on the S3. Leave it unset until the vendor is known -
-      # ESPHome logs "Set flash_chip: <vendor> under esp32 > framework >
-      # advanced" at boot with the right value. In qio mode (used here) a
-      # WRONG vendor can fail flash init at startup; OTA then rolls back and
-      # recovery needs a USB flash. Check every unit's boot log first.
+      # flash_chip (2026.10.0, esphome#19217): link only the Winbond SPI flash
+      # driver instead of every vendor's, saving IRAM - internal SRAM on the
+      # S3. The value comes from a 2026.10 unit's own boot log ("Set
+      # flash_chip: winbond under esp32 > framework > advanced"; 2026-10-25),
+      # and every Halo is the same LilyGo T-Display-Long board.
+      # IF A UNIT HAS A DIFFERENT CHIP: with one vendor linked, ESPHome falls
+      # back to the generic driver and logs "Set flash_chip: generic ..." at
+      # boot - check each unit's first boot log after this lands. In qio mode
+      # (used here) ISSI, MXIC and large GigaDevice parts need their own driver,
+      # so on those flash init can fail; enable_ota_rollback (on by default)
+      # then boots the previous firmware. Remove this line to restore all
+      # drivers.
+      flash_chip: winbond
       # Signed OTA verification (2026.4.0): verifies firmware signature during OTA
       # without requiring hardware Secure Boot (eFuse burning).
       # To enable: generate a signing key and configure below.
