@@ -391,7 +391,7 @@ packages:
       # -------------------------
       # Clock Feature (~5KB)
       # -------------------------
-      # Provides: Large vertical time display, 12h/24h format, blinking colon
+      # Provides: Large vertical time display, 12h/24h format, breathing colon
       # Memory: ~5KB
       # Hardware: None (uses system time)
       # Disable to: Save 5KB if you don't need clock display

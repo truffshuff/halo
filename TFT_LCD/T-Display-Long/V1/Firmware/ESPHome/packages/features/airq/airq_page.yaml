@@ -14,6 +14,9 @@
 # Features:
 #   - Header with logo, time, and WiFi status
 #   - Color-coded AQI banner (visual alert)
+#   - AQI category "pop" (aqi_category_pop, below): the AQI number scales up
+#     and back while the banner dims briefly, when the AQI enters a new
+#     category on this page. Triggered from the pm_2_5 sensor in airq_base.yaml
 #   - Temperature display
 #   - CO2 monitoring with color-coded values
 #   - Particulate matter (PM1.0, PM2.5, PM4.0, PM10)
@@ -22,12 +25,40 @@
 #   - Relative humidity
 #   - Navigation touch button
 #   - Auto-updates sensor values on page load
+#
+# MEMORY: aqi_category_pop is one LvAnimation component, ~200 B static
+# internal SRAM. Measured 2026-10-25 for all four animations together (clock,
+# AirQ, weather x2) on halo-v1-79e384.yaml: +808 B static internal SRAM,
+# +4.3 KB flash. While it plays (600 ms), LVGL renders the scaled label
+# through a transform layer the size of the label, from the LVGL heap (PSRAM)
 # ============================================================================
 
 # ============================================================================
 # LVGL Pages - Air Quality Display
 # ============================================================================
 lvgl:
+  # --------------------------------------------------------------------------
+  # AQI category pop: the number grows 30 % and settles back while the banner
+  # dims to 55 % and returns, over 600 ms. One shot, never looped; started by
+  # the pm_2_5 trigger in airq_base.yaml. The banner colour itself still
+  # changes instantly - ESPHome can only animate between constant colours.
+  # --------------------------------------------------------------------------
+  animations:
+    - id: aqi_category_pop
+      duration: 600ms
+      timing:
+        - round_trip
+        - ease_in_out
+      widgets:
+        - id: aqi_value
+          transform_scale:
+            from: 1.0
+            to: 1.3
+        - id: aqi_widget
+          bg_opa:
+            from: 100%
+            to: 55%
+
   pages:
     # ------------------------------------------------------------------------
     # Air Quality Page
@@ -302,6 +333,10 @@ lvgl:
             x: 90
             y: -275
             text: "000"
+            # Scale from the label's centre for aqi_category_pop (LVGL's
+            # default pivot is the top-left corner)
+            transform_pivot_x: 50%
+            transform_pivot_y: 50%
 
         # Temperature Section
         - label:

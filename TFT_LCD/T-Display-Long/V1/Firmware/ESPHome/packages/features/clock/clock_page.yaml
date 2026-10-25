@@ -4,14 +4,21 @@
 # Vertical clock display with large time and date
 #
 # Dependencies:
-#   - features/clock/clock_base.yaml (time_update script, time_update_force_render)
+#   - features/clock/clock_base.yaml (time_update script, time_update_force_render,
+#     vclock_colon_motion script, colon_blink_enabled switch)
 #   - features/page_rotation/page_rotation.yaml (current_page_name,
 #     last_auto_rotation_time)
 #   - system/fonts_colors.yaml (montserrat_80/50/24, my_white, my_gray)
 #
 # Features:
 #   - Large vertical time display (hours, colon, minutes)
-#   - Blinking colon animation
+#   - Breathing colon: an LVGL animation (vclock_colon_breathe, below) that
+#     fades the colon's opacity; runs only while this page is showing
+#
+# MEMORY: one LvAnimation component, ~200 B static internal SRAM. Measured
+# 2026-10-25 for all four animations together (clock, AirQ, weather x2) on
+# halo-v1-79e384.yaml: +808 B static internal SRAM, +4.3 KB flash. It redraws
+# only the colon glyph (montserrat_80, ~30x80 px)
 #   - AM/PM indicator (12-hour) or 24-hour format
 #   - Current date display
 #   - Day of week display
@@ -22,11 +29,30 @@
 # LVGL Pages - Clock Display
 # ============================================================================
 lvgl:
+  # --------------------------------------------------------------------------
+  # Breathing colon (ESPHome LVGL animation). One cycle fades the colon to 15 %
+  # and back over 2 s, matching the old 1 s on / 1 s off blink. Started and
+  # stopped by vclock_colon_motion (clock_base.yaml); a stopped animation
+  # leaves the colon mid-fade, so that script resets it to opaque.
+  # --------------------------------------------------------------------------
+  animations:
+    - id: vclock_colon_breathe
+      duration: 2s
+      loop: true
+      timing:
+        - round_trip
+        - ease_in_out
+      widgets:
+        - id: vclock_colon
+          opa:
+            from: 100%
+            to: 15%
+
   pages:
     # ------------------------------------------------------------------------
     # Vertical Clock Page
     # ------------------------------------------------------------------------
-    # Large vertical time display with blinking colon
+    # Large vertical time display with breathing colon
     # Shows: Hours | Colon | Minutes | AM/PM | Date | Day
     # Auto-updates every second via time_update script
     # ------------------------------------------------------------------------
@@ -39,6 +65,14 @@ lvgl:
             id(current_page_name) = "vertical_clock";
             id(time_update_force_render) = true;
         - script.execute: time_update
+        - script.execute: vclock_colon_motion
+      on_unload:
+        # Stopped directly, not through vclock_colon_motion: current_page_name
+        # may still read "vertical_clock" here, which would restart it.
+        - lvgl.animation.stop: vclock_colon_breathe
+        - lvgl.widget.update:
+            id: vclock_colon
+            opa: COVER
       widgets:
         # Large time display vertically centered
         - label:

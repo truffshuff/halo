@@ -29,7 +29,7 @@
 #   - features/page_rotation/page_rotation.yaml (current_page_name)
 #   - the selected BLE package (ble_scanner_switch, paused during fetches)
 #   - features/weather/weather_page.yaml (update_weather_display,
-#     lbl_weather_forecast_condition_icon), weather_daily.yaml
+#     weather_icon_motion, lbl_weather_forecast_condition_icon), weather_daily.yaml
 #     (update_daily_forecast_display) and weather_hourly.yaml
 #     (update_hourly_page_1): this file calls their scripts, so those
 #     packages are not independently optional today - see
@@ -706,6 +706,9 @@ script:
                   using namespace weather_helpers;
                   ESP_LOGD("weather_color", "Applying color for condition: '%s'", id(weather_last_condition).c_str());
                   return lv_color_hex(get_weather_icon_color(id(weather_last_condition)));
+            # Pick the icon's motion for the new condition (weather_page.yaml;
+            # a no-op off the weather page)
+            - script.execute: weather_icon_motion
       - lambda: |-
           const uint32_t elapsed = millis() - id(weather_last_started);
           id(weather_last_duration) = elapsed;

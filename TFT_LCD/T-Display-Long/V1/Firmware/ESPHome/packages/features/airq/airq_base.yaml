@@ -30,7 +30,8 @@
 #   - system/display_hardware.yaml (I2C bus)
 #   - system/fonts_colors.yaml (colors for UI)
 #   - features/airq/airq_page.yaml (every *_value label the on_value triggers
-#     update - the two files must be enabled together)
+#     update, and the aqi_category_pop animation - the two files must be
+#     enabled together)
 #   - features/weather/weather_led_effects.yaml (rgb_light, for "AQI Color")
 #   - Halo-v1-Core.yaml (led_effect_select)
 #   - features/page_rotation/page_rotation.yaml (current_page_name,
@@ -58,6 +59,20 @@ globals:
     type: int
     restore_value: yes
     initial_value: '2'
+
+  # AQI category pop (aqi_category_pop, airq_page.yaml). Category index
+  # 0-5 (Good..Hazardous/EVAC) of the last computed AQI; -1 until the first
+  # reading, so the first value after boot never pops. aqi_last_pop rate-limits
+  # the animation to once a minute.
+  - id: aqi_last_category
+    type: int8_t
+    restore_value: no
+    initial_value: '-1'
+
+  - id: aqi_last_pop
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
 
   # WiFi status indicator state for AirQ page
   - id: airq_wifi_stat_connected_state
@@ -567,6 +582,24 @@ sensor:
                       else if (aqi <= 200) return lv_color_hex(0xFF0000);  // Red
                       else if (aqi <= 300) return lv_color_hex(0x800080);  // Purple
                       else return lv_color_hex(0x800000);                  // Maroon
+                # Category pop: only on a real category change, only while the
+                # AirQ page is showing, and at most once a minute, so a reading
+                # hovering on a boundary (50/51) does not pulse every 2 s.
+                - if:
+                    condition:
+                      lambda: |-
+                        const float aqi = id(computed_halo_aqi).state;
+                        const int8_t cat = aqi <= 50 ? 0 : aqi <= 100 ? 1 : aqi <= 150 ? 2
+                                         : aqi <= 200 ? 3 : aqi <= 300 ? 4 : 5;
+                        const int8_t prev = id(aqi_last_category);
+                        id(aqi_last_category) = cat;
+                        if (prev < 0 || cat == prev || id(current_page_name) != "airq") return false;
+                        const uint32_t now = millis();
+                        if (id(aqi_last_pop) != 0 && now - id(aqi_last_pop) < 60000) return false;
+                        id(aqi_last_pop) = now;
+                        return true;
+                    then:
+                      - lvgl.animation.start: aqi_category_pop
 
     pm_4_0:
       name: "PM <4µm Weight concentration"

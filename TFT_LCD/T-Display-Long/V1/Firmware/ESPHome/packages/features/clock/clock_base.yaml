@@ -15,16 +15,19 @@
 #   - base/globals.yaml (boot_complete, last_display_update_time)
 #
 # This module configures:
-#   - Clock globals (colon blink, time update tracking)
+#   - Clock globals (time update tracking)
 #   - Time update script (renders clock on all pages)
-#   - Colon blink animation script
+#   - vclock_colon_motion: starts/stops the breathing-colon animation, which
+#     is declared in clock_page.yaml
 #   - Clock control switches (24h format, colon blink)
 #   - Page rotation controls for clock
 #   - Navigation button
 #
 # Features:
 #   - 12h/24h time format toggle
-#   - Blinking colon animation (configurable)
+#   - Breathing colon ("Clock Colon Blink" switch). Until 2026-10-25 this was
+#     a 1 s interval swapping the colon text for a space; turning the switch
+#     off on a hidden beat left the colon hidden until the next reboot.
 #   - Multi-page time display (clock, airq pages)
 #   - Page rotation integration
 #   - Performance tracking
@@ -40,13 +43,6 @@
 # Clock Globals
 # ============================================================================
 globals:
-  # Colon blink state for clock display
-  # Toggles every second to create blinking colon animation (:)
-  - id: colon_blink_state
-    type: bool
-    restore_value: no
-    initial_value: 'true'
-
   # Time update performance tracking
   - id: time_update_last_started
     type: int
@@ -89,25 +85,28 @@ globals:
 # Clock Scripts
 # ============================================================================
 script:
-  # Update colon widget (blink animation)
-  - id: update_colon_widget
+  # Breathing colon: run vclock_colon_breathe (clock_page.yaml) only while the
+  # clock page is showing and the "Clock Colon Blink" switch is on; otherwise
+  # stop it and put the colon back to fully opaque. Run from the page's
+  # on_load and from the switch. The nullptr test covers the switch restoring
+  # its state at boot, which can happen before LVGL has created the widget.
+  - id: vclock_colon_motion
     mode: restart
     then:
       - if:
           condition:
-            lambda: 'return id(current_page_name) == "vertical_clock";'
+            lambda: 'return id(vclock_colon) != nullptr;'
           then:
             - if:
                 condition:
-                  lambda: 'return id(colon_blink_state);'
+                  lambda: 'return id(colon_blink_enabled).state && id(current_page_name) == "vertical_clock";'
                 then:
-                  - lvgl.label.update:
-                      id: vclock_colon
-                      text: ":"
+                  - lvgl.animation.start: vclock_colon_breathe
                 else:
-                  - lvgl.label.update:
+                  - lvgl.animation.stop: vclock_colon_breathe
+                  - lvgl.widget.update:
                       id: vclock_colon
-                      text: " "
+                      opa: COVER
 
   # Main time update script
   # Updates time display on ALL pages that show time (vertical_clock, airq)
@@ -208,7 +207,6 @@ script:
                      return std::string("--");
                    }
                   return std::string(days[now.day_of_week - 1]);
-      - script.execute: update_colon_widget
       - lambda: |-
           const uint32_t now = millis();
           const uint32_t elapsed = now - id(time_update_last_started);
@@ -249,16 +247,6 @@ interval:
           then:
             - script.execute: time_update
 
-  # Toggle colon blink state every 1 second
-  - interval: 1s
-    then:
-      - if:
-          condition:
-            lambda: 'return id(boot_complete) && id(colon_blink_enabled).state;'
-          then:
-            - lambda: 'id(colon_blink_state) = !id(colon_blink_state);'
-            - script.execute: update_colon_widget
-
 # ============================================================================
 # Clock Control Switches
 # ============================================================================
@@ -272,7 +260,8 @@ switch:
     optimistic: true
     entity_category: "config"
 
-  # Colon blink animation toggle
+  # Breathing colon toggle (name kept from the old blink, so the HA entity is
+  # unchanged)
   - platform: template
     name: "Clock Colon Blink"
     id: colon_blink_enabled
@@ -280,6 +269,10 @@ switch:
     restore_mode: RESTORE_DEFAULT_ON
     optimistic: true
     entity_category: "config"
+    on_turn_on:
+      - script.execute: vclock_colon_motion
+    on_turn_off:
+      - script.execute: vclock_colon_motion
 
   # Page rotation enable/disable for clock page
   - platform: template

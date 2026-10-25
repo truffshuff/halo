@@ -16,8 +16,12 @@
 #   - current_page_name (from page_rotation)
 #   - weather_* globals (from weather_base)
 #   - wind_speed_sensor, wind_direction_sensor, fetch_daily_forecast,
-#     update_weather_icon_color (from weather_base)
+#     update_weather_icon_color, weather_on_weather_page,
+#     weather_last_condition (from weather_base)
 #   - page_transition_cleanup (from page_rotation)
+#
+# Provides to weather_base: weather_icon_motion (run by
+# update_weather_icon_color whenever the icon changes)
 #   - time: component with a timezone (system_management.yaml); weather_helpers
 #     converts forecast times via localtime_r(), which ESPHome's time uses
 #
@@ -28,9 +32,52 @@
 #   - Includes temperature gauge with color gradient
 #   - Displays wind compass with direction indicator
 #   - Shows high/low temps, precipitation chance, current conditions
+#   - Condition icon motion (weather_icon_bob / weather_icon_flicker, below):
+#     rain, snow and hail bob gently; lightning flickers; everything else is
+#     still. Runs only while this page is showing.
+#
+# MEMORY: two LvAnimation components, ~400 B static internal SRAM. Measured
+# 2026-10-25 for all four animations together (clock, AirQ, weather x2) on
+# halo-v1-79e384.yaml: +808 B static internal SRAM, +4.3 KB flash.
+# While one runs, LVGL redraws the 100 px icon (~100x105 px, ~21 KB of
+# pixels, ~8 ms on the 5 MHz QSPI link) each frame; nothing else on the page.
 # ============================================================================
 
 script:
+  # ============================================================================
+  # Condition icon motion
+  # ============================================================================
+  # Stops both icon animations, puts the icon back at rest, then starts the
+  # one that fits weather_last_condition (lower-case, set by
+  # update_weather_icon_color). Lightning is tested first: the normalised
+  # "lightning-rainy" also contains "rain".
+  - id: weather_icon_motion
+    mode: restart
+    then:
+      - lvgl.animation.stop:
+          id: [weather_icon_bob, weather_icon_flicker]
+      - lvgl.widget.update:
+          id: lbl_weather_forecast_condition_icon
+          translate_y: 0
+          opa: COVER
+      - if:
+          condition:
+            lambda: |-
+              return id(weather_on_weather_page) &&
+                     id(weather_last_condition).find("lightning") != std::string::npos;
+          then:
+            - lvgl.animation.start: weather_icon_flicker
+          else:
+            - if:
+                condition:
+                  lambda: |-
+                    if (!id(weather_on_weather_page)) return false;
+                    const std::string &c = id(weather_last_condition);
+                    return c.find("rain") != std::string::npos || c.find("pouring") != std::string::npos ||
+                           c.find("snow") != std::string::npos || c.find("hail") != std::string::npos;
+                then:
+                  - lvgl.animation.start: weather_icon_bob
+
   # ============================================================================
   # Weather Display Update Script
   # ============================================================================
@@ -184,6 +231,39 @@ script:
 # ============================================================================
 
 lvgl:
+  # --------------------------------------------------------------------------
+  # Condition icon animations, started by weather_icon_motion above.
+  # Bob: up 5 px and back every 2.4 s. Upward, because the condition name
+  #   sits directly below the icon (y 130).
+  # Flicker: the icon is dim (25 %) at each loop boundary and bright for the
+  #   rest of the 3 s cycle, so it reads as a short flicker every 3 s.
+  #   round_trip's pause holds the "to" value for 90 % of the cycle.
+  # --------------------------------------------------------------------------
+  animations:
+    - id: weather_icon_bob
+      duration: 2400ms
+      loop: true
+      timing:
+        - round_trip
+        - ease_in_out
+      widgets:
+        - id: lbl_weather_forecast_condition_icon
+          translate_y:
+            from: 0
+            to: -5
+
+    - id: weather_icon_flicker
+      duration: 3s
+      loop: true
+      timing:
+        - type: round_trip
+          pause: 0.9
+      widgets:
+        - id: lbl_weather_forecast_condition_icon
+          opa:
+            from: 25%
+            to: 100%
+
   pages:
     - id: weather_forecast_page
       bg_color: 0x000000
@@ -222,6 +302,9 @@ lvgl:
               - script.execute: fetch_daily_forecast
       on_unload:
         - lambda: 'id(weather_on_weather_page) = false;'
+        # With the flag cleared, this only stops the icon animations and puts
+        # the icon back at rest.
+        - script.execute: weather_icon_motion
       widgets:
         # Page Header
         - label:
