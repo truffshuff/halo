@@ -65,6 +65,13 @@ light:
     # that is what a light with neither restore_mode: nor restore_state: does,
     # and restore_mode: (formerly ALWAYS_OFF here) is deprecated. The LED
     # Effect select in Halo-v1-Core.yaml restores the effect after boot.
+    # resume_effect (2026.10.0, esphome#17791): a plain off -> on (the Home
+    # Assistant toggle) brings back the effect that was running at turn-off,
+    # instead of solid white. Calls that name an effect or colour (the LED
+    # Effect select, AQI Color, the offline rainbow) are unaffected. Memory
+    # only: lost on reboot. Measured cost: +8 B static internal RAM, +76 B
+    # flash (halo-v1-79e384.yaml, 2026-10-25).
+    resume_effect: true
     effects:
       - addressable_rainbow:
           name: Rainbow Effect With Custom Values

@@ -26,7 +26,7 @@
 # Font Definitions
 # ============================================================================
 # Fonts are defined with various sizes for different UI elements across pages.
-# bpp: 4 gives 16-level anti-aliasing on the AMOLED panel.
+# bpp: 4 gives 16-level anti-aliasing on the LCD panel.
 #
 # Every Montserrat size carries the same glyph string, for simplicity: any
 # label can use any size. Each size still rasterizes its own copy of every

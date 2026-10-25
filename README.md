@@ -1,6 +1,6 @@
 # Halo v1 — ESP32-S3 Air Quality Monitor
 
-An ESPHome-based firmware for the [LilyGo T-Display-Long](https://www.lilygo.cc/products/t-display-long) (180×640 AMOLED, ESP32-S3). Displays real-time air quality, weather, and time on a vertical touchscreen display with Home Assistant integration.
+An ESPHome-based firmware for the [LilyGo T-Display-Long](https://www.lilygo.cc/products/t-display-long) (180×640 TFT LCD, ESP32-S3). Displays real-time air quality, weather, and time on a vertical touchscreen display with Home Assistant integration.
 
 > This is a fork of [yashmulgaonkar/halo](https://github.com/yashmulgaonkar/halo) with significant modular refactoring.
 
@@ -19,7 +19,7 @@ Further reading:
 | Component | Details |
 |-----------|---------|
 | Board | LilyGo T-Display-Long (ESP32-S3, 16MB flash, 8MB PSRAM) |
-| Display | 180×640 AMOLED (AXS15231, core `mipi_spi`) with capacitive touch |
+| Display | 180×640 TFT LCD (AXS15231, core `mipi_spi`, GPIO1 backlight) with capacitive touch |
 | CO2 | SCD40 or SCD41 (I2C) |
 | Particulate / VOC / NOx | SEN55 (I2C, address 0x69) |
 | Multi-gas (NO2, CO, H2, CH4, ethanol, NH3) | MICS-4514 (I2C, address 0x75) |

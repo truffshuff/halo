@@ -10,7 +10,7 @@
 #   - the 1 s WiFi-stats interval that drives the WiFi page
 #   - the LED Effect select and the boot-time default page
 #
-# Hardware: LilyGo T-Display-Long (ESP32-S3, 180x640 AMOLED display)
+# Hardware: LilyGo T-Display-Long (ESP32-S3, 180x640 TFT LCD)
 # Dependencies: every package in the entry file (Halo-v1.yaml or
 #   halo-v1-<mac>.yaml) except diagnostics.yaml and the BLE choice. The
 #   rotation list and the page-show chain below name every page and its
@@ -19,14 +19,14 @@
 #   feature package can be commented out yet. See docs/ARCHITECTURE.md
 #   "Known gaps" #2.
 #
-# Version: 26.10.25.1633
+# Version: 26.10.25.1640
 # Last Updated: October 25, 2026
 # Baseline: ESPHome 2026.10.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.10.25.1633"
+  version: "26.10.25.1640"
   device_description: ${name} - v${version}.
   
 # ============================================================================

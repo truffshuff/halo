@@ -3,7 +3,7 @@
 # ============================================================================
 # LVGL display page for BambuLab printer monitoring
 #
-# Layout (180 x 640 AMOLED, portrait, y=0 at screen centre):
+# Layout (180 x 640 LCD, portrait, y=0 at screen centre):
 #
 #   y: -295  Printer name  (from HA sensor, default "3D Printer")
 #   y: -270  Status label  (color-coded: green/orange/red/teal/gray)

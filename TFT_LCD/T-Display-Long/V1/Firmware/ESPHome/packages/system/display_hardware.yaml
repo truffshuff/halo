@@ -8,7 +8,7 @@
 #
 # This module configures:
 #   - Quad-SPI display bus and the two I2C buses (sensors, touch)
-#   - Display: core mipi_spi, model AXS15231 (AMOLED, 180x640)
+#   - Display: core mipi_spi, model AXS15231 (TFT LCD, 180x640)
 #   - Touchscreen: the fork's axs15231 platform (interrupt-driven)
 #   - Backlight OUTPUT (plain GPIO1). The "Display Backlight" light entity on
 #     top of it is in features/weather/weather_led_effects.yaml.
@@ -67,9 +67,11 @@ output:
 # works. See docs/ARCHITECTURE.md "Known gaps".
 
 # ============================================================================
-# Display Driver - AXS15231 AMOLED
+# Display Driver - AXS15231 TFT LCD
 # ============================================================================
-# LilyGo T-Display-Long AMOLED display (180x640 pixels)
+# LilyGo T-Display-Long TFT LCD (180x640 pixels). Earlier comments called it
+# AMOLED; it is a backlit LCD (the GPIO1 backlight above), which is also why
+# mipi_spi's AMOLED brightness light (ESPHome 2026.10.0) does not apply.
 #
 # NOTE (2026.7.0 breaking change #17405): core `mipi_spi` display drivers now
 # enforce configuration of mandatory components (PSRAM, I/O expanders) for

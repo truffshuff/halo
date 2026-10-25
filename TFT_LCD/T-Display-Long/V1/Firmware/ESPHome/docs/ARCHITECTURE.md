@@ -31,7 +31,7 @@ needs a real `esphome compile`.
 | Flash | 16 MB, QIO @ 80 MHz |
 | PSRAM | 8 MB octal @ 80 MHz |
 | Internal SRAM | ~512 KB total; the portion reaching the heap after the WiFi/BLE stacks load is smaller — read it from the `Free Heap` diagnostic sensor rather than assuming a figure |
-| Display | 180 × 640 AMOLED, AXS15231, **quad SPI** |
+| Display | 180 × 640 TFT LCD, AXS15231, **quad SPI**, GPIO1 backlight |
 | Touch | AXS15231 capacitive, interrupt-driven on GPIO11 |
 | PMIC | SY6970 (not configured by the firmware) |
 | RGB LED | 12 × WS2812 on GPIO47, RMT driver, DMA enabled |

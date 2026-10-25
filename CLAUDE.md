@@ -6,7 +6,7 @@ Guidelines for AI-assisted development on this repository.
 
 ## Project Overview
 
-This is an **ESPHome YAML firmware project** for the LilyGo T-Display-Long (ESP32-S3 + 180×640 AMOLED). The entire firmware is expressed in YAML files plus C++ lambdas embedded in them — there is **no compiled application code** to run, build, or test locally. All validation happens by running `esphome compile` or `esphome run` against a physical device.
+This is an **ESPHome YAML firmware project** for the LilyGo T-Display-Long (ESP32-S3 + 180×640 TFT LCD). The entire firmware is expressed in YAML files plus C++ lambdas embedded in them — there is **no compiled application code** to run, build, or test locally. All validation happens by running `esphome compile` or `esphome run` against a physical device.
 
 The only external C++ is the companion repo **truffshuff/esphome-components** (local clone: `../../esphome-components`, i.e. `~/Projects/esphome-components`; working branch `nimble-bluedroid-parity`). It has its own `CLAUDE.md`.
 
