@@ -19,14 +19,14 @@
 #   feature package can be commented out yet. See docs/ARCHITECTURE.md
 #   "Known gaps" #2.
 #
-# Version: 26.10.09.1650
-# Last Updated: October 09, 2026
-# Baseline: ESPHome 2026.9.0
+# Version: 26.10.25.1621
+# Last Updated: October 25, 2026
+# Baseline: ESPHome 2026.10.0
 # ============================================================================
 
 substitutions:
   name: halo
-  version: "26.10.09.1650"
+  version: "26.10.25.1621"
   device_description: ${name} - v${version}.
   
 # ============================================================================
@@ -804,7 +804,7 @@ mdns:
 # ============================================================================
 # Configured by the BLE package selected in the device file, not here:
 #   features/ble/ble_improv.yaml   NimBLE: bluetooth_proxy + nimble_tracker + nimble_improv
-#   features/ble/ble_esphome.yaml  Bluedroid: bluetooth_proxy + esp32_ble_tracker + esp32_improv
+#   features/ble/ble_esphome.yaml  Bluedroid: bluetooth_proxy + esp32_ble_tracker + improv_ble
 #   features/ble/ble_stub.yaml     no BLE
 # Both stacks start scanning on boot on their own and keep scanning whether
 # or not Home Assistant is connected; ble_scanner_switch pauses it (OTA,

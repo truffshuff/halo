@@ -5,7 +5,10 @@ Why memory is placed where it is on this board, and what will break if you move 
 Read this before changing any buffer size, `sdkconfig_option`, `psram:` setting, or
 allocation in a lambda. Several values here look wasteful and are not.
 
-Baseline: **ESPHome 2026.9.0**, ESP-IDF 5.5.x, native `esp-idf` toolchain.
+Baseline: **ESPHome 2026.9.0**, ESP-IDF 5.5.x, native `esp-idf` toolchain, for the
+measurements in §10. The build now requires 2026.10.0, which moves the NVS cache to PSRAM
+(§3) and keeps more codegen tables (font glyphs, the `mipi_spi` init sequence, select
+options, HA action fields) in flash. None of that has been measured on hardware yet.
 
 ---
 
@@ -57,6 +60,7 @@ waste — do not lower it to "free" memory.
 | **`online_image` download buffer** | 64 KB | ESPHome's `RAMAllocator` defaults to *external first, internal fallback* |
 | **Decoded printer cover image** | ~39 KB (140×140 RGB565) | same `RAMAllocator` default |
 | **AQI history ring buffer** | 64 B per sample: ~270 KB at the default 3 days @ 60 s, up to ~1.26 MB | explicit `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` in `airq_history.yaml`, allocated on the first offline sample. Earlier docs said ~2.3 KB; that was never right for the 15-sensor layout |
+| **NVS page cache + key hash lists** | ~10 KB (ESPHome's figure for its default NVS partition; not measured here) | `esp32: framework: advanced: nvs_cache_in_psram: true` (ESPHome 2026.10.0, esphome#19378). On by default whenever `psram: ignore_not_found: false`; set explicitly in `esphome_core.yaml` so validation fails if that precondition is lost. Values stay in flash; NVS calls get ~2.5× slower |
 | **`.bss` segment** | varies | `CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY: "y"` |
 | **Instructions and rodata** | — | `execute_from_psram: true` (`CONFIG_SPIRAM_FETCH_INSTRUCTIONS` + `CONFIG_SPIRAM_RODATA`) — also what allows the display to keep drawing during an OTA flash write |
 

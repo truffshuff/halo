@@ -74,7 +74,8 @@ esphome:
   # framework-agnostic esp32: keys in packages/system/esphome_core.yaml, and
   # PSRAM octal/80MHz from the top-level psram: component there.
 
-  min_version: 2026.9.0
+  # 2026.10.0: see the min_version comment in Halo-v1.yaml.
+  min_version: 2026.10.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"
@@ -369,7 +370,7 @@ packages:
       # Three options — uncomment exactly ONE:
       #
       # Option 1: ESPHome native BLE stack (Bluedroid-based)
-      #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + esp32_improv.
+      #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + improv_ble.
       #   No custom external components needed.
       #   Trade-offs: Bluedroid costs more internal RAM and flash than NimBLE
       #   (docs/MEMORY.md). connection_slots and cache_services are available.

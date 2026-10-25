@@ -16,7 +16,7 @@
 #     filtering, like Bluedroid. Upstream on-device BLE sensors that bind
 #     through ble_device_base (ble_presence, ble_rssi, xiaomi_*, ...) work
 #     against it.
-#   - nimble_improv: Improv WiFi provisioning (esp32_improv equivalent). Runs
+#   - nimble_improv: Improv WiFi provisioning (improv_ble equivalent). Runs
 #     only while WiFi needs provisioning - no stored network, or no
 #     connection for wifi_timeout - and stops once provisioned.
 #   - ble_scanner_switch: pause/resume scanning (OTA, weather fetches).
@@ -72,7 +72,7 @@
 # same commit.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@5791c6be6cf27653a30ce8c5e0b4d0c02324d520 # NimBLE backend for the upstream 2026.9.0 proxy
+  - source: github://truffshuff/esphome-components@4e0adbd432f79643d7aceaf5b0e35b6ad234d7b3 # NimBLE backend for the upstream 2026.9.0 proxy
     components:
       - nimble_base
       - nimble_tracker
@@ -159,7 +159,7 @@ bluetooth_proxy:
 # ============================================================================
 # No authorizer: provisioning is accepted on connection. That is only
 # reachable while WiFi is unprovisioned or has been down for wifi_timeout
-# (the service does not run otherwise), which is esp32_improv's behaviour.
+# (the service does not run otherwise), which is improv_ble's behaviour.
 # ============================================================================
 nimble_improv:
   authorized_duration: 2min

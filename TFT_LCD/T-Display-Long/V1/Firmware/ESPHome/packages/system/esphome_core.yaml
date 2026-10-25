@@ -47,7 +47,7 @@ external_components:
   # Pinned by full SHA. The pin here and the one in features/ble/ble_improv.yaml
   # should move together; a new commit in the fork does nothing until both are
   # repinned and pushed.
-  - source: github://truffshuff/esphome-components@5791c6be6cf27653a30ce8c5e0b4d0c02324d520
+  - source: github://truffshuff/esphome-components@4e0adbd432f79643d7aceaf5b0e35b6ad234d7b3
     components: [axs15231, weather_helpers]
 
 # ============================================================================
@@ -143,6 +143,22 @@ esp32:
     advanced:
       loop_task_stack_size: 24576
       execute_from_psram: true
+      # NVS page cache and key hash lists in PSRAM (ESPHome 2026.10.0,
+      # esphome#19378): ~10 KB more INTERNAL heap. Preference values stay in
+      # flash; NVS reads/writes get ~2.5x slower, which nothing here notices
+      # (a handful of restore_mode/restore_value saves).
+      # 2026.10 already turns this on by itself because psram: above sets
+      # ignore_not_found: false. It is spelled out so that a change that
+      # breaks the precondition (PSRAM made optional, or nvs_encryption
+      # added) fails validation instead of silently giving the 10 KB back.
+      nvs_cache_in_psram: true
+      # NOT SET: flash_chip (2026.10.0, esphome#19217). Naming the flash
+      # vendor drops the other SPI flash drivers: 2-3 KB of IRAM, which is
+      # internal SRAM on the S3. Leave it unset until the vendor is known -
+      # ESPHome logs "Set flash_chip: <vendor> under esp32 > framework >
+      # advanced" at boot with the right value. In qio mode (used here) a
+      # WRONG vendor can fail flash init at startup; OTA then rolls back and
+      # recovery needs a USB flash. Check every unit's boot log first.
       # Signed OTA verification (2026.4.0): verifies firmware signature during OTA
       # without requiring hardware Secure Boot (eFuse burning).
       # To enable: generate a signing key and configure below.

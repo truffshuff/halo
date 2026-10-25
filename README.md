@@ -4,7 +4,7 @@ An ESPHome-based firmware for the [LilyGo T-Display-Long](https://www.lilygo.cc/
 
 > This is a fork of [yashmulgaonkar/halo](https://github.com/yashmulgaonkar/halo) with significant modular refactoring.
 
-**Requires ESPHome 2026.9.0 or newer.**
+**Requires ESPHome 2026.10.0 or newer.**
 
 Further reading:
 
@@ -50,7 +50,7 @@ Further reading:
 
 ### Prerequisites
 
-- [ESPHome](https://esphome.io) **2026.9.0 or newer** (the config uses `network: tcp_send_buffer:`, added in that release)
+- [ESPHome](https://esphome.io) **2026.10.0 or newer** (the config uses `nvs_cache_in_psram:` and 2026.10's light `initial_state:` boot behaviour; `network: tcp_send_buffer:` came in 2026.9.0)
 - Home Assistant with a Long-Lived Access Token
 - A weather entity in Home Assistant (e.g. `weather.home`)
 

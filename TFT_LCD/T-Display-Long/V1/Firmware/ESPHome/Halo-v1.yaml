@@ -108,9 +108,12 @@ esphome:
   # Flash mode/frequency and CPU frequency are set with the framework-agnostic
   # esp32: keys in packages/system/esphome_core.yaml.
 
-  # 2026.9.0 is required: packages/system/esphome_core.yaml uses the
-  # `network: tcp_send_buffer:` option introduced in that release.
-  min_version: 2026.9.0
+  # 2026.10.0 is required: packages/system/esphome_core.yaml sets
+  # `nvs_cache_in_psram:`, and the "Display Backlight" light in
+  # features/weather/weather_led_effects.yaml relies on 2026.10's
+  # `initial_state:` boot behaviour (an older ESPHome would boot it OFF).
+  # 2026.9.0 added `network: tcp_send_buffer:`, also used there.
+  min_version: 2026.10.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"
@@ -303,7 +306,7 @@ packages:
       # Three options — uncomment exactly ONE:
       #
       # Option 1: ESPHome native BLE stack (Bluedroid-based)
-      #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + esp32_improv.
+      #   Uses ESPHome's built-in bluetooth_proxy + esp32_ble_tracker + improv_ble.
       #   No custom external components needed.
       #   Trade-offs: Bluedroid costs more internal RAM and flash than NimBLE
       #   (docs/MEMORY.md). connection_slots and cache_services are available.

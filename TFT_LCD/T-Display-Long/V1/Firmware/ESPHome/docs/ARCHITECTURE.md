@@ -5,7 +5,7 @@ How this firmware is put together, for someone opening the repository for the fi
 Companion document: [MEMORY.md](MEMORY.md) explains *why* memory is placed where it is.
 Read it before changing any buffer size, `sdkconfig_option`, or allocation.
 
-Baseline: **ESPHome 2026.9.0**, ESP-IDF via the native `esp-idf` toolchain.
+Baseline: **ESPHome 2026.10.0** (`min_version`), ESP-IDF via the native `esp-idf` toolchain.
 
 ---
 
@@ -237,7 +237,7 @@ defines `ble_scanner_switch`, which OTA and the weather fetch scripts turn off a
 |---|---|---|
 | `ble_stub.yaml` | none | A no-op template switch. Smallest build. **Default in `Halo-v1.yaml`.** |
 | `ble_improv.yaml` | NimBLE (fork) | ESPHome 2026.9.0's `bluetooth_proxy` on a NimBLE scanner (`nimble_tracker`) and GATT backend, so HA sees Bluedroid-identical proxy behaviour; `nimble_improv` for provisioning. Host allocations in PSRAM. Parity status and hardware test plan: the fork's `docs/NIMBLE_PARITY.md`. |
-| `ble_esphome.yaml` | Bluedroid (upstream) | ESPHome's native `esp32_ble_tracker` + `bluetooth_proxy` + `esp32_improv`. Tracks upstream fixes; uses more internal RAM. |
+| `ble_esphome.yaml` | Bluedroid (upstream) | ESPHome's native `esp32_ble_tracker` + `bluetooth_proxy` + `improv_ble` (named `esp32_improv` before 2026.10.0). Tracks upstream fixes; uses more internal RAM. |
 
 ### WiFi/BT coexistence — do not remove
 
@@ -318,7 +318,8 @@ memory badly enough to trip the watchdog).
 ### Tunnel health and watchdog restart
 
 "WireGuard Status" is a template sensor published every 5 s by `wireguard.yaml`, not the
-wireguard platform's `status:` (which never goes false after a rekey; §10 gap 16). It is ON
+wireguard platform's `status:` (which, before 2026.10.0, never went false after a rekey; §10
+gap 16). It is ON
 only while `wg0.is_peer_up()` **and** `get_latest_handshake()` is under 180 s old; a healthy
 tunnel rekeys every 120 s. Read the handshake from the component, not the
 `latest_handshake` sensor: that sensor is a `float`, whose step at ~1.79e9 is 128 s.
@@ -329,8 +330,15 @@ recovery. Besides forcing a fresh handshake, a restart is what re-resolves a hos
 endpoint. `esp_wireguard_connect()` looks it up on every start, and nothing else does, so
 an endpoint that resolved to the wrong address stays wrong until a restart. That happened on
 2026-09-29 with a split-horizon answer. Restarts are not the churn described above: that was
-repeated `enable` without `disable`. esp_wireguard 0.4.5's teardown
+repeated `enable` without `disable`. The library's teardown
 (`wireguardif_shutdown`/`_fini`) frees the UDP pcb, timer and device state.
+
+Since ESPHome 2026.10.0 the component does this itself (esphome#20231): while the peer is
+offline, `Wireguard::update()` tears the connection down and restarts it every 30 s
+(`RECONNECT_INTERVAL_MS`, not configurable), re-resolving the endpoint each time. It only
+works because wireguard 0.4.8 (same release) finally reports a dead peer offline (§10 gap
+16). The local watchdog above is now a slower backstop to that. It is a candidate for removal
+once unit 79e35c has been seen recovering on its own after an outage.
 
 It also maintains `ha_http_blocked` (`base/globals.yaml`): switch on, tunnel down, API not
 connected. `weather_base.yaml` skips the hourly HTTP fallback and `printer_base.yaml`
@@ -384,7 +392,7 @@ EOF
 
 `esphome config <harness>.yaml` now resolves everything from disk, and
 `esphome compile <harness>.yaml` builds it (it only builds; nothing is uploaded). Remember this still does
-not compile lambdas, and that it needs an ESPHome at or above `min_version` (2026.9.0) —
+not compile lambdas, and that it needs an ESPHome at or above `min_version` (2026.10.0) —
 an older install stops at the version check before validating anything.
 
 ---
@@ -536,8 +544,15 @@ Recorded because they are easy to rediscover and misdiagnose.
     press either — with no display lambda, codegen picks `MipiSpi`, not `MipiSpiBuffer`,
     so `setup()` allocates nothing.
 
-16. **WORKED AROUND 2026-09-29 — the wireguard library never reports a rekeyed tunnel down.**
-    In droscy/esp_wireguard 0.4.5, still the version ESPHome pins, a peer counts as up while
+16. **FIXED UPSTREAM IN ESPHOME 2026.10.0 — the wireguard library never reported a rekeyed
+    tunnel down.** esphome-libs/wireguard#19 (released in 0.4.8, which ESPHome 2026.10.0
+    pins via esphome#20246) makes the periodic timer expire `prev_keypair` as well, so both
+    keys are gone ~180 s after the last handshake and `is_peer_up()` goes false. The text
+    below is the original diagnosis; the handshake-age workaround is still in place and is
+    harmless now (both tests agree), and the restart it drives overlaps with the component's
+    own 30 s restart (§8).
+
+    In droscy/esp_wireguard 0.4.5, the version ESPHome pinned until 2026.10, a peer counted as up while
     `curr_keypair` *or* `prev_keypair` is valid. `wireguardif_tmr` destroys the current key
     after `REJECT_AFTER_TIME` (180 s). The previous key is only cleared by
     `should_reset_peer()`, and that checks `curr_keypair.valid`, so once the current key is
@@ -547,8 +562,28 @@ Recorded because they are easy to rediscover and misdiagnose.
     Retries continue meanwhile (`should_send_initiation` fires while `curr_keypair` is
     invalid), so recovery itself works. `wireguard.yaml` no longer uses the platform's
     `status:` and judges the tunnel by handshake age (§8, "Tunnel health and watchdog
-    restart"). The upstream fix would be to expire `prev_keypair` in `wireguardif_tmr`, or to
-    test it in `should_reset_peer()`; not reported yet.
+    restart"). The fix that landed upstream is the first of the two options: expire
+    `prev_keypair` in `wireguardif_tmr`.
+
+17. **RESOLVED 2026-10-25 — `ble_improv.yaml` (NimBLE) did not build on ESPHome 2026.10.0.**
+    Fixed in fork commit `4e0adbd` ("Build nimble_improv on ESPHome 2026.10"); both pins
+    moved to it. The record below is from before the fix.
+    The fork's `nimble_improv/__init__.py` calls
+    `improv_base.setup_improv_core(var, config, "esp32_improv")`; 2026.10 renamed
+    `esp32_improv` to `improv_ble` (esphome#19264), dropped the third argument and renamed
+    the next-URL define to `USE_IMPROV_NEXT_URL`. Codegen stops with `TypeError:
+    setup_improv_core() takes 2 positional arguments but 3 were given`. `ble_stub.yaml` and
+    `ble_esphome.yaml` are unaffected. The fix (drop the third argument; `#ifdef
+    USE_ESP32_IMPROV_NEXT_URL` → `USE_IMPROV_NEXT_URL` in `nimble_improv.cpp`) is that
+    commit, on the fork's `nimble-bluedroid-parity` branch. Against the
+    fixed clone, `halo-v1-79e384.yaml` compiled on 2026.10.0 with no fork warnings,
+    `CONFIG_SW_COEXIST_ENABLE=y`, and static RAM 212,579 B (2026.9.0: 212,563 B); the fork's
+    `nimble_both.yaml` and `nimble_improv_only.yaml` examples compile too.
+    The previous pin `5791c6b` was not on any branch of the fork (history was rewritten;
+    its code matched branch commit `8c51877`), so it survived on GitHub only as an
+    unreferenced commit. The new pin is on the branch. The vendored 2026.9.0 `ble_device_base` / `bluetooth_connection` /
+    `bluetooth_proxy` still compile against 2026.10's core, but have not picked up its
+    upstream fixes (for example esphome#20774, ESP-IDF 6.1 connection-parameter init).
 
 ---
 

@@ -61,7 +61,10 @@ light:
     num_leds: 12
     use_dma: true  # Use DMA for better performance
     chipset: WS2812
-    restore_mode: ALWAYS_OFF
+    # Boots OFF and restores nothing: since ESPHome 2026.10.0 (esphome#18997)
+    # that is what a light with neither restore_mode: nor restore_state: does,
+    # and restore_mode: (formerly ALWAYS_OFF here) is deprecated. The LED
+    # Effect select in Halo-v1-Core.yaml restores the effect after boot.
     effects:
       - addressable_rainbow:
           name: Rainbow Effect With Custom Values
@@ -259,7 +262,13 @@ light:
     output: backlight
     name: "Display Backlight"
     id: display_backlight
-    restore_mode: ALWAYS_ON
+    # Always boots ON, nothing restored. This is the 2026.10.0 spelling of the
+    # old `restore_mode: ALWAYS_ON` (esphome#18997): no restore_state: key,
+    # plus an initial_state that 2026.10 now honours at boot. On ESPHome
+    # older than 2026.10 the same YAML would boot the backlight OFF, hence
+    # the min_version bump in the entry files.
+    initial_state:
+      state: ON
     # default_transition_length: 0s  # CRITICAL: No fade - instant on/off to prevent boot loop
     on_turn_on:
       - logger.log: "Display backlight turned ON"

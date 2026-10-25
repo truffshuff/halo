@@ -27,7 +27,7 @@
 #
 # This module configures:
 #   - ESPHome native BLE tracker (BLE scanning for HA proxy)
-#   - Improv WiFi provisioning via BLE (esp32_improv)
+#   - Improv WiFi provisioning via BLE (improv_ble)
 #   - Bluetooth proxy for Home Assistant (built-in ESPHome component)
 #   - Scanner switch to pause/resume BLE scanning (OTA, weather fetches)
 #
@@ -155,16 +155,20 @@ bluetooth_proxy:
 # ============================================================================
 # Allows WiFi reconfiguration via BLE using the Improv protocol.
 #
-# esp32_improv requires an authorizer binary_sensor — it checks this sensor
+# ESPHome 2026.10.0 renamed esp32_improv to improv_ble (esphome#19264). The
+# old key still works as an alias but warns on every build and is removed in
+# 2027.4.0. The options below are unchanged by the rename.
+#
+# improv_ble requires an authorizer binary_sensor — it checks this sensor
 # to decide whether to accept provisioning requests. We define an internal
 # always-on sensor (ble_improv_authorizer) so provisioning is auto-approved
 # on connection (nimble_improv in ble_improv.yaml does the same when it has
-# no authorizer). esp32_improv only runs while WiFi needs provisioning.
+# no authorizer). improv_ble only runs while WiFi needs provisioning.
 #
 # To require a physical button press instead: replace the template sensor
 # with a real button/GPIO binary_sensor.
 #
-# authorized_duration and wifi_timeout ARE supported by esp32_improv and
+# authorized_duration and wifi_timeout ARE supported by improv_ble and
 # are set here to match the values in ble_improv.yaml.
 # ============================================================================
 binary_sensor:
@@ -173,7 +177,7 @@ binary_sensor:
     internal: true   # Not exposed to Home Assistant
     lambda: "return true;"  # Always authorized — no button press required
 
-esp32_improv:
+improv_ble:
   authorizer: ble_improv_authorizer
   authorized_duration: 2min  # Match ble_improv.yaml
   wifi_timeout: 1min         # Match ble_improv.yaml

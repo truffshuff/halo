@@ -55,13 +55,16 @@
 #   - First SNTP sync: system_management.yaml enables it if boot timed out.
 #   - WiFi reconnect: networking.yaml does disable -> enable to force a fresh
 #     handshake (docs/ARCHITECTURE.md section 8).
-#   - "WireGuard Status" is judged here from the handshake age, not taken
-#     from the library, whose peer-up flag stays ON forever once a rekeyed
-#     tunnel dies (docs/ARCHITECTURE.md "Known gaps" #16).
+#   - "WireGuard Status" is judged here from the handshake age (and
+#     is_peer_up()). Before ESPHome 2026.10.0 the library's peer-up flag
+#     stayed ON forever once a rekeyed tunnel died; wireguard 0.4.8, pinned
+#     by 2026.10.0, fixes that (docs/ARCHITECTURE.md "Known gaps" #16).
 #   - Tunnel drop while enabled: auto rotation pauses and the AirQ page is
 #     shown until the tunnel returns.
 #   - No handshake for 3 min with WiFi up: WireGuard is restarted, which also
 #     re-resolves a hostname endpoint. Backs off 3 -> 6 -> 12 -> 24 -> 30 min.
+#     Since 2026.10.0 the component itself also restarts an offline peer every
+#     30 s (esphome#20231), so this one is now a backstop.
 #   - ha_http_blocked (base/globals.yaml) is set while HA is only reachable
 #     through the tunnel and neither the tunnel nor the API is up, so the
 #     weather and printer packages skip HTTP calls that would block ~10 s.
@@ -480,11 +483,16 @@ esphome:
 #      The API term keeps a unit at home working: there HA is on the LAN and
 #      connects whether or not the tunnel is up.
 #   3. If the tunnel has been down for the backoff time with WiFi up, restart
-#      WireGuard. A restart also re-resolves a hostname endpoint, the only way
+#      WireGuard. A restart also re-resolves a hostname endpoint, which is how
 #      to recover once it resolved to the wrong address (observed 2026-09-29:
 #      a split-horizon DNS answer pointed it at an internal host).
-#      esp_wireguard 0.4.5 teardown frees the netif, UDP pcb and timer, so
-#      restarts do not leak; the backoff only limits churn during an outage.
+#      The teardown frees the netif, UDP pcb and timer, so restarts do not
+#      leak; the backoff only limits churn during an outage.
+#      ESPHome 2026.10.0 (esphome#20231 + wireguard 0.4.8) does the same
+#      restart inside the component, every 30 s while the peer is offline,
+#      and the library now reports a dead peer offline ~180 s after the last
+#      handshake. This step is kept as a backstop until that is confirmed on
+#      unit 79e35c; see docs/ARCHITECTURE.md "Known gaps" #16.
 #
 # MEMORY: 3 uint32_t globals + one template binary sensor (internal SRAM,
 # well under 1 KB); no allocation in the interval.
