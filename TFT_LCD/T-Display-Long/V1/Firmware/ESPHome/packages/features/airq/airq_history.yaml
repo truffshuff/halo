@@ -326,13 +326,13 @@ script:
             data["readings"] = json;
             {
               esphome::api::HomeassistantActionRequest req;
-              req.service = esphome::StringRef("esphome.aqi_history_batch");
+              req.service = esphome::ProgmemStringRef(esphome::StringRef("esphome.aqi_history_batch"));
               req.is_event = true;
               req.data.init(data.size());
               for (auto &it : data) {
                 auto &kv = req.data.emplace_back();
-                kv.key   = esphome::StringRef(it.first);
-                kv.value = esphome::StringRef(it.second);
+                kv.key   = esphome::ProgmemStringRef(esphome::StringRef(it.first));
+                kv.value = esphome::ProgmemStringRef(esphome::StringRef(it.second));
               }
               api_server->send_homeassistant_action(req);
             }
