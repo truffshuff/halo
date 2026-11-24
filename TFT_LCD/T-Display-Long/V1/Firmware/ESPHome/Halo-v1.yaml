@@ -108,12 +108,12 @@ esphome:
   # Flash mode/frequency and CPU frequency are set with the framework-agnostic
   # esp32: keys in packages/system/esphome_core.yaml.
 
-  # 2026.10.0 is required: packages/system/esphome_core.yaml sets
-  # `nvs_cache_in_psram:`, and the "Display Backlight" light in
-  # features/weather/weather_led_effects.yaml relies on 2026.10's
-  # `initial_state:` boot behaviour (an older ESPHome would boot it OFF).
-  # 2026.9.0 added `network: tcp_send_buffer:`, also used there.
-  min_version: 2026.10.0
+  # 2026.11.0 is required: non-blocking http_request in scripts and action
+  # blocks (weather_base.yaml and system_management.yaml callbacks), resilient
+  # UDP OTA updates, and C++ automations saving internal SRAM.
+  # 2026.10.0 added `nvs_cache_in_psram:` and light `initial_state:`.
+  # 2026.9.0 added `network: tcp_send_buffer:`.
+  min_version: 2026.11.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"

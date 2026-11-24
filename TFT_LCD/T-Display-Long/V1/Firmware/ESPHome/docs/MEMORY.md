@@ -6,9 +6,10 @@ Read this before changing any buffer size, `sdkconfig_option`, `psram:` setting,
 allocation in a lambda. Several values here look wasteful and are not.
 
 Baseline: **ESPHome 2026.9.0**, ESP-IDF 5.5.x, native `esp-idf` toolchain, for the
-measurements in §10. The build now requires 2026.10.0, which moves the NVS cache to PSRAM
-(§3) and keeps more codegen tables (font glyphs, the `mipi_spi` init sequence, select
-options, HA action fields) in flash. None of that has been measured on hardware yet.
+measurements in §10. The build now requires 2026.11.0, which compiles automations directly
+to plain C++ and shifts entity strings and metadata to flash across platforms, reducing static
+internal SRAM. In 2026.10.0, the NVS cache moved to PSRAM (§3) and more codegen tables
+(font glyphs, the `mipi_spi` init sequence, select options, HA action fields) were kept in flash.
 `esp32: framework: advanced: flash_chip: winbond` (2026.10.0) links only the Winbond flash
 driver: build-time static internal RAM 212,579 → 208,615 B (−3,964 B, `halo-v1-79e384.yaml`).
 

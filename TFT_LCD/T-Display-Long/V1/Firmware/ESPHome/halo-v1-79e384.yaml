@@ -74,8 +74,8 @@ esphome:
   # framework-agnostic esp32: keys in packages/system/esphome_core.yaml, and
   # PSRAM octal/80MHz from the top-level psram: component there.
 
-  # 2026.10.0: see the min_version comment in Halo-v1.yaml.
-  min_version: 2026.10.0
+  # 2026.11.0: see the min_version comment in Halo-v1.yaml.
+  min_version: 2026.11.0
 
   project:
     name: "yashmulgaonkar.Halo-v1"

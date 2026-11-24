@@ -5,7 +5,7 @@ How this firmware is put together, for someone opening the repository for the fi
 Companion document: [MEMORY.md](MEMORY.md) explains *why* memory is placed where it is.
 Read it before changing any buffer size, `sdkconfig_option`, or allocation.
 
-Baseline: **ESPHome 2026.10.0** (`min_version`), ESP-IDF via the native `esp-idf` toolchain.
+Baseline: **ESPHome 2026.11.0** (`min_version`), ESP-IDF via the native `esp-idf` toolchain.
 
 ---
 
@@ -131,7 +131,7 @@ package that the template has commented out.
    (request/response over the API; 10 entries parsed into fixed-size global arrays)
 
  Device ──► http_request POST /api/services/weather/get_forecasts (type: hourly)
-   (FALLBACK ONLY, when the hourly attribute is stale: synchronous, ~57-63 KB)
+   (FALLBACK ONLY, when the hourly attribute is stale: non-blocking, ~57-63 KB)
 
  Home Assistant ──► image: platform: online_image (printer cover, 600 s poll)
 
@@ -146,8 +146,9 @@ Two distinct paths reach Home Assistant, and the difference matters:
   hourly forecast does not travel this way. The daily call needs **"Allow the device to
   perform Home Assistant actions"** enabled for the device in HA.
 - **HTTP REST** (`${ha_url}` + `${ha_token}`) — pull only, used for the printer cover image
-  and the hourly-forecast fallback. `http_request` is synchronous: every call blocks the
-  main loop for its duration.
+  and the hourly-forecast fallback. Starting in ESPHome 2026.11.0, `http_request` actions in
+  scripts are non-blocking; callbacks (`on_response` / `on_error`) handle completion without
+  stalling the main event loop.
 
 The Home Assistant side of the hourly path — a trigger-based template sensor publishing
 `sensor.hourly_forecast_esp` — is not in this repository; the README has an equivalent.
@@ -392,7 +393,7 @@ EOF
 
 `esphome config <harness>.yaml` now resolves everything from disk, and
 `esphome compile <harness>.yaml` builds it (it only builds; nothing is uploaded). Remember this still does
-not compile lambdas, and that it needs an ESPHome at or above `min_version` (2026.10.0) —
+not compile lambdas, and that it needs an ESPHome at or above `min_version` (2026.11.0) —
 an older install stops at the version check before validating anything.
 
 ---

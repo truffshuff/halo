@@ -32,11 +32,9 @@
 # ============================================================================
 http_request:
   useragent: esphome/halo
-  # WARNING: http_request is SYNCHRONOUS - every call blocks loopTask for its
-  # whole duration. With CONFIG_ESP_TASK_WDT_TIMEOUT_S at 30s, two stacked
-  # failures at this timeout are enough to reboot the device. That is exactly
-  # what happened on 2026-09-20 when ha_url pointed at an unresolvable name:
-  # each attempt burned ~7s in getaddrinfo and the watchdog fired.
+  # NOTE (ESPHome 2026.11.0): http_request in scripts/actions is non-blocking.
+  # Action lists do not stall during request transit; callbacks (on_response,
+  # on_error) handle completion. The timeout bounds failure detection.
   #
   # 10s (was 5s): the 5s value was chosen to "fail fast when WireGuard is not
   # yet up", a condition that no longer applies - WireGuard is off by default.
@@ -383,6 +381,41 @@ sensor:
     id: sntp_time_timestamp
     lambda: "return (float)id(sntp_time).now().timestamp;"
 
+# ============================================================================
+# HTTP Reachability Diagnostic Script (ESPHome 2026.11.0+ sequential chaining)
+# ============================================================================
+script:
+  - id: diag_check_cloudflare_script
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: 'return id(diag_check_cloudflare_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
+          then:
+            - http_request.get:
+                # Plain HTTP - Cloudflare's CDN IPs serve on port 80; avoids TLS blocking.
+                url: http://1.1.1.1/
+                on_response:
+                  then:
+                    - logger.log:
+                        format: 'HTTP cloudflare: status=%d duration=%lums'
+                        args:
+                          - response->status_code
+                          - response->duration_ms
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = true;
+                    - binary_sensor.template.publish:
+                        id: http_cloudflare_reachable
+                        state: true
+                on_error:
+                  then:
+                    - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
+                    - lambda: |-
+                        id(diag_http_cloudflare_ok) = false;
+                    - binary_sensor.template.publish:
+                        id: http_cloudflare_reachable
+                        state: false
+
 # Periodic diagnostic checks and logs
 interval:
   # Fast interval: API connection check and sensor state publishing
@@ -442,9 +475,7 @@ interval:
             # Skip the HTTP probe when WireGuard is enabled but not yet
             # connected.  If wg_allowed_ips routes all traffic through the
             # tunnel (0.0.0.0/0), outbound HTTP hangs for the full
-            # http_request timeout while WireGuard is offline, blocking the
-            # event loop; stacked with other stalls that can trip the 30 s
-            # task watchdog.
+            # http_request timeout while WireGuard is offline.
             lambda: 'return id(diag_check_google_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
           then:
             - http_request.get:
@@ -460,39 +491,21 @@ interval:
                           - response->duration_ms
                     - lambda: |-
                         id(diag_http_google_ok) = true;
+                    - binary_sensor.template.publish:
+                        id: http_google_reachable
+                        state: true
+                    # Sequence Cloudflare check after Google check completes
+                    - script.execute: diag_check_cloudflare_script
                 on_error:
                   then:
                     - logger.log: 'HTTP google test failed (network/DNS unreachable)'
                     - lambda: |-
                         id(diag_http_google_ok) = false;
-
-      - if:
-          condition:
-            # Same guard as the Google check above.
-            lambda: 'return id(diag_check_cloudflare_enabled) && !(id(wireguard_enabled_sensor).state && !id(wg_status_connected_state));'
-          then:
-            - http_request.get:
-                # Plain HTTP - Cloudflare's CDN IPs serve on port 80; avoids TLS blocking.
-                url: http://1.1.1.1/
-                on_response:
-                  then:
-                    - logger.log:
-                        format: 'HTTP cloudflare: status=%d duration=%lums'
-                        args:
-                          - response->status_code
-                          - response->duration_ms
-                    - lambda: |-
-                        id(diag_http_cloudflare_ok) = true;
-                on_error:
-                  then:
-                    - logger.log: 'HTTP cloudflare test failed (network/DNS unreachable)'
-                    - lambda: |-
-                        id(diag_http_cloudflare_ok) = false;
-
-      # Publish HTTP reachability sensor states after checks complete
-      - binary_sensor.template.publish:
-          id: http_google_reachable
-          state: !lambda 'return id(diag_http_google_ok);'
-      - binary_sensor.template.publish:
-          id: http_cloudflare_reachable
-          state: !lambda 'return id(diag_http_cloudflare_ok);'
+                    - binary_sensor.template.publish:
+                        id: http_google_reachable
+                        state: false
+                    # Sequence Cloudflare check after Google check completes
+                    - script.execute: diag_check_cloudflare_script
+          else:
+            # Google check skipped or disabled; run Cloudflare check directly
+            - script.execute: diag_check_cloudflare_script

@@ -18,8 +18,8 @@
 #            the `forecast` attribute of sensor.hourly_forecast_esp, a
 #            trigger-based template sensor that must exist in Home Assistant
 #            (README "Home Assistant setup"). fetch_hourly_forecast_http is
-#            only a fallback for when that sensor is missing or stale: it is
-#            synchronous and pulls the whole forecast (~57-63 KB).
+#            only a fallback for when that sensor is missing or stale: it pulls
+#            the whole forecast (~57-63 KB) via http_request.post (non-blocking in 2026.11.0).
 #
 # Dependencies:
 #   - system/system_management.yaml (http_request, weather_helpers, time)
@@ -1120,17 +1120,21 @@ script:
                     lambda: 'return id(current_page_name) == "hourly_forecast";'
                   then:
                     - script.execute: update_hourly_page_1
+
+              # Resume BLE scanner and release fetch lock (moved into callbacks for
+              # ESPHome 2026.11.0+ non-blocking http_request)
+              - switch.turn_on: ble_scanner_switch
+              - lambda: |-
+                  id(weather_fetch_lock) = false;
+                  ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP fallback) END ===");
           on_error:
             then:
               - lambda: |-
                   ESP_LOGE("weather", "✗ Hourly HTTP request failed (will retry at next interval)");
-
-      # Resume BLE scanner after HTTP fetch completes
-      - switch.turn_on: ble_scanner_switch
-
-      - lambda: |-
-          id(weather_fetch_lock) = false;
-          ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP fallback) END ===");
+              - switch.turn_on: ble_scanner_switch
+              - lambda: |-
+                  id(weather_fetch_lock) = false;
+                  ESP_LOGI("weather", "=== HOURLY FORECAST FETCH (HTTP fallback) END (failed) ===");
 
   # Transitional helper script that triggers both forecast fetches.
   # Retained for compatibility with existing automation; prefer calling
