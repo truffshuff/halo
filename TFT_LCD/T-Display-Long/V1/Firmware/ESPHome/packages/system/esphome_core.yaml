@@ -47,7 +47,7 @@ external_components:
   # Pinned by full SHA. The pin here and the one in features/ble/ble_improv.yaml
   # should move together; a new commit in the fork does nothing until both are
   # repinned and pushed.
-  - source: github://truffshuff/esphome-components@4e0adbd432f79643d7aceaf5b0e35b6ad234d7b3
+  - source: github://truffshuff/esphome-components@d683c520bd8e052fced85c5a9b98c6347e5d6eb5
     components: [axs15231, weather_helpers]
 
 # ============================================================================

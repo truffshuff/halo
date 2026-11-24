@@ -72,7 +72,7 @@
 # same commit.
 # ============================================================================
 external_components:
-  - source: github://truffshuff/esphome-components@4e0adbd432f79643d7aceaf5b0e35b6ad234d7b3 # NimBLE backend for the upstream 2026.9.0 proxy
+  - source: github://truffshuff/esphome-components@d683c520bd8e052fced85c5a9b98c6347e5d6eb5 # NimBLE backend for the upstream 2026.9.0 proxy
     components:
       - nimble_base
       - nimble_tracker
