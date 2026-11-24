@@ -585,6 +585,33 @@ Recorded because they are easy to rediscover and misdiagnose.
     `bluetooth_proxy` still compile against 2026.10's core, but have not picked up its
     upstream fixes (for example esphome#20774, ESP-IDF 6.1 connection-parameter init).
 
+18. **The daily forecast can be fetched twice at once.** Two callers decide on their own
+    that the daily forecast is stale and run `fetch_daily_forecast`: the weather page's
+    `on_load` (`weather_page.yaml`, the "Daily forecast is stale" check) and the daily
+    forecast page's `on_load` (`daily-forecast-pages.yaml`, same check). Neither checks
+    `weather_fetch_lock`, though the script sets it and the hourly pages already test it.
+    `mode: single` does not help: the script finishes as soon as `homeassistant.action`
+    is sent, and the response is handled later in `on_success`, so the second call finds
+    the script idle. Seen 2026-11-12 on unit 79d6b4: requests at 13:13:44 (weather page)
+    and 13:14:14 (daily page), and both responses were parsed, at 13:14:18 and 13:14:20.
+    It costs a second API round trip and parse; no corruption seen. Fix: add
+    `if (id(weather_fetch_lock)) return false;` to both conditions, as the hourly pages do.
+    Check first that every exit path from the fetch clears the lock, or one lost response
+    would block daily fetches until reboot.
+
+19. **A failed cover-image download leaves the printer page pointing at a bad image.**
+    `printer_image_ready` (`printer_base.yaml`) is set by `on_download_finished` and never
+    cleared, so after a later download fails, the printer page's `on_load` still calls
+    `lvgl.image.update` with `printer_cover_image_data`. Seen 2026-11-12 on unit 79d6b4:
+    downloads failed at 12:51:00 (`HTTP result: -1`) and 13:01:19 (`Error downloading
+    image: -28679`, i.e. `ESP_ERR_HTTP_EAGAIN`, a read timeout), then
+    `[W][lvgl] lv_image_set_src: failed to get image info` appeared at 13:03:40 and
+    13:07:42, when the printer page was shown. If `online_image` has freed or reallocated
+    its buffer at that point, LVGL is reading memory it no longer owns. Fix: clear
+    `printer_image_ready` in `on_error` (and hide the widget or skip the update while it
+    is false). Related: every download blocks the main loop for 3–17 s (`online_image.image
+    took a long time`), and the BLE tracker drops 8–284 advertisements during each one.
+
 ---
 
 ## 11. Design decisions worth not undoing
